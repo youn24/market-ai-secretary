@@ -86,7 +86,9 @@ def run(mode: str):
         logger.info("--- Step 7: Telegram通知 ---")
         from src.notify_telegram import run as notify_tg
         report_paths = {"md": f"reports/{get_today_str()}_{mode}.md"}
-        notify_tg(risk, analysis, report_paths, mode)
+        notify_tg(risk, analysis, report_paths, mode,
+                  prices=prices, news=news,
+                  fear_greed=fear_greed, ai_summary={"available": False})
     except Exception:
         logger.error("Telegram通知エラー"); logger.debug(traceback.format_exc())
 
