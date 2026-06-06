@@ -38,7 +38,7 @@ jobs:
           pip install --upgrade pip
           pip install pandas numpy requests feedparser beautifulsoup4 \
                       lxml python-dotenv PyYAML yfinance plotly \
-                      matplotlib kaleido
+                      matplotlib kaleido google-generativeai
 
       - name: 市場データ取得・レポート生成・Telegram通知
         env:

@@ -101,7 +101,7 @@ def run(mode: str):
     report_paths = {}
     try:
         logger.info("--- Step 7: HTMLレポート生成 ---")
-        _save_html_report(mode, prices, news, risk, analysis, fear_greed, chart_paths)
+        _save_html_report(mode, prices, news, risk, analysis, fear_greed, chart_paths, ai_summary)
         today = get_today_str()
         report_paths = {
             "html": str(get_dirs()["reports"] / f"{today}_{mode}.html"),
@@ -128,7 +128,7 @@ def run(mode: str):
           f"ニュース: {len(news)}件 | チャート: {len(chart_paths)}件")
 
 
-def _save_html_report(mode, prices, news, risk, analysis, fear_greed, chart_paths):
+def _save_html_report(mode, prices, news, risk, analysis, fear_greed, chart_paths, ai_summary=None):
     """プロ仕様の金融ダッシュボードHTMLを保存"""
     import base64
     today = get_today_str()
@@ -142,6 +142,12 @@ def _save_html_report(mode, prices, news, risk, analysis, fear_greed, chart_path
     signals   = risk.get("signals", [])
     facts     = analysis.get("facts", [])
     hypotheses= analysis.get("hypotheses", [])
+    ai_summary = ai_summary or {}
+    ai_available = ai_summary.get("available", False)
+    ai_overall = ai_summary.get("overall_summary", "")
+    ai_points  = ai_summary.get("points", "")
+    ai_risks   = ai_summary.get("risks", "")
+    ai_outlook = ai_summary.get("outlook", "")
 
     def p_val(sym):
         d = prices.get(sym, {})
@@ -282,6 +288,13 @@ body {{ background:var(--bg); color:var(--text); font-family:'Hiragino Sans','Me
 /* TradingView */
 .tv-section {{ background:var(--card); border:1px solid var(--border); border-radius:12px; padding:14px; margin-bottom:16px; overflow:hidden; }}
 
+/* AI分析 */
+.ai-box {{ background:linear-gradient(135deg,#0f1a2e,#1a1040); border:1px solid #7b61ff44; border-radius:12px; padding:16px; margin-bottom:16px; }}
+.ai-section {{ margin-bottom:12px; padding-bottom:12px; border-bottom:1px solid #7b61ff22; }}
+.ai-section:last-child {{ margin-bottom:0; padding-bottom:0; border-bottom:none; }}
+.ai-label {{ color:#a78bfa; font-size:0.8em; font-weight:700; letter-spacing:1px; margin-bottom:6px; }}
+.ai-text {{ color:var(--text); font-size:0.9em; line-height:1.7; white-space:pre-wrap; }}
+
 /* フッター */
 .footer {{ text-align:center; color:var(--text2); font-size:0.75em; padding:20px; border-top:1px solid var(--border); }}
 
@@ -380,6 +393,15 @@ body {{ background:var(--bg); color:var(--text); font-family:'Hiragino Sans','Me
   <!-- シグナル -->
   <div class="section-title">🔍 市場シグナル</div>
   <div class="signals">{signal_html or "<div class='signal-item'>シグナルなし</div>"}</div>
+
+  <!-- Gemini AI分析 -->
+  {f'''<div class="section-title">🤖 Gemini AI分析</div>
+  <div class="ai-box">
+    <div class="ai-section"><div class="ai-label">📊 総合判断</div><div class="ai-text">{ai_overall}</div></div>
+    {f'<div class="ai-section"><div class="ai-label">💡 注目ポイント</div><div class="ai-text">{ai_points}</div></div>' if ai_points else ""}
+    {f'<div class="ai-section"><div class="ai-label">⚠️ リスク要因</div><div class="ai-text">{ai_risks}</div></div>' if ai_risks else ""}
+    {f'<div class="ai-section"><div class="ai-label">🔮 今後の見通し</div><div class="ai-text">{ai_outlook}</div></div>' if ai_outlook else ""}
+  </div>''' if ai_available else '<div class="section-title">🤖 AI分析</div><div class="ai-box"><div class="ai-text">本日のAI分析は準備中です</div></div>'}
 
   <!-- 分析 -->
   {f'<div class="section-title">📝 マクロ分析</div><div class="analysis">{facts_html}{hypo_html}</div>' if facts_html or hypo_html else ""}
