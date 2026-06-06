@@ -75,6 +75,19 @@ def run(mode: str):
     except Exception:
         logger.error("分析エラー"); logger.debug(traceback.format_exc())
 
+    # Step 5b: Gemini AI分析
+    ai_summary = {"available": False}
+    try:
+        logger.info("--- Step 5b: Gemini AI分析 ---")
+        from src.ai_gemini import run_gemini_analysis
+        ai_summary = run_gemini_analysis(prices, news, risk, fear_greed)
+        if ai_summary.get("available"):
+            logger.info("✅ Gemini AI分析完了")
+        else:
+            logger.info("Gemini AI分析スキップ")
+    except Exception:
+        logger.error("Gemini AI分析エラー"); logger.debug(traceback.format_exc())
+
     # Step 6: チャート生成（matplotlibが使える場合）
     try:
         logger.info("--- Step 6: チャート生成 ---")
@@ -104,7 +117,7 @@ def run(mode: str):
         from src.notify_telegram import run as notify_tg
         notify_tg(risk, analysis, report_paths, mode,
                   prices=prices, news=news,
-                  fear_greed=fear_greed, ai_summary={"available": False},
+                  fear_greed=fear_greed, ai_summary=ai_summary,
                   chart_paths=chart_paths)
     except Exception:
         logger.error("Telegram通知エラー"); logger.debug(traceback.format_exc())
