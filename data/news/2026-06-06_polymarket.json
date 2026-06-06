@@ -1,0 +1,29 @@
+[
+  {
+    "question": "Will bitcoin hit $1m before GTA VI?",
+    "yes_prob": 49.2,
+    "no_prob": 50.8,
+    "volume": "4453002.432062519",
+    "end_date": "2026-07-31T12:00:00Z",
+    "url": "https://polymarket.com/event/will-bitcoin-hit-1m-before-gta-vi-872-424",
+    "fetch_time": "2026-06-06T01:25:33.937278+09:00"
+  },
+  {
+    "question": "Will the Vegas Golden Knights win the 2026 NHL Stanley Cup?",
+    "yes_prob": 44.6,
+    "no_prob": 55.4,
+    "volume": "2976348.3525869907",
+    "end_date": "2026-06-30T00:00:00Z",
+    "url": "https://polymarket.com/event/will-the-vegas-golden-knights-win-the-2026-nhl-stanley-cup",
+    "fetch_time": "2026-06-06T01:25:33.937378+09:00"
+  },
+  {
+    "question": "Will Japan win the 2026 FIFA World Cup?",
+    "yes_prob": 2.1,
+    "no_prob": 97.9,
+    "volume": "32626643.770354282",
+    "end_date": "2026-07-20T00:00:00Z",
+    "url": "https://polymarket.com/event/will-japan-win-the-2026-fifa-world-cup-112",
+    "fetch_time": "2026-06-06T01:25:33.937483+09:00"
+  }
+]

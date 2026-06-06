@@ -1,0 +1,156 @@
+2026-06-04 18:35:48 [INFO] run_daily: ====== Market AI Secretary 開始 [mode=test] ======
+2026-06-04 18:35:48 [INFO] run_daily: 実行時刻(JST): 2026-06-04 18:35:48
+2026-06-04 18:35:48 [INFO] run_daily: --- Step 1: 価格データ取得 ---
+2026-06-04 18:35:56 [INFO] fetch_prices: === 価格データ取得開始 ===
+2026-06-04 18:36:04 [INFO] fetch_prices: [OK] 日経平均(^N225) = 67470.6875
+2026-06-04 18:36:04 [ERROR] fetch_prices: [FAIL] TOPIX(^TOPX): 全ソースで取得失敗
+2026-06-04 18:36:05 [INFO] fetch_prices: [OK] S&P500(^GSPC) = 7553.6802
+2026-06-04 18:36:05 [INFO] fetch_prices: [OK] NASDAQ(^IXIC) = 26853.9805
+2026-06-04 18:36:06 [INFO] fetch_prices: [OK] ダウ工業株(^DJI) = 50687.0703
+2026-06-04 18:36:06 [INFO] fetch_prices: [OK] VIX恐怖指数(^VIX) = 16.5
+2026-06-04 18:36:07 [INFO] fetch_prices: [OK] ドル円(USDJPY=X) = 159.862
+2026-06-04 18:36:08 [INFO] fetch_prices: [OK] ユーロドル(EURUSD=X) = 1.1628
+2026-06-04 18:36:08 [INFO] fetch_prices: [OK] 米10年金利(^TNX) = 4.491
+2026-06-04 18:36:09 [INFO] fetch_prices: [OK] 金(GOLD)(GC=F) = 4493.0
+2026-06-04 18:36:09 [INFO] fetch_prices: [OK] WTI原油(CL=F) = 94.86
+2026-06-04 18:36:10 [INFO] fetch_prices: [OK] Bitcoin(BTC-USD) = 62822.6484
+2026-06-04 18:36:10 [INFO] fetch_prices: 価格データ保存: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\data\raw\2026-06-04_prices.json, C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\data\processed\2026-06-04_prices.csv
+2026-06-04 18:36:10 [INFO] fetch_prices: === 取得完了: 成功11件 / 失敗1件 ===
+2026-06-04 18:36:10 [INFO] run_daily: --- Step 2: ニュース取得 ---
+2026-06-04 18:36:10 [INFO] fetch_news: === ニュース取得開始 ===
+2026-06-04 18:36:11 [INFO] fetch_news: [OK] ニュース取得 [日銀]: 5件
+2026-06-04 18:36:13 [INFO] fetch_news: [OK] ニュース取得 [FRB]: 5件
+2026-06-04 18:36:15 [INFO] fetch_news: [OK] ニュース取得 [米国株]: 5件
+2026-06-04 18:36:17 [INFO] fetch_news: [OK] ニュース取得 [日本株]: 5件
+2026-06-04 18:36:19 [INFO] fetch_news: [OK] ニュース取得 [為替]: 5件
+2026-06-04 18:36:21 [INFO] fetch_news: [OK] ニュース取得 [金利]: 5件
+2026-06-04 18:36:23 [INFO] fetch_news: [OK] ニュース取得 [原油]: 5件
+2026-06-04 18:36:24 [INFO] fetch_news: [OK] ニュース取得 [半導体]: 5件
+2026-06-04 18:36:26 [INFO] fetch_news: [OK] ニュース取得 [決算]: 5件
+2026-06-04 18:36:28 [INFO] fetch_news: [OK] ニュース取得 [地政学リスク]: 5件
+2026-06-04 18:36:29 [INFO] fetch_news: ニュース保存: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\data\news\2026-06-04_news.json (50件)
+2026-06-04 18:36:29 [INFO] fetch_news: === ニュース取得完了: 50件 ===
+2026-06-04 18:36:29 [INFO] run_daily: --- Step 3: 指標計算 ---
+2026-06-04 18:36:29 [INFO] indicators: リスク判定: 弱気 (リスクオフ) (スコア=-4.78)
+2026-06-04 18:36:29 [INFO] run_daily: --- Step 4: 分析 ---
+2026-06-04 18:36:29 [INFO] analyze: === 分析開始 ===
+2026-06-04 18:36:29 [INFO] analyze: === 分析完了 ===
+2026-06-04 18:36:29 [INFO] run_daily: --- Step 5: チャート生成 ---
+2026-06-04 18:36:31 [INFO] visualize: === チャート生成開始 ===
+2026-06-04 18:36:31 [INFO] visualize: 指数チャート保存: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\reports\charts\2026-06-04_indices.png
+2026-06-04 18:36:31 [INFO] visualize: 為替チャート保存: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\reports\charts\2026-06-04_forex.png
+2026-06-04 18:36:32 [INFO] visualize: コモディティチャート保存: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\reports\charts\2026-06-04_commodities.png
+2026-06-04 18:36:32 [INFO] visualize: リスクメーター保存: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\reports\charts\2026-06-04_risk_meter.png
+2026-06-04 18:36:32 [INFO] visualize: ニュースチャート保存: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\reports\charts\2026-06-04_news.png
+2026-06-04 18:36:32 [INFO] visualize: === チャート生成完了: 5件 ===
+2026-06-04 18:36:32 [INFO] run_daily: --- Step 6: レポート生成 ---
+2026-06-04 18:36:32 [INFO] report_writer: レポート保存: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\reports\2026-06-04_test.md, C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\reports\2026-06-04_test.html
+2026-06-04 18:36:32 [INFO] run_daily: Markdown: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\reports\2026-06-04_test.md
+2026-06-04 18:36:32 [INFO] run_daily: HTML:     C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\reports\2026-06-04_test.html
+2026-06-04 18:36:32 [INFO] run_daily: --- Step 7: Telegram通知 ---
+2026-06-04 18:36:32 [INFO] notify_telegram: Telegram 設定なし。通知をスキップします。レポートはローカルに保存済みです。
+2026-06-04 18:36:32 [INFO] run_daily: ====== Market AI Secretary 完了 [mode=test] ======
+2026-06-04 18:37:00 [INFO] run_daily: ====== Market AI Secretary 開始 [mode=test] ======
+2026-06-04 18:37:00 [INFO] run_daily: 実行時刻(JST): 2026-06-04 18:37:00
+2026-06-04 18:37:00 [INFO] run_daily: --- Step 1: 価格データ取得 ---
+2026-06-04 18:37:01 [INFO] fetch_prices: === 価格データ取得開始 ===
+2026-06-04 18:37:02 [INFO] fetch_prices: [OK] 日経平均(^N225) = 67470.6875
+2026-06-04 18:37:03 [ERROR] fetch_prices: [FAIL] TOPIX(^TOPX): 全ソースで取得失敗
+2026-06-04 18:37:03 [INFO] fetch_prices: [OK] S&P500(^GSPC) = 7553.6802
+2026-06-04 18:37:04 [INFO] fetch_prices: [OK] NASDAQ(^IXIC) = 26853.9805
+2026-06-04 18:37:04 [INFO] fetch_prices: [OK] ダウ工業株(^DJI) = 50687.0703
+2026-06-04 18:37:04 [INFO] fetch_prices: [OK] VIX恐怖指数(^VIX) = 16.49
+2026-06-04 18:37:05 [INFO] fetch_prices: [OK] ドル円(USDJPY=X) = 159.882
+2026-06-04 18:37:05 [INFO] fetch_prices: [OK] ユーロドル(EURUSD=X) = 1.1625
+2026-06-04 18:37:06 [INFO] fetch_prices: [OK] 米10年金利(^TNX) = 4.491
+2026-06-04 18:37:06 [INFO] fetch_prices: [OK] 金(GOLD)(GC=F) = 4492.7998
+2026-06-04 18:37:06 [INFO] fetch_prices: [OK] WTI原油(CL=F) = 94.8
+2026-06-04 18:37:07 [INFO] fetch_prices: [OK] Bitcoin(BTC-USD) = 62730.1602
+2026-06-04 18:37:07 [INFO] fetch_prices: 価格データ保存: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\data\raw\2026-06-04_prices.json, C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\data\processed\2026-06-04_prices.csv
+2026-06-04 18:37:07 [INFO] fetch_prices: === 取得完了: 成功11件 / 失敗1件 ===
+2026-06-04 18:37:07 [INFO] run_daily: --- Step 2: ニュース取得 ---
+2026-06-04 18:37:07 [INFO] fetch_news: === ニュース取得開始 ===
+2026-06-04 18:37:08 [INFO] fetch_news: [OK] ニュース取得 [日銀]: 5件
+2026-06-04 18:37:09 [INFO] fetch_news: [OK] ニュース取得 [FRB]: 5件
+2026-06-04 18:37:10 [INFO] fetch_news: [OK] ニュース取得 [米国株]: 5件
+2026-06-04 18:37:11 [INFO] fetch_news: [OK] ニュース取得 [日本株]: 5件
+2026-06-04 18:37:13 [INFO] fetch_news: [OK] ニュース取得 [為替]: 5件
+2026-06-04 18:37:14 [INFO] fetch_news: [OK] ニュース取得 [金利]: 5件
+2026-06-04 18:37:15 [INFO] fetch_news: [OK] ニュース取得 [原油]: 5件
+2026-06-04 18:37:16 [INFO] fetch_news: [OK] ニュース取得 [半導体]: 5件
+2026-06-04 18:37:18 [INFO] fetch_news: [OK] ニュース取得 [決算]: 5件
+2026-06-04 18:37:19 [INFO] fetch_news: [OK] ニュース取得 [地政学リスク]: 5件
+2026-06-04 18:37:20 [INFO] fetch_news: ニュース保存: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\data\news\2026-06-04_news.json (50件)
+2026-06-04 18:37:20 [INFO] fetch_news: === ニュース取得完了: 50件 ===
+2026-06-04 18:37:20 [INFO] run_daily: --- Step 3: 指標計算 ---
+2026-06-04 18:37:20 [INFO] indicators: リスク判定: 弱気 (リスクオフ) (スコア=-4.73)
+2026-06-04 18:37:20 [INFO] run_daily: --- Step 4: 分析 ---
+2026-06-04 18:37:20 [INFO] analyze: === 分析開始 ===
+2026-06-04 18:37:20 [INFO] analyze: === 分析完了 ===
+2026-06-04 18:37:20 [INFO] run_daily: --- Step 5: チャート生成 ---
+2026-06-04 18:37:21 [INFO] visualize: === チャート生成開始 ===
+2026-06-04 18:37:21 [INFO] visualize: 指数チャート保存: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\reports\charts\2026-06-04_indices.png
+2026-06-04 18:37:21 [INFO] visualize: 為替チャート保存: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\reports\charts\2026-06-04_forex.png
+2026-06-04 18:37:21 [INFO] visualize: コモディティチャート保存: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\reports\charts\2026-06-04_commodities.png
+2026-06-04 18:37:21 [INFO] visualize: リスクメーター保存: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\reports\charts\2026-06-04_risk_meter.png
+2026-06-04 18:37:22 [INFO] visualize: ニュースチャート保存: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\reports\charts\2026-06-04_news.png
+2026-06-04 18:37:22 [INFO] visualize: === チャート生成完了: 5件 ===
+2026-06-04 18:37:22 [INFO] run_daily: --- Step 6: レポート生成 ---
+2026-06-04 18:37:22 [INFO] report_writer: レポート保存: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\reports\2026-06-04_test.md, C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\reports\2026-06-04_test.html
+2026-06-04 18:37:22 [INFO] run_daily: Markdown: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\reports\2026-06-04_test.md
+2026-06-04 18:37:22 [INFO] run_daily: HTML:     C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\reports\2026-06-04_test.html
+2026-06-04 18:37:22 [INFO] run_daily: --- Step 7: Telegram通知 ---
+2026-06-04 18:37:22 [INFO] notify_telegram: Telegram 設定なし。通知をスキップします。レポートはローカルに保存済みです。
+2026-06-04 18:37:22 [INFO] run_daily: ====== Market AI Secretary 完了 [mode=test] ======
+2026-06-04 18:37:48 [INFO] run_daily: ====== Market AI Secretary 開始 [mode=test] ======
+2026-06-04 18:37:48 [INFO] run_daily: 実行時刻(JST): 2026-06-04 18:37:48
+2026-06-04 18:37:48 [INFO] run_daily: --- Step 1: 価格データ取得 ---
+2026-06-04 18:37:49 [INFO] fetch_prices: === 価格データ取得開始 ===
+2026-06-04 18:37:50 [INFO] fetch_prices: [OK] 日経平均(^N225) = 67470.6875
+2026-06-04 18:37:51 [ERROR] fetch_prices: [FAIL] TOPIX(^TOPX): 全ソースで取得失敗
+2026-06-04 18:37:51 [INFO] fetch_prices: [OK] S&P500(^GSPC) = 7553.6802
+2026-06-04 18:37:52 [INFO] fetch_prices: [OK] NASDAQ(^IXIC) = 26853.9805
+2026-06-04 18:37:52 [INFO] fetch_prices: [OK] ダウ工業株(^DJI) = 50687.0703
+2026-06-04 18:37:52 [INFO] fetch_prices: [OK] VIX恐怖指数(^VIX) = 16.49
+2026-06-04 18:37:53 [INFO] fetch_prices: [OK] ドル円(USDJPY=X) = 159.85
+2026-06-04 18:37:53 [INFO] fetch_prices: [OK] ユーロドル(EURUSD=X) = 1.1629
+2026-06-04 18:37:54 [INFO] fetch_prices: [OK] 米10年金利(^TNX) = 4.491
+2026-06-04 18:37:54 [INFO] fetch_prices: [OK] 金(GOLD)(GC=F) = 4492.5
+2026-06-04 18:37:55 [INFO] fetch_prices: [OK] WTI原油(CL=F) = 94.79
+2026-06-04 18:37:55 [INFO] fetch_prices: [OK] Bitcoin(BTC-USD) = 62852.0
+2026-06-04 18:37:55 [INFO] fetch_prices: 価格データ保存: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\data\raw\2026-06-04_prices.json, C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\data\processed\2026-06-04_prices.csv
+2026-06-04 18:37:55 [INFO] fetch_prices: === 取得完了: 成功11件 / 失敗1件 ===
+2026-06-04 18:37:55 [INFO] run_daily: --- Step 2: ニュース取得 ---
+2026-06-04 18:37:55 [INFO] fetch_news: === ニュース取得開始 ===
+2026-06-04 18:37:56 [INFO] fetch_news: [OK] ニュース取得 [日銀]: 5件
+2026-06-04 18:37:57 [INFO] fetch_news: [OK] ニュース取得 [FRB]: 5件
+2026-06-04 18:37:58 [INFO] fetch_news: [OK] ニュース取得 [米国株]: 5件
+2026-06-04 18:38:00 [INFO] fetch_news: [OK] ニュース取得 [日本株]: 5件
+2026-06-04 18:38:01 [INFO] fetch_news: [OK] ニュース取得 [為替]: 5件
+2026-06-04 18:38:02 [INFO] fetch_news: [OK] ニュース取得 [金利]: 5件
+2026-06-04 18:38:03 [INFO] fetch_news: [OK] ニュース取得 [原油]: 5件
+2026-06-04 18:38:05 [INFO] fetch_news: [OK] ニュース取得 [半導体]: 5件
+2026-06-04 18:38:06 [INFO] fetch_news: [OK] ニュース取得 [決算]: 5件
+2026-06-04 18:38:07 [INFO] fetch_news: [OK] ニュース取得 [地政学リスク]: 5件
+2026-06-04 18:38:08 [INFO] fetch_news: ニュース保存: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\data\news\2026-06-04_news.json (50件)
+2026-06-04 18:38:08 [INFO] fetch_news: === ニュース取得完了: 50件 ===
+2026-06-04 18:38:08 [INFO] run_daily: --- Step 3: 指標計算 ---
+2026-06-04 18:38:08 [INFO] indicators: リスク判定: 弱気 (リスクオフ) (スコア=-4.74)
+2026-06-04 18:38:08 [INFO] run_daily: --- Step 4: 分析 ---
+2026-06-04 18:38:08 [INFO] analyze: === 分析開始 ===
+2026-06-04 18:38:08 [INFO] analyze: === 分析完了 ===
+2026-06-04 18:38:08 [INFO] run_daily: --- Step 5: チャート生成 ---
+2026-06-04 18:38:09 [INFO] visualize: === チャート生成開始 ===
+2026-06-04 18:38:09 [INFO] visualize: 指数チャート保存: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\reports\charts\2026-06-04_indices.png
+2026-06-04 18:38:09 [INFO] visualize: 為替チャート保存: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\reports\charts\2026-06-04_forex.png
+2026-06-04 18:38:09 [INFO] visualize: コモディティチャート保存: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\reports\charts\2026-06-04_commodities.png
+2026-06-04 18:38:10 [INFO] visualize: リスクメーター保存: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\reports\charts\2026-06-04_risk_meter.png
+2026-06-04 18:38:10 [INFO] visualize: ニュースチャート保存: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\reports\charts\2026-06-04_news.png
+2026-06-04 18:38:10 [INFO] visualize: === チャート生成完了: 5件 ===
+2026-06-04 18:38:10 [INFO] run_daily: --- Step 6: レポート生成 ---
+2026-06-04 18:38:10 [INFO] report_writer: レポート保存: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\reports\2026-06-04_test.md, C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\reports\2026-06-04_test.html
+2026-06-04 18:38:10 [INFO] run_daily: Markdown: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\reports\2026-06-04_test.md
+2026-06-04 18:38:10 [INFO] run_daily: HTML:     C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\reports\2026-06-04_test.html
+2026-06-04 18:38:10 [INFO] run_daily: --- Step 7: Telegram通知 ---
+2026-06-04 18:38:10 [INFO] notify_telegram: Telegram 設定なし。通知をスキップします。レポートはローカルに保存済みです。
+2026-06-04 18:38:10 [INFO] run_daily: ====== Market AI Secretary 完了 [mode=test] ======

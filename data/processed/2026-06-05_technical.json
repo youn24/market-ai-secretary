@@ -1,0 +1,240 @@
+{
+  "^N225": {
+    "symbol": "^N225",
+    "name": "日経平均",
+    "current": 66588.12,
+    "ma": {
+      "ma5": 67225.9,
+      "ma25": 63410.35,
+      "ma75": 58356.56,
+      "dev_ma5": -0.95,
+      "dev_ma25": 5.01,
+      "dev_ma75": 14.11
+    },
+    "rsi": 72.6,
+    "macd": {
+      "macd": 2125.51,
+      "signal": 1945.44,
+      "hist": 180.08,
+      "cross": "なし"
+    },
+    "bb": {
+      "upper": 69117.26,
+      "middle": 64049.79,
+      "lower": 58982.33,
+      "position": 75.0,
+      "signal": "中間"
+    },
+    "stochastic": {
+      "k": 76.8,
+      "d": 86.3,
+      "signal": "中間"
+    },
+    "trend": "中期上昇",
+    "rsi_signal": "買われすぎ注意"
+  },
+  "^GSPC": {
+    "symbol": "^GSPC",
+    "name": "S&P500",
+    "current": 7513.56,
+    "ma": {
+      "ma5": 7572.26,
+      "ma25": 7444.49,
+      "ma75": 7024.53,
+      "dev_ma5": -0.78,
+      "dev_ma25": 0.93,
+      "dev_ma75": 6.96
+    },
+    "rsi": 61.2,
+    "macd": {
+      "macd": 107.51,
+      "signal": 120.7,
+      "hist": -13.18,
+      "cross": "なし"
+    },
+    "bb": {
+      "upper": 7643.35,
+      "middle": 7486.0,
+      "lower": 7328.65,
+      "position": 58.8,
+      "signal": "中間"
+    },
+    "stochastic": {
+      "k": 62.6,
+      "d": 75.5,
+      "signal": "中間"
+    },
+    "trend": "中期上昇",
+    "rsi_signal": "中立"
+  },
+  "^IXIC": {
+    "symbol": "^IXIC",
+    "name": "NASDAQ",
+    "current": 26359.9,
+    "ma": {
+      "ma5": 26845.11,
+      "ma25": 26293.64,
+      "ma75": 24015.71,
+      "dev_ma5": -1.81,
+      "dev_ma25": 0.25,
+      "dev_ma75": 9.76
+    },
+    "rsi": 52.9,
+    "macd": {
+      "macd": 523.36,
+      "signal": 622.61,
+      "hist": -99.25,
+      "cross": "なし"
+    },
+    "bb": {
+      "upper": 27231.02,
+      "middle": 26509.38,
+      "lower": 25787.73,
+      "position": 39.6,
+      "signal": "中間"
+    },
+    "stochastic": {
+      "k": 44.2,
+      "d": 65.8,
+      "signal": "中間"
+    },
+    "trend": "中期上昇",
+    "rsi_signal": "中立"
+  },
+  "USDJPY=X": {
+    "symbol": "USDJPY=X",
+    "name": "ドル円",
+    "current": 160.24,
+    "ma": {
+      "ma5": 159.83,
+      "ma25": 158.51,
+      "ma75": 158.53,
+      "dev_ma5": 0.26,
+      "dev_ma25": 1.09,
+      "dev_ma75": 1.08
+    },
+    "rsi": 78.1,
+    "macd": {
+      "macd": 0.42,
+      "signal": 0.27,
+      "hist": 0.16,
+      "cross": "なし"
+    },
+    "bb": {
+      "upper": 160.69,
+      "middle": 158.89,
+      "lower": 157.09,
+      "position": 87.7,
+      "signal": "上限接近(過熱)"
+    },
+    "stochastic": {
+      "k": 97.8,
+      "d": 96.9,
+      "signal": "買われすぎ"
+    },
+    "trend": "短期上昇トレンド / 中期下落",
+    "rsi_signal": "買われすぎ注意"
+  },
+  "GC=F": {
+    "symbol": "GC=F",
+    "name": "金",
+    "current": 4381.4,
+    "ma": {
+      "ma5": 4451.64,
+      "ma25": 4562.08,
+      "ma75": 4747.41,
+      "dev_ma5": -1.58,
+      "dev_ma25": -3.96,
+      "dev_ma75": -7.71
+    },
+    "rsi": 34.8,
+    "macd": {
+      "macd": -61.84,
+      "signal": -54.22,
+      "hist": -7.62,
+      "cross": "なし"
+    },
+    "bb": {
+      "upper": 4746.62,
+      "middle": 4548.25,
+      "lower": 4349.89,
+      "position": 7.9,
+      "signal": "下限接近(売られすぎ)"
+    },
+    "stochastic": {
+      "k": 7.8,
+      "d": 25.2,
+      "signal": "売られすぎ"
+    },
+    "trend": "短期下落トレンド / 中期下落",
+    "rsi_signal": "中立"
+  },
+  "CL=F": {
+    "symbol": "CL=F",
+    "name": "原油",
+    "current": 91.09,
+    "ma": {
+      "ma5": 93.21,
+      "ma25": 97.45,
+      "ma75": 92.8,
+      "dev_ma5": -2.28,
+      "dev_ma25": -6.53,
+      "dev_ma75": -1.84
+    },
+    "rsi": 31.7,
+    "macd": {
+      "macd": -1.67,
+      "signal": -1.02,
+      "hist": -0.64,
+      "cross": "なし"
+    },
+    "bb": {
+      "upper": 109.03,
+      "middle": 96.79,
+      "lower": 84.56,
+      "position": 26.7,
+      "signal": "中間"
+    },
+    "stochastic": {
+      "k": 20.5,
+      "d": 30.4,
+      "signal": "中間"
+    },
+    "trend": "短期下落トレンド / 中期上昇",
+    "rsi_signal": "中立"
+  },
+  "BTC-USD": {
+    "symbol": "BTC-USD",
+    "name": "Bitcoin",
+    "current": 60787.99,
+    "ma": {
+      "ma5": 65325.47,
+      "ma25": 74463.94,
+      "ma75": 74282.1,
+      "dev_ma5": -6.95,
+      "dev_ma25": -18.37,
+      "dev_ma75": -18.17
+    },
+    "rsi": 11.4,
+    "macd": {
+      "macd": -3523.29,
+      "signal": -1985.65,
+      "hist": -1537.64,
+      "cross": "なし"
+    },
+    "bb": {
+      "upper": 83552.65,
+      "middle": 73179.77,
+      "lower": 62806.89,
+      "position": -9.7,
+      "signal": "下限接近(売られすぎ)"
+    },
+    "stochastic": {
+      "k": 2.5,
+      "d": 5.8,
+      "signal": "売られすぎ"
+    },
+    "trend": "短期下落トレンド / 中期上昇",
+    "rsi_signal": "売られすぎ注意"
+  }
+}

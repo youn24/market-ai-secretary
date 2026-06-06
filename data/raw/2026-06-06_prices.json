@@ -1,0 +1,322 @@
+{
+  "prices": {
+    "^N225": {
+      "symbol": "^N225",
+      "name": "日経平均",
+      "category": "japan",
+      "fetch_time": "2026-06-06T01:23:02.593483+09:00",
+      "source": "yfinance",
+      "latest": 67470.6875,
+      "prev_close": 68402.1328,
+      "change_pct": -1.36,
+      "error": null
+    },
+    "^TOPX": {
+      "symbol": "^TOPX",
+      "name": "TOPIX",
+      "category": "japan",
+      "fetch_time": "2026-06-06T01:23:04.068760+09:00",
+      "source": null,
+      "latest": null,
+      "prev_close": null,
+      "change_pct": null,
+      "error": "全ソースで取得失敗"
+    },
+    "^GSPC": {
+      "symbol": "^GSPC",
+      "name": "S&P500",
+      "category": "us",
+      "fetch_time": "2026-06-06T01:23:04.569304+09:00",
+      "source": "yfinance",
+      "latest": 7464.9302,
+      "prev_close": 7584.3101,
+      "change_pct": -1.57,
+      "error": null
+    },
+    "^IXIC": {
+      "symbol": "^IXIC",
+      "name": "NASDAQ",
+      "category": "us",
+      "fetch_time": "2026-06-06T01:23:05.084632+09:00",
+      "source": "yfinance",
+      "latest": 26128.543,
+      "prev_close": 26830.9609,
+      "change_pct": -2.62,
+      "error": null
+    },
+    "^DJI": {
+      "symbol": "^DJI",
+      "name": "ダウ",
+      "category": "us",
+      "fetch_time": "2026-06-06T01:23:05.598765+09:00",
+      "source": "yfinance",
+      "latest": 51183.3008,
+      "prev_close": 51561.9297,
+      "change_pct": -0.73,
+      "error": null
+    },
+    "^VIX": {
+      "symbol": "^VIX",
+      "name": "VIX（恐怖指数）",
+      "category": "fear",
+      "fetch_time": "2026-06-06T01:23:06.108612+09:00",
+      "source": "yfinance",
+      "latest": 17.87,
+      "prev_close": 15.4,
+      "change_pct": 16.04,
+      "error": null
+    },
+    "^VIX9D": {
+      "symbol": "^VIX9D",
+      "name": "VIX9D（超短期）",
+      "category": "fear",
+      "fetch_time": "2026-06-06T01:23:06.624125+09:00",
+      "source": "yfinance",
+      "latest": 17.44,
+      "prev_close": 12.65,
+      "change_pct": 37.87,
+      "error": null
+    },
+    "^VIX3M": {
+      "symbol": "^VIX3M",
+      "name": "VIX3M（3ヶ月）",
+      "category": "fear",
+      "fetch_time": "2026-06-06T01:23:07.140795+09:00",
+      "source": "yfinance",
+      "latest": 20.4,
+      "prev_close": 19.23,
+      "change_pct": 6.08,
+      "error": null
+    },
+    "^VVIX": {
+      "symbol": "^VVIX",
+      "name": "VVIX（VIXのVIX）",
+      "category": "fear",
+      "fetch_time": "2026-06-06T01:23:07.655228+09:00",
+      "source": "yfinance",
+      "latest": 92.5,
+      "prev_close": 85.75,
+      "change_pct": 7.87,
+      "error": null
+    },
+    "^SKEW": {
+      "symbol": "^SKEW",
+      "name": "SKEW（テールリスク）",
+      "category": "fear",
+      "fetch_time": "2026-06-06T01:23:08.166978+09:00",
+      "source": "yfinance",
+      "latest": 142.15,
+      "prev_close": 136.86,
+      "change_pct": 3.87,
+      "error": null
+    },
+    "^TNX": {
+      "symbol": "^TNX",
+      "name": "米10年金利",
+      "category": "rates",
+      "fetch_time": "2026-06-06T01:23:10.224225+09:00",
+      "source": "yfinance",
+      "latest": 4.54,
+      "prev_close": 4.477,
+      "change_pct": 1.41,
+      "error": null
+    },
+    "USDJPY=X": {
+      "symbol": "USDJPY=X",
+      "name": "ドル円",
+      "category": "forex",
+      "fetch_time": "2026-06-06T01:23:09.191689+09:00",
+      "source": "yfinance",
+      "latest": 160.296,
+      "prev_close": 159.94,
+      "change_pct": 0.22,
+      "error": null
+    },
+    "EURUSD=X": {
+      "symbol": "EURUSD=X",
+      "name": "ユーロドル",
+      "category": "forex",
+      "fetch_time": "2026-06-06T01:23:09.711341+09:00",
+      "source": "yfinance",
+      "latest": 1.1529,
+      "prev_close": 1.1609,
+      "change_pct": -0.7,
+      "error": null
+    },
+    "GC=F": {
+      "symbol": "GC=F",
+      "name": "金(GOLD)",
+      "category": "commodity",
+      "fetch_time": "2026-06-06T01:23:10.658431+09:00",
+      "source": "yfinance",
+      "latest": 4363.1001,
+      "prev_close": 4475.7998,
+      "change_pct": -2.52,
+      "error": null
+    },
+    "CL=F": {
+      "symbol": "CL=F",
+      "name": "WTI原油",
+      "category": "commodity",
+      "fetch_time": "2026-06-06T01:23:11.172583+09:00",
+      "source": "yfinance",
+      "latest": 90.59,
+      "prev_close": 93.04,
+      "change_pct": -2.63,
+      "error": null
+    },
+    "BTC-USD": {
+      "symbol": "BTC-USD",
+      "name": "Bitcoin",
+      "category": "crypto",
+      "fetch_time": "2026-06-06T01:23:11.685498+09:00",
+      "source": "yfinance",
+      "latest": 61363.3789,
+      "prev_close": 63801.5742,
+      "change_pct": -3.82,
+      "error": null
+    },
+    "NVDA": {
+      "symbol": "NVDA",
+      "name": "NVIDIA",
+      "category": "us_stock",
+      "fetch_time": "2026-06-06T01:23:12.201974+09:00",
+      "source": "yfinance",
+      "latest": 208.935,
+      "prev_close": 218.66,
+      "change_pct": -4.45,
+      "error": null
+    },
+    "AAPL": {
+      "symbol": "AAPL",
+      "name": "Apple",
+      "category": "us_stock",
+      "fetch_time": "2026-06-06T01:23:12.732948+09:00",
+      "source": "yfinance",
+      "latest": 312.2686,
+      "prev_close": 311.23,
+      "change_pct": 0.33,
+      "error": null
+    },
+    "TSLA": {
+      "symbol": "TSLA",
+      "name": "Tesla",
+      "category": "us_stock",
+      "fetch_time": "2026-06-06T01:23:13.299070+09:00",
+      "source": "yfinance",
+      "latest": 399.83,
+      "prev_close": 418.45,
+      "change_pct": -4.45,
+      "error": null
+    },
+    "MSFT": {
+      "symbol": "MSFT",
+      "name": "Microsoft",
+      "category": "us_stock",
+      "fetch_time": "2026-06-06T01:23:13.817139+09:00",
+      "source": "yfinance",
+      "latest": 420.17,
+      "prev_close": 428.05,
+      "change_pct": -1.84,
+      "error": null
+    },
+    "AMZN": {
+      "symbol": "AMZN",
+      "name": "Amazon",
+      "category": "us_stock",
+      "fetch_time": "2026-06-06T01:23:14.358065+09:00",
+      "source": "yfinance",
+      "latest": 252.67,
+      "prev_close": 253.79,
+      "change_pct": -0.44,
+      "error": null
+    },
+    "META": {
+      "symbol": "META",
+      "name": "Meta",
+      "category": "us_stock",
+      "fetch_time": "2026-06-06T01:23:14.873569+09:00",
+      "source": "yfinance",
+      "latest": 610.74,
+      "prev_close": 627.57,
+      "change_pct": -2.68,
+      "error": null
+    },
+    "7203.T": {
+      "symbol": "7203.T",
+      "name": "トヨタ",
+      "category": "jp_stock",
+      "fetch_time": "2026-06-06T01:23:15.387014+09:00",
+      "source": "yfinance",
+      "latest": 2838.5,
+      "prev_close": 2881.0,
+      "change_pct": -1.48,
+      "error": null
+    },
+    "9984.T": {
+      "symbol": "9984.T",
+      "name": "ソフトバンクG",
+      "category": "jp_stock",
+      "fetch_time": "2026-06-06T01:23:15.939351+09:00",
+      "source": "yfinance",
+      "latest": 7377.0,
+      "prev_close": 8315.0,
+      "change_pct": -11.28,
+      "error": null
+    },
+    "6758.T": {
+      "symbol": "6758.T",
+      "name": "ソニーG",
+      "category": "jp_stock",
+      "fetch_time": "2026-06-06T01:23:16.480400+09:00",
+      "source": "yfinance",
+      "latest": 3540.0,
+      "prev_close": 3619.0,
+      "change_pct": -2.18,
+      "error": null
+    },
+    "8306.T": {
+      "symbol": "8306.T",
+      "name": "三菱UFJ",
+      "category": "jp_stock",
+      "fetch_time": "2026-06-06T01:23:17.030642+09:00",
+      "source": "yfinance",
+      "latest": 3169.0,
+      "prev_close": 3137.0,
+      "change_pct": 1.02,
+      "error": null
+    },
+    "6857.T": {
+      "symbol": "6857.T",
+      "name": "アドバンテスト",
+      "category": "jp_stock",
+      "fetch_time": "2026-06-06T01:23:17.564552+09:00",
+      "source": "yfinance",
+      "latest": 28170.0,
+      "prev_close": 27660.0,
+      "change_pct": 1.84,
+      "error": null
+    },
+    "4063.T": {
+      "symbol": "4063.T",
+      "name": "信越化学",
+      "category": "jp_stock",
+      "fetch_time": "2026-06-06T01:23:18.113682+09:00",
+      "source": "yfinance",
+      "latest": 7641.0,
+      "prev_close": 7806.0,
+      "change_pct": -2.11,
+      "error": null
+    }
+  },
+  "fear_and_greed": {
+    "score": 49.1,
+    "rating": "Neutral",
+    "rating_ja": "中立 😐",
+    "prev_close": 54.7,
+    "prev_1_week": 59.5,
+    "prev_1_month": 67.3,
+    "fetch_time": "2026-06-06T01:23:19.272445+09:00",
+    "source": "CNN Fear & Greed Index（株式市場版）"
+  }
+}

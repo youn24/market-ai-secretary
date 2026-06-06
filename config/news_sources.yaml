@@ -1,0 +1,103 @@
+# ニュース収集キーワードとRSSソース設定
+
+# ─── Google News RSS キーワード検索 ───────────────────────────
+google_news_keywords:
+  # トランプ大統領 動向・発言（重要度A）
+  - keyword: "トランプ 発言 政策"
+    label: "トランプ動向"
+    importance: "A"
+  - keyword: "トランプ 関税 貿易"
+    label: "トランプ関税・貿易"
+    importance: "A"
+  - keyword: "Trump tariff economy"
+    label: "Trump(英語)"
+    importance: "A"
+  - keyword: "トランプ 大統領 経済"
+    label: "トランプ経済政策"
+    importance: "A"
+
+  # 中央銀行・金融政策（重要度A）
+  - keyword: "日銀"
+    label: "日銀政策"
+    importance: "A"
+  - keyword: "FRB 金融政策"
+    label: "FRB政策"
+    importance: "A"
+  - keyword: "FedWatch 利上げ 確率"
+    label: "FedWatch利上げ確率"
+    importance: "A"
+  - keyword: "site:boj.or.jp"
+    label: "日銀公式"
+    importance: "A"
+
+  # 政府・財政（重要度A）
+  - keyword: "site:kantei.go.jp 経済"
+    label: "首相官邸"
+    importance: "A"
+  - keyword: "site:mof.go.jp"
+    label: "財務省"
+    importance: "A"
+
+  # 市場全体（重要度A）
+  - keyword: "米国株"
+    label: "米国株市場"
+    importance: "A"
+  - keyword: "日本株"
+    label: "日本株市場"
+    importance: "A"
+  - keyword: "金利"
+    label: "金利動向"
+    importance: "A"
+  - keyword: "地政学リスク"
+    label: "地政学リスク"
+    importance: "A"
+
+  # 為替（重要度A）
+  - keyword: "為替 ドル円"
+    label: "為替（ドル円）"
+    importance: "A"
+  - keyword: "OANDA 為替 レート"
+    label: "OANDA為替"
+    importance: "A"
+
+  # 企業・産業（重要度B）
+  - keyword: "半導体"
+    label: "半導体産業"
+    importance: "B"
+  - keyword: "決算"
+    label: "企業決算"
+    importance: "B"
+  - keyword: "原油"
+    label: "原油市場"
+    importance: "B"
+
+  # 専門情報サイト（重要度B）
+  - keyword: "site:traders.co.jp"
+    label: "トレーダーズウェブ"
+    importance: "B"
+  - keyword: "site:minkabu.jp 株"
+    label: "みんかぶ株"
+    importance: "B"
+  - keyword: "site:fx.minkabu.jp"
+    label: "みんかぶFX"
+    importance: "B"
+  - keyword: "site:nikkei225jp.com"
+    label: "日経225専門"
+    importance: "B"
+
+  # 企業信用・倒産（重要度B）
+  - keyword: "帝国データバンク 倒産"
+    label: "帝国DB倒産情報"
+    importance: "B"
+  - keyword: "site:tdb.co.jp"
+    label: "帝国データバンク"
+    importance: "B"
+
+# ─── Google News RSS のベースURL ─────────────────────────────
+google_news_rss_base: "https://news.google.com/rss/search?q={keyword}&hl=ja&gl=JP&ceid=JP:ja"
+
+# 収集件数の上限（キーワードごと）
+max_items_per_keyword: 5
+
+# ニュース保存期間（日数）
+keep_days: 30

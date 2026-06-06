@@ -1,0 +1,811 @@
+{
+  "fundamentals": {
+    "NVDA": {
+      "name": "NVIDIA",
+      "per": 31.9,
+      "forward_per": 16.5,
+      "pbr": 32.26,
+      "market_cap": 5057349681152,
+      "div_yield": 46.0,
+      "rating": "strong_buy",
+      "rating_ja": "強気買い ⭐⭐⭐",
+      "target_price": 298.07,
+      "current_price": 208.8,
+      "upside_pct": 42.8,
+      "fetch_time": "2026-06-06T01:24:16.661696+09:00"
+    },
+    "AAPL": {
+      "name": "Apple",
+      "per": 37.8,
+      "forward_per": 32.5,
+      "pbr": 42.97,
+      "market_cap": 4581574049792,
+      "div_yield": 35.0,
+      "rating": "buy",
+      "rating_ja": "買い ⭐⭐",
+      "target_price": 310.51,
+      "current_price": 311.94,
+      "upside_pct": -0.5,
+      "fetch_time": "2026-06-06T01:24:17.443545+09:00"
+    },
+    "TSLA": {
+      "name": "Tesla",
+      "per": 366.5,
+      "forward_per": 159.5,
+      "pbr": 18.24,
+      "market_cap": 1500336619520,
+      "div_yield": null,
+      "rating": "buy",
+      "rating_ja": "買い ⭐⭐",
+      "target_price": 411.89,
+      "current_price": 399.48,
+      "upside_pct": 3.1,
+      "fetch_time": "2026-06-06T01:24:18.222527+09:00"
+    },
+    "MSFT": {
+      "name": "Microsoft",
+      "per": 25.0,
+      "forward_per": 21.7,
+      "pbr": 7.53,
+      "market_cap": 3121502486528,
+      "div_yield": 85.0,
+      "rating": "strong_buy",
+      "rating_ja": "強気買い ⭐⭐⭐",
+      "target_price": 560.95,
+      "current_price": 420.26,
+      "upside_pct": 33.5,
+      "fetch_time": "2026-06-06T01:24:19.136396+09:00"
+    },
+    "AMZN": {
+      "name": "Amazon",
+      "per": 31.5,
+      "forward_per": 25.6,
+      "pbr": 6.15,
+      "market_cap": 2717998907392,
+      "div_yield": null,
+      "rating": "strong_buy",
+      "rating_ja": "強気買い ⭐⭐⭐",
+      "target_price": 312.79,
+      "current_price": 252.67,
+      "upside_pct": 23.8,
+      "fetch_time": "2026-06-06T01:24:19.943185+09:00"
+    },
+    "META": {
+      "name": "Meta",
+      "per": 22.2,
+      "forward_per": 16.9,
+      "pbr": 6.36,
+      "market_cap": 1549656653824,
+      "div_yield": 33.0,
+      "rating": "strong_buy",
+      "rating_ja": "強気買い ⭐⭐⭐",
+      "target_price": 828.8,
+      "current_price": 610.48,
+      "upside_pct": 35.8,
+      "fetch_time": "2026-06-06T01:24:20.724787+09:00"
+    },
+    "7203.T": {
+      "name": "トヨタ",
+      "per": 9.7,
+      "forward_per": 8.8,
+      "pbr": 0.93,
+      "market_cap": 37145146294272,
+      "div_yield": 352.0,
+      "rating": "buy",
+      "rating_ja": "買い ⭐⭐",
+      "target_price": 3805.22,
+      "current_price": 2850.0,
+      "upside_pct": 33.5,
+      "fetch_time": "2026-06-06T01:24:21.500972+09:00"
+    },
+    "9984.T": {
+      "name": "SBG",
+      "per": 8.5,
+      "forward_per": 25.1,
+      "pbr": 2.43,
+      "market_cap": 42320204398592,
+      "div_yield": 15.0,
+      "rating": "buy",
+      "rating_ja": "買い ⭐⭐",
+      "target_price": 6834.26,
+      "current_price": 7426.0,
+      "upside_pct": -8.0,
+      "fetch_time": "2026-06-06T01:24:22.313108+09:00"
+    },
+    "6758.T": {
+      "name": "ソニーG",
+      "per": 20.8,
+      "forward_per": 19.4,
+      "pbr": 2.59,
+      "market_cap": 20958920310784,
+      "div_yield": 99.0,
+      "rating": "strong_buy",
+      "rating_ja": "強気買い ⭐⭐⭐",
+      "target_price": 4676.3,
+      "current_price": 3559.0,
+      "upside_pct": 31.4,
+      "fetch_time": "2026-06-06T01:24:23.092479+09:00"
+    },
+    "8306.T": {
+      "name": "三菱UFJ",
+      "per": 15.2,
+      "forward_per": 21.2,
+      "pbr": 1.63,
+      "market_cap": 36300296028160,
+      "div_yield": 303.0,
+      "rating": "buy",
+      "rating_ja": "買い ⭐⭐",
+      "target_price": 3139.17,
+      "current_price": 3219.0,
+      "upside_pct": -2.5,
+      "fetch_time": "2026-06-06T01:24:23.870457+09:00"
+    },
+    "6857.T": {
+      "name": "アドバンテスト",
+      "per": 52.2,
+      "forward_per": 112.6,
+      "pbr": 24.4,
+      "market_cap": 19414957162496,
+      "div_yield": 21.0,
+      "rating": "buy",
+      "rating_ja": "買い ⭐⭐",
+      "target_price": 32795.0,
+      "current_price": 26765.0,
+      "upside_pct": 22.5,
+      "fetch_time": "2026-06-06T01:24:24.651168+09:00"
+    }
+  },
+  "futures": {
+    "ES=F": {
+      "name": "S&P500先物",
+      "latest": 7481.0,
+      "prev_close": 7601.0,
+      "change_pct": -1.58
+    },
+    "NQ=F": {
+      "name": "NASDAQ先物",
+      "latest": 29607.5,
+      "prev_close": 30488.25,
+      "change_pct": -2.89
+    },
+    "YM=F": {
+      "name": "ダウ先物",
+      "latest": 51265.0,
+      "prev_close": 51671.0,
+      "change_pct": -0.79
+    },
+    "GC=F": {
+      "name": "金先物",
+      "latest": 4362.1,
+      "prev_close": 4475.8,
+      "change_pct": -2.54
+    },
+    "CL=F": {
+      "name": "原油先物",
+      "latest": 90.47,
+      "prev_close": 93.04,
+      "change_pct": -2.76
+    },
+    "ZN=F": {
+      "name": "米10年債先物",
+      "latest": 109.06,
+      "prev_close": 109.84,
+      "change_pct": -0.71
+    }
+  },
+  "options": {
+    "expiry": "2026-06-10",
+    "call_vol": 6793,
+    "put_vol": 893,
+    "put_call_ratio": 0.13,
+    "signal": "強気寄り",
+    "fetch_time": "2026-06-06T01:24:28.534698+09:00"
+  },
+  "nt_ratio": {
+    "nt_ratio": null,
+    "n225": 67470.6875,
+    "topix": null,
+    "signal": "TOPIX取得失敗のため計算不可",
+    "method": "取得失敗"
+  },
+  "torakuhi": {
+    "ratio": 111.7,
+    "up_days": 105,
+    "down_days": 94,
+    "signal": "中立",
+    "note": "主要銘柄による近似値（東証全銘柄ではありません）"
+  },
+  "market_stat_news": [
+    {
+      "label": "信用残",
+      "source_name": "信用残",
+      "importance": "A",
+      "title": "信用残ランキング【買い残増加】 フジクラ、ソニーＦＧ、ＫＬａｂ | 個別株 - 株探ニュース - 株探（かぶたん）",
+      "url": "https://news.google.com/rss/articles/CBMiYEFVX3lxTFBKQ21vWVpDY3Y1cmZGYmQ5S3ZjVDNwM0xUYkZMUzdFV0Y5TC1xdDB4SHNCYjBEQUlDWmMyZ1VrMVEwYmRUMGQzcU1Zd2VmVG9OempvaUgzenREWHhMUnZWcQ?oc=5",
+      "published_jst": "2026-05-31 08:10 JST",
+      "fetch_time": "2026-06-06T01:24:32.222022+09:00",
+      "category": "market_stats"
+    },
+    {
+      "label": "信用残",
+      "source_name": "信用残",
+      "importance": "A",
+      "title": "週間信用取組（5/15現在）－日経平均が大幅安のなか売り残買い残ともに増加 信用倍率は低下(トレーダーズ・ウェブ) - Yahoo!ファイナンス",
+      "url": "https://news.google.com/rss/articles/CBMihwFBVV95cUxNT3BwOUE5bE54ZmFJeUJNNVUyYXlKVnVNcUF0VS1QZVQwR2xhUlFidXgtUXctLWVGQWZDcXpnOEtIRWNkcmhQYklwWjdrQjlvck5mQm11TkowcDg0X0tzX2Z2cEZJSnRBbExETmE0ZHptSG14enViRHJqTE9maUk3RktzUTdiY3M?oc=5",
+      "published_jst": "2026-05-19 16:00 JST",
+      "fetch_time": "2026-06-06T01:24:32.222081+09:00",
+      "category": "market_stats"
+    },
+    {
+      "label": "信用残",
+      "source_name": "信用残",
+      "importance": "A",
+      "title": "【材料】 信用残ランキング【売り残増加】 ソニーＦＧ、東京きらぼし、ロイヤルＨＤ - 株探（かぶたん）",
+      "url": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE1tM1RzbERtTXpSbzJBTndFaHk3Y0Ruam9VTXFNZ0ZmZS1LbmFYU3pXUkpDa1dpNEMzelFrSFVMWU9jTWxKZGZYb3puVHU5bWM2VU9UTzRrRTlGbDRRcEdQZQ?oc=5",
+      "published_jst": "2026-05-31 08:15 JST",
+      "fetch_time": "2026-06-06T01:24:32.222112+09:00",
+      "category": "market_stats"
+    },
+    {
+      "label": "信用残",
+      "source_name": "信用残",
+      "importance": "A",
+      "title": "「信用買い残」19年超ぶり高水準、株価への影響は？/日経平均最高値【今日の注目株＆日本株市場見通し】「デイリーZAi」2月3日号 - ダイヤモンド・オンライン",
+      "url": "https://news.google.com/rss/articles/CBMiU0FVX3lxTE8yM1docWJuckU0OGtnMkZER0RZRE54SEhDbzd0a0Z3YVNoemstMzJtQlM3eUZITU9pLUZfLWFmQ2ZJUEFxd2JNeGl3Q0lxeGpnSVhN?oc=5",
+      "published_jst": "2026-02-03 17:00 JST",
+      "fetch_time": "2026-06-06T01:24:32.222140+09:00",
+      "category": "market_stats"
+    },
+    {
+      "label": "騰落レシオ",
+      "source_name": "騰落レシオ",
+      "importance": "B",
+      "title": "14時45分時点の東証プライム騰落レシオ／先物ＯＰ市場ウォッチ(フィスコ) - Yahoo!ファイナンス",
+      "url": "https://news.google.com/rss/articles/CBMihwFBVV95cUxNckpuUVlGSFhYaEFXUVNYSjZVckpMeFRjRDF1OVc0bzBOTGQ2eVdVbGYzemdKWnNyem51WkFjeDJqLUE0NnV2SG9iWGVuVmZ2T3pJUGdqZXRGSGRjSHFrM0k4dmMwbDJScktfVWZPcFVIdDluSS1vOWpBWTFPREhIZG40ejlsTkk?oc=5",
+      "published_jst": "2026-06-05 14:49 JST",
+      "fetch_time": "2026-06-06T01:24:34.294370+09:00",
+      "category": "market_stats"
+    },
+    {
+      "label": "騰落レシオ",
+      "source_name": "騰落レシオ",
+      "importance": "B",
+      "title": "日経平均最高値圏 騰落レシオとの「ワニの口」が示唆する一段高 - 日本経済新聞",
+      "url": "https://news.google.com/rss/articles/CBMibEFVX3lxTFBsUi1mdjNNZEFERnhuSGZrcjBIb3BBNmY5YzlSY01WSnVPXzJlOWhoS3lKMGJ2anRJWXpaQmZrMXNUVGxUTHpQbGQ2S2hhX2NzV0JheWtuWnlNQlBwMTJyZVhzbUhaM0pGSlRIMg?oc=5",
+      "published_jst": "2026-06-01 08:26 JST",
+      "fetch_time": "2026-06-06T01:24:34.294418+09:00",
+      "category": "market_stats"
+    },
+    {
+      "label": "騰落レシオ",
+      "source_name": "騰落レシオ",
+      "importance": "B",
+      "title": "【相場の体温計】 東証プライム・騰落レシオ推移(25日平均)(株探ニュース) - Yahoo!ファイナンス",
+      "url": "https://news.google.com/rss/articles/CBMihwFBVV95cUxOV3JVUGtQZkJCU01MLUJPMGtrZ2xGN2xhNVg1cXpXMWYyN0NjSGhPZWk4bDFLcWRrYWxCc2tWZUd1QjEzb0hGWUNJT1FDeTlSd0xxLTg5U0QzRkJPNDFPYTZuSE5BTzhvLUNjb2VpaWV2WHFsVU4tU3gwMVlRYUEzTW1kSzdhdVE?oc=5",
+      "published_jst": "2026-06-05 16:31 JST",
+      "fetch_time": "2026-06-06T01:24:34.294445+09:00",
+      "category": "market_stats"
+    },
+    {
+      "label": "騰落レシオ",
+      "source_name": "騰落レシオ",
+      "importance": "B",
+      "title": "14時45分時点の東証プライム騰落レシオ／先物ＯＰ市場ウォッチ(フィスコ) - Yahoo!ファイナンス",
+      "url": "https://news.google.com/rss/articles/CBMihwFBVV95cUxQaTdENWtxM3ltRzFUaDZCNWZxSjN1akc5U182U2xfaXhEQUFRU3RjOUdVOUhBSk5SMU9lMGtEQy1TMWlUVVRmODJDWkoyd0FHakViQUVNNF9xNDBwMHZpYk1PZGV6RHhzbV9teE9JMU51djRNSnNEUFUzRlVCWl9DMmtGR2N3N28?oc=5",
+      "published_jst": "2026-06-03 14:49 JST",
+      "fetch_time": "2026-06-06T01:24:34.294470+09:00",
+      "category": "market_stats"
+    },
+    {
+      "label": "空売り比率",
+      "source_name": "空売り比率",
+      "importance": "B",
+      "title": "【空売りデータ追跡】ブラックベリーの空売り出来高は前日比1,161.2万株と急増、空売り比率は22%（6月4日） - Moomoo",
+      "url": "https://news.google.com/rss/articles/CBMirgFBVV95cUxQbnZHSjdHanpDSHg4dy1FYU9fZXBFb241QVN2ZmxvTGEwZTdfRzRudndfWHA0UGVLUXViaEpwQnYzdlRnbFMwNzNrbDRKem9HR18tNENnZGRzMXZVM2oxUURad3E2UGFzRFBSU183Z0xFQkhWWVRSVFNpNmx6SkZJMWlpdmk4cF9QUFplbEVPMW1yTU81cEdpRjNjWERYWVdsek1YdUl5MWE3Q2pkamc?oc=5",
+      "published_jst": "2026-06-04 02:23 JST",
+      "fetch_time": "2026-06-06T01:24:36.051705+09:00",
+      "category": "market_stats"
+    },
+    {
+      "label": "空売り比率",
+      "source_name": "空売り比率",
+      "importance": "B",
+      "title": "日本株下落に構える投資家、空売り比率など弱気示す3つのチャート - Bloomberg.com",
+      "url": "https://news.google.com/rss/articles/CBMid0FVX3lxTE1QV3Q4MUxxTHAwVmZ2SXpMOS1xV1lCSkVhQ0MzWGh3N0lBREZKVEgwOFl0UjM1VHI2Rmt3UUpjSjdpSnhNc1RjZjh0RVpjSkVrS2UtSUpqX2l4SUtWMUlfU2FldnAwaXo5NFRIdE9QNFZLUlZKOWFz?oc=5",
+      "published_jst": "2026-03-25 16:00 JST",
+      "fetch_time": "2026-06-06T01:24:36.051751+09:00",
+      "category": "market_stats"
+    },
+    {
+      "label": "空売り比率",
+      "source_name": "空売り比率",
+      "importance": "B",
+      "title": "香港ハンセン指数が500ポイント超急騰、テンセント・美団がけん引 空売り比率20%突破で多空の攻防激化 - finance.biggo.jp",
+      "url": "https://news.google.com/rss/articles/CBMiX0FVX3lxTE1FbktmcF85X0kySGc5NHVrTWtXOWotMW1vNWhxWEtIOGUxTjBEbGk2TFotc3YwZ084QS1mbGdIU3ZGY3NueFNMVW1aMThQSGFHWkZPVWxUcjY5cmM4eTFZ?oc=5",
+      "published_jst": "2026-06-02 16:35 JST",
+      "fetch_time": "2026-06-06T01:24:36.051776+09:00",
+      "category": "market_stats"
+    },
+    {
+      "label": "空売り比率",
+      "source_name": "空売り比率",
+      "importance": "B",
+      "title": "空売り集計（21日）36.5％に低下 日経平均は続伸(トレーダーズ・ウェブ) - Yahoo!ファイナンス",
+      "url": "https://news.google.com/rss/articles/CBMihwFBVV95cUxPRDJ1Uy1zNlI0REhHNEpnakh4MVBLTk1hNDM3RDMxZ01fRFNROXFfanJxS0tkc21iUFBka0lIQ0pGZjhPU0pwdjJrOUxucEJiUi15VjRCYkF6Rl9PM0c5Y1g2SmVsb2JpaFlJUkVTTzFmS2RCTjFsMExhc3lnblExQlpvaktBNGM?oc=5",
+      "published_jst": "2026-04-21 16:00 JST",
+      "fetch_time": "2026-06-06T01:24:36.051801+09:00",
+      "category": "market_stats"
+    },
+    {
+      "label": "裁定残",
+      "source_name": "裁定残",
+      "importance": "B",
+      "title": "日経平均に反落のサイン：外国人投資家の思惑を映す「裁定買い残」の読み方（窪田真之） - トウシル",
+      "url": "https://news.google.com/rss/articles/CBMiWkFVX3lxTFB4T0tpNlc0N29NdEE0aVhkY0wtUDlxZE5SM2NZYklldjRibkxLaWdTNm5KeWVMdTRDQ05aN3FxMjZndHJsdWFDZUZNaE1pWFh3UzJRZ3J5OFA5UQ?oc=5",
+      "published_jst": "2025-10-06 16:00 JST",
+      "fetch_time": "2026-06-06T01:24:37.836233+09:00",
+      "category": "market_stats"
+    },
+    {
+      "label": "裁定残",
+      "source_name": "裁定残",
+      "importance": "B",
+      "title": "裁定取引の買い残が２週連続で増加 - QUICK Money World",
+      "url": "https://news.google.com/rss/articles/CBMiVEFVX3lxTE9nc3cyUUh0bXNXOS1IWEdINXFqOWlOYmt0c0V1Zk85bE9EZ2dOS040M0Q4aTJ1RWF5YWF1d3Brbmg1aUVqX1Z5bEFOVm5OX0diM1MwWg?oc=5",
+      "published_jst": "2026-02-01 19:00 JST",
+      "fetch_time": "2026-06-06T01:24:37.836266+09:00",
+      "category": "market_stats"
+    },
+    {
+      "label": "裁定残",
+      "source_name": "裁定残",
+      "importance": "B",
+      "title": "〔需給情報〕4月6―10日のプログラム売買、裁定買い残が2週ぶり増加 - Reuters",
+      "url": "https://news.google.com/rss/articles/CBMigAFBVV95cUxQQ0RtZkNxSTBLcXBINlBSYzRNd2R2S3p5bDdKY0tDdy16SWg4eG9KSlU1d2VyTXpmZWRTa2hDRnJKbVRsT0dtakhhMERoT3pwNmp2blNJb2ZYRGdKeWg5TVVjRnRyUnp2YjNpMFJLM2ROUEc1QTUyV2RGcTdXTHZnQg?oc=5",
+      "published_jst": "2026-04-15 16:00 JST",
+      "fetch_time": "2026-06-06T01:24:37.836283+09:00",
+      "category": "market_stats"
+    },
+    {
+      "label": "裁定残",
+      "source_name": "裁定残",
+      "importance": "B",
+      "title": "信用買い残と裁定買い残(2026.3.17収録) - KOYO証券株式会社",
+      "url": "https://news.google.com/rss/articles/CBMiV0FVX3lxTE5YOS1SOWVQcGxKTzFkZ3B2bmNNZ1hzaW9Uby1IY00tVlZYSDVaVTVpVHh0WFVFa1dzcHVRNWhWNjRXYUI0eXVpU2x2UWo2c1FDYWljZDFvcw?oc=5",
+      "published_jst": "2026-03-19 16:25 JST",
+      "fetch_time": "2026-06-06T01:24:37.836297+09:00",
+      "category": "market_stats"
+    },
+    {
+      "label": "投資主体別",
+      "source_name": "投資主体別",
+      "importance": "A",
+      "title": "海外投資家が９週ぶりの売り越し、個人は買い越し─投資主体別動向(5/25～5/29) - QUICK Money World",
+      "url": "https://news.google.com/rss/articles/CBMiVkFVX3lxTE1RZXI4QnYzR2pyUjl4ZDZfWjg0QVh5S05DMHJLOTJhTERDQzRWdm1LQ1dPYXZKMVd1SGZqTlhzR29fdDFzN2ZTOEt3NEdMSFVhMF9OM3JB?oc=5",
+      "published_jst": "2026-06-04 15:39 JST",
+      "fetch_time": "2026-06-06T01:24:39.502785+09:00",
+      "category": "market_stats"
+    },
+    {
+      "label": "投資主体別",
+      "source_name": "投資主体別",
+      "importance": "A",
+      "title": "投資部門別売買動向（26年４月）～海外投資家は大幅買い越し～ - nli-research.co.jp",
+      "url": "https://news.google.com/rss/articles/CBMib0FVX3lxTE9mQURoUzNxUG5JR0JKTVEwaWFNSUpmU09fZkNFQ1hOSVpteTNkRVp1MFExLWxXRUQ1MXd6Z0ZHcHpmcmZVYml1dUx2bm1KcmoxRHdUS1dIcVlNMW1FejNPUGpOTjZoRlNNWFlTMUpyNNIBf0FVX3lxTE5LYkw5OWx6RWVDMHJEcExnR0kwelBob3V2MFpKV2hzMVFzZVY5b3ozeU9wWHVvV0hUN1A3Rzl4WE5aZkF3SFd0Z2R3aUFRcFlqSmdYOEZaY2hYSktiSWRXLXFaS3Z2cGdmVEp4MFBIRHdxeGkwYWxWMHNjQWlhYmc?oc=5",
+      "published_jst": "2026-05-14 16:00 JST",
+      "fetch_time": "2026-06-06T01:24:39.502817+09:00",
+      "category": "market_stats"
+    },
+    {
+      "label": "投資主体別",
+      "source_name": "投資主体別",
+      "importance": "A",
+      "title": "【市況】 【投資部門別売買動向】 海外投資家が6週連続の買い越し、個人は4週ぶりに売り越し (5月第1週) [速報] - 株探（かぶたん）",
+      "url": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE9tZ0tHSXJDMFg5RkJFeXlfdUo3d2ZiNy01Z25tZGptbmhHQmRzMEd6bzdpT2IxazY1ZG4teTlmSVFneW5TajBoYUVJNEtJN0R5MFI3aVhGdHdEbDE4dlgtUQ?oc=5",
+      "published_jst": "2026-05-14 16:00 JST",
+      "fetch_time": "2026-06-06T01:24:39.502834+09:00",
+      "category": "market_stats"
+    },
+    {
+      "label": "投資主体別",
+      "source_name": "投資主体別",
+      "importance": "A",
+      "title": "海外勢が破竹の勢い､日経平均は加速して再び上昇軌道へ - 四季報オンライン",
+      "url": "https://news.google.com/rss/articles/CBMiV0FVX3lxTFBHam11Z0MyakRvcU43ejJROURhTzVySy1hSXpael9OX3Q4X2w0UXVGb25zQTVtWXVvMFhOTmdfNHYwemMxbUJtcW9rZEhuUm4yU3U3Y2Exbw?oc=5",
+      "published_jst": "2026-05-19 16:00 JST",
+      "fetch_time": "2026-06-06T01:24:39.502849+09:00",
+      "category": "market_stats"
+    },
+    {
+      "label": "決算情報",
+      "source_name": "決算情報",
+      "importance": "A",
+      "title": "2026年末の日本株見通しを日経平均株価60,000円に上方修正 総選挙結果と決算を反映 野村證券ストラテジストが解説 - nomura.co.jp",
+      "url": "https://news.google.com/rss/articles/CBMiX0FVX3lxTE5oSWU3ZUtYb2J2YW9yMmlwdDNBbFh2RG1jUldFU0FiSW9EYmhxZEdQeGxFS3gwTDZIWFo4THEzSnpRZVZpWlk1ZlpEN21HNFRuMXRubkhGYjJqYzhka0lv?oc=5",
+      "published_jst": "2026-06-05 16:14 JST",
+      "fetch_time": "2026-06-06T01:24:41.466033+09:00",
+      "category": "market_stats"
+    },
+    {
+      "label": "決算情報",
+      "source_name": "決算情報",
+      "importance": "A",
+      "title": "アールビバン[7523]：通期の連結業績予想値と決算値との差異に関するお知らせ 2026年5月15日(適時開示) ：日経会社情報DIGITAL - 日本経済新聞",
+      "url": "https://news.google.com/rss/articles/CBMiakFVX3lxTFA1dWNDa0g1ZXN0bU1yVXh2V00zZGFhb041UUoxVE9Hd3lhZU10b2V0bzBZX2Fkc29FTmRBZHQ3aTRaNmk1WUg0MFdVQTZ1Qm4tSHNKTnpLV3pZMEFJcTZ6Ty1zajFoRUxfYWc?oc=5",
+      "published_jst": "2026-05-15 16:00 JST",
+      "fetch_time": "2026-06-06T01:24:41.466077+09:00",
+      "category": "market_stats"
+    },
+    {
+      "label": "決算情報",
+      "source_name": "決算情報",
+      "importance": "A",
+      "title": "2025年度 第3四半期決算、業績予想について | ニュースリリース - NTT",
+      "url": "https://news.google.com/rss/articles/CBMiZ0FVX3lxTE5KTEdRdFFXeXFhSUlCcTE1cmptMzZlbzVJdTBOSnZ0WFNfai1FeVlDTGQyd2JPSEI3LUZrYm42TzFReEVzTWRweUxnTmstQUdsMm1HQUxJWWtqejYxV3I5U2dJal9vcE0?oc=5",
+      "published_jst": "2026-02-05 17:00 JST",
+      "fetch_time": "2026-06-06T01:24:41.466103+09:00",
+      "category": "market_stats"
+    },
+    {
+      "label": "決算情報",
+      "source_name": "決算情報",
+      "importance": "A",
+      "title": "日産自動車、2025年度第3四半期決算を発表し、通期業績見通しを修正 - 日産自動車ニュースルーム",
+      "url": "https://news.google.com/rss/articles/CBMiZ0FVX3lxTE5TOElqOHk3VG9RbGJDcE1KZE1JTDlyeS1XNEZEbGYyTWROblNOaTFzS19WRzZzT3dBRTVOYnhrQW9kRzB2b0NpQllocmk2ZnozcGpnOGthSm0zOGpOZXA0WWM3RThLTjg?oc=5",
+      "published_jst": "2026-02-12 17:00 JST",
+      "fetch_time": "2026-06-06T01:24:41.466127+09:00",
+      "category": "market_stats"
+    },
+    {
+      "label": "レーティング",
+      "source_name": "レーティング",
+      "importance": "B",
+      "title": "レーティング情報（目標株価変更・その２）＝ＩＮＰＥＸ、第一三共など(ウエルスアドバイザー) - Yahoo!ファイナンス",
+      "url": "https://news.google.com/rss/articles/CBMihwFBVV95cUxNd0tvMXI3R1VNYUI2Z0IwWHhkbV8yYXJ2VG03WnAxSjV6cXhKZXhzcjgxWFdmZEF6SmxYeWZQaWpfMl9wX05iR3FZMjFiajhvcTBveDlrRG51a21IdXVPYXNuMjdRNnJycjJrckZMWDgyaFY1TnJBc1BXQk1GZzNNTDN3SWRZYmM?oc=5",
+      "published_jst": "2026-06-05 10:58 JST",
+      "fetch_time": "2026-06-06T01:24:43.166082+09:00",
+      "category": "market_stats"
+    },
+    {
+      "label": "レーティング",
+      "source_name": "レーティング",
+      "importance": "B",
+      "title": "レーティング変更観測＞セプテーニＨ格上げ、インフォＭＴ格下げなど 速報 - kabushiki.jp",
+      "url": "https://news.google.com/rss/articles/CBMiR0FVX3lxTE9yUllGVnpHa3FNZnkwZ0xWTkdadmdkV2xtSWpSZDlHQUQzRlQyck1uWDZ5TmNiM2VpbnVvdEMtcUpwZlhqOE1Z?oc=5",
+      "published_jst": "2026-06-05 08:50 JST",
+      "fetch_time": "2026-06-06T01:24:43.166117+09:00",
+      "category": "market_stats"
+    },
+    {
+      "label": "レーティング",
+      "source_name": "レーティング",
+      "importance": "B",
+      "title": "レーティング情報（目標株価変更・その１）＝Ｐアルファ、東海カなど(ウエルスアドバイザー) - Yahoo!ファイナンス",
+      "url": "https://news.google.com/rss/articles/CBMihwFBVV95cUxNT0RYNUU0WjFwNW9jSXlQbGlCYjAxYU9WaThtb3psT2VZS01RYjBkMUpDWDR1d2xBcHQ4NmFTXzl5NnBmVndWTmlfc1F1WHJCb2U4Vm9maURWSFFKUi1GcGQ4NmF0Qi1lcHFFMU52Sm5wdnNNRU5yTXRXWFRDLU5rNGlVSkVXbkU?oc=5",
+      "published_jst": "2026-06-05 10:32 JST",
+      "fetch_time": "2026-06-06T01:24:43.166137+09:00",
+      "category": "market_stats"
+    },
+    {
+      "label": "レーティング",
+      "source_name": "レーティング",
+      "importance": "B",
+      "title": "レーティング変更観測＞Ｓｙｎｓ格上げ、第一三共格下げなど 速報 - kabushiki.jp",
+      "url": "https://news.google.com/rss/articles/CBMiR0FVX3lxTE4zM3pWTTBqT2xJUHNKRk5nbU5BLTdsWUtfM0RwZkhkOVFQNFRpVnRNSnVQVU0wcHUzX05lRlo0d2JvNUY4eFlj?oc=5",
+      "published_jst": "2026-06-04 08:52 JST",
+      "fetch_time": "2026-06-06T01:24:43.166152+09:00",
+      "category": "market_stats"
+    },
+    {
+      "label": "経済指標",
+      "source_name": "経済指標",
+      "importance": "A",
+      "title": "【指標】インド中銀、政策金利を 5.25％で据え置き 予想通り(トレーダーズ・ウェブ) - Yahoo!ファイナンス",
+      "url": "https://news.google.com/rss/articles/CBMihwFBVV95cUxNNnFhWndmeXk1XzBHLTFSbmpELURTT1NOY3p6ajc2bmk2aXNWUGlSUjE1REtLeF8taDdkdHVfd1dpbVMzTzFWVkVSZHFxUXBMdWhiT0otY3ZnRnVBMzYtekxTVnRhamdKaUZzRnhKTnoxMlczaHQtOEg2S2x3andBRDNaQXgyRU0?oc=5",
+      "published_jst": "2026-06-05 13:33 JST",
+      "fetch_time": "2026-06-06T01:24:44.829009+09:00",
+      "category": "market_stats"
+    },
+    {
+      "label": "経済指標",
+      "source_name": "経済指標",
+      "importance": "A",
+      "title": "FXで注目される経済指標の特徴やポイントをFX初心者にもわかりやすく解説！｜IMM通貨先物ポジション／経済指標・政策金利 - ザイFX！",
+      "url": "https://news.google.com/rss/articles/CBMiUkFVX3lxTFBOTGxLU1ZIVm52bjAydzJQaUl6UDlrNjdCUzFod1VCc3BUNExNY1FMU005emh2Z2xTWE9CZHZTNUNNZlFWLWlpX3paMFJrUzdDSUE?oc=5",
+      "published_jst": "2026-06-01 16:00 JST",
+      "fetch_time": "2026-06-06T01:24:44.829043+09:00",
+      "category": "market_stats"
+    },
+    {
+      "label": "経済指標",
+      "source_name": "経済指標",
+      "importance": "A",
+      "title": "ＮＹ時間に伝わった発言・ニュース - みんかぶ FX/為替",
+      "url": "https://news.google.com/rss/articles/CBMiSEFVX3lxTE1VcHRnMjZfZTJ4LUFNZ3F2OHR5SWM4Z0FDUWhCOEI3Nm15Rks4THdIQ2FRM2pvaGZuc0dQamxpSVQ4amgyTDlxTw?oc=5",
+      "published_jst": "2026-03-14 16:00 JST",
+      "fetch_time": "2026-06-06T01:24:44.829060+09:00",
+      "category": "market_stats"
+    },
+    {
+      "label": "経済指標",
+      "source_name": "経済指標",
+      "importance": "A",
+      "title": "【見通し】ロンドン為替見通し＝序盤の英経済指標に注目、結果次第でポンド主導の動きに - 外為どっとコム",
+      "url": "https://news.google.com/rss/articles/CBMiY0FVX3lxTE1hQ21oOEJ5MjdmcU01dWJhZW5pdVlwZjFURlFwR2J4NEtCeFdlLUNEQnZHZnRGcHQ2VkdieHgtbkE2WGpHZzNZY3VvdFpDVnlFM2VVSG9fSy1HTkhNNHNCbS1zcw?oc=5",
+      "published_jst": "2026-02-12 17:00 JST",
+      "fetch_time": "2026-06-06T01:24:44.829077+09:00",
+      "category": "market_stats"
+    },
+    {
+      "label": "FOMC",
+      "source_name": "FOMC",
+      "importance": "A",
+      "title": "ＦＲＢ、利上げ容認派が増加 物価懸念強める＝議事要旨 - Reuters",
+      "url": "https://news.google.com/rss/articles/CBMigAFBVV95cUxNbE82T0ljaVFVVFRNbWhGMGdxRnZPU3Y5c29UTUNLaXBVMDdvNkVMVkRLQ2hVOWdPZjlmbThmVl85MXhJa1c1c1Z0Zll3T1M3ODBsR01kc0lzR2dqdGMyU25sellzeHRTVVo4cFNIT3V5SE1Ca21xTVlmclFQaEhqYg?oc=5",
+      "published_jst": "2026-05-20 16:00 JST",
+      "fetch_time": "2026-06-06T01:24:46.290592+09:00",
+      "category": "market_stats"
+    },
+    {
+      "label": "FOMC",
+      "source_name": "FOMC",
+      "importance": "A",
+      "title": "【海外市場の注目ポイント】米ＦＯＭＣ議事録など - みんかぶ FX/為替",
+      "url": "https://news.google.com/rss/articles/CBMiSEFVX3lxTE9pam9KaHMxMkhmeHlpYWMzaFRpZExyTWsxQTB5bnhZNXJzWUZPbTh6MXpRUVVzOEdRR1VXc0J4S0ludFFrN1B3eg?oc=5",
+      "published_jst": "2026-05-20 16:00 JST",
+      "fetch_time": "2026-06-06T01:24:46.290635+09:00",
+      "category": "market_stats"
+    },
+    {
+      "label": "FOMC",
+      "source_name": "FOMC",
+      "importance": "A",
+      "title": "【注目】 ＦＯＭＣ議事録 インフレ長期化は利上げ正当化しそうだと過半数が判断 - 株探（かぶたん）",
+      "url": "https://news.google.com/rss/articles/CBMiYEFVX3lxTFBjei1iSjdCMVEwcnhpVEVrUnR2UW92NjhmYjJlV3U0MjBBNklEak9FajRJSHFXMG41YmdzWTI0Uk5HRDZHS3hablJVdkJBS3dWbkJ3a2h4LU82R0NpaWFtMQ?oc=5",
+      "published_jst": "2026-05-21 16:00 JST",
+      "fetch_time": "2026-06-06T01:24:46.290655+09:00",
+      "category": "market_stats"
+    },
+    {
+      "label": "FOMC",
+      "source_name": "FOMC",
+      "importance": "A",
+      "title": "4月FOMCプレビュー、FRBは様子見姿勢を続けると予想 米国野村證券・雨宮愛知 - nomura.co.jp",
+      "url": "https://news.google.com/rss/articles/CBMiX0FVX3lxTE9qSklia3dwTERxeGViQUlQaVNZa0lGWGJUekxVLXA1TGwybnQ2N1B0Vk5BZ0stOTBHV3NTV1pOZGtqcUVSVTRDcUVLeVJIQjA0VVl4YldxQmlmZ1IzbmxB?oc=5",
+      "published_jst": "2026-04-28 16:00 JST",
+      "fetch_time": "2026-06-06T01:24:46.290670+09:00",
+      "category": "market_stats"
+    },
+    {
+      "label": "日銀会合",
+      "source_name": "日銀会合",
+      "importance": "A",
+      "title": "日銀が今月会合で1%への利上げ検討、年内に追加の可能性も－関係者 - Bloomberg.com",
+      "url": "https://news.google.com/rss/articles/CBMid0FVX3lxTE1xZXhQcHdmWXNpeTJJbTRPWjU0Wjc3Yy1kZzZrMkpQemZxbXNGV3EyS0t2RmpIRkQ2UHRsc0NBYUV0OWE3VGVZcVBLR25RdVljeF9UbmQ4RHJ3NWJtV210dHMyMmwtY3UwUVBHdUVHRGlYZWVQVml3?oc=5",
+      "published_jst": "2026-06-04 13:34 JST",
+      "fetch_time": "2026-06-06T01:24:48.053338+09:00",
+      "category": "market_stats"
+    },
+    {
+      "label": "日銀会合",
+      "source_name": "日銀会合",
+      "importance": "A",
+      "title": "日銀の6月15、16日の金融政策決定会合で利上げを決定か #エキスパートトピ（久保田博幸） - エキスパート - Yahoo!ニュース",
+      "url": "https://news.google.com/rss/articles/CBMiiAFBVV95cUxORWFNTV9ETDZKQzdHTXJkTUFVU1dFTmlYNElCdnFoWVdEM2RFc09HYkxDMGhaaTlzODBTSVktYUNHX1pPcjRYdjdaa3hYLUd0VmQ0Z0R3YW1wa2lES3dqN1AtWU95VWRVaEp3Sno0eUFTOWFQVTNzOXkwQ3VicHFRX1FoNGhOR0tD?oc=5",
+      "published_jst": "2026-06-04 17:36 JST",
+      "fetch_time": "2026-06-06T01:24:48.053380+09:00",
+      "category": "market_stats"
+    },
+    {
+      "label": "日銀会合",
+      "source_name": "日銀会合",
+      "importance": "A",
+      "title": "日銀6月利上げ予想、9割に迫る 植田総裁がタカ派色最大限に - 日本経済新聞",
+      "url": "https://news.google.com/rss/articles/CBMibEFVX3lxTE9rQVM2cEhvcnNMRDRXVnNoNGJtejJTUXRNWmRVU2x5X01qZXlLSmJPVnRPMEFXTnZkQjFKTDZUdmM2V3RaQjMxSHRnUjVJS21USkJOTGk5RFREUmFMMzRhOEE1aEJyNThSZm9LSQ?oc=5",
+      "published_jst": "2026-06-04 13:37 JST",
+      "fetch_time": "2026-06-06T01:24:48.053410+09:00",
+      "category": "market_stats"
+    },
+    {
+      "label": "日銀会合",
+      "source_name": "日銀会合",
+      "importance": "A",
+      "title": "日銀、次回会合で利上げ検討へ 中東リスク見極め最終判断 - Reuters",
+      "url": "https://news.google.com/rss/articles/CBMiiwFBVV95cUxOTGJPMjBjcXdiMGVtYk1ObGpHTHQzUTZNa1VmaWl1QXFFMFhCQkk0Yll0NndVLUlrRy1WdmpzeGxkUmVncy1EZC1Qa3JDdldQQkdvaHphVHpIRGpLVk9mX0ljcjI2NV9HUFVVMFJrNnM3U2VvQW9Oc0ZyNTFrYmo0U2JfSy1neE94N2VB?oc=5",
+      "published_jst": "2026-06-04 15:54 JST",
+      "fetch_time": "2026-06-06T01:24:48.053433+09:00",
+      "category": "market_stats"
+    },
+    {
+      "label": "先物/オプション",
+      "source_name": "先物/オプション",
+      "importance": "B",
+      "title": "マーケット - SBI証券",
+      "url": "https://news.google.com/rss/articles/CBMi7AJBVV95cUxPeTJEVzJJZHpPRXIxMWpnNEpzZ0liQUR0WXN3c1NMMzFVckcwMFQ2cTZIWmoyYkFhS01acVl5bkhwT3B2ZWtBSWJkRkZEY2RGUVNDcVNtRXNOMzRNdkdNbUxLaUNWeV9tTVM1NUFUQWd6V0F5OF8xZnc1NHVvSllzc0V1YXR6aHVtQmRoT1JVQ1pGaDlVZFYtbDB6ODBwb2R5c0FlOS1hUDFKRV9nVkEtTm9uMTZGSlFlZ0dlWnVGS0NWRFFjbjZlWHBNSXlHVHpyZFVPeWo2MHFjQ0NscUJNaWpvYS1oRDBOT1FPMTdUbTlXNDRSb2V0THJZUWxRaFN1b2ltb29IX1pSX190amtNMmpaNzBBUnVDa1oxTEhzYjVuTURJeUNSa0xaWmkwWFRKdUR2b2dYRnY3cERneWpBU1VGcmRiY3JpbV9oTjdxYmRMeC1IU2o0TFl4OEpmMlF1c2JXa3VoLW9ZbUww?oc=5",
+      "published_jst": "2026-06-05 03:54 JST",
+      "fetch_time": "2026-06-06T01:24:49.757746+09:00",
+      "category": "market_stats"
+    },
+    {
+      "label": "先物/オプション",
+      "source_name": "先物/オプション",
+      "importance": "B",
+      "title": "CME、暗号資産先物・先物オプションの24/7取引開始。初週末の取引規模は50Mドルに (あたらしい経済) - Yahoo!ニュース",
+      "url": "https://news.google.com/rss/articles/CBMijgFBVV95cUxPWldYZ2x4c284cUd5aDh2YmpLUjF5TFBGYkhOMmc5RlNxSnFvcXBjc19idEtwaGgzaXJOaWlpaVJuMEhlX0VkWld6ZzRhV2EyeDVJLXJIamVZYTZUUUtVMnFJSzEzTVJudFZ5cm9nU3VlSWtGRlRMLWZ5LWhqX0ZLMzk3TU1SaTlSQVAteFFB?oc=5",
+      "published_jst": "2026-06-02 19:07 JST",
+      "fetch_time": "2026-06-06T01:24:49.757780+09:00",
+      "category": "market_stats"
+    },
+    {
+      "label": "先物/オプション",
+      "source_name": "先物/オプション",
+      "importance": "B",
+      "title": "🚀MooSummit MY 2026: オプション徹底解説。さあ、語り合おう！ - Moomoo",
+      "url": "https://news.google.com/rss/articles/CBMipAFBVV95cUxOYUloZXJEZHVjWUctS0JBWVE1VXpyZm1HUW1Rck5saGZxV3VnM2Y5WVRPR1JsY0R6QWlJX0pzaV9Md2xKbWQ1RTZraUcyYTM4YmVOdjNVVUk3aEhpX09GSXA0UFJnZ1k1LUpwX2pPaWtoTjZwbHdpM2ZlSDRtbjBKQUxvLXUtTTlWVXJXSjljQXVjRC1OV3J3ZVV5Tm1neTVIWnMybA?oc=5",
+      "published_jst": "2026-06-05 13:41 JST",
+      "fetch_time": "2026-06-06T01:24:49.757797+09:00",
+      "category": "market_stats"
+    },
+    {
+      "label": "先物/オプション",
+      "source_name": "先物/オプション",
+      "importance": "B",
+      "title": "CME、暗号資産先物・先物オプションの24/7取引開始。初週末の取引規模は50Mドルに - あたらしい経済",
+      "url": "https://news.google.com/rss/articles/CBMiT0FVX3lxTE9wWnlPU1Ayd2plZzdDdDlFbVdKdTdUTUFSakVzQjNuaTVPN1NzSHZWU3QtNnA1dW9na1NoUC10Q1VVWTc5UUdTNWtTSjRuNm8?oc=5",
+      "published_jst": "2026-06-02 20:06 JST",
+      "fetch_time": "2026-06-06T01:24:49.757811+09:00",
+      "category": "market_stats"
+    },
+    {
+      "label": "バリュエーション",
+      "source_name": "バリュエーション",
+      "importance": "B",
+      "title": "PERが高いと株価は割高なのか？ 正しい見方を野村證券が解説 シニア・ストラテジスト小髙貴久 - nomura.co.jp",
+      "url": "https://news.google.com/rss/articles/CBMiX0FVX3lxTE14c1E0bGptZGE5S0dMSUlva1dkZDBaRUxGcy0tNldheGotS2tGcFRxUmxNY3ExX0lxaTRxLS15NlE5amdZTTBheVRCVkdvNWZWUGNCT0VRN2l0MTBybFBR?oc=5",
+      "published_jst": "2025-08-20 16:00 JST",
+      "fetch_time": "2026-06-06T01:24:51.408428+09:00",
+      "category": "market_stats"
+    },
+    {
+      "label": "バリュエーション",
+      "source_name": "バリュエーション",
+      "importance": "B",
+      "title": "【特集】 上昇トレンドに乗る【低PER＆低PBR】 25社選出 ＜テクニカル特集＞ 4月24日版 - 株探（かぶたん）",
+      "url": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE5LUU42WDdLMEVNcWFRcC1Va19oTE9iMkdXalFPbFJscU9vV2FSRVhlZkVtd2VFY2FyX25WUlpMMlZZOTBBenZGU3did3pQN0xTdnlZZS1jbVhpRGtoSGltdg?oc=5",
+      "published_jst": "2026-04-25 16:00 JST",
+      "fetch_time": "2026-06-06T01:24:51.408460+09:00",
+      "category": "market_stats"
+    },
+    {
+      "label": "バリュエーション",
+      "source_name": "バリュエーション",
+      "importance": "B",
+      "title": "日本株はもう割高？「PER」のホントの使い方 - トウシル",
+      "url": "https://news.google.com/rss/articles/CBMiWkFVX3lxTFBNbWg0MFVlNTJVV19MT00ta0RDYUQ4T0d6ekNJT0ZLUUQ3ZTJMeUR4MFBOemN2XzU2MUc4SmpLbGd1UlA4R0Z3b3BjcURjNklvTGF3LUZhbnMyQQ?oc=5",
+      "published_jst": "2025-10-29 16:00 JST",
+      "fetch_time": "2026-06-06T01:24:51.408477+09:00",
+      "category": "market_stats"
+    },
+    {
+      "label": "バリュエーション",
+      "source_name": "バリュエーション",
+      "importance": "B",
+      "title": "【ゴールドマン・サックスの元トレーダーが教える】「割安株」を見つける最初の一歩は“たった2つの指標”だった - ダイヤモンド・オンライン",
+      "url": "https://news.google.com/rss/articles/CBMiVkFVX3lxTFB3bmxxUXl0MVFQWDNEOTh1bFdXLW5JWXlGd0VvNmR2Tk9JSzJDU0wwTU8xNE5MTkJiWUNDQ3JDb1A1QWJ0c0xRRkNDbEd6bkNlVTJQNTZB0gFPQVVfeXFMTUJDMUU2d1AtM3Z1QUtiOU9aQU1EYWl2RkF1U0tUZl9Ka05sajNuU2VOcUNkVEFrbHBFUm1fcE5RRDJ4Z05BeEtrV3lBV2RhZw?oc=5",
+      "published_jst": "2025-11-30 17:00 JST",
+      "fetch_time": "2026-06-06T01:24:51.408492+09:00",
+      "category": "market_stats"
+    }
+  ],
+  "economic_calendar": [
+    {
+      "keyword": "米国 雇用統計 予想",
+      "title": "米雇用統計の予想とドル円展望｜5月NFPは9万人前後、160.00円挟んだレンジ継続か【外為総研】2026年6月4日 - 外為どっとコム",
+      "url": "https://news.google.com/rss/articles/CBMiY0FVX3lxTE1qeDVDLXptT0FaeEdjVnRPYnJ6NkdHYjRrWHl4UjNkWlAySGF6Qi1KejVMQVY3SjgxUlBRUkNPRGpzOEh2TTN1cHVFMGVlMzYwTUVhSVBUYktWRWU5TGFWa0pncw?oc=5",
+      "published_jst": "2026-06-04 18:53 JST"
+    },
+    {
+      "keyword": "米国 雇用統計 予想",
+      "title": "【指標発表予定】21:30 5月米雇用統計(トレーダーズ・ウェブ) - Yahoo!ファイナンス",
+      "url": "https://news.google.com/rss/articles/CBMihwFBVV95cUxQLXNsdmF3Mm1QcUE5WG10Q1k3a2dhNDBMNl8yUFVNRGNBZkF4TzAtckJqdUt3Z0Z5NVFMR3E0YktDZm5yOTlVS2p1d0Q0NUdJWHFUa1NIR29rb3JiSVQwZVAyS3htQXVWVThPUzRXR1I2SzBzQUx6c054MUxnY1V6ZVZZUm05WEE?oc=5",
+      "published_jst": "2026-06-05 21:15 JST"
+    },
+    {
+      "keyword": "米国 雇用統計 予想",
+      "title": "【注目】 明日は米雇用統計 労働市場の底堅さが証明されるか注目 - 株探（かぶたん）",
+      "url": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE5IMWFsUUx3SkU0N3lhRURRSHZMQWk4Zk5ieDFCUEpoeUpTNW5fNkNVQUtMaE5hRXJiZEhqV1pkYUhjMUtTazNHN2QxOHMxWGhaZHRLQXFQM1FIZzl3YmJMLQ?oc=5",
+      "published_jst": "2026-06-05 03:46 JST"
+    },
+    {
+      "keyword": "CPI 消費者物価指数 発表",
+      "title": "【指標】5月トルコCPI（前月比） +1.71％、予想 +1.60％ほか(トレーダーズ・ウェブ) - Yahoo!ファイナンス",
+      "url": "https://news.google.com/rss/articles/CBMihwFBVV95cUxNanJsT0pZdXMwb2dYdHpKSW1nTlJSUjB3am1nUDhGZVUwUGFzajlRUXNDbkc5ZHdKblBYS2w1aV9qZTJGMzA5QWw1dnpkNk9iMU1uSkJ1WmNZT2ctekhoQ3J5VVJjZGtiV3ZjSHJHS0NpZ3FyUGFsVmtFTU1uWlVzemR2b3p3NWc?oc=5",
+      "published_jst": "2026-06-05 16:01 JST"
+    },
+    {
+      "keyword": "CPI 消費者物価指数 発表",
+      "title": "まもなくスウェーデン消費者物価指数CPI速報値の発表 - みんかぶ FX/為替",
+      "url": "https://news.google.com/rss/articles/CBMiSEFVX3lxTFB6Y0Z2REVOMVJZVWZGVHVPQTJzNW1TaUJ0Q2hrQ1h3Yi1aUHNLM2VFdkZFWU4zbG8zQkRFU3E1VHFYeUp2RVBzYw?oc=5",
+      "published_jst": "2026-06-04 14:40 JST"
+    },
+    {
+      "keyword": "CPI 消費者物価指数 発表",
+      "title": "4月のCPIは鈍化したが、利上げ路線を維持だろう - ピクテ・ジャパン",
+      "url": "https://news.google.com/rss/articles/CBMif0FVX3lxTE81Yy1Id1ZaODV4M0lja2RZcndKd2ZsMGNxYU1uYnJ5bkVzWFo5VzhGMTlQamhXZ0NmelBGZ3hqNl9jRVRNak5tU1BYQURjRktGc2JMVUstcV8xbkdFZ0lXd0hFeGwyc0t0N3RXNmt3RVdJVHdnM05QWkRrdy1LOVU?oc=5",
+      "published_jst": "2026-05-22 16:00 JST"
+    },
+    {
+      "keyword": "FOMC 会合 結果",
+      "title": "３月のFOMC、２会合続けて金利据え置きか？スケジュールなど関連情報まとめ【2026年３月】 - QUICK Money World",
+      "url": "https://news.google.com/rss/articles/CBMiVEFVX3lxTE5MWDdvLTIwZVZqQTd1Nm4wbVBxT0ItaHZmcVd5OVgtNHhINmR2N0wzVjR3d0dlZjQyeXpIczNqTzVoOTRCS3hhT09EejhlWE5xUXpBZQ?oc=5",
+      "published_jst": "2026-03-19 16:00 JST"
+    },
+    {
+      "keyword": "FOMC 会合 結果",
+      "title": "【ドル/円、見通し】日銀会合後なぜ円安に！？FOMC次第で160円を試すか＿2026/4/28 #外為ドキッ - 外為どっとコム",
+      "url": "https://news.google.com/rss/articles/CBMiY0FVX3lxTE1YTTYzaGV6Z2Ryekl1UE04bzBaeHdOS0puUHBSUU1lVHdLMU1SYXZLYm1ZOFNPVnRDcEdDeHVHVVd3OHdENmJOMFhMTVFkQnJBc281X3hKYjZpSEhiSHAwUWQ2OA?oc=5",
+      "published_jst": "2026-04-28 16:00 JST"
+    },
+    {
+      "keyword": "FOMC 会合 結果",
+      "title": "FOMC・日銀会合通過 野村は12月の米利下げ見送りへ予想変更 野村證券・尾畑秀一 - nomura.co.jp",
+      "url": "https://news.google.com/rss/articles/CBMiX0FVX3lxTE95Qm53Y29ONDlZZ3NlSnNlak1pMnl0YU9MVDdEVWY2S2NNUXgxblpZckZxN01Ja0ctWWhSUzYwNVZnMGZHWW5oQm5keXd4c3Boc3V1dk9udEw0bFRnRnNF?oc=5",
+      "published_jst": "2025-10-30 16:00 JST"
+    },
+    {
+      "keyword": "GDP 速報値",
+      "title": "【速報】インドの25年度GDP、7.7％増 - 47NEWS",
+      "url": "https://news.google.com/rss/articles/CBMiS0FVX3lxTE9oeEpRMDFGcEpBMmNfeE1PeWQ4SDhycE1HRjFtTUtXYTA0aFl6ejVMcnFPRlpYSmFuTno3WEFiTXRoWVBLeko2Zm41VQ?oc=5",
+      "published_jst": "2026-06-05 19:46 JST"
+    },
+    {
+      "keyword": "GDP 速報値",
+      "title": "実質GDP年率2.1%増 1〜3月、自動車の輸出回復で予想上回る伸び - 日本経済新聞",
+      "url": "https://news.google.com/rss/articles/CBMibEFVX3lxTFBDTktMMEZBYXpMSmJnMldIdmtDclc1clE0REpiWVJNeWhYaTk2VTNOb0dUeDNLaEJMZVUwdy1WcmNZSk1nSVE4ZElRQVg5dms2cnVUdE0zQ3E2bmJnS19xdWNBb3FVOHpQV2RhNg?oc=5",
+      "published_jst": "2026-05-19 16:00 JST"
+    },
+    {
+      "keyword": "GDP 速報値",
+      "title": "米ＧＤＰ、26年第1四半期改定値1.6％増 速報値から下方修正 - Reuters",
+      "url": "https://news.google.com/rss/articles/CBMigAFBVV95cUxNcWlWSVFfSzBOR0Fld3JIRHNxNkJnUXVoZTBGZHpQb09MRGxWUHNZcDJPUGhkc3pWaEZQbmh3Ym1GeERDRTJSSkpSbkJhaG9ndXZGV0lVWUNYakgwS2dUTUlrV0lSZC1vbjV3YWZkdllQZ09MQmRKOEtkUEZvWDVFMA?oc=5",
+      "published_jst": "2026-05-29 04:27 JST"
+    },
+    {
+      "keyword": "日銀 政策金利 決定",
+      "title": "日銀6月利上げ、中立金利もヒントに? 欧米とは「立ち位置が違う」 - 朝日新聞",
+      "url": "https://news.google.com/rss/articles/CBMiZ0FVX3lxTE1jMDhiTkNlclV4dTBaZTdSUmEtQVlPeDh5bjdpRGZNYlVDMWQtZGxpR1c5UzBQb0xXdTVoWFZWR25ab2R3TWlEZ3owQW5mTmsyV1VwMTY4N0lqcXNOWFBRdFJsNm1LZjQ?oc=5",
+      "published_jst": "2026-06-02 06:00 JST"
+    },
+    {
+      "keyword": "日銀 政策金利 決定",
+      "title": "植田総裁講演を踏まえ、野村は日銀の6月利上げ予想を維持 野村證券・森田京平 - nomura.co.jp",
+      "url": "https://news.google.com/rss/articles/CBMiX0FVX3lxTE5jWTNnR2taTVRyNm45WXVuR0plNlNqdGc0ekRoX1pRTkdmcUZ4dEVSVHdIRWh5ZWE2RWFpMkl1TXYybmt4cmJTT3k4alRXWHNwdkZiaW5MZG1zRUI4eGM4?oc=5",
+      "published_jst": "2026-06-04 17:00 JST"
+    },
+    {
+      "keyword": "日銀 政策金利 決定",
+      "title": "日銀の6月15、16日の金融政策決定会合で利上げを決定か #エキスパートトピ（久保田博幸） - エキスパート - Yahoo!ニュース",
+      "url": "https://news.google.com/rss/articles/CBMiiAFBVV95cUxORWFNTV9ETDZKQzdHTXJkTUFVU1dFTmlYNElCdnFoWVdEM2RFc09HYkxDMGhaaTlzODBTSVktYUNHX1pPcjRYdjdaa3hYLUd0VmQ0Z0R3YW1wa2lES3dqN1AtWU95VWRVaEp3Sno0eUFTOWFQVTNzOXkwQ3VicHFRX1FoNGhOR0tD?oc=5",
+      "published_jst": "2026-06-04 17:36 JST"
+    },
+    {
+      "keyword": "PMI 景況感指数",
+      "title": "米ＩＳＭ製造業景気指数、5月は4年ぶり高水準 中東紛争受け発注前倒し - Reuters",
+      "url": "https://news.google.com/rss/articles/CBMigAFBVV95cUxQamlKLXFNdl9lNk51b2ZFWlVzSHVvbTFQM0hzN3BTeElNamNyT1o2WGpkQmlxcFE2ZFlOUm00VVJpMzFTR1libHhVajE5TWN1WkdVOHNoNG5xeDFLcm9YXy1OZ2wxa0h1M1pPZ2d5ZHBMWHdUUDZWUnlmUzkzZG56aA?oc=5",
+      "published_jst": "2026-06-02 02:37 JST"
+    },
+    {
+      "keyword": "PMI 景況感指数",
+      "title": "【商業】ASEAN製造業PMIが3カ月ぶりに上昇 タイ・ベトナムが牽引 - バンコク週報",
+      "url": "https://news.google.com/rss/articles/CBMiUEFVX3lxTFBmLVhhS3h3OVdDMTRBdUlja0hodzIyT1ZXeXJ2cmRuZkNxYkRlb2t2Qnhjb0Z0S2lLbEJTM3JVelJjSEpadjVaeUROT3l5QlhO?oc=5",
+      "published_jst": "2026-06-05 18:03 JST"
+    },
+    {
+      "keyword": "PMI 景況感指数",
+      "title": "中国製造PMI低下、外需鈍化で物流需要に減速感 - LOGISTICS TODAY",
+      "url": "https://news.google.com/rss/articles/CBMiSEFVX3lxTE1jdEdNYjlXWjNOc1ZpeXNiZnpVbFVjeEhTN1dLQXFzczdNeXJtemMwQ2lBWFlvMXdsTVI3UkpuRk1HUjAtWmpmeA?oc=5",
+      "published_jst": "2026-06-02 04:31 JST"
+    }
+  ],
+  "fetch_time": "2026-06-06T01:25:02.053344+09:00"
+}

@@ -1,0 +1,53 @@
+# GitHub Actions - 毎日自動実行（PC電源OFF中も動く）
+# 朝7:30 JST（UTCの前日22:30）に自動実行
+
+name: 毎日市場レポート
+
+on:
+  schedule:
+    # UTC 22:30 = JST 7:30（朝）
+    - cron: "30 22 * * 1-5"   # 平日のみ
+    # UTC 00:30 = JST 9:30（追加実行）
+    # - cron: "30 0 * * 1-5"
+  workflow_dispatch:  # 手動実行ボタンも有効化
+
+jobs:
+  daily-report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      # 1. リポジトリをダウンロード
+      - name: リポジトリをチェックアウト
+        uses: actions/checkout@v4
+
+      # 2. Pythonセットアップ
+      - name: Python 3.11 セットアップ
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      # 3. ライブラリインストール（matplotlib不要なのでlite版）
+      - name: ライブラリインストール
+        run: |
+          pip install --upgrade pip
+          pip install pandas numpy requests feedparser beautifulsoup4 \
+                      lxml python-dotenv PyYAML yfinance plotly
+
+      # 4. データ取得・レポート生成（Ollamaなし・チャートなし版）
+      - name: 市場データ取得・レポート生成
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          python cloud_run.py --mode morning
+
+      # 5. レポートをArtifactとして保存（7日間）
+      - name: レポートをアップロード
+        uses: actions/upload-artifact@v4
+        with:
+          name: market-report-${{ github.run_number }}
+          path: reports/
+          retention-days: 7
