@@ -96,7 +96,7 @@ def build_three_messages(risk: dict, analysis: dict, mode: str,
         f"💵 ドル円: {_fmt_price(prices,'USDJPY=X','円')}  VIX: {_fmt_price(prices,'^VIX')}",
         f"🥇 金: {_fmt_price(prices,'GC=F','$')}  ₿: {_fmt_price(prices,'BTC-USD','$')}",
         "",
-        "⚠️ 投資助言ではありません",
+        "📱 市場AI秘書",
     ])
 
     # ===== 通知②: イラスト付きAI分析（画像のキャプションとして使用）=====
@@ -130,10 +130,15 @@ def build_three_messages(risk: dict, analysis: dict, mode: str,
         hypo_text,
         ai_text,
         "",
-        "⚠️ 投資助言ではありません",
+        "📱 市場AI秘書",
     ])
 
-    return [msg1, msg2_caption]
+    # レポートURL
+    report_url = ""
+    if report_paths and report_paths.get("url"):
+        report_url = f"\n\n🌐 [レポートを見る]({report_paths.get('url')})"
+
+    return [msg1, msg2_caption + report_url]
 
 
 def send_message(text: str) -> bool:

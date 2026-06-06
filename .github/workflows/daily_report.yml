@@ -5,11 +5,13 @@ name: 毎日市場レポート
 
 on:
   schedule:
-    # UTC 22:30 = JST 7:30（朝）
-    - cron: "30 22 * * 1-5"   # 平日のみ
-    # UTC 00:30 = JST 9:30（追加実行）
-    # - cron: "30 0 * * 1-5"
+    - cron: "30 22 * * 1-5"   # UTC 22:30 = JST 7:30（平日）
   workflow_dispatch:  # 手動実行ボタンも有効化
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
 
 jobs:
   daily-report:
@@ -17,35 +19,54 @@ jobs:
     timeout-minutes: 30
 
     steps:
-      # 1. リポジトリをダウンロード
       - name: リポジトリをチェックアウト
         uses: actions/checkout@v4
 
-      # 2. Pythonセットアップ
       - name: Python 3.11 セットアップ
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
           cache: "pip"
 
-      # 3. ライブラリインストール（matplotlib不要なのでlite版）
+      - name: 日本語フォントインストール
+        run: |
+          sudo apt-get install -y fonts-noto-cjk
+          fc-cache -fv
+
       - name: ライブラリインストール
         run: |
           pip install --upgrade pip
           pip install pandas numpy requests feedparser beautifulsoup4 \
-                      lxml python-dotenv PyYAML yfinance plotly
+                      lxml python-dotenv PyYAML yfinance plotly \
+                      matplotlib kaleido
 
-      # 4. データ取得・レポート生成（Ollamaなし・チャートなし版）
-      - name: 市場データ取得・レポート生成
+      - name: 市場データ取得・レポート生成・Telegram通知
         env:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          GITHUB_PAGES_URL: "https://youn24.github.io/market-ai-secretary"
         run: |
           python cloud_run.py --mode morning
 
-      # 5. レポートをArtifactとして保存（7日間）
-      - name: レポートをアップロード
+      - name: レポートをgh-pagesに公開
+        run: |
+          git config --global user.email "actions@github.com"
+          git config --global user.name "GitHub Actions"
+          # gh-pagesブランチにreportsフォルダを公開
+          cp -r reports/ /tmp/reports_backup
+          git fetch origin gh-pages 2>/dev/null || true
+          git checkout --orphan gh-pages-temp
+          git rm -rf . --quiet 2>/dev/null || true
+          cp -r /tmp/reports_backup/* .
+          # インデックスページ作成
+          ls *.html 2>/dev/null | sort -r | head -1 | xargs -I{} cp {} index.html 2>/dev/null || true
+          git add -A
+          git commit -m "レポート更新 $(date '+%Y-%m-%d %H:%M JST')" || true
+          git push origin gh-pages-temp:gh-pages --force
+          git checkout main
+
+      - name: レポートをArtifactとして保存（7日間）
         uses: actions/upload-artifact@v4
         with:
           name: market-report-${{ github.run_number }}
