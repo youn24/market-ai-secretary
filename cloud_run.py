@@ -116,7 +116,8 @@ def run(mode: str):
 
 
 def _save_html_report(mode, prices, news, risk, analysis, fear_greed, chart_paths):
-    """見やすいHTMLレポートを保存"""
+    """プロ仕様の金融ダッシュボードHTMLを保存"""
+    import base64
     today = get_today_str()
     dirs  = get_dirs()
     now   = get_jst_now().strftime("%Y-%m-%d %H:%M JST")
@@ -126,47 +127,64 @@ def _save_html_report(mode, prices, news, risk, analysis, fear_greed, chart_path
     fg_score  = fear_greed.get("score")
     fg_rating = fear_greed.get("rating_ja","---")
     signals   = risk.get("signals", [])
+    facts     = analysis.get("facts", [])
+    hypotheses= analysis.get("hypotheses", [])
 
-    def p(sym, unit=""):
-        d   = prices.get(sym, {})
-        v   = d.get("latest")
-        chg = d.get("change_pct")
-        if v is None: return "<span class='na'>---</span>"
-        arrow = "▲" if (chg or 0) >= 0 else "▼"
-        cls   = "up" if (chg or 0) >= 0 else "down"
-        chg_s = f"<span class='{cls}'>{arrow}{abs(chg):.2f}%</span>" if chg else ""
-        return f"<strong>{v:,.2f}{unit}</strong> {chg_s}"
+    def p_val(sym):
+        d = prices.get(sym, {})
+        v = d.get("latest")
+        return f"{v:,.2f}" if v else "---"
 
-    # チャート画像をbase64で埋め込み
-    import base64
+    def p_chg(sym):
+        chg = prices.get(sym, {}).get("change_pct")
+        if chg is None: return "---", "neutral"
+        arrow = "▲" if chg >= 0 else "▼"
+        cls = "up" if chg >= 0 else "down"
+        return f"{arrow}{abs(chg):.2f}%", cls
+
     def img_tag(key):
         path = chart_paths.get(key, "")
-        if not path or not Path(path).exists():
-            return ""
+        if not path or not Path(path).exists(): return ""
         with open(path, "rb") as f:
             b64 = base64.b64encode(f.read()).decode()
-        return f'<img src="data:image/png;base64,{b64}" style="width:100%;border-radius:8px;margin:8px 0">'
+        return f'<img src="data:image/png;base64,{b64}" class="chart-img">'
 
-    sorted_news = sorted(news, key=lambda x: {"A":0,"B":1,"C":2}.get(x.get("importance","C"),2))
-    news_rows = ""
-    for item in sorted_news[:15]:
-        imp  = item.get("importance","C")
-        cls  = {"A":"imp-a","B":"imp-b","C":"imp-c"}.get(imp,"imp-c")
+    score_color = "#3fb950" if score >= 2 else "#f85149" if score <= -2 else "#8b949e"
+    fg_color    = "#3fb950" if (fg_score or 0) >= 55 else "#f85149" if (fg_score or 0) <= 30 else "#e3b341"
+
+    # 指数カード生成
+    def price_card(emoji, label, sym, unit=""):
+        val = p_val(sym)
+        chg_str, cls = p_chg(sym)
+        return f'''<div class="price-card">
+            <div class="pc-label">{emoji} {label}</div>
+            <div class="pc-value">{val}{unit}</div>
+            <div class="pc-chg {cls}">{chg_str}</div>
+        </div>'''
+
+    # ニュース生成
+    sorted_news = sorted(news, key=lambda x: {{"A":0,"B":1,"C":2}}.get(x.get("importance","C"),2))
+    news_html = ""
+    for item in sorted_news[:20]:
+        imp   = item.get("importance","C")
         title = item.get("title","")
         src   = item.get("source_name") or item.get("source","")
-        cat   = item.get("category","")
         url   = item.get("url","")
-        title_link = f'<a href="{url}" target="_blank">{title}</a>' if url else title
-        news_rows += f'<tr><td><span class="badge {cls}">{imp}</span></td><td>{title_link}</td><td>{cat}</td><td>{src}</td></tr>'
+        cat   = item.get("category","")
+        imp_cls = {{"A":"ni-a","B":"ni-b","C":"ni-c"}}.get(imp,"ni-c")
+        link = f'<a href="{url}" target="_blank">{title}</a>' if url else title
+        news_html += f'<div class="news-item"><span class="ni-badge {imp_cls}">{imp}</span><span class="ni-cat">{cat}</span><span class="ni-title">{link}</span><span class="ni-src">{src}</span></div>'
 
-    signal_items = ""
+    # シグナル
+    signal_html = ""
     for s in signals[:6]:
         d = s.get("direction","")
         arrow = "🔺" if "上昇" in d or "強" in d else "🔻" if "下落" in d or "弱" in d else "➡️"
-        signal_items += f'<li>{arrow} <strong>{s.get("indicator","")}</strong>: {d}</li>'
+        signal_html += f'<div class="signal-item">{arrow} <strong>{s.get("indicator","")}</strong>: {d}</div>'
 
-    score_color = "#3fb950" if score >= 2 else "#f85149" if score <= -2 else "#8b949e"
-    fg_color = "#3fb950" if (fg_score or 0) >= 55 else "#f85149" if (fg_score or 0) <= 30 else "#e3b341"
+    # 分析テキスト
+    facts_html = "".join(f'<div class="analysis-item">✅ {f}</div>' for f in facts[:3])
+    hypo_html  = "".join(f'<div class="analysis-item">🔮 {h}</div>' for h in hypotheses[:2])
 
     html = f"""<!DOCTYPE html>
 <html lang="ja">
@@ -175,83 +193,191 @@ def _save_html_report(mode, prices, news, risk, analysis, fear_greed, chart_path
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>市場AI秘書 {today}</title>
 <style>
-  * {{ margin:0; padding:0; box-sizing:border-box; }}
-  body {{ background:#0d1117; color:#e6edf3; font-family:'Hiragino Sans','Meiryo',sans-serif; padding:16px; }}
-  h1 {{ font-size:1.4em; color:#58a6ff; margin-bottom:4px; }}
-  h2 {{ font-size:1.1em; color:#58a6ff; margin:16px 0 8px; border-left:3px solid #58a6ff; padding-left:8px; }}
-  .meta {{ color:#8b949e; font-size:0.85em; margin-bottom:16px; }}
-  .cards {{ display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-bottom:16px; }}
-  .card {{ background:#161b22; border:1px solid #30363d; border-radius:8px; padding:12px; text-align:center; }}
-  .card .label {{ color:#8b949e; font-size:0.8em; margin-bottom:4px; }}
-  .card .value {{ font-size:1.3em; font-weight:bold; }}
-  .up {{ color:#3fb950; }} .down {{ color:#f85149; }} .na {{ color:#8b949e; }}
-  .grid2 {{ display:grid; grid-template-columns:repeat(2,1fr); gap:10px; }}
-  .section {{ background:#161b22; border:1px solid #30363d; border-radius:8px; padding:12px; margin-bottom:12px; }}
-  table {{ width:100%; border-collapse:collapse; font-size:0.85em; }}
-  th {{ background:#21262d; color:#8b949e; padding:6px; text-align:left; }}
-  td {{ padding:6px; border-bottom:1px solid #21262d; }}
-  a {{ color:#58a6ff; text-decoration:none; }}
-  .badge {{ padding:2px 6px; border-radius:4px; font-size:0.75em; font-weight:bold; }}
-  .imp-a {{ background:#f85149; color:#fff; }}
-  .imp-b {{ background:#e3b341; color:#000; }}
-  .imp-c {{ background:#30363d; color:#8b949e; }}
-  ul {{ padding-left:20px; }} li {{ margin:4px 0; }}
-  .score-big {{ font-size:2em; font-weight:bold; color:{score_color}; }}
-  .fg-big {{ font-size:2em; font-weight:bold; color:{fg_color}; }}
+:root {{
+  --bg: #0a0e17;
+  --bg2: #0f1623;
+  --card: #141d2b;
+  --border: #1e2d42;
+  --accent: #00d4ff;
+  --accent2: #7b61ff;
+  --up: #00e676;
+  --down: #ff4444;
+  --neutral: #607d8b;
+  --text: #e8f0fe;
+  --text2: #8899aa;
+  --gold: #ffd700;
+}}
+* {{ margin:0; padding:0; box-sizing:border-box; }}
+body {{ background:var(--bg); color:var(--text); font-family:'Hiragino Sans','Meiryo',system-ui,sans-serif; min-height:100vh; }}
+
+/* ヘッダー */
+.header {{ background:linear-gradient(135deg,#0f1623,#1a1f3a); border-bottom:1px solid var(--border); padding:16px 20px; display:flex; align-items:center; justify-content:space-between; }}
+.header-title {{ font-size:1.3em; font-weight:700; background:linear-gradient(90deg,var(--accent),var(--accent2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }}
+.header-meta {{ color:var(--text2); font-size:0.8em; }}
+
+/* メインコンテンツ */
+.container {{ max-width:1200px; margin:0 auto; padding:16px; }}
+
+/* ステータスバー */
+.status-bar {{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px; }}
+.status-card {{ background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px; text-align:center; position:relative; overflow:hidden; }}
+.status-card::before {{ content:''; position:absolute; top:0; left:0; right:0; height:3px; }}
+.status-card.market::before {{ background:linear-gradient(90deg,{score_color},{score_color}88); }}
+.status-card.fg::before {{ background:linear-gradient(90deg,{fg_color},{fg_color}88); }}
+.sc-label {{ color:var(--text2); font-size:0.75em; margin-bottom:8px; letter-spacing:1px; text-transform:uppercase; }}
+.sc-value {{ font-size:1.8em; font-weight:800; color:{score_color}; }}
+.sc-value2 {{ font-size:1.8em; font-weight:800; color:{fg_color}; }}
+.sc-sub {{ color:var(--text2); font-size:0.8em; margin-top:4px; }}
+
+/* 価格グリッド */
+.section-title {{ color:var(--accent); font-size:0.85em; font-weight:600; letter-spacing:2px; text-transform:uppercase; margin:16px 0 8px; padding-left:8px; border-left:3px solid var(--accent); }}
+.price-grid {{ display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-bottom:16px; }}
+.price-card {{ background:var(--card); border:1px solid var(--border); border-radius:10px; padding:12px; transition:border-color 0.2s; }}
+.price-card:hover {{ border-color:var(--accent); }}
+.pc-label {{ color:var(--text2); font-size:0.75em; margin-bottom:4px; }}
+.pc-value {{ font-size:1.2em; font-weight:700; color:var(--text); margin-bottom:2px; }}
+.pc-chg {{ font-size:0.85em; font-weight:600; }}
+.up {{ color:var(--up); }} .down {{ color:var(--down); }} .neutral {{ color:var(--neutral); }}
+
+/* チャート */
+.chart-img {{ width:100%; border-radius:10px; margin:8px 0; border:1px solid var(--border); }}
+
+/* シグナル */
+.signals {{ background:var(--card); border:1px solid var(--border); border-radius:12px; padding:14px; margin-bottom:16px; }}
+.signal-item {{ padding:6px 0; border-bottom:1px solid var(--border); font-size:0.9em; }}
+.signal-item:last-child {{ border-bottom:none; }}
+
+/* 分析 */
+.analysis {{ background:var(--card); border:1px solid var(--border); border-radius:12px; padding:14px; margin-bottom:16px; }}
+.analysis-item {{ padding:5px 0; font-size:0.88em; color:var(--text2); border-bottom:1px solid var(--border); }}
+.analysis-item:last-child {{ border-bottom:none; }}
+
+/* ニュース */
+.news-list {{ background:var(--card); border:1px solid var(--border); border-radius:12px; padding:14px; margin-bottom:16px; }}
+.news-item {{ display:flex; align-items:flex-start; gap:8px; padding:8px 0; border-bottom:1px solid var(--border); flex-wrap:wrap; }}
+.news-item:last-child {{ border-bottom:none; }}
+.ni-badge {{ padding:2px 6px; border-radius:4px; font-size:0.7em; font-weight:700; flex-shrink:0; }}
+.ni-a {{ background:#f85149; color:#fff; }}
+.ni-b {{ background:#e3b341; color:#000; }}
+.ni-c {{ background:#21262d; color:#8b949e; }}
+.ni-cat {{ color:var(--accent2); font-size:0.72em; flex-shrink:0; padding-top:2px; }}
+.ni-title {{ flex:1; font-size:0.85em; min-width:0; }}
+.ni-title a {{ color:var(--text); text-decoration:none; }}
+.ni-title a:hover {{ color:var(--accent); }}
+.ni-src {{ color:var(--text2); font-size:0.72em; flex-shrink:0; padding-top:2px; }}
+
+/* TradingView */
+.tv-section {{ background:var(--card); border:1px solid var(--border); border-radius:12px; padding:14px; margin-bottom:16px; overflow:hidden; }}
+
+/* フッター */
+.footer {{ text-align:center; color:var(--text2); font-size:0.75em; padding:20px; border-top:1px solid var(--border); }}
+
+@media(min-width:600px) {{
+  .price-grid {{ grid-template-columns:repeat(3,1fr); }}
+  .status-bar {{ grid-template-columns:repeat(4,1fr); }}
+}}
 </style>
 </head>
 <body>
-<h1>📊 市場AI秘書レポート</h1>
-<div class="meta">📅 {today} {now} | GitHub Actions 自動生成</div>
 
-<div class="cards">
-  <div class="card">
-    <div class="label">🌡 市場地合い</div>
-    <div class="score-big">{sentiment}</div>
-    <div style="color:#8b949e;font-size:0.85em">スコア: {score:+.2f}</div>
+<div class="header">
+  <div class="header-title">🦣 市場AI秘書</div>
+  <div class="header-meta">📅 {today} {now}</div>
+</div>
+
+<div class="container">
+
+  <!-- ステータス -->
+  <div class="status-bar">
+    <div class="status-card market">
+      <div class="sc-label">🌡 市場地合い</div>
+      <div class="sc-value">{sentiment}</div>
+      <div class="sc-sub">スコア: {score:+.2f}</div>
+    </div>
+    <div class="status-card fg">
+      <div class="sc-label">😱 Fear &amp; Greed</div>
+      <div class="sc-value2">{f"{fg_score:.0f}" if fg_score else "---"}</div>
+      <div class="sc-sub">{fg_rating}</div>
+    </div>
   </div>
-  <div class="card">
-    <div class="label">😱 Fear & Greed</div>
-    <div class="fg-big">{fg_score:.0f if fg_score else '---'}</div>
-    <div style="color:#8b949e;font-size:0.85em">{fg_rating}</div>
+
+  <!-- 主要指数 -->
+  <div class="section-title">📈 主要指数</div>
+  <div class="price-grid">
+    {price_card("🇯🇵","日経平均","^N225","円")}
+    {price_card("🇺🇸","S&P 500","^GSPC","")}
+    {price_card("🇺🇸","NASDAQ","^IXIC","")}
+    {price_card("🇺🇸","ダウ平均","^DJI","")}
+    {price_card("😰","VIX恐怖指数","^VIX","")}
+    {price_card("📊","米10年金利","^TNX","%")}
   </div>
+
+  <!-- 為替・コモディティ -->
+  <div class="section-title">💱 為替・コモディティ</div>
+  <div class="price-grid">
+    {price_card("💵","ドル円","USDJPY=X","円")}
+    {price_card("💶","EUR/USD","EURUSD=X","")}
+    {price_card("🥇","金 (GOLD)","GC=F","$")}
+    {price_card("🛢","WTI原油","CL=F","$")}
+    {price_card("₿","Bitcoin","BTC-USD","$")}
+  </div>
+
+  <!-- TradingViewチャート -->
+  <div class="section-title">📊 リアルタイムチャート</div>
+  <div class="tv-section">
+    <div class="tradingview-widget-container">
+      <div class="tradingview-widget-container__widget"></div>
+      <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-market-overview.js" async>
+      {{
+        "colorTheme": "dark",
+        "dateRange": "1D",
+        "showChart": true,
+        "locale": "ja",
+        "largeChartUrl": "",
+        "isTransparent": true,
+        "showSymbolLogo": true,
+        "showFloatingTooltip": false,
+        "width": "100%",
+        "height": "400",
+        "tabs": [
+          {{"title":"指数","symbols":[
+            {{"s":"INDEX:NKY","d":"日経平均"}},
+            {{"s":"SP:SPX","d":"S&P500"}},
+            {{"s":"NASDAQ:NDX","d":"NASDAQ"}},
+            {{"s":"INDEX:DJI","d":"ダウ"}}
+          ]}},
+          {{"title":"為替","symbols":[
+            {{"s":"FX:USDJPY","d":"ドル円"}},
+            {{"s":"FX:EURUSD","d":"EUR/USD"}}
+          ]}},
+          {{"title":"コモディティ","symbols":[
+            {{"s":"COMEX:GC1!","d":"金"}},
+            {{"s":"NYMEX:CL1!","d":"原油"}},
+            {{"s":"BITSTAMP:BTCUSD","d":"Bitcoin"}}
+          ]}}
+        ]
+      }}
+      </script>
+    </div>
+  </div>
+
+  <!-- チャート画像 -->
+  {f'<div class="section-title">🎨 市場ビジュアル</div><div>{img_tag("overview")}{img_tag("fear_greed")}{img_tag("risk_meter")}</div>' if chart_paths else ""}
+
+  <!-- シグナル -->
+  <div class="section-title">🔍 市場シグナル</div>
+  <div class="signals">{signal_html or "<div class='signal-item'>シグナルなし</div>"}</div>
+
+  <!-- 分析 -->
+  {f'<div class="section-title">📝 マクロ分析</div><div class="analysis">{facts_html}{hypo_html}</div>' if facts_html or hypo_html else ""}
+
+  <!-- ニュース -->
+  <div class="section-title">📰 注目ニュース</div>
+  <div class="news-list">{news_html or "<div class='news-item'>ニュースなし</div>"}</div>
+
 </div>
 
-<h2>📈 主要指数</h2>
-<div class="section">
-<div class="grid2">
-  <div>🇯🇵 日経平均: {p('^N225','円')}</div>
-  <div>🇺🇸 S&P500: {p('^GSPC')}</div>
-  <div>🇺🇸 NASDAQ: {p('^IXIC')}</div>
-  <div>🇺🇸 ダウ: {p('^DJI')}</div>
-  <div>😰 VIX: {p('^VIX')}</div>
-  <div>📊 米10Y: {p('^TNX','%')}</div>
-</div>
-</div>
-
-<h2>💱 為替・コモディティ</h2>
-<div class="section">
-<div class="grid2">
-  <div>💵 ドル円: {p('USDJPY=X','円')}</div>
-  <div>💶 EUR/USD: {p('EURUSD=X')}</div>
-  <div>🥇 金: {p('GC=F','$')}</div>
-  <div>🛢 原油: {p('CL=F','$')}</div>
-  <div>₿ Bitcoin: {p('BTC-USD','$')}</div>
-</div>
-</div>
-
-<h2>🔍 市場シグナル</h2>
-<div class="section"><ul>{signal_items}</ul></div>
-
-{f'<h2>📊 チャート</h2><div class="section">{img_tag("overview")}{img_tag("fear_greed")}{img_tag("risk_meter")}</div>' if chart_paths else ''}
-
-<h2>📰 注目ニュース</h2>
-<div class="section">
-<table>
-<tr><th>重要度</th><th>タイトル</th><th>カテゴリ</th><th>情報源</th></tr>
-{news_rows}
-</table>
-</div>
+<div class="footer">市場AI秘書 | GitHub Actions 自動生成 | {now}</div>
 
 </body>
 </html>"""
