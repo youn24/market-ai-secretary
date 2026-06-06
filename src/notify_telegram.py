@@ -37,13 +37,15 @@ def _fmt_price(prices: dict, sym: str, unit: str = "") -> str:
 
 def build_three_messages(risk: dict, analysis: dict, mode: str,
                          prices: dict = None, news: list = None,
-                         fear_greed: dict = None, ai_summary: dict = None) -> list:
+                         fear_greed: dict = None, ai_summary: dict = None,
+                         report_paths: dict = None) -> list:
     """Telegramに送る3通のメッセージを生成"""
     today = get_today_str()
     prices = prices or {}
     news = news or []
     fear_greed = fear_greed or {}
     ai_summary = ai_summary or {}
+    report_paths = report_paths or {}
 
     sentiment = risk.get("sentiment", "不明")
     score = risk.get("score", 0)
@@ -262,7 +264,8 @@ def run(risk: dict, analysis: dict, report_paths: dict, mode: str,
         msgs = build_three_messages(
             risk, analysis, mode,
             prices=prices, news=news,
-            fear_greed=fear_greed, ai_summary=ai_summary
+            fear_greed=fear_greed, ai_summary=ai_summary,
+            report_paths=report_paths
         )
 
         # 通知①: ニュース＆市場概況（テキスト）
@@ -282,15 +285,16 @@ def run(risk: dict, analysis: dict, report_paths: dict, mode: str,
             # チャートがなければテキストで送る
             send_message(msgs[1])
 
-        # 通知③: HTMLレポートファイル（Safari・Chromeで開ける）
-        html_path = report_paths.get("html", "")
-        if html_path:
-            import os as _os
-            if _os.path.exists(str(html_path)):
-                send_document(
-                    str(html_path),
-                    caption="📄 本日の詳細レポート\nSafari・Chrome・Edgeで開いてください\n\n⚠️投資助言ではありません"
-                )
+        # 通知③: レポートURL or HTMLファイル
+        report_url = report_paths.get("url", "") if report_paths else ""
+        html_path  = report_paths.get("html", "") if report_paths else ""
+        import os as _os
+        if report_url:
+            # クラウド実行時はURLを送信
+            send_message(f"📄 *本日の詳細レポート*\n\n🌐 [SafariまたはChromeで開く]({report_url})\n\n📱 市場AI秘書")
+        elif html_path and _os.path.exists(str(html_path)):
+            # ローカル実行時はファイルを送信
+            send_document(str(html_path), caption="📄 本日の詳細レポート\nSafari・Chrome・Edgeで開いてください")
 
         logger.info("Telegram 3通送信完了")
         return True
