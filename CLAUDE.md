@@ -35,6 +35,7 @@ cloud_run.py（メインスクリプト）
     ├── Step L3e: src/prediction_tracker.py → 予測学習・正解率記録
     ├── Step L4a: src/sector_analysis.py   → セクター分析・ローテーション
     │             src/sector_chart.py      → セクターヒートマップ画像
+    ├── Step L4b: src/historical_analysis.py → 長期歴史データ分析（20年分）
     ├── Step 5f: src/economic_calendar.py → 週次カレンダー（月曜のみ）
     ├── Step 5e: src/ai_memory.py        → AI記憶更新・継続分析
     ├── Step 6: src/visualize.py         → matplotlibチャート生成
@@ -67,6 +68,7 @@ cloud_run.py（メインスクリプト）
 | `src/scenario.py` | 楽観/基本/悲観シナリオ生成 |
 | `src/prediction_tracker.py` | 予測記録→翌日検証→正解率→Geminiフィードバック |
 | `src/ai_memory.py` | 過去データを記憶・継続比較分析 |
+| `src/historical_analysis.py` | 長期歴史データ分析（Yahoo Finance API直接取得・20年分） |
 | `src/economic_calendar.py` | 週次経済カレンダー画像生成（月曜のみ） |
 | `src/visualize.py` | matplotlibダッシュボード画像生成 |
 | `src/notify_telegram.py` | Telegram Bot通知送信 |
@@ -189,6 +191,7 @@ response = model.generate_content(prompt)
 | L3d | 3シナリオ分析（楽観/基本/悲観・確率付き） | ✅ 完成 |
 | L3e | 予測学習・正解率記録・Geminiへの精度フィードバック | ✅ 完成 |
 | L4a | セクター分析・ローテーション検出・週次成績サマリー強化 | ✅ 完成 |
+| L4b | 長期歴史データ分析（20年分・市場レジーム・類似期間検索） | ✅ 完成 |
 
 ---
 

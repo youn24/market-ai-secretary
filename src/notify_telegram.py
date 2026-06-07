@@ -244,6 +244,7 @@ def send_document(file_path: str, caption: str = "") -> bool:
 def run(risk, analysis, report_paths, mode,
         prices=None, news=None,
         fear_greed=None, ai_summary=None,
+        historical_analysis=None,
         chart_paths=None,
         weekly_calendar=None,
         agent_report=None,
@@ -379,6 +380,40 @@ def run(risk, analysis, report_paths, mode,
             else:
                 send_message(sec_caption)
             logger.info("✅ セクター分析送信")
+
+        # ⑨ 長期歴史データ分析
+        if historical_analysis and historical_analysis.get("available"):
+            reg = historical_analysis.get("regime", {})
+            stats = historical_analysis.get("stats", {})
+            similar = historical_analysis.get("similar_periods", [])
+
+            sp_st = stats.get("sp500", {})
+            vix_st = stats.get("vix", {})
+            nk_st = stats.get("nikkei", {})
+
+            hist_lines = [
+                f"📚 *長期歴史分析*（過去20年データ）",
+                "━━━━━━━━━━━━━━━",
+                f"🌡️ 市場レジーム: *{reg.get('regime','---')}*",
+                f"{reg.get('description','')}",
+                "",
+            ]
+            if sp_st:
+                hist_lines.append(f"📊 S\\&P500: {sp_st.get('percentile',0):.0f}%ile（過去20年中の位置）")
+                hist_lines.append(f"   ATHから{sp_st.get('from_ath_pct',0):.1f}%")
+            if nk_st:
+                hist_lines.append(f"🗾 日経225: {nk_st.get('percentile',0):.0f}%ile  ATHから{nk_st.get('from_ath_pct',0):.1f}%")
+            if vix_st:
+                hist_lines.append(f"😱 VIX: {vix_st.get('percentile',0):.0f}%ile（{vix_st.get('current',0):.1f}）")
+
+            if similar:
+                hist_lines.append("")
+                hist_lines.append("🔍 類似した過去の時期")
+                for p in similar[:2]:
+                    hist_lines.append(f"  • {p['year']}年頃: VIX={p['vix']}  下落率={p['drawdown']}%")
+
+            send_message("\n".join(hist_lines))
+            logger.info("✅ 歴史分析送信")
 
         # ⑩ 週次カレンダー（月曜朝のみ・画像送信）
         if weekly_calendar and weekly_calendar.get("available"):

@@ -192,6 +192,18 @@ def run(mode: str):
     except Exception:
         logger.error("セクターチャート生成エラー"); logger.debug(traceback.format_exc())
 
+    # Step L4b: 長期歴史データ分析
+    historical_analysis = {"available": False}
+    try:
+        logger.info("--- Step L4b: 長期歴史データ分析 ---")
+        from src.historical_analysis import run as run_hist
+        historical_analysis = run_hist()
+        if historical_analysis.get("available"):
+            reg = historical_analysis.get("regime", {})
+            logger.info(f"✅ 歴史分析完了: {reg.get('regime','---')}")
+    except Exception:
+        logger.error("歴史分析エラー"); logger.debug(traceback.format_exc())
+
     # Step 5f: 週次カレンダー（月曜朝のみ）
     weekly_calendar = {"available": False}
     try:
@@ -267,7 +279,8 @@ def run(mode: str):
                   portfolio=portfolio,
                   scenario=scenario,
                   prediction_tracker=prediction_tracker,
-                  sector_analysis=sector_analysis)
+                  sector_analysis=sector_analysis,
+                  historical_analysis=historical_analysis)
     except Exception:
         logger.error("Telegram通知エラー"); logger.debug(traceback.format_exc())
 
