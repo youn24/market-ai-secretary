@@ -259,7 +259,11 @@ def run(risk, analysis, report_paths, mode,
         sentiment_data=None,
         monte_carlo=None,
         fomc_sentiment=None,
-        congress_trades=None) -> bool:
+        congress_trades=None,
+        multi_consensus=None,
+        autonomous_plan=None,
+        rl_result=None,
+        multimodal=None) -> bool:
     if not _is_configured():
         logger.info("Telegram 設定なし。スキップします。")
         return False
@@ -557,6 +561,38 @@ def run(risk, analysis, report_paths, mode,
             if msg:
                 send_message(msg)
                 logger.info("✅ 議員取引送信")
+
+        # ⑱ マルチエージェント合議（L5a）
+        if multi_consensus and multi_consensus.get("available"):
+            from src.multi_agent_consensus import format_telegram as fmt_mac
+            msg = fmt_mac(multi_consensus)
+            if msg:
+                send_message(msg)
+                logger.info("✅ マルチエージェント合議送信")
+
+        # ⑲ 完全自律エージェント（L5b）
+        if autonomous_plan and autonomous_plan.get("available"):
+            from src.autonomous_orchestrator import format_telegram as fmt_auto
+            msg = fmt_auto(autonomous_plan)
+            if msg:
+                send_message(msg)
+                logger.info("✅ 自律エージェント送信")
+
+        # ⑳ 強化学習ループ（L5c）
+        if rl_result and (rl_result.get("available") or rl_result.get("total_verified", 0) > 0):
+            from src.reinforcement_learning import format_telegram as fmt_rl
+            msg = fmt_rl(rl_result)
+            if msg:
+                send_message(msg)
+                logger.info("✅ 強化学習送信")
+
+        # ㉑ マルチモーダルVision分析（L5d）
+        if multimodal and multimodal.get("available"):
+            from src.multimodal_analysis import format_telegram as fmt_mm
+            msg = fmt_mm(multimodal)
+            if msg:
+                send_message(msg)
+                logger.info("✅ Vision分析送信")
 
         # ⑰ 週次カレンダー（月曜朝のみ・画像送信）
         if weekly_calendar and weekly_calendar.get("available"):

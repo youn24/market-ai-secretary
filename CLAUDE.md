@@ -36,10 +36,14 @@ cloud_run.py（メインスクリプト）
     ├── Step L4a: src/sector_analysis.py   → セクター分析・ローテーション
     │             src/sector_chart.py      → セクターヒートマップ画像
     ├── Step L4b: src/historical_analysis.py → 長期歴史データ分析（20年分）
+    ├── Step L5a: src/multi_agent_consensus.py → 4AIエージェント多数決合議
+    ├── Step L5b: src/autonomous_orchestrator.py → 完全自律エージェント（今日のミッション決定）
+    ├── Step L5c: src/reinforcement_learning.py → 強化学習ループ（ML予測・パターン学習）
     ├── Step 5f: src/economic_calendar.py → 週次カレンダー（月曜のみ）
     ├── Step 5e: src/ai_memory.py        → AI記憶更新・継続分析
     ├── Step 6: src/visualize.py         → matplotlibチャート生成
     ├── Step 7: cloud_run._save_html_report() → HTMLレポート生成
+    ├── Step L5d: src/multimodal_analysis.py → チャート画像Gemini Vision分析（Step6後）
     └── Step 8: src/notify_telegram.py   → Telegram通知送信
 ```
 
@@ -201,6 +205,10 @@ response = model.generate_content(prompt)
 | L4i | FOMC議事録NLP分析（タカ派/ハト派自動判定） | ✅ 完成 |
 | L4j | 米議員株取引トラッカー（STOCK Act公開データ） | ✅ 完成 |
 | L4k | 自己改善AI（予測ミス分析→パラメータ自動最適化→自動コミット） | ✅ 完成 |
+| L5a | マルチエージェント合議（4AI多数決・全員一致＝高確信シグナル） | ✅ 完成 |
+| L5b | 完全自律エージェント（市場レジーム検知→今日の優先タスク自己決定） | ✅ 完成 |
+| L5c | 強化学習ループ（予測ミスパターン学習・30件以上でRandomForest起動） | ✅ 完成 |
+| L5d | マルチモーダル分析（チャート画像をGemini Visionで視覚的テクニカル分析） | ✅ 完成 |
 
 ---
 

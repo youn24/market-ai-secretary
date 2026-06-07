@@ -297,6 +297,52 @@ def run(mode: str):
     except Exception:
         logger.error("議員取引エラー"); logger.debug(traceback.format_exc())
 
+    # ── Level 5 ─────────────────────────────────────────────
+
+    # Step L5a: マルチエージェント合議（4AI多数決）
+    multi_consensus = {"available": False}
+    try:
+        logger.info("--- Step L5a: マルチエージェント合議 ---")
+        from src.multi_agent_consensus import run as run_mac
+        multi_consensus = run_mac(prices, risk, fear_greed, news,
+                                  technical=technical, fred_data=fred_data)
+        if multi_consensus.get("available"):
+            v = multi_consensus.get("verdict", {})
+            logger.info(f"✅ 合議: {v.get('direction','---')} {v.get('consensus_level','')}")
+    except Exception:
+        logger.error("マルチエージェント合議エラー"); logger.debug(traceback.format_exc())
+
+    # Step L5b: 完全自律エージェント（今日のミッション決定）
+    autonomous_plan = {"available": False}
+    try:
+        logger.info("--- Step L5b: 完全自律エージェント ---")
+        from src.autonomous_orchestrator import run as run_auto
+        autonomous_plan = run_auto(
+            prices, risk, fear_greed, news,
+            technical=technical,
+            historical_analysis=historical_analysis,
+            fred_data=fred_data,
+            fomc_sentiment=fomc_sentiment,
+            multi_consensus=multi_consensus,
+        )
+        if autonomous_plan.get("available"):
+            logger.info(f"✅ 自律エージェント: {autonomous_plan.get('todays_mission','')[:50]}")
+    except Exception:
+        logger.error("自律エージェントエラー"); logger.debug(traceback.format_exc())
+
+    # Step L5c: 強化学習ループ（予測パターン学習・ML予測）
+    rl_result = {"available": False}
+    try:
+        logger.info("--- Step L5c: 強化学習ループ ---")
+        from src.reinforcement_learning import run as run_rl
+        rl_result = run_rl(prices, risk, fear_greed, technical=technical)
+        if rl_result.get("available"):
+            logger.info(f"✅ 強化学習: {rl_result.get('learning_summary','')[:60]}")
+        else:
+            logger.info(f"強化学習: {rl_result.get('reason','データ蓄積中')}")
+    except Exception:
+        logger.error("強化学習エラー"); logger.debug(traceback.format_exc())
+
     # Step 5f: 週次カレンダー（月曜朝のみ）
     weekly_calendar = {"available": False}
     try:
@@ -332,6 +378,18 @@ def run(mode: str):
         logger.info(f"チャート生成: {len(chart_paths)}件")
     except Exception:
         logger.error("チャート生成エラー（続行）"); logger.debug(traceback.format_exc())
+
+    # Step L5d: マルチモーダル分析（チャート画像をVisionで解析・Step6後に実行）
+    multimodal = {"available": False}
+    try:
+        if chart_paths:
+            logger.info("--- Step L5d: マルチモーダル Vision分析 ---")
+            from src.multimodal_analysis import run as run_mm
+            multimodal = run_mm(chart_paths, prices, technical=technical)
+            if multimodal.get("available"):
+                logger.info(f"✅ Vision分析: direction={multimodal.get('direction','---')}")
+    except Exception:
+        logger.error("マルチモーダル分析エラー"); logger.debug(traceback.format_exc())
 
     # Step 7: HTMLレポート生成
     report_paths = {}
@@ -380,7 +438,11 @@ def run(mode: str):
                   sentiment_data=sentiment_data,
                   monte_carlo=monte_carlo,
                   fomc_sentiment=fomc_sentiment,
-                  congress_trades=congress_trades)
+                  congress_trades=congress_trades,
+                  multi_consensus=multi_consensus,
+                  autonomous_plan=autonomous_plan,
+                  rl_result=rl_result,
+                  multimodal=multimodal)
     except Exception:
         logger.error("Telegram通知エラー"); logger.debug(traceback.format_exc())
 
