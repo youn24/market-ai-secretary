@@ -442,6 +442,17 @@ def run(mode: str):
     except Exception:
         logger.error("チャート生成エラー（続行）"); logger.debug(traceback.format_exc())
 
+    # Step CHR: AIキャラクターコメント生成（ガネーシャ＆カワウソ）
+    character_comments = {"available": False, "ganesha": "", "otter": ""}
+    try:
+        logger.info("--- Step CHR: AIキャラクターコメント生成 ---")
+        from src.character_commentary import generate_comments
+        character_comments = generate_comments(prices, risk, fear_greed, ai_summary=ai_summary)
+        if character_comments.get("available"):
+            logger.info("✅ ガネーシャ＆カワウソ コメント生成完了")
+    except Exception:
+        logger.error("キャラクターコメントエラー"); logger.debug(traceback.format_exc())
+
     # Step L5d: マルチモーダル分析（チャート画像をVisionで解析・Step6後に実行）
     multimodal = {"available": False}
     try:
@@ -474,7 +485,8 @@ def run(mode: str):
         logger.info("--- Step 7: HTMLレポート生成 ---")
         _save_html_report(mode, prices, news, risk, analysis, fear_greed, chart_paths,
                           ai_summary, econ_analysis, youtube_summary, memory_analysis,
-                          agent_report, technical, portfolio, scenario, prediction_tracker)
+                          agent_report, technical, portfolio, scenario, prediction_tracker,
+                          character_comments=character_comments)
         today = get_today_str()
         report_paths = {
             "html": str(get_dirs()["reports"] / f"{today}_{mode}.html"),
@@ -524,7 +536,8 @@ def run(mode: str):
                   reddit_sentiment=reddit_sentiment,
                   earnings_preview=earnings_preview,
                   market_chain=market_chain,
-                  jquants=jquants)
+                  jquants=jquants,
+                  character_comments=character_comments)
     except Exception:
         logger.error("Telegram通知エラー"); logger.debug(traceback.format_exc())
 
@@ -537,7 +550,8 @@ def run(mode: str):
 def _save_html_report(mode, prices, news, risk, analysis, fear_greed, chart_paths,
                       ai_summary=None, econ_analysis=None, youtube_summary=None,
                       memory_analysis="", agent_report=None, technical=None,
-                      portfolio=None, scenario=None, prediction_tracker=None):
+                      portfolio=None, scenario=None, prediction_tracker=None,
+                      character_comments=None):
     """初心者でもわかる見やすいダッシュボードHTMLを保存"""
     import base64
     today = get_today_str()
@@ -551,6 +565,19 @@ def _save_html_report(mode, prices, news, risk, analysis, fear_greed, chart_path
     signals    = risk.get("signals", [])
     ai_summary = ai_summary or {}
     ai_available = ai_summary.get("available", False)
+    character_comments = character_comments or {}
+
+    # キャラクターHTMLセクション生成
+    char_html_section = ""
+    try:
+        from src.character_commentary import get_character_html, CHARACTER_CSS
+        if character_comments.get("available"):
+            char_html_section = get_character_html(
+                character_comments.get("ganesha", ""),
+                character_comments.get("otter", ""),
+            )
+    except Exception:
+        CHARACTER_CSS = ""
     econ_analysis   = econ_analysis or {}
     youtube_summary = youtube_summary or {}
 
@@ -1049,6 +1076,8 @@ a:hover{{text-decoration:underline;}}
   .container{{max-width:900px;margin:0 auto;}}
 }}
 
+{CHARACTER_CSS}
+
 /* ══════════════════════════════════════
    アニメーション
 ══════════════════════════════════════ */
@@ -1098,6 +1127,9 @@ a:hover{{text-decoration:underline;}}
     <div class="hero-msg">{hero_msg}</div>
     <div class="hero-score">リスクスコア {score:+.2f}</div>
   </div>
+
+  <!-- キャラクターコメント（ガネーシャ & カワウソ） -->
+  {char_html_section}
 
   <!-- クイックステータス3つ -->
   <div class="quick-row">

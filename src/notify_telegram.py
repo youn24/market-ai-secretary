@@ -241,6 +241,22 @@ def send_document(file_path: str, caption: str = "") -> bool:
 # メイン実行
 # ────────────────────────────────────────────────────────────────
 
+def _send_character_messages(character_comments: dict) -> None:
+    """ガネーシャとカワウソのコメントをTelegramに送信"""
+    if not character_comments or not character_comments.get("available"):
+        return
+    ganesha = character_comments.get("ganesha", "")
+    otter = character_comments.get("otter", "")
+    if ganesha or otter:
+        msg = "🐘 *AIガネーシャ＆🦦 AIカワウソ*\n━━━━━━━━━━━━━━━\n"
+        if ganesha:
+            msg += f"🐘 *ガネーシャ*\n{ganesha}\n\n"
+        if otter:
+            msg += f"🦦 *カワウソ*\n{otter}"
+        send_message(msg)
+        logger.info("✅ キャラクターコメント送信")
+
+
 def run(risk, analysis, report_paths, mode,
         prices=None, news=None,
         fear_greed=None, ai_summary=None,
@@ -268,7 +284,8 @@ def run(risk, analysis, report_paths, mode,
         reddit_sentiment=None,
         earnings_preview=None,
         market_chain=None,
-        jquants=None) -> bool:
+        jquants=None,
+        character_comments=None) -> bool:
     if not _is_configured():
         logger.info("Telegram 設定なし。スキップします。")
         return False
@@ -283,6 +300,9 @@ def run(risk, analysis, report_paths, mode,
 
         # ① 数字・ニュース速報
         send_message(msgs[0])
+
+        # ①.5 キャラクターコメント（ガネーシャ＆カワウソ）
+        _send_character_messages(character_comments)
 
         # ② AI分析チャート画像 + キャプション
         chart_sent = False
