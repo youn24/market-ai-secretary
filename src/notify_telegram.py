@@ -63,95 +63,110 @@ def build_three_messages(risk, analysis, mode,
     report_paths = report_paths or {}
 
     score    = risk.get("score", 0)
-    signals  = risk.get("signals", [])
     tl, mood = _mood(score)
     fg_score = fear_greed.get("score") or 50
     fg_bar   = _fg_bar(fg_score)
 
     # VIX判定
     vix_val = prices.get("^VIX", {}).get("latest") or 0
-    vix_comment = "低い=安定🟢" if vix_val < 15 else "注意が必要🟡" if vix_val < 20 else "高い=危険🔴"
+    if   vix_val < 15: vix_icon, vix_txt = "🟢", "安定"
+    elif vix_val < 20: vix_icon, vix_txt = "🟡", "やや不安"
+    elif vix_val < 30: vix_icon, vix_txt = "🟠", "警戒"
+    else:              vix_icon, vix_txt = "🔴", "危険！"
 
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    # 通知①：市場速報（数字一覧）
+    # 通知①：今日の相場まとめ（シンプル・わかりやすく）
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    # ニュースをカテゴリ別に整理
+    cat_news: dict[str, list] = {}
     sorted_news = sorted(news, key=lambda x: {"A":0,"B":1,"C":2}.get(x.get("importance","C"),2))
-    news_lines  = []
-    imp_icon = {"A":"🔴","B":"🟡","C":"⚪"}
-    for item in sorted_news[:6]:
-        icon  = imp_icon.get(item.get("importance","C"), "⚪")
-        title = item.get("title","")[:45]
-        news_lines.append(f"{icon} {title}")
+    for item in sorted_news:
+        cat = item.get("category", item.get("label","その他"))
+        if cat not in cat_news:
+            cat_news[cat] = []
+        if len(cat_news[cat]) < 2:   # カテゴリごと最大2件
+            cat_news[cat].append(item)
+
+    # 重要Aニュースを優先、カテゴリ偏りなし
+    news_lines = []
+    imp_icon   = {"A": "🔴", "B": "🟡", "C": "⚪"}
+    seen_cats  = set()
+    for item in sorted_news:
+        if len(news_lines) >= 8:
+            break
+        cat  = item.get("category", "その他")
+        imp  = item.get("importance", "C")
+        icon = imp_icon.get(imp, "⚪")
+        title = item.get("title", "")[:42]
+        # 同カテゴリは最大2件
+        cat_count = sum(1 for l in news_lines if item.get("category","") in l)
+        if cat_count < 2:
+            news_lines.append(f"{icon} {title}")
 
     msg1 = (
-        f"📊 *市場AI秘書 [{today}]*\n"
-        f"━━━━━━━━━━━━━━━\n"
+        f"📊 *今日の市場まとめ* [{today}]\n"
+        f"━━━━━━━━━━━━━━━━━━\n"
         f"\n"
-        f"🌡 *今日の相場*\n"
-        f"{tl} *{mood}*  （スコア: {score:+.2f}）\n"
+        f"*今日の相場は？*\n"
+        f"{tl} *{mood}*\n"
         f"\n"
-        f"😱 恐怖＆強欲\n"
+        f"*みんなの心理* 😱\n"
         f"`{fg_bar}`\n"
+        f"  0=超怖い ← 50=普通 → 100=強気すぎ\n"
         f"\n"
-        f"📈 *株価指数*\n"
-        f"🇯🇵 日経平均:  {_fmt(prices,'^N225','円')}\n"
-        f"🇺🇸 S\\&P 500: {_fmt(prices,'^GSPC')}\n"
-        f"🇺🇸 NASDAQ:   {_fmt(prices,'^IXIC')}\n"
+        f"*📈 株価*\n"
+        f"🇯🇵 日経:   {_fmt(prices,'^N225','円')}\n"
+        f"🇺🇸 S&P:   {_fmt(prices,'^GSPC')}\n"
+        f"🇺🇸 NAS:   {_fmt(prices,'^IXIC')}\n"
         f"\n"
-        f"💱 *為替・コモディティ*\n"
-        f"💵 ドル円:  {_fmt(prices,'USDJPY=X','円')}\n"
-        f"🥇 金:      {_fmt(prices,'GC=F','$')}\n"
-        f"🛢 原油:    {_fmt(prices,'CL=F','$')}\n"
-        f"₿ BTC:     {_fmt(prices,'BTC-USD','$')}\n"
+        f"*💱 為替・商品*\n"
+        f"💵 ドル円: {_fmt(prices,'USDJPY=X','円')}\n"
+        f"🥇 金:     {_fmt(prices,'GC=F','$')}\n"
+        f"🛢 原油:   {_fmt(prices,'CL=F','$')}\n"
+        f"₿ BTC:    {_fmt(prices,'BTC-USD','$')}\n"
         f"\n"
-        f"⚡ VIX: {_fmt(prices,'^VIX')}  → {vix_comment}\n"
-        f"━━━━━━━━━━━━━━━\n"
-        f"📰 *本日の重要ニュース*\n"
+        f"*⚡ 市場の怖さ（VIX）*\n"
+        f"{vix_icon} {_fmt(prices,'^VIX')} → {vix_txt}\n"
+        f"━━━━━━━━━━━━━━━━━━\n"
+        f"*📰 今日のニュース（カテゴリ別）*\n"
         + "\n".join(news_lines)
     )
 
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    # 通知②：AI分析（画像キャプション用）
+    # 通知②：AI分析（チャート画像キャプション）
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     ai_lines = []
     if ai_summary.get("available"):
-        bull = (ai_summary.get("bull_view") or "")[:120]
-        bear = (ai_summary.get("bear_view") or "")[:120]
-        neut = (ai_summary.get("neutral_view") or "")[:160]
-        if bull: ai_lines.append(f"📈 *強気AI*: {bull}")
-        if bear: ai_lines.append(f"📉 *弱気AI*: {bear}")
-        if neut: ai_lines.append(f"⚖️ *中立AI*: {neut}")
+        bull = (ai_summary.get("bull_view") or "")[:100]
+        bear = (ai_summary.get("bear_view") or "")[:100]
+        neut = (ai_summary.get("neutral_view") or "")[:150]
+        if bull: ai_lines.append(f"📈 *上がると思う理由*\n{bull}")
+        if bear: ai_lines.append(f"📉 *下がると思う理由*\n{bear}")
+        if neut: ai_lines.append(f"⚖️ *AIのまとめ*\n{neut}")
     else:
-        ai_lines.append("🤖 AI分析準備中...")
-
-    # シグナル
-    sig_lines = []
-    for s in signals[:3]:
-        d     = s.get("direction","")
-        arrow = "🔺" if any(k in d for k in ["上昇","強"]) else "🔻" if any(k in d for k in ["下落","弱"]) else "➡️"
-        sig_lines.append(f"{arrow} {s.get('indicator','')}: {d}")
+        ai_lines.append("🤖 AI分析を実行中...")
 
     msg2_caption = (
-        f"🤖 *AI マルチ視点分析*\n"
-        f"━━━━━━━━━━━━━━━\n"
-        + "\n\n".join(ai_lines) + "\n"
-        f"━━━━━━━━━━━━━━━\n"
-        f"🔍 *市場シグナル*\n"
-        + ("\n".join(sig_lines) if sig_lines else "シグナルなし")
+        f"🤖 *AI 3視点分析*\n"
+        f"（同じデータを3つのAIが議論）\n"
+        f"━━━━━━━━━━━━━━━━━━\n"
+        + "\n\n".join(ai_lines)
     )
 
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    # 通知③：レポートリンク（Safari/Chrome で開く）
+    # 通知③：レポートURL
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    report_url = report_paths.get("url","")
+    report_url = report_paths.get("url", "")
     msg3 = (
-        f"📄 *本日の詳細レポート*\n"
-        f"━━━━━━━━━━━━━━━\n"
-        f"グラフ・チャート・AI分析をすべて見れます！\n\n"
-        f"📱 iPhoneのSafariやChromeで開いてください👇\n"
-        f"{report_url if report_url else '（レポート生成中）'}\n"
+        f"📱 *詳しいレポートはこちら*\n"
+        f"━━━━━━━━━━━━━━━━━━\n"
+        f"グラフ・チャート・AI分析を全部まとめて見れます\n\n"
+        f"👇 iPhoneのSafariやChromeで開いてください\n"
+        f"{report_url if report_url else '（準備中）'}\n"
         f"\n"
-        f"✅ チャート  ✅ AI議論  ✅ ニュース  ✅ 経済指標"
+        f"📊 チャート  🤖 AI議論  📰 ニュース\n"
+        f"📐 テクニカル  🎭 シナリオ  📅 カレンダー"
     )
 
     return [msg1, msg2_caption, msg3]

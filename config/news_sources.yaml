@@ -1,103 +1,154 @@
-# ニュース収集キーワードとRSSソース設定
+# ニュース収集キーワード設定
+# カテゴリ別にバランスよく配置
 
-# ─── Google News RSS キーワード検索 ───────────────────────────
 google_news_keywords:
-  # トランプ大統領 動向・発言（重要度A）
-  - keyword: "トランプ 発言 政策"
-    label: "トランプ動向"
-    importance: "A"
-  - keyword: "トランプ 関税 貿易"
-    label: "トランプ関税・貿易"
-    importance: "A"
-  - keyword: "Trump tariff economy"
-    label: "Trump(英語)"
-    importance: "A"
-  - keyword: "トランプ 大統領 経済"
-    label: "トランプ経済政策"
-    importance: "A"
 
-  # 中央銀行・金融政策（重要度A）
-  - keyword: "日銀"
-    label: "日銀政策"
+  # ── 中央銀行・金融政策（超重要） ──────────────────────────
+  - keyword: "日銀 政策金利 利上げ"
+    label: "🏦 日銀"
     importance: "A"
-  - keyword: "FRB 金融政策"
-    label: "FRB政策"
-    importance: "A"
-  - keyword: "FedWatch 利上げ 確率"
-    label: "FedWatch利上げ確率"
-    importance: "A"
-  - keyword: "site:boj.or.jp"
-    label: "日銀公式"
-    importance: "A"
+    category: "金融政策"
 
-  # 政府・財政（重要度A）
-  - keyword: "site:kantei.go.jp 経済"
-    label: "首相官邸"
+  - keyword: "FRB 利上げ 利下げ 政策金利"
+    label: "🏦 FRB"
     importance: "A"
-  - keyword: "site:mof.go.jp"
-    label: "財務省"
-    importance: "A"
+    category: "金融政策"
 
-  # 市場全体（重要度A）
-  - keyword: "米国株"
-    label: "米国株市場"
+  # ── 経済指標（超重要） ────────────────────────────────────
+  - keyword: "米国 CPI インフレ 消費者物価"
+    label: "📊 米CPI"
     importance: "A"
-  - keyword: "日本株"
-    label: "日本株市場"
-    importance: "A"
-  - keyword: "金利"
-    label: "金利動向"
-    importance: "A"
-  - keyword: "地政学リスク"
-    label: "地政学リスク"
-    importance: "A"
+    category: "経済指標"
 
-  # 為替（重要度A）
-  - keyword: "為替 ドル円"
-    label: "為替（ドル円）"
+  - keyword: "雇用統計 非農業部門 失業率"
+    label: "📊 雇用統計"
     importance: "A"
-  - keyword: "OANDA 為替 レート"
-    label: "OANDA為替"
+    category: "経済指標"
+
+  - keyword: "GDP 経済成長率 景気"
+    label: "📊 GDP"
     importance: "A"
+    category: "経済指標"
 
-  # 企業・産業（重要度B）
-  - keyword: "半導体"
-    label: "半導体産業"
+  - keyword: "PMI 製造業 景気指数"
+    label: "📊 PMI"
     importance: "B"
-  - keyword: "決算"
-    label: "企業決算"
-    importance: "B"
-  - keyword: "原油"
-    label: "原油市場"
-    importance: "B"
+    category: "経済指標"
 
-  # 専門情報サイト（重要度B）
-  - keyword: "site:traders.co.jp"
-    label: "トレーダーズウェブ"
-    importance: "B"
-  - keyword: "site:minkabu.jp 株"
-    label: "みんかぶ株"
-    importance: "B"
-  - keyword: "site:fx.minkabu.jp"
-    label: "みんかぶFX"
-    importance: "B"
-  - keyword: "site:nikkei225jp.com"
-    label: "日経225専門"
-    importance: "B"
+  # ── 株式市場 ──────────────────────────────────────────────
+  - keyword: "日経平均 株価 急落 急騰"
+    label: "📈 日本株"
+    importance: "A"
+    category: "株式市場"
 
-  # 企業信用・倒産（重要度B）
-  - keyword: "帝国データバンク 倒産"
-    label: "帝国DB倒産情報"
-    importance: "B"
-  - keyword: "site:tdb.co.jp"
-    label: "帝国データバンク"
-    importance: "B"
+  - keyword: "米国株 ニューヨーク ダウ S&P"
+    label: "📈 米国株"
+    importance: "A"
+    category: "株式市場"
 
-# ─── Google News RSS のベースURL ─────────────────────────────
+  - keyword: "ナスダック テック株 AI株"
+    label: "📈 テック株"
+    importance: "B"
+    category: "株式市場"
+
+  # ── 為替・債券 ────────────────────────────────────────────
+  - keyword: "ドル円 為替 円安 円高"
+    label: "💱 為替"
+    importance: "A"
+    category: "為替"
+
+  - keyword: "米国債 長期金利 10年債"
+    label: "📊 米金利"
+    importance: "A"
+    category: "債券"
+
+  # ── 地政学リスク ──────────────────────────────────────────
+  - keyword: "中東 紛争 戦争 地政学リスク"
+    label: "⚠️ 中東情勢"
+    importance: "A"
+    category: "地政学"
+
+  - keyword: "ウクライナ ロシア 戦争"
+    label: "⚠️ ロシア・ウクライナ"
+    importance: "A"
+    category: "地政学"
+
+  - keyword: "中国 台湾 米中関係 対立"
+    label: "⚠️ 米中・台湾"
+    importance: "A"
+    category: "地政学"
+
+  # ── 米国政治・経済政策 ────────────────────────────────────
+  - keyword: "トランプ 関税 貿易 経済政策"
+    label: "🇺🇸 米経済政策"
+    importance: "B"
+    category: "政治・政策"
+
+  - keyword: "米国 財政赤字 国債 予算"
+    label: "🇺🇸 米財政"
+    importance: "B"
+    category: "政治・政策"
+
+  # ── 主要企業・決算 ────────────────────────────────────────
+  - keyword: "決算 増益 減益 業績予想"
+    label: "🏢 企業決算"
+    importance: "B"
+    category: "企業"
+
+  - keyword: "Apple Google Microsoft Meta 決算 業績"
+    label: "🏢 GAFA決算"
+    importance: "B"
+    category: "企業"
+
+  - keyword: "トヨタ ソニー ソフトバンク 決算 業績"
+    label: "🏢 日本大企業"
+    importance: "B"
+    category: "企業"
+
+  - keyword: "エヌビディア NVIDIA 半導体 AI"
+    label: "💻 AI・半導体"
+    importance: "B"
+    category: "企業"
+
+  # ── コモディティ ──────────────────────────────────────────
+  - keyword: "原油 WTI 価格 OPEC"
+    label: "🛢 原油"
+    importance: "B"
+    category: "コモディティ"
+
+  - keyword: "金 ゴールド 価格 安全資産"
+    label: "🥇 金"
+    importance: "B"
+    category: "コモディティ"
+
+  - keyword: "ビットコイン 仮想通貨 暗号資産"
+    label: "₿ 仮想通貨"
+    importance: "C"
+    category: "コモディティ"
+
+  # ── 中国・アジア経済 ──────────────────────────────────────
+  - keyword: "中国 経済 景気 不動産 不況"
+    label: "🇨🇳 中国経済"
+    importance: "B"
+    category: "海外経済"
+
+  - keyword: "欧州 ECB ユーロ圏 景気"
+    label: "🇪🇺 欧州経済"
+    importance: "B"
+    category: "海外経済"
+
+  # ── 日本経済 ──────────────────────────────────────────────
+  - keyword: "日本経済 景気 インフレ 物価上昇"
+    label: "🇯🇵 日本経済"
+    importance: "B"
+    category: "国内経済"
+
+  - keyword: "倒産 破綻 経営危機"
+    label: "⚠️ 倒産情報"
+    importance: "B"
+    category: "国内経済"
+
+# ─── 設定 ────────────────────────────────────────────────────
 google_news_rss_base: "https://news.google.com/rss/search?q={keyword}&hl=ja&gl=JP&ceid=JP:ja"
-
-# 収集件数の上限（キーワードごと）
-max_items_per_keyword: 5
-
-# ニュース保存期間（日数）
+max_items_per_keyword: 3
 keep_days: 30
