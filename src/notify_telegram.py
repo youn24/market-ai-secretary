@@ -1,166 +1,180 @@
 """
-Telegram通知モジュール
-.envに TELEGRAM_BOT_TOKEN と TELEGRAM_CHAT_ID がない場合はスキップ
+Telegram通知モジュール（初心者でも一目でわかるデザイン）
 """
 import os
 import traceback
-
 import requests
 from dotenv import load_dotenv
-
 from src.utils import setup_logger, get_today_str
 
 logger = setup_logger("notify_telegram")
-
 load_dotenv()
 
 
 def _is_configured() -> bool:
-    token = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
+    token   = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
     chat_id = os.getenv("TELEGRAM_CHAT_ID", "").strip()
-    placeholders = {"ここにBotFatherのトークン", "ここにあなたのChat ID", ""}
-    if token in placeholders or chat_id in placeholders:
-        return False
-    return True
+    skip    = {"ここにBotFatherのトークン", "ここにあなたのChat ID", ""}
+    return token not in skip and chat_id not in skip
 
 
-def _fmt_price(prices: dict, sym: str, unit: str = "") -> str:
-    d = prices.get(sym, {})
-    v = d.get("latest")
+def _fmt(prices: dict, sym: str, unit: str = "") -> str:
+    d   = prices.get(sym, {})
+    v   = d.get("latest")
     chg = d.get("change_pct")
     if v is None:
-        return "取得中..."
-    arrow = "🔺" if (chg or 0) >= 0 else "🔻"
-    chg_str = f"{chg:+.2f}%" if chg is not None else ""
-    return f"{arrow} {v:,.2f}{unit} ({chg_str})"
+        return "---"
+    arrow = "▲" if (chg or 0) >= 0 else "▼"
+    chg_s = f"{abs(chg):.2f}%" if chg is not None else ""
+    return f"{v:,.2f}{unit} {arrow}{chg_s}"
 
 
-def build_three_messages(risk: dict, analysis: dict, mode: str,
-                         prices: dict = None, news: list = None,
-                         fear_greed: dict = None, ai_summary: dict = None,
-                         report_paths: dict = None) -> list:
-    """Telegramに送る3通のメッセージを生成"""
-    today = get_today_str()
-    prices = prices or {}
-    news = news or []
+def _mood(score: float) -> tuple:
+    """地合いスコア → (信号灯, 一言)"""
+    if   score >= 2:   return "🟢", "強気！上昇ムード"
+    elif score >= 0.5: return "🟢", "やや強気"
+    elif score >= -0.5:return "🟡", "中立・様子見"
+    elif score >= -2:  return "🟠", "やや弱気・注意"
+    else:               return "🔴", "弱気！慎重に"
+
+
+def _fg_bar(score) -> str:
+    """Fear&Greed をテキストバーで表現"""
+    n = int(score or 50)
+    filled = round(n / 10)
+    bar = "█" * filled + "░" * (10 - filled)
+    if n >= 75: emoji, label = "😱", "超強欲"
+    elif n >= 55: emoji, label = "😤", "強欲"
+    elif n >= 45: emoji, label = "😐", "中立"
+    elif n >= 25: emoji, label = "😰", "恐怖"
+    else:         emoji, label = "😭", "超恐怖"
+    return f"{emoji} {bar} {n} ({label})"
+
+
+def build_three_messages(risk, analysis, mode,
+                         prices=None, news=None,
+                         fear_greed=None, ai_summary=None,
+                         report_paths=None) -> list:
+    today      = get_today_str()
+    prices     = prices or {}
+    news       = news or []
     fear_greed = fear_greed or {}
     ai_summary = ai_summary or {}
     report_paths = report_paths or {}
 
-    sentiment = risk.get("sentiment", "不明")
-    score = risk.get("score", 0)
-    signals = risk.get("signals", [])
-    facts = analysis.get("facts", [])
-    hypotheses = analysis.get("hypotheses", [])
+    score    = risk.get("score", 0)
+    signals  = risk.get("signals", [])
+    tl, mood = _mood(score)
+    fg_score = fear_greed.get("score") or 50
+    fg_bar   = _fg_bar(fg_score)
 
-    # 地合いアイコン
-    if score >= 5:
-        mood = "🟢 強気"
-    elif score >= 2:
-        mood = "🟡 やや強気"
-    elif score >= -2:
-        mood = "⚪ 中立"
-    elif score >= -5:
-        mood = "🟠 やや弱気"
-    else:
-        mood = "🔴 弱気"
+    # VIX判定
+    vix_val = prices.get("^VIX", {}).get("latest") or 0
+    vix_comment = "低い=安定🟢" if vix_val < 15 else "注意が必要🟡" if vix_val < 20 else "高い=危険🔴"
 
-    fg_score = fear_greed.get("score")
-    fg_rating = fear_greed.get("rating_ja", "不明")
-    if fg_score:
-        if fg_score >= 75:   fg_icon = "😱 極度の強欲"
-        elif fg_score >= 55: fg_icon = "😄 強欲"
-        elif fg_score >= 45: fg_icon = "😐 中立"
-        elif fg_score >= 25: fg_icon = "😟 恐怖"
-        else:                fg_icon = "😨 極度の恐怖"
-        fg_str = f"{fg_icon} ({fg_score:.0f}点)"
-    else:
-        fg_str = "取得中..."
-
-    # ===== 通知①: ニュース＆市場概況 =====
-    sorted_news = sorted(news, key=lambda x: {"A": 0, "B": 1, "C": 2}.get(x.get("importance", "C"), 2))
-    imp_icons = {"A": "🔴", "B": "🟡", "C": "⚪"}
-
-    news_lines = []
-    for item in sorted_news[:8]:
-        title = item.get("title", "")[:40]
-        imp = item.get("importance", "C")
-        icon = imp_icons.get(imp, "⚪")
+    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    # 通知①：市場速報（数字一覧）
+    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    sorted_news = sorted(news, key=lambda x: {"A":0,"B":1,"C":2}.get(x.get("importance","C"),2))
+    news_lines  = []
+    imp_icon = {"A":"🔴","B":"🟡","C":"⚪"}
+    for item in sorted_news[:6]:
+        icon  = imp_icon.get(item.get("importance","C"), "⚪")
+        title = item.get("title","")[:45]
         news_lines.append(f"{icon} {title}")
 
-    msg1 = "\n".join([
-        f"📰 *本日の注目ニュース* [{today}]",
-        "━━━━━━━━━━━━━━━",
-        *news_lines,
-        "",
-        f"📈 日経: {_fmt_price(prices,'^N225','円')}",
-        f"📈 S&P: {_fmt_price(prices,'^GSPC')}  NYダウ: {_fmt_price(prices,'^DJI')}",
-        f"💵 ドル円: {_fmt_price(prices,'USDJPY=X','円')}  VIX: {_fmt_price(prices,'^VIX')}",
-        f"🥇 金: {_fmt_price(prices,'GC=F','$')}  ₿: {_fmt_price(prices,'BTC-USD','$')}",
-        "",
-        "📱 市場AI秘書",
-    ])
+    msg1 = (
+        f"📊 *市場AI秘書 [{today}]*\n"
+        f"━━━━━━━━━━━━━━━\n"
+        f"\n"
+        f"🌡 *今日の相場*\n"
+        f"{tl} *{mood}*  （スコア: {score:+.2f}）\n"
+        f"\n"
+        f"😱 恐怖＆強欲\n"
+        f"`{fg_bar}`\n"
+        f"\n"
+        f"📈 *株価指数*\n"
+        f"🇯🇵 日経平均:  {_fmt(prices,'^N225','円')}\n"
+        f"🇺🇸 S\\&P 500: {_fmt(prices,'^GSPC')}\n"
+        f"🇺🇸 NASDAQ:   {_fmt(prices,'^IXIC')}\n"
+        f"\n"
+        f"💱 *為替・コモディティ*\n"
+        f"💵 ドル円:  {_fmt(prices,'USDJPY=X','円')}\n"
+        f"🥇 金:      {_fmt(prices,'GC=F','$')}\n"
+        f"🛢 原油:    {_fmt(prices,'CL=F','$')}\n"
+        f"₿ BTC:     {_fmt(prices,'BTC-USD','$')}\n"
+        f"\n"
+        f"⚡ VIX: {_fmt(prices,'^VIX')}  → {vix_comment}\n"
+        f"━━━━━━━━━━━━━━━\n"
+        f"📰 *本日の重要ニュース*\n"
+        + "\n".join(news_lines)
+    )
 
-    # ===== 通知②: イラスト付きAI分析（画像のキャプションとして使用）=====
-    signal_lines = []
-    for s in signals[:4]:
-        d = s.get("direction", "")
-        arrow = "🔺" if "上昇" in d or "強" in d else "🔻" if "下落" in d or "弱" in d else "➡️"
-        signal_lines.append(f"{arrow} {s.get('indicator','')}: {d}")
+    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    # 通知②：AI分析（画像キャプション用）
+    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    ai_lines = []
+    if ai_summary.get("available"):
+        bull = (ai_summary.get("bull_view") or "")[:120]
+        bear = (ai_summary.get("bear_view") or "")[:120]
+        neut = (ai_summary.get("neutral_view") or "")[:160]
+        if bull: ai_lines.append(f"📈 *強気AI*: {bull}")
+        if bear: ai_lines.append(f"📉 *弱気AI*: {bear}")
+        if neut: ai_lines.append(f"⚖️ *中立AI*: {neut}")
+    else:
+        ai_lines.append("🤖 AI分析準備中...")
 
-    ai_text = ""
-    if ai_summary and ai_summary.get("available"):
-        overall = ai_summary.get("overall_summary", "")
-        if overall:
-            ai_text = f"\n🤖 *AI分析:*\n{overall[:300]}{'...' if len(overall)>300 else ''}"
+    # シグナル
+    sig_lines = []
+    for s in signals[:3]:
+        d     = s.get("direction","")
+        arrow = "🔺" if any(k in d for k in ["上昇","強"]) else "🔻" if any(k in d for k in ["下落","弱"]) else "➡️"
+        sig_lines.append(f"{arrow} {s.get('indicator','')}: {d}")
 
-    facts_text = ""
-    if facts:
-        facts_text = "\n✅ " + "\n✅ ".join(facts[:2])
-    hypo_text = ""
-    if hypotheses:
-        hypo_text = "\n🔮 " + "\n🔮 ".join(hypotheses[:1])
+    msg2_caption = (
+        f"🤖 *AI マルチ視点分析*\n"
+        f"━━━━━━━━━━━━━━━\n"
+        + "\n\n".join(ai_lines) + "\n"
+        f"━━━━━━━━━━━━━━━\n"
+        f"🔍 *市場シグナル*\n"
+        + ("\n".join(sig_lines) if sig_lines else "シグナルなし")
+    )
 
-    msg2_caption = "\n".join([
-        f"🦣 *ガネーシャの市場分析* [{mode.upper()}]",
-        f"━━━━━━━━━━━━━━━",
-        f"地合い: {mood}  スコア: {score:+.2f}",
-        f"Fear&Greed: {fg_str}",
-        "",
-        *signal_lines,
-        facts_text,
-        hypo_text,
-        ai_text,
-        "",
-        "📱 市場AI秘書",
-    ])
+    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    # 通知③：レポートリンク（Safari/Chrome で開く）
+    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    report_url = report_paths.get("url","")
+    msg3 = (
+        f"📄 *本日の詳細レポート*\n"
+        f"━━━━━━━━━━━━━━━\n"
+        f"グラフ・チャート・AI分析をすべて見れます！\n\n"
+        f"📱 iPhoneのSafariやChromeで開いてください👇\n"
+        f"{report_url if report_url else '（レポート生成中）'}\n"
+        f"\n"
+        f"✅ チャート  ✅ AI議論  ✅ ニュース  ✅ 経済指標"
+    )
 
-    # レポートURL
-    report_url = ""
-    if report_paths and report_paths.get("url"):
-        report_url = f"\n\n🌐 [レポートを見る]({report_paths.get('url')})"
+    return [msg1, msg2_caption, msg3]
 
-    return [msg1, msg2_caption + report_url]
 
+# ────────────────────────────────────────────────────────────────
+# 低レベル送信関数
+# ────────────────────────────────────────────────────────────────
 
 def send_message(text: str) -> bool:
-    """Telegram にメッセージを送信する。失敗時は False を返す。"""
     if not _is_configured():
-        logger.info("Telegram 未設定のためスキップ（.envを確認してください）")
+        logger.info("Telegram 未設定スキップ")
         return False
-
-    token = os.getenv("TELEGRAM_BOT_TOKEN")
+    token   = os.getenv("TELEGRAM_BOT_TOKEN")
     chat_id = os.getenv("TELEGRAM_CHAT_ID")
-    url = f"https://api.telegram.org/bot{token}/sendMessage"
-
     try:
-        resp = requests.post(url, json={
-            "chat_id": chat_id,
-            "text": text,
-            "parse_mode": "Markdown",
-        }, timeout=15)
-        resp.raise_for_status()
-        logger.info("Telegram 送信成功")
+        r = requests.post(
+            f"https://api.telegram.org/bot{token}/sendMessage",
+            json={"chat_id": chat_id, "text": text, "parse_mode": "Markdown"},
+            timeout=15,
+        )
+        r.raise_for_status()
+        logger.info("Telegram テキスト送信 ✅")
         return True
     except Exception as e:
         logger.error(f"Telegram 送信失敗: {e}")
@@ -168,22 +182,20 @@ def send_message(text: str) -> bool:
 
 
 def send_photo(image_path: str, caption: str = "") -> bool:
-    """Telegram にチャート画像を送信する。"""
     if not _is_configured():
         return False
-
-    token = os.getenv("TELEGRAM_BOT_TOKEN")
+    token   = os.getenv("TELEGRAM_BOT_TOKEN")
     chat_id = os.getenv("TELEGRAM_CHAT_ID")
-    url = f"https://api.telegram.org/bot{token}/sendPhoto"
-
     try:
         with open(image_path, "rb") as f:
-            resp = requests.post(url, data={
-                "chat_id": chat_id,
-                "caption": caption[:1024],
-            }, files={"photo": f}, timeout=30)
-        resp.raise_for_status()
-        logger.info(f"Telegram 画像送信成功: {image_path}")
+            r = requests.post(
+                f"https://api.telegram.org/bot{token}/sendPhoto",
+                data={"chat_id": chat_id, "caption": caption[:1024], "parse_mode": "Markdown"},
+                files={"photo": f},
+                timeout=30,
+            )
+        r.raise_for_status()
+        logger.info(f"Telegram 画像送信 ✅: {image_path}")
         return True
     except Exception as e:
         logger.error(f"Telegram 画像送信失敗: {e}")
@@ -191,73 +203,35 @@ def send_photo(image_path: str, caption: str = "") -> bool:
 
 
 def send_document(file_path: str, caption: str = "") -> bool:
-    """Telegram にHTMLレポートなどのファイルを送信する。"""
     if not _is_configured():
         return False
-
-    token = os.getenv("TELEGRAM_BOT_TOKEN")
+    token   = os.getenv("TELEGRAM_BOT_TOKEN")
     chat_id = os.getenv("TELEGRAM_CHAT_ID")
-    url = f"https://api.telegram.org/bot{token}/sendDocument"
-
     try:
         with open(file_path, "rb") as f:
-            resp = requests.post(url, data={
-                "chat_id": chat_id,
-                "caption": caption[:1024],
-            }, files={"document": f}, timeout=30)
-        resp.raise_for_status()
-        logger.info(f"Telegram ファイル送信成功: {file_path}")
+            r = requests.post(
+                f"https://api.telegram.org/bot{token}/sendDocument",
+                data={"chat_id": chat_id, "caption": caption[:1024]},
+                files={"document": f},
+                timeout=30,
+            )
+        r.raise_for_status()
         return True
     except Exception as e:
         logger.error(f"Telegram ファイル送信失敗: {e}")
         return False
 
 
-def send_charts(chart_paths: dict, ai_summary: dict = None) -> bool:
-    """チャートPNG画像をまとめて送信する。"""
-    if not _is_configured() or not chart_paths:
-        return False
+# ────────────────────────────────────────────────────────────────
+# メイン実行
+# ────────────────────────────────────────────────────────────────
 
-    # AI要約があればキャプションに使う
-    overall = ""
-    if ai_summary and ai_summary.get("available"):
-        overall = ai_summary.get("overall_summary", "")
-        if len(overall) > 300:
-            overall = overall[:300] + "..."
-
-    sent = 0
-    # メインチャート（overview）を最初に送る
-    priority_keys = ["overview", "fear_greed", "prices", "indices"]
-    ordered = []
-    for k in priority_keys:
-        if k in chart_paths:
-            ordered.append((k, chart_paths[k]))
-    for k, v in chart_paths.items():
-        if k not in priority_keys:
-            ordered.append((k, v))
-
-    for i, (key, path) in enumerate(ordered[:4]):  # 最大4枚
-        import os as _os
-        if not path or not _os.path.exists(str(path)):
-            continue
-        caption = ""
-        if i == 0 and overall:
-            caption = f"🤖 AI分析:\n{overall}\n\n⚠️投資助言ではありません"
-        elif i == 0:
-            caption = "📊 市場概況チャート | ⚠️投資助言ではありません"
-        send_photo(str(path), caption)
-        sent += 1
-
-    logger.info(f"チャート画像 {sent}枚 送信")
-    return sent > 0
-
-
-def run(risk: dict, analysis: dict, report_paths: dict, mode: str,
-        prices: dict = None, news: list = None,
-        fear_greed: dict = None, ai_summary: dict = None,
-        chart_paths: dict = None) -> bool:
+def run(risk, analysis, report_paths, mode,
+        prices=None, news=None,
+        fear_greed=None, ai_summary=None,
+        chart_paths=None) -> bool:
     if not _is_configured():
-        logger.info("Telegram 設定なし。通知をスキップします。")
+        logger.info("Telegram 設定なし。スキップします。")
         return False
 
     try:
@@ -265,39 +239,30 @@ def run(risk: dict, analysis: dict, report_paths: dict, mode: str,
             risk, analysis, mode,
             prices=prices, news=news,
             fear_greed=fear_greed, ai_summary=ai_summary,
-            report_paths=report_paths
+            report_paths=report_paths,
         )
 
-        # 通知①: ニュース＆市場概況（テキスト）
+        # ① 数字・ニュース速報
         send_message(msgs[0])
 
-        # 通知②: イラスト（チャート画像）＋AI分析キャプション
+        # ② AI分析チャート画像 + キャプション
         chart_sent = False
         if chart_paths:
-            import os as _os
             for key in ["overview", "prices", "indices"]:
                 path = chart_paths.get(key, "")
-                if path and _os.path.exists(str(path)):
+                if path and os.path.exists(str(path)):
                     send_photo(str(path), caption=msgs[1])
                     chart_sent = True
                     break
         if not chart_sent:
-            # チャートがなければテキストで送る
             send_message(msgs[1])
 
-        # 通知③: レポートURL or HTMLファイル
-        report_url = report_paths.get("url", "") if report_paths else ""
-        html_path  = report_paths.get("html", "") if report_paths else ""
-        import os as _os
-        if report_url:
-            # クラウド実行時はURLを送信
-            send_message(f"📄 *本日の詳細レポート*\n\n🌐 [SafariまたはChromeで開く]({report_url})\n\n📱 市場AI秘書")
-        elif html_path and _os.path.exists(str(html_path)):
-            # ローカル実行時はファイルを送信
-            send_document(str(html_path), caption="📄 本日の詳細レポート\nSafari・Chrome・Edgeで開いてください")
+        # ③ レポートURL
+        send_message(msgs[2])
 
-        logger.info("Telegram 3通送信完了")
+        logger.info("✅ Telegram 3通送信完了")
         return True
+
     except Exception as e:
         logger.error(f"Telegram通知エラー: {e}")
         logger.debug(traceback.format_exc())
