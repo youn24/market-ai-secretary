@@ -169,6 +169,29 @@ def run(mode: str):
     except Exception:
         logger.error("予測トラッカーエラー"); logger.debug(traceback.format_exc())
 
+    # Step L4a: セクター分析・ローテーション
+    sector_analysis = {"available": False}
+    try:
+        logger.info("--- Step L4a: セクター分析・ローテーション ---")
+        from src.sector_analysis import run as run_sector
+        sector_analysis = run_sector()
+        if sector_analysis.get("available"):
+            rot = sector_analysis.get("rotation", {})
+            logger.info(f"✅ セクター分析完了: {rot.get('phase','---')}")
+    except Exception:
+        logger.error("セクター分析エラー"); logger.debug(traceback.format_exc())
+
+    # セクターチャート生成
+    sector_chart_path = None
+    try:
+        if sector_analysis.get("available"):
+            from src.sector_chart import make_sector_chart
+            sector_chart_path = make_sector_chart(sector_analysis)
+            if sector_chart_path:
+                logger.info(f"✅ セクターチャート生成: {sector_chart_path}")
+    except Exception:
+        logger.error("セクターチャート生成エラー"); logger.debug(traceback.format_exc())
+
     # Step 5f: 週次カレンダー（月曜朝のみ）
     weekly_calendar = {"available": False}
     try:
@@ -231,6 +254,9 @@ def run(mode: str):
         if portfolio.get("chart_path"):
             chart_paths["portfolio"] = portfolio["chart_path"]
 
+        if sector_chart_path:
+            chart_paths["sector"] = sector_chart_path
+
         notify_tg(risk, analysis, report_paths, mode,
                   prices=prices, news=news,
                   fear_greed=fear_greed, ai_summary=ai_summary,
@@ -240,7 +266,8 @@ def run(mode: str):
                   technical=technical,
                   portfolio=portfolio,
                   scenario=scenario,
-                  prediction_tracker=prediction_tracker)
+                  prediction_tracker=prediction_tracker,
+                  sector_analysis=sector_analysis)
     except Exception:
         logger.error("Telegram通知エラー"); logger.debug(traceback.format_exc())
 

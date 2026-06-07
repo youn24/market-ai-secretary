@@ -33,6 +33,8 @@ cloud_run.py（メインスクリプト）
     ├── Step L3c: src/portfolio.py       → ポートフォリオ管理
     ├── Step L3d: src/scenario.py        → 3シナリオ分析（楽観/基本/悲観）
     ├── Step L3e: src/prediction_tracker.py → 予測学習・正解率記録
+    ├── Step L4a: src/sector_analysis.py   → セクター分析・ローテーション
+    │             src/sector_chart.py      → セクターヒートマップ画像
     ├── Step 5f: src/economic_calendar.py → 週次カレンダー（月曜のみ）
     ├── Step 5e: src/ai_memory.py        → AI記憶更新・継続分析
     ├── Step 6: src/visualize.py         → matplotlibチャート生成
@@ -186,6 +188,7 @@ response = model.generate_content(prompt)
 | L3c | ポートフォリオ損益管理 | ✅ 完成 |
 | L3d | 3シナリオ分析（楽観/基本/悲観・確率付き） | ✅ 完成 |
 | L3e | 予測学習・正解率記録・Geminiへの精度フィードバック | ✅ 完成 |
+| L4a | セクター分析・ローテーション検出・週次成績サマリー強化 | ✅ 完成 |
 
 ---
 

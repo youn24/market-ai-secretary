@@ -46,6 +46,33 @@ def run():
     # 週次AI分析
     weekly_analysis = _generate_weekly_analysis(prices, news, risk, fear_greed)
 
+    # セクター分析・ローテーション
+    sector = {}
+    try:
+        from src.sector_analysis import run as run_sector
+        sector = run_sector()
+        if sector.get("available"):
+            logger.info(f"✅ セクター分析完了: {sector.get('rotation',{}).get('phase','---')}")
+    except Exception:
+        logger.error("セクター分析エラー")
+
+    # セクターチャート生成
+    sector_chart_path = None
+    try:
+        if sector.get("available"):
+            from src.sector_chart import make_sector_chart
+            sector_chart_path = make_sector_chart(sector)
+    except Exception:
+        logger.error("セクターチャート生成エラー")
+
+    # 予測学習サマリー
+    pred_summary = {}
+    try:
+        from src.prediction_tracker import calc_accuracy, get_week_summary
+        pred_summary = get_week_summary()
+    except Exception:
+        logger.error("予測サマリーエラー")
+
     # YouTube要約
     youtube = {}
     try:
@@ -71,7 +98,8 @@ def run():
         logger.error("カレンダー生成エラー")
 
     # Telegram送信
-    _send_weekly_report(weekly_analysis, youtube, memory_analysis, prices, fear_greed, risk, calendar_data)
+    _send_weekly_report(weekly_analysis, youtube, memory_analysis, prices, fear_greed, risk,
+                        calendar_data, sector, sector_chart_path, pred_summary)
 
     logger.info("====== 週次レポート完了 ======")
 
@@ -166,7 +194,8 @@ Fear&Greed: {fear_greed.get('score','---')} ({fear_greed.get('rating_ja','---')}
         return {"available": False}
 
 
-def _send_weekly_report(weekly, youtube, memory_analysis, prices, fear_greed, risk, calendar_data=None):
+def _send_weekly_report(weekly, youtube, memory_analysis, prices, fear_greed, risk,
+                        calendar_data=None, sector=None, sector_chart_path=None, pred_summary=None):
     """週次レポートをTelegramに送信"""
     try:
         from src.notify_telegram import send_message, send_photo
@@ -225,6 +254,68 @@ def _send_weekly_report(weekly, youtube, memory_analysis, prices, fear_greed, ri
                 msg3_lines.append(f"🎬 {v['title']}")
         if msg3_lines:
             send_message("\n".join(msg3_lines))
+
+        # メッセージ④：セクターローテーション
+        if sector and sector.get("available"):
+            rot  = sector.get("rotation", {})
+            top3 = sector.get("top3", [])
+            bot3 = sector.get("bottom3", [])
+            ai_c = sector.get("ai_comment", "")[:250]
+
+            top_str = "\n".join(f"  🟢 {s['name']}({s['symbol']}): 日{s['chg_1d']:+.1f}% 週{s['chg_1w']:+.1f}% 月{s['chg_1m']:+.1f}%" for s in top3)
+            bot_str = "\n".join(f"  🔴 {s['name']}({s['symbol']}): 日{s['chg_1d']:+.1f}% 週{s['chg_1w']:+.1f}% 月{s['chg_1m']:+.1f}%" for s in bot3)
+
+            sec_msg_lines = [
+                "🌐 *今週のセクターローテーション*",
+                "━━━━━━━━━━━━━━━",
+                f"📊 フェーズ: {rot.get('phase','---')}",
+                f"{rot.get('label','')}",
+                f"📝 {rot.get('detail','')}",
+                "",
+                "💪 今週強かったセクター",
+                top_str,
+                "",
+                "📉 今週弱かったセクター",
+                bot_str,
+            ]
+            if ai_c:
+                sec_msg_lines += ["", "🤖 AI分析", ai_c]
+
+            if sector_chart_path and os.path.exists(str(sector_chart_path)):
+                send_photo(str(sector_chart_path), caption="\n".join(sec_msg_lines))
+            else:
+                send_message("\n".join(sec_msg_lines))
+
+        # メッセージ⑤：AI予測の週次成績
+        if pred_summary and pred_summary.get("available"):
+            wins   = pred_summary.get("wins", 0)
+            losses = pred_summary.get("losses", 0)
+            total  = wins + losses
+            rate   = round(wins / total * 100) if total > 0 else 0
+            days   = pred_summary.get("days", [])
+
+            trophy = "🏆" if rate >= 70 else "👍" if rate >= 50 else "📚"
+            bar    = "█" * round(rate / 10) + "░" * (10 - round(rate / 10))
+
+            pred_lines = [
+                f"{trophy} *今週のAI予測成績*",
+                "━━━━━━━━━━━━━━━",
+                f"📊 {wins}勝{losses}敗 ({rate}%)",
+                f"`{bar}`",
+                "",
+                "*今週の予測 vs 実際*",
+            ]
+            icons_d = {"bull": "📈", "bear": "📉", "neutral": "➡️"}
+            for d in days:
+                mark = "✅" if d.get("correct") else "❌" if d.get("correct") is False else "⏳"
+                icon = icons_d.get(d.get("direction", ""), "")
+                move = f"{d['move']:+.1f}%" if d.get("move") is not None else "未確定"
+                pred_lines.append(f"  {mark} {d.get('date','')[-5:]} {icon} → {move}")
+
+            if pred_summary.get("comment"):
+                pred_lines += ["", f"💡 {pred_summary['comment']}"]
+
+            send_message("\n".join(pred_lines))
 
         # 来週のカレンダー画像
         if calendar_data and calendar_data.get("available"):

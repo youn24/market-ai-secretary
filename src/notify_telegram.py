@@ -250,7 +250,8 @@ def run(risk, analysis, report_paths, mode,
         technical=None,
         portfolio=None,
         scenario=None,
-        prediction_tracker=None) -> bool:
+        prediction_tracker=None,
+        sector_analysis=None) -> bool:
     if not _is_configured():
         logger.info("Telegram 設定なし。スキップします。")
         return False
@@ -351,7 +352,35 @@ def run(risk, analysis, report_paths, mode,
                 send_message(pt_msg)
                 logger.info("✅ 予測学習レポート送信")
 
-        # ⑧ 週次カレンダー（月曜朝のみ・画像送信）
+        # ⑧ セクター分析チャート
+        if sector_analysis and sector_analysis.get("available"):
+            rot = sector_analysis.get("rotation", {})
+            top3 = sector_analysis.get("top3", [])
+            bot3 = sector_analysis.get("bottom3", [])
+            ai_c = sector_analysis.get("ai_comment", "")[:200]
+
+            top_str = "  ".join(f"{s['name']} {s['chg_1d']:+.1f}%" for s in top3)
+            bot_str = "  ".join(f"{s['name']} {s['chg_1d']:+.1f}%" for s in bot3)
+
+            sec_caption = (
+                f"🌐 *米国セクター分析*\n"
+                f"━━━━━━━━━━━━━━━\n"
+                f"📊 フェーズ: {rot.get('phase','---')}\n"
+                f"{rot.get('label','')}\n\n"
+                f"🟢 強いセクター\n  {top_str}\n"
+                f"🔴 弱いセクター\n  {bot_str}\n"
+            )
+            if ai_c:
+                sec_caption += f"\n🤖 AI分析\n{ai_c}"
+
+            sec_path = chart_paths.get("sector", "") if chart_paths else ""
+            if sec_path and os.path.exists(str(sec_path)):
+                send_photo(str(sec_path), caption=sec_caption)
+            else:
+                send_message(sec_caption)
+            logger.info("✅ セクター分析送信")
+
+        # ⑩ 週次カレンダー（月曜朝のみ・画像送信）
         if weekly_calendar and weekly_calendar.get("available"):
             cal_path = weekly_calendar.get("image_path","")
             if cal_path and os.path.exists(str(cal_path)):

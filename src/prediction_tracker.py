@@ -348,6 +348,61 @@ Fear&Greed: {fear_greed.get('score', 50):.0f} ({fear_greed.get('rating_ja','---'
 
 
 # ──────────────────────────────────────────────────────────────
+# 週次サマリー（weekly_run.pyから使用）
+# ──────────────────────────────────────────────────────────────
+
+def get_week_summary() -> dict:
+    """
+    直近7日間の予測成績をまとめて返す（週次レポート用）
+    """
+    data     = _load()
+    verified = [p for p in data["predictions"] if p.get("verified")]
+
+    cutoff = (get_jst_now() - timedelta(days=7)).strftime("%Y-%m-%d")
+    week   = [p for p in verified if p["date"] >= cutoff]
+
+    if not week:
+        return {"available": False}
+
+    wins   = sum(1 for p in week if p.get("correct"))
+    losses = sum(1 for p in week if p.get("correct") is False)
+    total  = wins + losses
+    rate   = round(wins / total * 100) if total > 0 else 0
+
+    # コメント生成
+    if rate >= 70:
+        comment = "🏆 今週のAIは絶好調！予測が当たり続けています。"
+    elif rate >= 50:
+        comment = "👍 今週は半数以上の予測が的中しました。"
+    elif total < 3:
+        comment = "📊 データ蓄積中。来週以降に精度が上がります。"
+    else:
+        comment = "📚 今週は予測が難しい相場でした。来週に学習が活きます。"
+
+    icons_d = {"bull": "📈", "bear": "📉", "neutral": "➡️"}
+    days = [
+        {
+            "date":      p["date"],
+            "direction": p["direction"],
+            "correct":   p.get("correct"),
+            "move":      p.get("actual_move"),
+            "icon":      icons_d.get(p["direction"], ""),
+        }
+        for p in sorted(week, key=lambda x: x["date"])
+    ]
+
+    return {
+        "available": True,
+        "wins":      wins,
+        "losses":    losses,
+        "total":     total,
+        "rate":      rate,
+        "days":      days,
+        "comment":   comment,
+    }
+
+
+# ──────────────────────────────────────────────────────────────
 # メイン実行
 # ──────────────────────────────────────────────────────────────
 
