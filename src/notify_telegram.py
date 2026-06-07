@@ -263,7 +263,12 @@ def run(risk, analysis, report_paths, mode,
         multi_consensus=None,
         autonomous_plan=None,
         rl_result=None,
-        multimodal=None) -> bool:
+        multimodal=None,
+        self_critique=None,
+        reddit_sentiment=None,
+        earnings_preview=None,
+        market_chain=None,
+        jquants=None) -> bool:
     if not _is_configured():
         logger.info("Telegram 設定なし。スキップします。")
         return False
@@ -561,6 +566,46 @@ def run(risk, analysis, report_paths, mode,
             if msg:
                 send_message(msg)
                 logger.info("✅ 議員取引送信")
+
+        # ㉒ 自己批判エンジン（L5e）
+        if self_critique and self_critique.get("available"):
+            from src.self_critique import format_telegram as fmt_sc
+            msg = fmt_sc(self_critique)
+            if msg:
+                send_message(msg)
+                logger.info("✅ 自己批判送信")
+
+        # ㉓ Reddit感情分析（L5f）
+        if reddit_sentiment and reddit_sentiment.get("available"):
+            from src.reddit_sentiment import format_telegram as fmt_reddit
+            msg = fmt_reddit(reddit_sentiment)
+            if msg:
+                send_message(msg)
+                logger.info("✅ Reddit感情送信")
+
+        # ㉔ 決算前分析（L5g）
+        if earnings_preview and earnings_preview.get("available"):
+            from src.earnings_preview import format_telegram as fmt_ep
+            msg = fmt_ep(earnings_preview)
+            if msg:
+                send_message(msg)
+                logger.info("✅ 決算前分析送信")
+
+        # ㉕ グローバル市場連鎖（L5h）
+        if market_chain and market_chain.get("available"):
+            from src.market_chain import format_telegram as fmt_chain
+            msg = fmt_chain(market_chain)
+            if msg:
+                send_message(msg)
+                logger.info("✅ 市場連鎖送信")
+
+        # ㉖ J-Quants日本株スクリーナー（L5j・月曜のみ）
+        if jquants and jquants.get("available"):
+            from src.jquants_screener import format_telegram as fmt_jq
+            msg = fmt_jq(jquants)
+            if msg:
+                send_message(msg)
+                logger.info("✅ J-Quants送信")
 
         # ⑱ マルチエージェント合議（L5a）
         if multi_consensus and multi_consensus.get("available"):

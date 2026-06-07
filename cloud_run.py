@@ -299,6 +299,69 @@ def run(mode: str):
 
     # ── Level 5 ─────────────────────────────────────────────
 
+    # Step L5e: 自己批判エンジン（過去予測の反省学習）
+    self_critique = {"available": False}
+    try:
+        logger.info("--- Step L5e: 自己批判エンジン ---")
+        from src.self_critique import run as run_sc
+        self_critique = run_sc(prices=prices, risk=risk)
+        if self_critique.get("available"):
+            logger.info(f"✅ 自己批判: 正解率{self_critique.get('accuracy','---')}% 教訓{len(self_critique.get('lessons',[]))}件")
+        else:
+            logger.info(f"自己批判: {self_critique.get('reason','データ不足')}")
+    except Exception:
+        logger.error("自己批判エンジンエラー"); logger.debug(traceback.format_exc())
+
+    # Step L5f: Redditソーシャル感情分析（APIキー不要）
+    reddit_sentiment = {"available": False}
+    try:
+        logger.info("--- Step L5f: Reddit感情分析 ---")
+        from src.reddit_sentiment import run as run_reddit
+        reddit_sentiment = run_reddit()
+        if reddit_sentiment.get("available"):
+            logger.info(f"✅ Reddit: {reddit_sentiment.get('signal','---')} (スコア:{reddit_sentiment.get('sentiment_score',0)})")
+    except Exception:
+        logger.error("Reddit感情分析エラー"); logger.debug(traceback.format_exc())
+
+    # Step L5g: 決算前AI事前分析
+    earnings_preview = {"available": False}
+    try:
+        logger.info("--- Step L5g: 決算前AI分析 ---")
+        from src.earnings_preview import run as run_ep
+        earnings_preview = run_ep()
+        if earnings_preview.get("available"):
+            n = earnings_preview.get("count", 0)
+            msg = f"{n}件の決算" if n > 0 else "今週の主要決算なし"
+            logger.info(f"✅ 決算前分析: {msg}")
+    except Exception:
+        logger.error("決算前分析エラー"); logger.debug(traceback.format_exc())
+
+    # Step L5h: グローバル市場連鎖分析（日経→欧州→米国の連鎖）
+    market_chain = {"available": False}
+    try:
+        logger.info("--- Step L5h: グローバル市場連鎖 ---")
+        from src.market_chain import run as run_mc2
+        market_chain = run_mc2(prices=prices)
+        if market_chain.get("available"):
+            sp_pred = market_chain.get("sp500_prediction", {})
+            logger.info(f"✅ 市場連鎖: S&P500翌日予測={sp_pred.get('direction','---')} ({sp_pred.get('predicted_ret',0):+.2f}%)")
+    except Exception:
+        logger.error("市場連鎖分析エラー"); logger.debug(traceback.format_exc())
+
+    # Step L5j: J-Quants 日本株スクリーナー（月曜のみ）
+    jquants = {"available": False}
+    try:
+        if get_jst_now().weekday() == 0 or mode == "test":
+            logger.info("--- Step L5j: J-Quants日本株スクリーナー ---")
+            from src.jquants_screener import run as run_jq
+            jquants = run_jq()
+            if jquants.get("available"):
+                logger.info(f"✅ J-Quants: {jquants.get('total_stocks',0)}銘柄分析完了")
+        else:
+            logger.info("J-Quants: 月曜以外のためスキップ")
+    except Exception:
+        logger.error("J-Quantsエラー"); logger.debug(traceback.format_exc())
+
     # Step L5a: マルチエージェント合議（4AI多数決）
     multi_consensus = {"available": False}
     try:
@@ -391,6 +454,20 @@ def run(mode: str):
     except Exception:
         logger.error("マルチモーダル分析エラー"); logger.debug(traceback.format_exc())
 
+    # Step L5i: LINE通知（Telegramと並行送信）
+    try:
+        logger.info("--- Step L5i: LINE通知 ---")
+        from src.notify_line import run as run_line
+        run_line(
+            risk, fear_greed, prices, report_paths,
+            ai_summary=ai_summary,
+            chart_paths=chart_paths,
+            multi_consensus=multi_consensus,
+            autonomous_plan=autonomous_plan,
+        )
+    except Exception:
+        logger.error("LINE通知エラー"); logger.debug(traceback.format_exc())
+
     # Step 7: HTMLレポート生成
     report_paths = {}
     try:
@@ -442,7 +519,12 @@ def run(mode: str):
                   multi_consensus=multi_consensus,
                   autonomous_plan=autonomous_plan,
                   rl_result=rl_result,
-                  multimodal=multimodal)
+                  multimodal=multimodal,
+                  self_critique=self_critique,
+                  reddit_sentiment=reddit_sentiment,
+                  earnings_preview=earnings_preview,
+                  market_chain=market_chain,
+                  jquants=jquants)
     except Exception:
         logger.error("Telegram通知エラー"); logger.debug(traceback.format_exc())
 
