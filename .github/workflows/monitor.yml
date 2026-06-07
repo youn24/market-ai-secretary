@@ -26,7 +26,7 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install pandas numpy requests python-dotenv \
-                      PyYAML yfinance google-generativeai
+                      PyYAML yfinance feedparser google-generativeai
 
       - name: 市場監視・急変アラート
         env:
