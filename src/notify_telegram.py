@@ -230,7 +230,11 @@ def run(risk, analysis, report_paths, mode,
         prices=None, news=None,
         fear_greed=None, ai_summary=None,
         chart_paths=None,
-        weekly_calendar=None) -> bool:
+        weekly_calendar=None,
+        agent_report=None,
+        technical=None,
+        portfolio=None,
+        scenario=None) -> bool:
     if not _is_configured():
         logger.info("Telegram 設定なし。スキップします。")
         return False
@@ -261,7 +265,36 @@ def run(risk, analysis, report_paths, mode,
         # ③ レポートURL
         send_message(msgs[2])
 
-        # ④ 週次カレンダー（月曜朝のみ・画像送信）
+        # ④ Level 3: シナリオ分析テキスト
+        if scenario and scenario.get("available"):
+            bull = scenario.get("bull",{}); base = scenario.get("base",{}); bear = scenario.get("bear",{})
+            sc_msg = (
+                "🎭 *3シナリオ分析*\n"
+                "━━━━━━━━━━━━━━━\n"
+                f"🟢 楽観 {bull.get('prob','?')}% — {(bull.get('text','')[:80] or '---')}\n\n"
+                f"🟡 基本 {base.get('prob','?')}% — {(base.get('text','')[:80] or '---')}\n\n"
+                f"🔴 悲観 {bear.get('prob','?')}% — {(bear.get('text','')[:80] or '---')}"
+            )
+            if scenario.get("top_risk"):
+                sc_msg += f"\n\n⚡ *最注目リスク*\n{scenario['top_risk'][:100]}"
+            send_message(sc_msg)
+
+        # ⑤ Level 3: テクニカル分析チャート
+        if technical and technical.get("chart_path") and os.path.exists(str(technical["chart_path"])):
+            ai_c = technical.get("ai_comment","")[:300]
+            send_photo(str(technical["chart_path"]), caption=f"📐 *テクニカル分析*\n{ai_c}")
+
+        # ⑥ Level 3: ポートフォリオ
+        if portfolio and portfolio.get("available") and portfolio.get("chart_path"):
+            if os.path.exists(str(portfolio["chart_path"])):
+                total_pct = portfolio.get("total_pnl_pct",0)
+                arrow = "▲" if total_pct>=0 else "▼"
+                pf_cap = f"💼 *ポートフォリオ損益*\n総損益: {arrow}{abs(total_pct):.2f}%"
+                for a in portfolio.get("alerts",[]):
+                    pf_cap += f"\n{a.get('msg','')}"
+                send_photo(str(portfolio["chart_path"]), caption=pf_cap)
+
+        # ⑧ 週次カレンダー（月曜朝のみ・画像送信）
         if weekly_calendar and weekly_calendar.get("available"):
             cal_path = weekly_calendar.get("image_path","")
             if cal_path and os.path.exists(str(cal_path)):

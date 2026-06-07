@@ -110,6 +110,52 @@ def run(mode: str):
     except Exception:
         logger.error("YouTube要約エラー"); logger.debug(traceback.format_exc())
 
+    # ── Level 3 ─────────────────────────────────────────────
+
+    # Step L3a: 自律AIエージェント
+    agent_report = {"available": False}
+    try:
+        logger.info("--- Step L3a: 自律AIエージェント ---")
+        from src.ai_agent import run_agent
+        agent_report = run_agent(prices, news, risk, fear_greed)
+        if agent_report.get("available"):
+            logger.info(f"✅ エージェント完了 (ツール{agent_report.get('tool_count',0)}回呼び出し)")
+    except Exception:
+        logger.error("エージェントエラー"); logger.debug(traceback.format_exc())
+
+    # Step L3b: テクニカル分析
+    technical = {"available": False}
+    try:
+        logger.info("--- Step L3b: テクニカル分析 ---")
+        from src.technical_ai import run as run_tech
+        technical = run_tech()
+        if technical.get("available"):
+            logger.info("✅ テクニカル分析完了")
+    except Exception:
+        logger.error("テクニカル分析エラー"); logger.debug(traceback.format_exc())
+
+    # Step L3c: ポートフォリオ管理
+    portfolio = {"available": False}
+    try:
+        logger.info("--- Step L3c: ポートフォリオ管理 ---")
+        from src.portfolio import run as run_pf
+        portfolio = run_pf()
+        if portfolio.get("available"):
+            logger.info(f"✅ ポートフォリオ完了 {len(portfolio.get('holdings',[]))}銘柄")
+    except Exception:
+        logger.error("ポートフォリオエラー"); logger.debug(traceback.format_exc())
+
+    # Step L3d: シナリオ分析
+    scenario = {"available": False}
+    try:
+        logger.info("--- Step L3d: シナリオ分析 ---")
+        from src.scenario import run as run_scen
+        scenario = run_scen(prices, risk, fear_greed, news)
+        if scenario.get("available"):
+            logger.info("✅ シナリオ分析完了")
+    except Exception:
+        logger.error("シナリオ分析エラー"); logger.debug(traceback.format_exc())
+
     # Step 5f: 週次カレンダー（月曜朝のみ）
     weekly_calendar = {"available": False}
     try:
@@ -151,7 +197,9 @@ def run(mode: str):
     report_paths = {}
     try:
         logger.info("--- Step 7: HTMLレポート生成 ---")
-        _save_html_report(mode, prices, news, risk, analysis, fear_greed, chart_paths, ai_summary, econ_analysis, youtube_summary, memory_analysis)
+        _save_html_report(mode, prices, news, risk, analysis, fear_greed, chart_paths,
+                          ai_summary, econ_analysis, youtube_summary, memory_analysis,
+                          agent_report, technical, portfolio, scenario)
         today = get_today_str()
         report_paths = {
             "html": str(get_dirs()["reports"] / f"{today}_{mode}.html"),
@@ -165,11 +213,21 @@ def run(mode: str):
     try:
         logger.info("--- Step 8: Telegram通知 ---")
         from src.notify_telegram import run as notify_tg
+        # テクニカル・ポートフォリオチャートを追加
+        if technical.get("chart_path"):
+            chart_paths["technical"] = technical["chart_path"]
+        if portfolio.get("chart_path"):
+            chart_paths["portfolio"] = portfolio["chart_path"]
+
         notify_tg(risk, analysis, report_paths, mode,
                   prices=prices, news=news,
                   fear_greed=fear_greed, ai_summary=ai_summary,
                   chart_paths=chart_paths,
-                  weekly_calendar=weekly_calendar)
+                  weekly_calendar=weekly_calendar,
+                  agent_report=agent_report,
+                  technical=technical,
+                  portfolio=portfolio,
+                  scenario=scenario)
     except Exception:
         logger.error("Telegram通知エラー"); logger.debug(traceback.format_exc())
 
@@ -179,7 +237,10 @@ def run(mode: str):
           f"ニュース: {len(news)}件 | チャート: {len(chart_paths)}件")
 
 
-def _save_html_report(mode, prices, news, risk, analysis, fear_greed, chart_paths, ai_summary=None, econ_analysis=None, youtube_summary=None, memory_analysis=""):
+def _save_html_report(mode, prices, news, risk, analysis, fear_greed, chart_paths,
+                      ai_summary=None, econ_analysis=None, youtube_summary=None,
+                      memory_analysis="", agent_report=None, technical=None,
+                      portfolio=None, scenario=None):
     """初心者でもわかる見やすいダッシュボードHTMLを保存"""
     import base64
     today = get_today_str()
@@ -309,6 +370,85 @@ def _save_html_report(mode, prices, news, risk, analysis, fear_greed, chart_path
         for icon, lbl, txt in rows:
             if txt:
                 econ_html += f'<div class="econ-row"><span class="econ-icon">{icon}</span><div><div class="econ-lbl">{lbl}</div><div class="econ-txt">{txt}</div></div></div>'
+
+    # ── Level 3: 自律AIエージェントHTML ──────────────────────
+    agent_report = agent_report or {}
+    agent_html = ""
+    if agent_report.get("available"):
+        secs = agent_report.get("sections", {})
+        full = agent_report.get("full_report","")
+        tc   = agent_report.get("tool_count", 0)
+        agent_html += f'<div class="debate-intro">🤖 AIエージェントが<strong>{tc}回</strong>ツールを自律呼び出しして分析しました</div>'
+        if secs.get("summary"):
+            agent_html += f'<div class="bubble" style="border-left:4px solid #00d4ff;background:linear-gradient(135deg,#071520,#0a1f2e);"><div class="bubble-head" style="color:#00d4ff;">📋 エージェント総評</div><div class="bubble-text">{secs["summary"]}</div></div>'
+        if secs.get("technical"):
+            agent_html += f'<div class="bubble" style="border-left:4px solid #f0c060;background:linear-gradient(135deg,#1a1500,#231c00);"><div class="bubble-head" style="color:#f0c060;">📐 テクニカル分析</div><div class="bubble-text">{secs["technical"]}</div></div>'
+        if secs.get("scenario"):
+            agent_html += f'<div class="bubble" style="border-left:4px solid #bc8cff;background:linear-gradient(135deg,#100a20,#18102e);"><div class="bubble-head" style="color:#bc8cff;">🎭 シナリオ考察</div><div class="bubble-text">{secs["scenario"]}</div></div>'
+        if secs.get("judgment"):
+            agent_html += f'<div class="bubble" style="border-left:4px solid #3fb950;background:linear-gradient(135deg,#0a1f10,#0d2b18);"><div class="bubble-head" style="color:#3fb950;">⚡ 最終判断</div><div class="bubble-text">{secs["judgment"]}</div></div>'
+
+    # ── Level 3: テクニカル分析HTML ────────────────────────
+    technical = technical or {}
+    tech_html = ""
+    if technical.get("available"):
+        ai_comment = technical.get("ai_comment","")
+        if ai_comment:
+            tech_html += f'<div class="debate-intro">{ai_comment}</div>'
+        for r in technical.get("results",[]):
+            if "error" in r: continue
+            label   = r.get("label", r.get("symbol",""))
+            rsi     = r.get("rsi", 50)
+            rsi_sig = r.get("rsi_signal","")
+            bb_pct  = r.get("bb_pct", 50)
+            bb_sig  = r.get("bb_signal","")
+            macd_h  = r.get("macd_hist",0)
+            trend   = r.get("trend","")
+            rsi_c   = "#f44336" if rsi>70 else "#3fb950" if rsi<30 else "#ffd740"
+            bb_c    = "#f44336" if bb_pct>80 else "#3fb950" if bb_pct<20 else "#ffd740"
+            macd_c  = "#3fb950" if macd_h>=0 else "#f44336"
+            tech_html += f'''<div class="econ-row">
+              <div class="econ-icon">📐</div>
+              <div style="flex:1">
+                <div class="econ-lbl">{label}</div>
+                <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:4px;">
+                  <span style="color:{rsi_c};font-size:0.85em;">RSI:{rsi:.0f} {rsi_sig}</span>
+                  <span style="color:{bb_c};font-size:0.85em;">BB:{bb_pct:.0f}% {bb_sig}</span>
+                  <span style="color:{macd_c};font-size:0.85em;">MACD:{macd_h:+.3f}</span>
+                  <span style="color:#8899aa;font-size:0.85em;">{trend}</span>
+                </div>
+              </div>
+            </div>'''
+
+    # ── Level 3: ポートフォリオHTML ────────────────────────
+    portfolio = portfolio or {}
+    pf_html = ""
+    if portfolio.get("available"):
+        total_pct = portfolio.get("total_pnl_pct",0)
+        total_pnl = portfolio.get("total_pnl",0)
+        tc = "#3fb950" if total_pct>=0 else "#f44336"
+        pf_html += f'<div style="text-align:center;font-size:1.3em;font-weight:800;color:{tc};margin-bottom:12px;">{"▲" if total_pct>=0 else "▼"}{abs(total_pct):.2f}%  ({total_pnl:+,.0f}円)</div>'
+        for h in portfolio.get("holdings",[]):
+            pct = h.get("pnl_pct") or 0
+            pc  = "#3fb950" if pct>=0 else "#f44336"
+            pf_html += f'<div class="econ-row"><div class="econ-icon">{"📈" if pct>=0 else "📉"}</div><div><div class="econ-lbl">{h.get("name",h.get("symbol",""))}</div><div style="color:{pc};font-weight:700;">{pct:+.2f}% ({h.get("pnl",0):+,.0f}円)</div><div style="color:#8899aa;font-size:0.75em;">取得:{h.get("buy_price",0):,.2f} → 現在:{h.get("current",0):,.2f}</div></div></div>'
+        for alert in portfolio.get("alerts",[]):
+            pf_html += f'<div style="background:#2a0a0a;border:1px solid #f44336;border-radius:8px;padding:10px;margin-top:8px;color:#f44336;">{alert.get("msg","")}</div>'
+
+    # ── Level 3: シナリオHTML ──────────────────────────────
+    scenario = scenario or {}
+    scen_html = ""
+    if scenario.get("available"):
+        def scen_card(data, icon, color, bg):
+            if not data: return ""
+            prob = data.get("prob","?")
+            text = data.get("text","")[:300]
+            return f'<div class="bubble" style="border-left:4px solid {color};background:{bg};"><div class="bubble-head" style="color:{color};">{icon} 確率 {prob}%</div><div class="bubble-text">{text}</div></div>'
+        scen_html += scen_card(scenario.get("bull",{}), "🟢 楽観シナリオ（強気）", "#3fb950", "linear-gradient(135deg,#0a1f10,#0d2b18)")
+        scen_html += scen_card(scenario.get("base",{}), "🟡 基本シナリオ（中立）", "#ffd740", "linear-gradient(135deg,#1f1a00,#2b2400)")
+        scen_html += scen_card(scenario.get("bear",{}), "🔴 悲観シナリオ（弱気）", "#f44336", "linear-gradient(135deg,#200a0a,#2b0d0d)")
+        if scenario.get("top_risk"):
+            scen_html += f'<div style="background:#1a0f00;border:1px solid #ff9800;border-radius:12px;padding:14px;margin-top:8px;"><div style="color:#ff9800;font-weight:700;margin-bottom:6px;">⚡ 最注目リスク</div><div>{scenario["top_risk"]}</div></div>'
 
     # ── YouTube HTML ──────────────────────────────────────
     yt_html = ""
@@ -705,6 +845,20 @@ a:hover{{text-decoration:underline;}}
     {big_card("₿","ビットコイン","BTC-USD","$","仮想通貨の代表格")}
     {big_card("🪙","イーサリアム","ETH-USD","$","仮想通貨2位")}
   </div>
+
+  <!-- Level 3: 自律AIエージェント -->
+  {f'<div class="sec-head">🤖 Level 3 自律AIエージェント分析</div><div class="debate-wrap">{agent_html}</div>' if agent_html else ""}
+
+  <!-- Level 3: シナリオ分析 -->
+  {f'<div class="sec-head">🎭 3シナリオ分析（楽観・基本・悲観）</div><div class="debate-wrap">{scen_html}</div>' if scen_html else ""}
+
+  <!-- Level 3: テクニカル分析 -->
+  {f'<div class="sec-head">📐 テクニカル分析（RSI・MACD・ボリンジャー）</div><div class="econ-wrap">{tech_html}</div>' if tech_html else ""}
+  {(f'<img src="data:image/png;base64,{__import__("base64").b64encode(open(technical["chart_path"],"rb").read()).decode()}" class="chart-img">') if technical and technical.get("chart_path") and Path(technical["chart_path"]).exists() else ""}
+
+  <!-- Level 3: ポートフォリオ -->
+  {f'<div class="sec-head">💼 ポートフォリオ損益管理</div><div class="econ-wrap">{pf_html}</div>' if pf_html else ""}
+  {(f'<img src="data:image/png;base64,{__import__("base64").b64encode(open(portfolio["chart_path"],"rb").read()).decode()}" class="chart-img">') if portfolio and portfolio.get("chart_path") and Path(portfolio["chart_path"]).exists() else ""}
 
   <!-- AI議論分析 -->
   <div class="sec-head">🤖 AIが多角的に分析（強気・弱気・中立の3視点）</div>
