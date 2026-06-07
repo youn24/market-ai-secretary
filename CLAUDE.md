@@ -218,6 +218,26 @@ python -c "from src.prediction_tracker import calc_accuracy; print(calc_accuracy
 
 ---
 
+## 🔌 MCPサーバー（コネクタ）
+
+設定ファイル: `.mcp.json`（プロジェクトルート）
+
+| MCP | 役割 | 使うコマンド |
+|-----|------|------------|
+| **github** | GitHub Actionsのログ・ワークフロー・コミット履歴を直接参照 | `/check-actions` |
+| **brave-search** | 最新の市場ニュース・経済指標をリアルタイム検索 | `/market-news`, `/research` |
+
+### セットアップ方法
+1. `.mcp.json` の `YOUR_GITHUB_PAT_HERE` を実際のGitHub Personal Access Tokenに書き換え
+2. `.mcp.json` の `YOUR_BRAVE_API_KEY_HERE` を実際のBrave Search APIキーに書き換え
+3. Claude Codeで `/mcp` コマンドを実行して接続確認
+
+### トークン取得先
+- GitHub PAT: https://github.com/settings/tokens → `repo` + `workflow` 権限
+- Brave Search API: https://brave.com/search/api/ → 無料枠2000回/月
+
+---
+
 ## 🔧 Python環境
 
 - **ローカル**: Python 3.14.5（Windows）
