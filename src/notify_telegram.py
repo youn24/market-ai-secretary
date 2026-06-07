@@ -229,7 +229,8 @@ def send_document(file_path: str, caption: str = "") -> bool:
 def run(risk, analysis, report_paths, mode,
         prices=None, news=None,
         fear_greed=None, ai_summary=None,
-        chart_paths=None) -> bool:
+        chart_paths=None,
+        weekly_calendar=None) -> bool:
     if not _is_configured():
         logger.info("Telegram 設定なし。スキップします。")
         return False
@@ -260,7 +261,25 @@ def run(risk, analysis, report_paths, mode,
         # ③ レポートURL
         send_message(msgs[2])
 
-        logger.info("✅ Telegram 3通送信完了")
+        # ④ 週次カレンダー（月曜朝のみ・画像送信）
+        if weekly_calendar and weekly_calendar.get("available"):
+            cal_path = weekly_calendar.get("image_path","")
+            if cal_path and os.path.exists(str(cal_path)):
+                n_events = len(weekly_calendar.get("events",[]))
+                w_start  = weekly_calendar.get("week_start","")
+                w_end    = weekly_calendar.get("week_end","")
+                caption  = (
+                    f"📅 *今週の注目イベントスケジュール*\n"
+                    f"━━━━━━━━━━━━━━━\n"
+                    f"📆 {w_start} 〜 {w_end}\n"
+                    f"📋 全{n_events}件のイベントを掲載\n\n"
+                    f"🔴 赤＝超重要  🟠 橙＝注目  🟣 紫＝決算\n"
+                    f"⏰ 時刻はすべて日本時間の目安です"
+                )
+                send_photo(str(cal_path), caption=caption)
+                logger.info("✅ 週次カレンダー画像送信完了")
+
+        logger.info("✅ Telegram 送信完了")
         return True
 
     except Exception as e:

@@ -110,6 +110,22 @@ def run(mode: str):
     except Exception:
         logger.error("YouTube要約エラー"); logger.debug(traceback.format_exc())
 
+    # Step 5f: 週次カレンダー（月曜朝のみ）
+    weekly_calendar = {"available": False}
+    try:
+        from src.utils import get_jst_now
+        weekday = get_jst_now().weekday()   # 0=月曜
+        if weekday == 0 or mode == "test":
+            logger.info("--- Step 5f: 週次カレンダー生成 ---")
+            from src.economic_calendar import run as run_cal
+            weekly_calendar = run_cal()
+            if weekly_calendar.get("available"):
+                logger.info("✅ 週次カレンダー生成完了")
+        else:
+            logger.info("週次カレンダー: 月曜以外のためスキップ")
+    except Exception:
+        logger.error("週次カレンダーエラー"); logger.debug(traceback.format_exc())
+
     # Step 5e: AI記憶更新・分析
     memory_analysis = ""
     try:
@@ -152,7 +168,8 @@ def run(mode: str):
         notify_tg(risk, analysis, report_paths, mode,
                   prices=prices, news=news,
                   fear_greed=fear_greed, ai_summary=ai_summary,
-                  chart_paths=chart_paths)
+                  chart_paths=chart_paths,
+                  weekly_calendar=weekly_calendar)
     except Exception:
         logger.error("Telegram通知エラー"); logger.debug(traceback.format_exc())
 

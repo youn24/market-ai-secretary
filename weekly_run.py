@@ -2,6 +2,7 @@
 週次レポート（毎週日曜日に自動実行）
 1週間の振り返り・AI分析・来週の見通し
 """
+import os
 import sys
 import json
 import traceback
@@ -61,8 +62,16 @@ def run():
     except Exception:
         memory_analysis = ""
 
+    # 来週のカレンダー生成
+    calendar_data = {}
+    try:
+        from src.economic_calendar import run as run_cal
+        calendar_data = run_cal()
+    except Exception:
+        logger.error("カレンダー生成エラー")
+
     # Telegram送信
-    _send_weekly_report(weekly_analysis, youtube, memory_analysis, prices, fear_greed, risk)
+    _send_weekly_report(weekly_analysis, youtube, memory_analysis, prices, fear_greed, risk, calendar_data)
 
     logger.info("====== 週次レポート完了 ======")
 
@@ -157,7 +166,7 @@ Fear&Greed: {fear_greed.get('score','---')} ({fear_greed.get('rating_ja','---')}
         return {"available": False}
 
 
-def _send_weekly_report(weekly, youtube, memory_analysis, prices, fear_greed, risk):
+def _send_weekly_report(weekly, youtube, memory_analysis, prices, fear_greed, risk, calendar_data=None):
     """週次レポートをTelegramに送信"""
     try:
         from src.notify_telegram import send_message, send_photo
@@ -216,6 +225,19 @@ def _send_weekly_report(weekly, youtube, memory_analysis, prices, fear_greed, ri
                 msg3_lines.append(f"🎬 {v['title']}")
         if msg3_lines:
             send_message("\n".join(msg3_lines))
+
+        # 来週のカレンダー画像
+        if calendar_data and calendar_data.get("available"):
+            cal_path = calendar_data.get("image_path","")
+            if cal_path and os.path.exists(str(cal_path)):
+                n = len(calendar_data.get("events",[]))
+                send_photo(str(cal_path), caption=(
+                    f"📅 *来週のイベントスケジュール*\n"
+                    f"━━━━━━━━━━━━━━━\n"
+                    f"📋 全{n}件掲載\n"
+                    f"🔴 赤=重要  🟠 橙=注目  🟣 紫=決算\n"
+                    f"⏰ 時刻は日本時間・目安です"
+                ))
 
         logger.info("✅ 週次レポートTelegram送信完了")
 
