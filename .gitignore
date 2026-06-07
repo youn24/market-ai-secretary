@@ -1,5 +1,9 @@
-.env 
-__pycache__/ 
-data/ 
-reports/charts/ 
-logs/ 
+.env
+__pycache__/
+# data/ は基本除外するが、学習データ(predictions.json)と記憶データは永続化のためGit管理
+data/*
+!data/predictions.json
+!data/ai_memory.json
+!data/portfolio.json
+reports/charts/
+logs/

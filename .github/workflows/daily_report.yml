@@ -50,6 +50,17 @@ jobs:
         run: |
           python cloud_run.py --mode morning
 
+      - name: 予測学習データをmainブランチに保存（永続化）
+        run: |
+          git config --global user.email "actions@github.com"
+          git config --global user.name "GitHub Actions Bot"
+          # data/predictions.json があればコミットして永続化
+          if [ -f data/predictions.json ]; then
+            git add data/predictions.json
+            git diff --staged --quiet || git commit -m "🧠 予測学習データ更新 $(date '+%Y-%m-%d')"
+            git push origin main || true
+          fi
+
       - name: レポートをgh-pagesに公開
         run: |
           git config --global user.email "actions@github.com"

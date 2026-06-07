@@ -156,6 +156,19 @@ def run(mode: str):
     except Exception:
         logger.error("シナリオ分析エラー"); logger.debug(traceback.format_exc())
 
+    # Step L3e: 予測トラッカー（自己学習・正解率記録）
+    prediction_tracker = {"available": False}
+    try:
+        logger.info("--- Step L3e: 予測トラッカー（自己学習） ---")
+        from src.prediction_tracker import run as run_pt
+        prediction_tracker = run_pt(prices, risk, fear_greed, news, ai_summary, scenario)
+        if prediction_tracker.get("available"):
+            stats = prediction_tracker.get("stats", {})
+            r10 = stats.get("10d", {}).get("rate")
+            logger.info(f"✅ 予測トラッカー完了 (直近10日正解率:{r10}%)")
+    except Exception:
+        logger.error("予測トラッカーエラー"); logger.debug(traceback.format_exc())
+
     # Step 5f: 週次カレンダー（月曜朝のみ）
     weekly_calendar = {"available": False}
     try:
@@ -198,7 +211,7 @@ def run(mode: str):
         logger.info("--- Step 7: HTMLレポート生成 ---")
         _save_html_report(mode, prices, news, risk, analysis, fear_greed, chart_paths,
                           ai_summary, econ_analysis, youtube_summary, memory_analysis,
-                          agent_report, technical, portfolio, scenario)
+                          agent_report, technical, portfolio, scenario, prediction_tracker)
         today = get_today_str()
         report_paths = {
             "html": str(get_dirs()["reports"] / f"{today}_{mode}.html"),
@@ -226,7 +239,8 @@ def run(mode: str):
                   agent_report=agent_report,
                   technical=technical,
                   portfolio=portfolio,
-                  scenario=scenario)
+                  scenario=scenario,
+                  prediction_tracker=prediction_tracker)
     except Exception:
         logger.error("Telegram通知エラー"); logger.debug(traceback.format_exc())
 
@@ -239,7 +253,7 @@ def run(mode: str):
 def _save_html_report(mode, prices, news, risk, analysis, fear_greed, chart_paths,
                       ai_summary=None, econ_analysis=None, youtube_summary=None,
                       memory_analysis="", agent_report=None, technical=None,
-                      portfolio=None, scenario=None):
+                      portfolio=None, scenario=None, prediction_tracker=None):
     """初心者でもわかる見やすいダッシュボードHTMLを保存"""
     import base64
     today = get_today_str()
@@ -448,6 +462,53 @@ def _save_html_report(mode, prices, news, risk, analysis, fear_greed, chart_path
         scen_html += scen_card(scenario.get("bear",{}), "🔴 悲観シナリオ（弱気）", "#f44336", "linear-gradient(135deg,#200a0a,#2b0d0d)")
         if scenario.get("top_risk"):
             scen_html += f'<div style="background:#1a0f00;border:1px solid #ff9800;border-radius:12px;padding:14px;margin-top:8px;"><div style="color:#ff9800;font-weight:700;margin-bottom:6px;">⚡ 最注目リスク</div><div>{scenario["top_risk"]}</div></div>'
+
+    # ── Level 3: 予測学習・精度HTML ────────────────────────
+    prediction_tracker = prediction_tracker or {}
+    pred_html = ""
+    if prediction_tracker.get("available"):
+        stats  = prediction_tracker.get("stats", {})
+        r10    = stats.get("10d", {})
+        r30    = stats.get("30d", {})
+        recent = stats.get("recent5", [])
+        la     = prediction_tracker.get("learning_analysis", "")
+
+        # 正解率バー
+        rate10 = r10.get("rate")
+        if rate10 is not None:
+            bar_color = "#3fb950" if rate10 >= 65 else "#ffd740" if rate10 >= 50 else "#f44336"
+            bar_emoji = "🎯" if rate10 >= 65 else "🔶" if rate10 >= 50 else "⚠️"
+            pred_html += f'''
+            <div style="margin-bottom:16px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                <span style="font-weight:700;font-size:0.9em;">{bar_emoji} 直近10日の正解率</span>
+                <span style="font-size:1.5em;font-weight:900;color:{bar_color};">{rate10}%</span>
+              </div>
+              <div style="background:#1e2d42;border-radius:8px;height:16px;overflow:hidden;">
+                <div style="height:100%;background:{bar_color};border-radius:8px;width:{rate10}%;transition:width 0.8s;"></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:0.68em;color:#7a8fa8;margin-top:4px;">
+                <span>正解: {r10.get("correct",0)}/{r10.get("total",0)}日</span>
+                <span>{'精度良好 ✅' if rate10>=65 else '普通 🔶' if rate10>=50 else '要改善 ⚠️'}</span>
+              </div>
+            </div>'''
+
+        # 直近5日カード
+        if recent:
+            pred_html += '<div style="margin-bottom:12px;"><div style="font-size:0.75em;color:#7a8fa8;font-weight:700;margin-bottom:8px;letter-spacing:1px;">📅 直近の予測と結果</div>'
+            pred_html += '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;">'
+            icons = {"bull": "📈", "bear": "📉", "neutral": "➡️"}
+            for r in recent:
+                mark  = "✅" if r.get("correct") else "❌" if r.get("correct") is False else "⏳"
+                icon  = icons.get(r.get("direction",""), "")
+                move  = f"{r['move']:+.1f}%" if r.get("move") is not None else "---"
+                color = "#3fb950" if r.get("correct") else "#f44336" if r.get("correct") is False else "#8899aa"
+                pred_html += f'<div style="background:#0f1623;border:1px solid {color}44;border-radius:10px;padding:8px;text-align:center;"><div style="font-size:1.1em;">{mark}</div><div style="font-size:0.6em;color:#7a8fa8;">{r.get("date","")[-5:]}</div><div style="font-size:0.7em;">{icon}</div><div style="font-size:0.7em;color:{color};font-weight:700;">{move}</div></div>'
+            pred_html += '</div></div>'
+
+        # 学習フィードバック分析
+        if la:
+            pred_html += f'<div style="background:linear-gradient(135deg,#070f1f,#0a1428);border:1px solid #00d4ff33;border-radius:12px;padding:14px;margin-top:8px;"><div style="color:#00d4ff;font-weight:700;font-size:0.8em;margin-bottom:8px;">🧠 AIの自己分析（過去の結果を踏まえて）</div><div style="font-size:0.85em;line-height:1.75;white-space:pre-wrap;">{la}</div></div>'
 
     # ── YouTube HTML ──────────────────────────────────────
     yt_html = ""
@@ -875,6 +936,9 @@ a:hover{{text-decoration:underline;}}
 
   <!-- AI記憶分析 -->
   {f'<div class="sec-head">🧠 AI記憶：過去との比較</div><div class="memory-box"><div class="memory-text">{memory_analysis}</div></div>' if memory_analysis else ""}
+
+  <!-- 予測学習・精度トラッカー -->
+  {f'<div class="sec-head">🧠 AI予測学習レポート（正解率・精度向上）</div><div class="econ-wrap">{pred_html}</div>' if pred_html else ""}
 
   <!-- YouTube -->
   {f'<div class="sec-head">📺 YouTube注目動画まとめ</div><div class="yt-wrap">{yt_html}</div>' if yt_html else ""}

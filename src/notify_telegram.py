@@ -249,7 +249,8 @@ def run(risk, analysis, report_paths, mode,
         agent_report=None,
         technical=None,
         portfolio=None,
-        scenario=None) -> bool:
+        scenario=None,
+        prediction_tracker=None) -> bool:
     if not _is_configured():
         logger.info("Telegram 設定なし。スキップします。")
         return False
@@ -308,6 +309,47 @@ def run(risk, analysis, report_paths, mode,
                 for a in portfolio.get("alerts",[]):
                     pf_cap += f"\n{a.get('msg','')}"
                 send_photo(str(portfolio["chart_path"]), caption=pf_cap)
+
+        # ⑦ 予測学習レポート（蓄積3件以上の場合のみ）
+        if prediction_tracker and prediction_tracker.get("available"):
+            stats = prediction_tracker.get("stats", {})
+            r10   = stats.get("10d", {})
+            rate  = r10.get("rate")
+            total = stats.get("total_verified", 0)
+            if total >= 3 and rate is not None:
+                # 正解率バー（テキスト）
+                filled = round(rate / 10)
+                bar    = "█" * filled + "░" * (10 - filled)
+                bar_emoji = "🎯" if rate >= 65 else "🔶" if rate >= 50 else "⚠️"
+                # 直近5日
+                recent_lines = []
+                icons_d = {"bull":"📈","bear":"📉","neutral":"➡️"}
+                for r in stats.get("recent5", []):
+                    mark = "✅" if r.get("correct") else "❌" if r.get("correct") is False else "⏳"
+                    icon = icons_d.get(r.get("direction",""),"")
+                    move = f"{r['move']:+.1f}%" if r.get("move") is not None else ""
+                    recent_lines.append(f"  {mark} {r.get('date','')[-5:]} {icon} → {move}")
+
+                pt_msg = (
+                    f"🧠 *AI予測学習レポート*\n"
+                    f"━━━━━━━━━━━━━━━\n"
+                    f"{bar_emoji} 直近10日の正解率\n"
+                    f"`{bar}` {rate}%\n"
+                    f"({r10.get('correct',0)}/{r10.get('total',0)}日正解)\n"
+                )
+                if stats.get("10d",{}).get("bull_acc") is not None:
+                    pt_msg += f"  📈 強気予測: {stats['10d']['bull_acc']}%  "
+                if stats.get("10d",{}).get("bear_acc") is not None:
+                    pt_msg += f"📉 弱気予測: {stats['10d']['bear_acc']}%\n"
+                if recent_lines:
+                    pt_msg += "\n*直近の結果*\n" + "\n".join(recent_lines)
+                # 今日の予測
+                today_pred = prediction_tracker.get("today_prediction", {})
+                if today_pred:
+                    dir_icon = {"bull":"📈 強気（上昇)","bear":"📉 弱気（下落）","neutral":"➡️ 中立（横ばい）"}.get(today_pred.get("direction","neutral"),"")
+                    pt_msg += f"\n\n*今日のAI予測:* {dir_icon}\n（明日の結果で検証します）"
+                send_message(pt_msg)
+                logger.info("✅ 予測学習レポート送信")
 
         # ⑧ 週次カレンダー（月曜朝のみ・画像送信）
         if weekly_calendar and weekly_calendar.get("available"):
