@@ -252,7 +252,11 @@ def run(risk, analysis, report_paths, mode,
         portfolio=None,
         scenario=None,
         prediction_tracker=None,
-        sector_analysis=None) -> bool:
+        sector_analysis=None,
+        fred_data=None,
+        correlation=None,
+        backtest=None,
+        sentiment_data=None) -> bool:
     if not _is_configured():
         logger.info("Telegram 設定なし。スキップします。")
         return False
@@ -415,7 +419,83 @@ def run(risk, analysis, report_paths, mode,
             send_message("\n".join(hist_lines))
             logger.info("✅ 歴史分析送信")
 
-        # ⑩ 週次カレンダー（月曜朝のみ・画像送信）
+        # ⑩ FRED経済指標
+        if fred_data and fred_data.get("available"):
+            from src.fred_data import format_telegram as fmt_fred
+            msg = fmt_telegram_fred = fmt_fred(fred_data)
+            if msg:
+                send_message(msg)
+                logger.info("✅ FRED指標送信")
+
+        # ⑪ センチメント複合データ（P/C比率・AAII）
+        if sentiment_data and sentiment_data.get("available"):
+            pc = sentiment_data.get("put_call", {})
+            overall = sentiment_data.get("overall_signal", "")
+            lines = [
+                "📊 *市場センチメント*",
+                "━━━━━━━━━━━━━━━",
+                f"総合: {overall}",
+            ]
+            if pc.get("available") and pc.get("value"):
+                lines.append(f"📉 P/C比率: {pc['value']:.2f} {pc.get('signal','')}")
+            aaii = sentiment_data.get("aaii", {})
+            if aaii.get("available"):
+                lines.append(
+                    f"👥 AAII個人投資家: 強気{aaii.get('bullish',0):.0f}%"
+                    f" / 弱気{aaii.get('bearish',0):.0f}%"
+                )
+                if aaii.get("note"):
+                    lines.append(f"   {aaii['note']}")
+            send_message("\n".join(lines))
+            logger.info("✅ センチメント送信")
+
+        # ⑫ 相関分析チャート
+        if correlation and correlation.get("available"):
+            key = correlation.get("key", {})
+            insights = correlation.get("insights", [])
+            cap_lines = [
+                "🔗 *資産間 相関分析*（2年）",
+                "━━━━━━━━━━━━━━━",
+            ]
+            if key.get("nikkei_usdjpy") is not None:
+                r = key["nikkei_usdjpy"]
+                cap_lines.append(f"日経↔ドル円: r={r:.2f} {'（強い連動）' if abs(r)>0.6 else '（中程度）'}")
+            if key.get("nikkei_sp500") is not None:
+                r = key["nikkei_sp500"]
+                cap_lines.append(f"日経↔S&P500: r={r:.2f} {'（強い連動）' if abs(r)>0.6 else '（中程度）'}")
+            top_insight = next((i for i in insights if i.get("comment")), None)
+            if top_insight:
+                cap_lines.append(f"\n💡 {top_insight['comment']}")
+            corr_path = chart_paths.get("correlation", "") if chart_paths else ""
+            if corr_path and os.path.exists(str(corr_path)):
+                send_photo(str(corr_path), caption="\n".join(cap_lines))
+            else:
+                send_message("\n".join(cap_lines))
+            logger.info("✅ 相関分析送信")
+
+        # ⑬ バックテスト（月曜のみ）
+        if backtest and backtest.get("available"):
+            strategies = backtest.get("strategies", [])
+            bt_lines = [
+                "📐 *バックテスト結果*（S&P500 20年）",
+                "━━━━━━━━━━━━━━━",
+                f"🏆 最良戦略: {backtest.get('best_strategy','')}",
+                "",
+            ]
+            for s in strategies:
+                icon = "🥇" if s["name"] == backtest.get("best_strategy") else "•"
+                bt_lines.append(
+                    f"{icon} {s['name']}: CAGR {s['cagr']:.1f}%"
+                    f" (BH:{s['bnh_cagr']:.1f}%) MaxDD{s['max_drawdown']:.1f}%"
+                )
+            bt_path = chart_paths.get("backtest", "") if chart_paths else ""
+            if bt_path and os.path.exists(str(bt_path)):
+                send_photo(str(bt_path), caption="\n".join(bt_lines))
+            else:
+                send_message("\n".join(bt_lines))
+            logger.info("✅ バックテスト送信")
+
+        # ⑭ 週次カレンダー（月曜朝のみ・画像送信）
         if weekly_calendar and weekly_calendar.get("available"):
             cal_path = weekly_calendar.get("image_path","")
             if cal_path and os.path.exists(str(cal_path)):

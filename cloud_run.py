@@ -204,6 +204,60 @@ def run(mode: str):
     except Exception:
         logger.error("歴史分析エラー"); logger.debug(traceback.format_exc())
 
+    # Step L4c: FRED経済指標
+    fred_data = {"available": False}
+    try:
+        logger.info("--- Step L4c: FRED経済指標 ---")
+        from src.fred_data import run as run_fred
+        fred_data = run_fred()
+        if fred_data.get("available"):
+            logger.info(f"✅ FRED取得完了: {fred_data.get('summary','')}")
+    except Exception:
+        logger.error("FRED取得エラー"); logger.debug(traceback.format_exc())
+
+    # Step L4d: 資産間相関分析
+    correlation = {"available": False}
+    try:
+        logger.info("--- Step L4d: 相関分析 ---")
+        from src.correlation_analysis import run as run_corr
+        correlation = run_corr()
+        if correlation.get("available"):
+            k = correlation.get("key", {})
+            logger.info(f"✅ 相関分析完了: 日経-ドル円r={k.get('nikkei_usdjpy','---')}")
+    except Exception:
+        logger.error("相関分析エラー"); logger.debug(traceback.format_exc())
+
+    # Step L4e: バックテスト（週1回：月曜のみ）
+    backtest = {"available": False}
+    try:
+        weekday_now = get_jst_now().weekday()
+        if weekday_now == 0 or mode == "test":
+            logger.info("--- Step L4e: バックテスト ---")
+            from src.backtest import run as run_bt
+            backtest = run_bt()
+            if backtest.get("available"):
+                logger.info(f"✅ バックテスト完了: 最良={backtest.get('best_strategy','---')}")
+        else:
+            logger.info("バックテスト: 月曜以外のためスキップ")
+    except Exception:
+        logger.error("バックテストエラー"); logger.debug(traceback.format_exc())
+
+    # Step L4f: センチメントデータ（P/C比率・AAII・COT）
+    sentiment_data = {"available": False}
+    try:
+        logger.info("--- Step L4f: センチメントデータ ---")
+        from src.sentiment_data import run as run_sent
+        sentiment_data = run_sent()
+        if sentiment_data.get("available"):
+            logger.info(f"✅ センチメント: {sentiment_data.get('overall_signal','---')}")
+    except Exception:
+        logger.error("センチメントエラー"); logger.debug(traceback.format_exc())
+
+    if correlation.get("chart_path"):
+        chart_paths["correlation"] = correlation["chart_path"]
+    if backtest.get("chart_path"):
+        chart_paths["backtest"] = backtest["chart_path"]
+
     # Step 5f: 週次カレンダー（月曜朝のみ）
     weekly_calendar = {"available": False}
     try:
@@ -280,7 +334,11 @@ def run(mode: str):
                   scenario=scenario,
                   prediction_tracker=prediction_tracker,
                   sector_analysis=sector_analysis,
-                  historical_analysis=historical_analysis)
+                  historical_analysis=historical_analysis,
+                  fred_data=fred_data,
+                  correlation=correlation,
+                  backtest=backtest,
+                  sentiment_data=sentiment_data)
     except Exception:
         logger.error("Telegram通知エラー"); logger.debug(traceback.format_exc())
 
