@@ -57,6 +57,7 @@ cloud_run.py（メインスクリプト）
 | `cloud_run.py` | GitHub Actions用メイン実行スクリプト |
 | `weekly_run.py` | 日曜週次レポート用スクリプト |
 | `monitor_run.py` | 15分ごと急変アラート用スクリプト |
+| `fx_noon_run.py` | FX午後レポート（14:00 JST）実行スクリプト |
 
 ### srcモジュール（各Stepの実体）
 | ファイル | 役割 |
@@ -76,6 +77,7 @@ cloud_run.py（メインスクリプト）
 | `src/economic_calendar.py` | 週次経済カレンダー画像生成（月曜のみ） |
 | `src/visualize.py` | matplotlibダッシュボード画像生成 |
 | `src/notify_telegram.py` | Telegram Bot通知送信 |
+| `src/fx_visual_report.py` | FX専用ビジュアルダッシュボード（13パネル・matplotlib） |
 
 ### 設定・データ
 | ファイル | 役割 |
@@ -92,6 +94,7 @@ cloud_run.py（メインスクリプト）
 | `.github/workflows/daily_report.yml` | UTC 22:30 = JST 7:30（平日月〜金） |
 | `.github/workflows/weekly_report.yml` | UTC 23:00 土曜 = JST 8:00 日曜 |
 | `.github/workflows/monitor.yml` | 平日15分ごと急変アラート |
+| `.github/workflows/fx_noon.yml` | UTC 05:00 = JST 14:00（毎日・FX専用午後レポート） |
 
 ---
 
@@ -209,6 +212,7 @@ response = model.generate_content(prompt)
 | L5b | 完全自律エージェント（市場レジーム検知→今日の優先タスク自己決定） | ✅ 完成 |
 | L5c | 強化学習ループ（予測ミスパターン学習・30件以上でRandomForest起動） | ✅ 完成 |
 | L5d | マルチモーダル分析（チャート画像をGemini Visionで視覚的テクニカル分析） | ✅ 完成 |
+| FX-PM | FX午後ダッシュボード（毎日14:00 JST・13パネル・Telegram配信） | ✅ 完成 |
 
 ---
 
