@@ -1,0 +1,69 @@
+name: Weekly Report (Sunday)
+
+on:
+  schedule:
+    # 日曜 8:00 JST = 日曜 23:00 UTC (土曜の23:00 UTC = 日曜 8:00 JST)
+    - cron: "0 23 * * 6"
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: "手動実行理由"
+        required: false
+        default: "テスト"
+
+jobs:
+  weekly-report:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
+
+    steps:
+      - name: リポジトリをチェックアウト
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 30
+
+      - name: Python セットアップ
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 日本語フォントをインストール
+        run: sudo apt-get install -y fonts-noto-cjk
+
+      - name: 依存ライブラリをインストール
+        run: |
+          pip install --upgrade pip
+          pip install yfinance feedparser requests python-dotenv pytz \
+                      matplotlib japanize-matplotlib pillow \
+                      google-generativeai
+
+      - name: 週次レポートを実行
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          python weekly_run.py
+
+      - name: 週次HTMLをgh-pagesに公開
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions Weekly"
+
+          # reports フォルダが存在する場合のみ公開
+          if [ -d "reports" ] && [ "$(ls -A reports/ 2>/dev/null)" ]; then
+            git fetch origin gh-pages 2>/dev/null || true
+            git checkout gh-pages 2>/dev/null || git checkout --orphan gh-pages
+            git checkout main -- reports/ 2>/dev/null || true
+            cp -r reports/* . 2>/dev/null || true
+            git add *.html *.md 2>/dev/null || true
+            git commit -m "weekly: $(date +'%Y-%m-%d') 週次レポート自動更新" 2>/dev/null || echo "コミットなし"
+            git push origin gh-pages --force || echo "プッシュエラー（無視）"
+          else
+            echo "reportsフォルダ空のためスキップ"
+          fi

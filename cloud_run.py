@@ -75,18 +75,52 @@ def run(mode: str):
     except Exception:
         logger.error("分析エラー"); logger.debug(traceback.format_exc())
 
-    # Step 5b: Gemini AI分析
+    # Step 5b: AI議論分析（強気・弱気・中立）
     ai_summary = {"available": False}
     try:
-        logger.info("--- Step 5b: Gemini AI分析 ---")
-        from src.ai_gemini import run_gemini_analysis
-        ai_summary = run_gemini_analysis(prices, news, risk, fear_greed)
+        logger.info("--- Step 5b: AI議論分析 ---")
+        from src.ai_debate import run_ai_debate
+        ai_summary = run_ai_debate(prices, news, risk, fear_greed)
         if ai_summary.get("available"):
-            logger.info("✅ Gemini AI分析完了")
+            logger.info("✅ AI議論分析完了")
         else:
-            logger.info("Gemini AI分析スキップ")
+            logger.info("AI議論スキップ")
     except Exception:
-        logger.error("Gemini AI分析エラー"); logger.debug(traceback.format_exc())
+        logger.error("AI議論エラー"); logger.debug(traceback.format_exc())
+
+    # Step 5c: 経済指標分析
+    econ_analysis = {"available": False}
+    try:
+        logger.info("--- Step 5c: 経済指標分析 ---")
+        from src.economic_indicators import run as run_econ
+        econ_analysis = run_econ(prices)
+        if econ_analysis.get("available"):
+            logger.info("✅ 経済指標分析完了")
+    except Exception:
+        logger.error("経済指標分析エラー"); logger.debug(traceback.format_exc())
+
+    # Step 5d: YouTube動画要約
+    youtube_summary = {"available": False}
+    try:
+        logger.info("--- Step 5d: YouTube動画要約 ---")
+        from src.youtube_summary import run as run_yt
+        youtube_summary = run_yt(news)
+        if youtube_summary.get("available"):
+            logger.info(f"✅ YouTube分析完了 ({len(youtube_summary.get('videos',[]))}件)")
+    except Exception:
+        logger.error("YouTube要約エラー"); logger.debug(traceback.format_exc())
+
+    # Step 5e: AI記憶更新・分析
+    memory_analysis = ""
+    try:
+        logger.info("--- Step 5e: AI記憶更新 ---")
+        from src.ai_memory import update_memory, analyze_with_memory
+        update_memory(prices, risk, fear_greed, ai_summary)
+        memory_analysis = analyze_with_memory(prices, risk, fear_greed)
+        if memory_analysis:
+            logger.info("✅ AI記憶分析完了")
+    except Exception:
+        logger.error("AI記憶エラー"); logger.debug(traceback.format_exc())
 
     # Step 6: チャート生成（matplotlibが使える場合）
     try:
@@ -101,7 +135,7 @@ def run(mode: str):
     report_paths = {}
     try:
         logger.info("--- Step 7: HTMLレポート生成 ---")
-        _save_html_report(mode, prices, news, risk, analysis, fear_greed, chart_paths, ai_summary)
+        _save_html_report(mode, prices, news, risk, analysis, fear_greed, chart_paths, ai_summary, econ_analysis, youtube_summary, memory_analysis)
         today = get_today_str()
         report_paths = {
             "html": str(get_dirs()["reports"] / f"{today}_{mode}.html"),
@@ -128,7 +162,7 @@ def run(mode: str):
           f"ニュース: {len(news)}件 | チャート: {len(chart_paths)}件")
 
 
-def _save_html_report(mode, prices, news, risk, analysis, fear_greed, chart_paths, ai_summary=None):
+def _save_html_report(mode, prices, news, risk, analysis, fear_greed, chart_paths, ai_summary=None, econ_analysis=None, youtube_summary=None, memory_analysis=""):
     """プロ仕様の金融ダッシュボードHTMLを保存"""
     import base64
     today = get_today_str()
@@ -394,17 +428,47 @@ body {{ background:var(--bg); color:var(--text); font-family:'Hiragino Sans','Me
   <div class="section-title">🔍 市場シグナル</div>
   <div class="signals">{signal_html or "<div class='signal-item'>シグナルなし</div>"}</div>
 
-  <!-- Gemini AI分析 -->
-  {f'''<div class="section-title">🤖 Gemini AI分析</div>
-  <div class="ai-box">
-    <div class="ai-section"><div class="ai-label">📊 総合判断</div><div class="ai-text">{ai_overall}</div></div>
-    {f'<div class="ai-section"><div class="ai-label">💡 注目ポイント</div><div class="ai-text">{ai_points}</div></div>' if ai_points else ""}
-    {f'<div class="ai-section"><div class="ai-label">⚠️ リスク要因</div><div class="ai-text">{ai_risks}</div></div>' if ai_risks else ""}
-    {f'<div class="ai-section"><div class="ai-label">🔮 今後の見通し</div><div class="ai-text">{ai_outlook}</div></div>' if ai_outlook else ""}
-  </div>''' if ai_available else '<div class="section-title">🤖 AI分析</div><div class="ai-box"><div class="ai-text">本日のAI分析は準備中です</div></div>'}
+  <!-- AI議論分析 -->
+  <div class="section-title">🤖 AIマルチ視点分析</div>
+  {f'''<div class="ai-box">
+    <div class="ai-section">
+      <div class="ai-label">📈 強気派AI の意見</div>
+      <div class="ai-text">{ai_summary.get("bull_view","---")}</div>
+    </div>
+    <div class="ai-section">
+      <div class="ai-label">📉 弱気派AI の意見</div>
+      <div class="ai-text">{ai_summary.get("bear_view","---")}</div>
+    </div>
+    <div class="ai-section">
+      <div class="ai-label">⚖️ 中立AI の総合判断</div>
+      <div class="ai-text">{ai_summary.get("neutral_view","---")}</div>
+    </div>
+    {f'<div class="ai-section"><div class="ai-label">📊 過去データ比較</div><div class="ai-text">{ai_summary.get("history_comment","")}</div></div>' if ai_summary.get("history_comment") else ""}
+  </div>''' if ai_available else '<div class="ai-box"><div class="ai-text">AI分析準備中...</div></div>'}
+
+  <!-- 経済指標分析 -->
+  <div class="section-title">📊 経済指標分析</div>
+  {f'''<div class="ai-box">
+    {f'<div class="ai-section"><div class="ai-label">🌍 現状分析</div><div class="ai-text">{econ_analysis.get("status","")}</div></div>' if econ_analysis and econ_analysis.get("status") else ""}
+    {f'<div class="ai-section"><div class="ai-label">🎯 注目指標</div><div class="ai-text">{econ_analysis.get("focus","")}</div></div>' if econ_analysis and econ_analysis.get("focus") else ""}
+    {f'<div class="ai-section"><div class="ai-label">💹 市場への影響予測</div><div class="ai-text">{econ_analysis.get("impact","")}</div></div>' if econ_analysis and econ_analysis.get("impact") else ""}
+    {f'<div class="ai-section"><div class="ai-label">💡 投資家へのヒント</div><div class="ai-text">{econ_analysis.get("hint","")}</div></div>' if econ_analysis and econ_analysis.get("hint") else ""}
+  </div>''' if econ_analysis and econ_analysis.get("available") else '<div class="ai-box"><div class="ai-text">経済指標分析準備中...</div></div>'}
 
   <!-- 分析 -->
   {f'<div class="section-title">📝 マクロ分析</div><div class="analysis">{facts_html}{hypo_html}</div>' if facts_html or hypo_html else ""}
+
+  <!-- AI記憶分析 -->
+  {f'''<div class="section-title">🧠 AI記憶・パターン分析</div>
+  <div class="ai-box"><div class="ai-text">{memory_analysis}</div></div>''' if memory_analysis else ""}
+
+  <!-- YouTube動画要約 -->
+  {f'''<div class="section-title">📺 YouTube注目動画</div>
+  <div class="ai-box">
+    {f'<div class="ai-section"><div class="ai-label">💡 動画のポイント</div><div class="ai-text">{youtube_summary.get("points","")}</div></div>' if youtube_summary and youtube_summary.get("points") else ""}
+    {f'<div class="ai-section"><div class="ai-label">📊 市場への示唆</div><div class="ai-text">{youtube_summary.get("impact","")}</div></div>' if youtube_summary and youtube_summary.get("impact") else ""}
+    {"".join(f'<div class="ai-section"><div class="ai-text">🎬 <a href=\\"{v.get("url","")}\\" target=\\"_blank\\" style=\\"color:var(--accent)\\">{v.get("title","")}</a></div></div>' for v in (youtube_summary or {{}}).get("videos",[])[:4]) if youtube_summary and youtube_summary.get("videos") else ""}
+  </div>''' if youtube_summary and youtube_summary.get("available") else ""}
 
   <!-- ニュース -->
   <div class="section-title">📰 注目ニュース</div>

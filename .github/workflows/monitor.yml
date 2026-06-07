@@ -1,0 +1,37 @@
+# 15分ごと市場監視（急変アラート）
+name: 市場監視アラート
+
+on:
+  schedule:
+    - cron: "*/15 22-7 * * 1-5"   # 日本時間の平日朝7時〜夜23時（UTC）
+    - cron: "*/15 0-14 * * 2-6"   # 続き
+  workflow_dispatch:
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: チェックアウト
+        uses: actions/checkout@v4
+
+      - name: Python セットアップ
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: ライブラリインストール
+        run: |
+          pip install --upgrade pip
+          pip install pandas numpy requests python-dotenv \
+                      PyYAML yfinance google-generativeai
+
+      - name: 市場監視・急変アラート
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          python monitor_run.py
