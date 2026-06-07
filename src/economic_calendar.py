@@ -194,8 +194,7 @@ def generate_calendar_image(events: list, week_dates: list) -> str | None:
         fig = plt.figure(figsize=(13, fig_h), facecolor=BG)
         fig.patch.set_facecolor(BG)
 
-        # タイトル
-        mon_str = week_dates[0].strftime("%Y年%-m月%-d日") if hasattr(week_dates[0], "strftime") else ""
+        # タイトル（Windows/Linux両対応）
         try:
             mon_str = week_dates[0].strftime("%Y年%m月%d日")
             fri_str = week_dates[4].strftime("%m月%d日")
@@ -262,8 +261,8 @@ def generate_calendar_image(events: list, week_dates: list) -> str | None:
 
             # 区切り線
             sep_y = cur_y - row_h * nrows
-            ax.axhline(sep_y, color=BORDER, linewidth=0.8,
-                       transform=ax.transAxes, zorder=2)
+            ax.plot([0, 1], [sep_y, sep_y], color=BORDER, linewidth=0.8,
+                    transform=ax.transAxes, zorder=2)
 
             # 日付（縦中央揃え）
             date_cy = cur_y - row_h * (nrows - 1) / 2 - row_h * 0.5
