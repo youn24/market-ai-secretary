@@ -258,6 +258,45 @@ def run(mode: str):
     if backtest.get("chart_path"):
         chart_paths["backtest"] = backtest["chart_path"]
 
+    # Step L4h: モンテカルロ + マーコウィッツ（月曜のみ）
+    monte_carlo = {"available": False}
+    try:
+        if get_jst_now().weekday() == 0 or mode == "test":
+            logger.info("--- Step L4h: モンテカルロ + マーコウィッツ ---")
+            from src.monte_carlo import run as run_mc
+            monte_carlo = run_mc()
+            if monte_carlo.get("available"):
+                mc = monte_carlo.get("monte_carlo", {})
+                logger.info(f"✅ MC完了: 利益確率={mc.get('prob_profit','---')}%")
+            if monte_carlo.get("chart_path"):
+                chart_paths["monte_carlo"] = monte_carlo["chart_path"]
+    except Exception:
+        logger.error("モンテカルロエラー"); logger.debug(traceback.format_exc())
+
+    # Step L4i: FOMC議事録NLP分析（月曜のみ）
+    fomc_sentiment = {"available": False}
+    try:
+        if get_jst_now().weekday() == 0 or mode == "test":
+            logger.info("--- Step L4i: FOMC分析 ---")
+            from src.fomc_sentiment import run as run_fomc
+            fomc_sentiment = run_fomc()
+            if fomc_sentiment.get("available"):
+                logger.info(f"✅ FOMC: {fomc_sentiment.get('sentiment',{}).get('label','---')}")
+    except Exception:
+        logger.error("FOMC分析エラー"); logger.debug(traceback.format_exc())
+
+    # Step L4j: 米議員株取引（月曜のみ）
+    congress_trades = {"available": False}
+    try:
+        if get_jst_now().weekday() == 0 or mode == "test":
+            logger.info("--- Step L4j: 米議員株取引 ---")
+            from src.congress_trading import run as run_congress
+            congress_trades = run_congress(days=14)
+            if congress_trades.get("available"):
+                logger.info(f"✅ 議員取引: {congress_trades.get('total_trades','---')}件")
+    except Exception:
+        logger.error("議員取引エラー"); logger.debug(traceback.format_exc())
+
     # Step 5f: 週次カレンダー（月曜朝のみ）
     weekly_calendar = {"available": False}
     try:
@@ -338,7 +377,10 @@ def run(mode: str):
                   fred_data=fred_data,
                   correlation=correlation,
                   backtest=backtest,
-                  sentiment_data=sentiment_data)
+                  sentiment_data=sentiment_data,
+                  monte_carlo=monte_carlo,
+                  fomc_sentiment=fomc_sentiment,
+                  congress_trades=congress_trades)
     except Exception:
         logger.error("Telegram通知エラー"); logger.debug(traceback.format_exc())
 

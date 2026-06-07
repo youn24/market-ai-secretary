@@ -256,7 +256,10 @@ def run(risk, analysis, report_paths, mode,
         fred_data=None,
         correlation=None,
         backtest=None,
-        sentiment_data=None) -> bool:
+        sentiment_data=None,
+        monte_carlo=None,
+        fomc_sentiment=None,
+        congress_trades=None) -> bool:
     if not _is_configured():
         logger.info("Telegram 設定なし。スキップします。")
         return False
@@ -495,7 +498,67 @@ def run(risk, analysis, report_paths, mode,
                 send_message("\n".join(bt_lines))
             logger.info("✅ バックテスト送信")
 
-        # ⑭ 週次カレンダー（月曜朝のみ・画像送信）
+        # ⑭ モンテカルロ + マーコウィッツ（月曜のみ）
+        if monte_carlo and monte_carlo.get("available"):
+            mc = monte_carlo.get("monte_carlo", {})
+            mz = monte_carlo.get("markowitz")
+            p = mc.get("percentiles", {})
+            mc_lines = [
+                "🎲 *モンテカルロ × 効率的フロンティア*",
+                "━━━━━━━━━━━━━━━",
+                f"📊 日経225 1年後シミュレーション（5,000回）",
+                f"  🟢 楽観(95%ile): {p.get('p95', '---'):.1f}",
+                f"  🟡 中央値(50%ile): {p.get('p50', '---'):.1f}",
+                f"  🔴 悲観(5%ile):  {p.get('p5', '---'):.1f}",
+                f"",
+                f"  利益確率: *{mc.get('prob_profit','---')}%*",
+                f"  10%超損失確率: {mc.get('prob_loss10','---')}%",
+                f"  年率リターン(期待値): {mc.get('mu_annual','---')}%",
+            ]
+            if mz:
+                ms = mz.get("max_sharpe", {})
+                w = ms.get("weights", {})
+                w_str = " / ".join(f"{k}:{v:.0f}%" for k, v in w.items() if v > 5)
+                mc_lines += [
+                    f"",
+                    f"📐 最適配分（シャープ比最大）",
+                    f"  {w_str}",
+                    f"  期待リターン: {ms.get('return','---')}%  リスク: {ms.get('risk','---')}%",
+                ]
+            mc_path = chart_paths.get("monte_carlo", "") if chart_paths else ""
+            if mc_path and os.path.exists(str(mc_path)):
+                send_photo(str(mc_path), caption="\n".join(mc_lines))
+            else:
+                send_message("\n".join(mc_lines))
+            logger.info("✅ モンテカルロ送信")
+
+        # ⑮ FOMC議事録分析（月曜のみ）
+        if fomc_sentiment and fomc_sentiment.get("available"):
+            sent = fomc_sentiment.get("sentiment", {})
+            fomc_lines = [
+                "🏦 *FOMC声明文 NLP分析*",
+                "━━━━━━━━━━━━━━━",
+                f"📊 スタンス: *{sent.get('label','---')}*",
+                f"  タカ派ワード: {sent.get('hawk_count',0)}個",
+                f"  ハト派ワード: {sent.get('dove_count',0)}個",
+                f"",
+                f"🇯🇵 日本への影響: {fomc_sentiment.get('japan_impact','')}",
+            ]
+            ai = fomc_sentiment.get("ai_analysis", "")
+            if ai:
+                fomc_lines += ["", f"🤖 AI分析", ai]
+            send_message("\n".join(fomc_lines))
+            logger.info("✅ FOMC分析送信")
+
+        # ⑯ 米議員株取引（月曜のみ）
+        if congress_trades and congress_trades.get("available"):
+            from src.congress_trading import format_telegram as fmt_ct
+            msg = fmt_ct(congress_trades)
+            if msg:
+                send_message(msg)
+                logger.info("✅ 議員取引送信")
+
+        # ⑰ 週次カレンダー（月曜朝のみ・画像送信）
         if weekly_calendar and weekly_calendar.get("available"):
             cal_path = weekly_calendar.get("image_path","")
             if cal_path and os.path.exists(str(cal_path)):

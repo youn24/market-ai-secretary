@@ -97,9 +97,38 @@ def run():
     except Exception:
         logger.error("カレンダー生成エラー")
 
+    # 自己改善AI（毎週日曜に実行）
+    self_improve_result = {}
+    try:
+        logger.info("--- 自己改善AI エンジン ---")
+        from src.self_improving_ai import run_and_auto_improve
+        self_improve_result = run_and_auto_improve()
+        if self_improve_result.get("auto_updated"):
+            # パラメータが更新された → 自動git commit
+            import subprocess
+            subprocess.run(
+                ["git", "add", "src/prediction_tracker.py"],
+                capture_output=True
+            )
+            msg = (
+                f"fix: 自己改善AI パラメータ自動最適化\n\n"
+                f"精度 {self_improve_result.get('current_accuracy')}% → "
+                f"{self_improve_result.get('best_accuracy')}% (+{self_improve_result.get('improvement')}%)\n"
+                f"最適パラメータ: {self_improve_result.get('best_params')}"
+            )
+            subprocess.run(
+                ["git", "commit", "-m", msg],
+                capture_output=True
+            )
+            subprocess.run(["git", "push", "origin", "main"], capture_output=True)
+            logger.info("✅ 自己改善: パラメータ更新→自動コミット完了")
+    except Exception:
+        logger.error("自己改善AIエラー"); logger.debug(traceback.format_exc())
+
     # Telegram送信
     _send_weekly_report(weekly_analysis, youtube, memory_analysis, prices, fear_greed, risk,
-                        calendar_data, sector, sector_chart_path, pred_summary)
+                        calendar_data, sector, sector_chart_path, pred_summary,
+                        self_improve_result=self_improve_result)
 
     logger.info("====== 週次レポート完了 ======")
 
@@ -195,7 +224,8 @@ Fear&Greed: {fear_greed.get('score','---')} ({fear_greed.get('rating_ja','---')}
 
 
 def _send_weekly_report(weekly, youtube, memory_analysis, prices, fear_greed, risk,
-                        calendar_data=None, sector=None, sector_chart_path=None, pred_summary=None):
+                        calendar_data=None, sector=None, sector_chart_path=None,
+                        pred_summary=None, self_improve_result=None):
     """週次レポートをTelegramに送信"""
     try:
         from src.notify_telegram import send_message, send_photo
@@ -329,6 +359,41 @@ def _send_weekly_report(weekly, youtube, memory_analysis, prices, fear_greed, ri
                     f"🔴 赤=重要  🟠 橙=注目  🟣 紫=決算\n"
                     f"⏰ 時刻は日本時間・目安です"
                 ))
+
+        # 自己改善AIレポート
+        if self_improve_result and self_improve_result.get("available"):
+            si = self_improve_result
+            if si.get("enough_data"):
+                updated = si.get("auto_updated", False)
+                imp = si.get("improvement", 0)
+                si_lines = [
+                    f"🧠 *自己改善AI 週次レポート*",
+                    "━━━━━━━━━━━━━━━",
+                    f"{'🚀 パラメータ自動更新完了！' if updated else '📊 分析完了（更新なし）'}",
+                    f"",
+                    f"現在の正解率: {si.get('current_accuracy','---')}%",
+                    f"最適化後:     {si.get('best_accuracy','---')}% (+{imp}%)",
+                    f"検証済み予測: {si.get('n_verified','---')}件",
+                ]
+                if updated:
+                    p = si.get("best_params", {})
+                    si_lines += [
+                        f"",
+                        f"✏️ 更新されたパラメータ",
+                        f"  bull閾値: {p.get('bull_th','---')}",
+                        f"  bear閾値: {p.get('bear_th','---')}",
+                        f"  VIX重み: {p.get('vix_weight','---')}",
+                    ]
+                weak = [p for p in si.get("patterns", []) if p.get("weak")]
+                if weak:
+                    si_lines += ["", "⚠️ 苦手な市場環境"]
+                    for w in weak[:3]:
+                        si_lines.append(f"  {w['condition']}: {w['accuracy']:.0f}%")
+                if si.get("ai_comment"):
+                    si_lines += ["", f"🤖 AI分析", si["ai_comment"]]
+                send_message("\n".join(si_lines))
+            else:
+                send_message(f"🧠 *自己改善AI*\nデータ蓄積中... 5件以上で最適化開始")
 
         logger.info("✅ 週次レポートTelegram送信完了")
 
