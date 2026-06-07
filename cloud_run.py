@@ -159,7 +159,6 @@ def run(mode: str):
     # Step 5f: 週次カレンダー（月曜朝のみ）
     weekly_calendar = {"available": False}
     try:
-        from src.utils import get_jst_now
         weekday = get_jst_now().weekday()   # 0=月曜
         if weekday == 0 or mode == "test":
             logger.info("--- Step 5f: 週次カレンダー生成 ---")
