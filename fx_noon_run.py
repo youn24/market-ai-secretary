@@ -45,6 +45,10 @@ def main():
     except ImportError:
         pass  # GitHub Actions では不要
 
+    # ── Step 0: キャラクター判定（データ取得前に仮判定 → 後で上書き） ──
+    char_info  = {"mood": "analyzing", "desc": "", "path": None, "available": False}
+    mood_emoji = "🐘📊"
+
     # ── Step 1: FX ビジュアル分析 + チャート生成 ──────────────────
     fx_result = {"available": False, "text_msg": "", "url_msg": "", "chart_path": None}
     try:
@@ -53,6 +57,23 @@ def main():
         fx_result = fx_run()
         if fx_result.get("available"):
             logger.info("✅ FX分析 + チャート生成完了")
+            # キャラクター選択（実データで判定）
+            try:
+                from src.character_selector import get_character_for_market, get_mood_emoji
+                data       = fx_result.get("data", {})
+                usdjpy_chg = data.get("USDJPY=X", {}).get("chg", 0) or 0
+                vix        = data.get("^VIX",     {}).get("latest", 20) or 20
+                rsi_val    = None
+                if "USDJPY=X" in data:
+                    from src.fx_visual_report import calc_rsi
+                    close   = data["USDJPY=X"]["df"]["Close"].tail(30)
+                    rsi_s   = calc_rsi(close)
+                    rsi_val = float(rsi_s.iloc[-1]) if len(rsi_s) > 0 else None
+                char_info  = get_character_for_market(usdjpy_chg, vix, rsi_val)
+                mood_emoji = get_mood_emoji(char_info["mood"])
+                logger.info(f"キャラクター: {char_info['mood']} {mood_emoji}")
+            except Exception:
+                logger.debug(traceback.format_exc())
         else:
             err = fx_result.get("error", "不明なエラー")
             logger.warning(f"⚠️  FX分析 一部失敗: {err}")
@@ -73,22 +94,24 @@ def main():
             print("─" * 60)
             return
 
-        # ①  テキストサマリー
-        text = fx_result.get("text_msg") or _fallback_text()
-        ok1  = send_message(text)
+        # ①  テキストサマリー（キャラクター一言を先頭に追加）
+        base_text = fx_result.get("text_msg") or _fallback_text()
+        char_line = f"{mood_emoji} *{char_info['desc']}*\n\n" if char_info.get("desc") else ""
+        text      = char_line + base_text
+        ok1       = send_message(text)
         logger.info(f"{'✅' if ok1 else '❌'} ① テキスト送信")
 
         # ②  チャート画像
         chart_path = fx_result.get("chart_path", "")
         if chart_path and os.path.exists(chart_path):
             caption = (
-                "📊 *FX ダッシュボード*\n"
+                f"{mood_emoji} *{char_info.get('desc', 'FX ダッシュボード')}*\n"
                 "━━━━━━━━━━━━━━━━━━━━\n"
-                "📈 USD/JPY + BB + MA\n"
+                "📈 USD/JPY + BB + MA5/25/75\n"
                 "📐 RSI / MACD / Stochastic\n"
                 "💵 DXY / クロスアセット / 金利差\n"
-                "💪 通貨強弱 / IMM / 相関マトリクス\n"
-                "🏦 FedWatch / ⚡ VIX ゲージ / 💹 価格ボード"
+                "💪 通貨強弱（8通貨） / IMM / 相関\n"
+                "🏦 FedWatch / ⚡ VIX / 💹 価格ボード"
             )
             ok2 = send_photo(chart_path, caption=caption)
             logger.info(f"{'✅' if ok2 else '❌'} ② チャート画像送信")

@@ -821,6 +821,38 @@ def build_dashboard(data: dict, out_path: str) -> str:
     panel_vix_gauge(ax_vix,        data)
     panel_price_board(ax_board,    data)
 
+    # ─── キャラクター画像オーバーレイ（assets/characters_grid.png があれば） ───
+    try:
+        from src.character_selector import get_character_for_market
+        import matplotlib.image as mpimg
+        from matplotlib.offsetbox import OffsetImage, AnnotationBbox
+
+        usdjpy_chg = data.get("USDJPY=X", {}).get("chg", 0) or 0
+        vix_val    = data.get("^VIX", {}).get("latest", 20) or 20
+        char_info  = get_character_for_market(usdjpy_chg, vix_val,
+                                              out_dir=str(Path("data/fx_charts")))
+        if char_info.get("available") and char_info.get("path"):
+            char_img = mpimg.imread(char_info["path"])
+            imagebox = OffsetImage(char_img, zoom=0.55, alpha=0.92)
+            ab = AnnotationBbox(
+                imagebox,
+                (0.965, 0.975),            # 右上コーナー
+                xycoords="figure fraction",
+                frameon=False,
+                box_alignment=(1.0, 1.0),
+            )
+            fig.add_artist(ab)
+            # キャラクター一言テキスト
+            fig.text(
+                0.965, 0.945,
+                char_info.get("desc", ""),
+                ha="right", va="top",
+                color=C_GOLD, fontsize=9, fontweight="bold",
+                alpha=0.9,
+            )
+    except Exception:
+        pass   # キャラクター未設定時はスキップ
+
     # ─── フッター ───
     footer = (
         "Data: Yahoo Finance / CME / CFTC est.  "
