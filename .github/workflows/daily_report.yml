@@ -5,7 +5,7 @@ name: 毎日市場レポート
 
 on:
   schedule:
-    - cron: "30 22 * * 1-5"   # UTC 22:30 = JST 7:30（平日）
+    - cron: "30 22 * * 0-4"   # UTC 日〜木 22:30 = JST 月〜金 7:30（平日）
   workflow_dispatch:  # 手動実行ボタンも有効化
 
 permissions:

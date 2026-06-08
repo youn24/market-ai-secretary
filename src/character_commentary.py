@@ -170,107 +170,155 @@ def generate_comments(prices: dict, risk: dict, fear_greed: dict, ai_summary: di
 
 
 def get_character_html(ganesha_comment: str, otter_comment: str) -> str:
-    """HTMLキャラクターセクションを生成"""
+    """HTMLキャラクターセクションを生成（吹き出しスタイル）"""
+    g_text = ganesha_comment or "市場データを分析中ですぞ…"
+    o_text = otter_comment or "データ取得中だよ〜♪"
     return f"""
 <div class="char-section">
-
-  <!-- AIガネーシャ -->
-  <div class="char-card ganesha-card">
-    <div class="char-svg-wrap">
+  <div class="char-row ganesha-row">
+    <!-- ガネーシャ：左にキャラ、右に吹き出し -->
+    <div class="char-avatar-wrap">
       {GANESHA_SVG}
-      <div class="char-label">🐘 AIガネーシャ</div>
+      <div class="char-name ganesha-name">🐘 AIガネーシャ</div>
     </div>
-    <div class="char-bubble ganesha-bubble">
-      <div class="char-bubble-title">プロの相場解説</div>
-      <div class="char-bubble-text">{ganesha_comment or '市場データを分析中ですぞ…'}</div>
+    <div class="speech-bubble ganesha-bubble">
+      <div class="bubble-badge ganesha-badge">📜 プロの相場解説</div>
+      <div class="bubble-text">{g_text}</div>
     </div>
   </div>
 
-  <!-- AIカワウソ -->
-  <div class="char-card otter-card">
-    <div class="char-svg-wrap">
+  <div class="char-row otter-row">
+    <!-- カワウソ：左に吹き出し、右にキャラ（左右反転で変化をつける） -->
+    <div class="speech-bubble otter-bubble">
+      <div class="bubble-badge otter-badge">✨ カンタンまとめ</div>
+      <div class="bubble-text">{o_text}</div>
+    </div>
+    <div class="char-avatar-wrap">
       {OTTER_SVG}
-      <div class="char-label">🦦 AIカワウソ</div>
-    </div>
-    <div class="char-bubble otter-bubble">
-      <div class="char-bubble-title">カンタンまとめ</div>
-      <div class="char-bubble-text">{otter_comment or 'データ取得中だよ〜♪'}</div>
+      <div class="char-name otter-name">🦦 AIカワウソ</div>
     </div>
   </div>
-
 </div>"""
 
 
 CHARACTER_CSS = """
 /* ══════════════════════════════════════
-   キャラクターセクション
+   キャラクター吹き出しセクション
 ══════════════════════════════════════ */
 .char-section {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin: 16px 0;
-}
-.char-card {
-  border-radius: var(--radius);
-  padding: 14px 12px;
   display: flex;
-  align-items: flex-start;
+  flex-direction: column;
   gap: 10px;
-  border: 1px solid var(--border);
+  margin: 14px 0;
 }
-.ganesha-card {
-  background: linear-gradient(135deg, #1a1400, #241c00);
-  border-color: #FFD70044;
+/* 1行 = キャラ + 吹き出し */
+.char-row {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  border-radius: 16px;
+  overflow: visible;
 }
-.otter-card {
-  background: linear-gradient(135deg, #140d08, #1e130c);
-  border-color: #C4956A44;
-}
-.char-svg-wrap {
-  flex-shrink: 0;
-  text-align: center;
-}
-.char-label {
-  font-size: 0.65em;
-  font-weight: 800;
-  margin-top: 4px;
-  white-space: nowrap;
-  letter-spacing: 0.3px;
-}
-.ganesha-card .char-label { color: #FFD700; }
-.otter-card   .char-label { color: #C4956A; }
-.char-bubble {
-  flex: 1;
-  border-radius: 12px;
-  padding: 10px 12px;
-  min-width: 0;
-}
-.ganesha-bubble {
-  background: rgba(255,215,0,0.06);
+.ganesha-row {
+  background: linear-gradient(135deg, #1c1600 0%, #271e00 100%);
   border: 1px solid #FFD70033;
 }
-.otter-bubble {
-  background: rgba(196,149,106,0.08);
+.otter-row {
+  background: linear-gradient(135deg, #160e09 0%, #1f130c 100%);
   border: 1px solid #C4956A33;
 }
-.char-bubble-title {
-  font-size: 0.65em;
+
+/* アバター（SVG + 名前） */
+.char-avatar-wrap {
+  flex-shrink: 0;
+  width: 96px;
+  text-align: center;
+  padding: 8px 4px 6px;
+}
+.char-name {
+  font-size: 0.58em;
   font-weight: 800;
-  letter-spacing: 1px;
+  margin-top: 2px;
+  white-space: nowrap;
+  letter-spacing: 0.2px;
+}
+.ganesha-name { color: #FFD700; }
+.otter-name   { color: #C4956A; }
+
+/* 吹き出し本体 */
+.speech-bubble {
+  flex: 1;
+  border-radius: 14px;
+  padding: 11px 14px;
+  margin: 8px;
+  position: relative;
+  min-width: 0;
+}
+/* ガネーシャ吹き出し（左のキャラからの矢印：左端に三角） */
+.ganesha-bubble {
+  background: rgba(255, 215, 0, 0.07);
+  border: 1px solid #FFD70044;
+}
+.ganesha-bubble::before {
+  content: '';
+  position: absolute;
+  left: -9px;
+  top: 18px;
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+  border-right: 9px solid #FFD70044;
+}
+/* カワウソ吹き出し（右のキャラへの矢印：右端に三角） */
+.otter-bubble {
+  background: rgba(196, 149, 106, 0.09);
+  border: 1px solid #C4956A44;
+}
+.otter-bubble::after {
+  content: '';
+  position: absolute;
+  right: -9px;
+  top: 18px;
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+  border-left: 9px solid #C4956A44;
+}
+
+/* バッジ（タイトル） */
+.bubble-badge {
+  display: inline-block;
+  font-size: 0.60em;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  padding: 2px 8px;
+  border-radius: 20px;
   margin-bottom: 6px;
   text-transform: uppercase;
 }
-.ganesha-bubble .char-bubble-title { color: #FFD700; }
-.otter-bubble   .char-bubble-title { color: #C4956A; }
-.char-bubble-text {
-  font-size: 0.82em;
+.ganesha-badge {
+  background: rgba(255,215,0,0.15);
+  color: #FFD700;
+  border: 1px solid #FFD70044;
+}
+.otter-badge {
+  background: rgba(196,149,106,0.15);
+  color: #C4956A;
+  border: 1px solid #C4956A44;
+}
+
+/* 本文 */
+.bubble-text {
+  font-size: 0.84em;
   line-height: 1.75;
   color: var(--text);
   word-break: break-word;
 }
-@media(max-width:480px) {
-  .char-section { grid-template-columns: 1fr; }
-  .char-card { flex-direction: column; align-items: center; text-align: center; }
+
+/* モバイル対応 */
+@media(max-width:500px) {
+  .char-row { flex-direction: column; padding: 10px; }
+  .char-avatar-wrap { width: 100%; padding: 4px 0; }
+  .speech-bubble { margin: 4px 0 0; width: 100%; }
+  .ganesha-bubble::before,
+  .otter-bubble::after { display: none; }
 }
 """

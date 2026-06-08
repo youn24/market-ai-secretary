@@ -31,6 +31,7 @@ def run(mode: str):
     risk        = {"score":0,"sentiment":"不明","meter":"NEUTRAL","signals":[]}
     analysis    = {}
     chart_paths = {}
+    report_paths = {}  # Step L5i(LINE)より前に初期化（NameError防止）
 
     # Step 1: 価格取得
     try:
