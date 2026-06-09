@@ -1,4 +1,18 @@
 {
-  "predictions": [],
+  "predictions": [
+    {
+      "date": "2026-06-09",
+      "direction": "bull",
+      "score": 5.29,
+      "fg": null,
+      "nikkei": 65416.6289,
+      "sp500": 7405.73,
+      "usdjpy": 160.157,
+      "vix": 18.1,
+      "verified": false,
+      "correct": null,
+      "actual_move": null
+    }
+  ],
   "accuracy": {}
 }
