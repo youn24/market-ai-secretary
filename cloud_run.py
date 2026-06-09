@@ -394,6 +394,37 @@ def run(mode: str):
     except Exception:
         logger.error("自律エージェントエラー"); logger.debug(traceback.format_exc())
 
+    # ★★★ Step L5: 完全自律チームディベート（NEW）★★★
+    team_debate = {"available": False}
+    try:
+        logger.info("--- Step L5: 完全自律チームディベート ---")
+        from src.ai_debate import run_team_debate
+        
+        # 市場データ文字列を構築
+        market_data_str = f"""
+        【市場データ】
+        日経平均: {prices.get('^N225', {}).get('latest', '---')}円 ({prices.get('^N225', {}).get('change_pct', 0):+.2f}%)
+        S&P500: {prices.get('^GSPC', {}).get('latest', '---')} ({prices.get('^GSPC', {}).get('change_pct', 0):+.2f}%)
+        VIX: {prices.get('^VIX', {}).get('latest', '---')}
+        ドル円: {prices.get('USDJPY=X', {}).get('latest', '---')} ({prices.get('USDJPY=X', {}).get('change_pct', 0):+.2f}%)
+        リスクスコア: {risk.get('score', 0):.1f}
+        Fear&Greed: {fear_greed.get('score', 'N/A')} ({fear_greed.get('rating_ja', 'N/A')})
+        """
+        
+        news_text = "\n".join([f"・{n.get('title', '')}" for n in news[:5]])
+        
+        # チームディベート実行
+        team_debate = run_team_debate(market_data_str, news_text)
+        if team_debate.get("status") == "success":
+            logger.info(f"✅ チームディベート完了: 最終判断 = 「{team_debate.get('final_decision', '---')}」 (信頼度: {team_debate.get('confidence', 0):.1%})")
+            logger.info(f"   マーケット太郎: {team_debate.get('members', {}).get('マーケット太郎', {}).get('vote', '---')}")
+            logger.info(f"   ニュース花子:   {team_debate.get('members', {}).get('ニュース花子', {}).get('vote', '---')}")
+            logger.info(f"   リスク次郎:     {team_debate.get('members', {}).get('リスク次郎', {}).get('vote', '---')}")
+        else:
+            logger.info(f"チームディベート: {team_debate.get('status', '実行中')}")
+    except Exception:
+        logger.error("チームディベートエラー"); logger.debug(traceback.format_exc())
+
     # Step L5c: 強化学習ループ（予測パターン学習・ML予測）
     rl_result = {"available": False}
     try:
@@ -576,6 +607,7 @@ def _save_html_report(mode, prices, news, risk, analysis, fear_greed, chart_path
             char_html_section = get_character_html(
                 character_comments.get("ganesha", ""),
                 character_comments.get("otter", ""),
+                mood=character_comments.get("mood", "neutral"),
             )
     except Exception:
         CHARACTER_CSS = ""
