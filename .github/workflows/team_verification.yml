@@ -1,0 +1,81 @@
+# GitHub Actions - 完全自律チームの予測検証ワークフロー
+# 毎朝7:35 JST（前日の予測を検証）に実行
+
+name: 自律チーム予測検証
+
+on:
+  schedule:
+    - cron: "35 22 * * 1-5"   # UTC 日〜木 22:35 = JST 月〜金 7:35
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  prediction-verification:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: リポジトリをチェックアウト
+        uses: actions/checkout@v4
+
+      - name: Python 3.11 セットアップ
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: ライブラリインストール
+        run: |
+          pip install --upgrade pip
+          pip install pandas numpy requests feedparser beautifulsoup4 \
+                      lxml python-dotenv PyYAML yfinance plotly \
+                      matplotlib kaleido google-generativeai pytz
+
+      - name: 予測検証・改善案生成
+        run: |
+          echo "🔬 前日の予測を検証中..."
+          python run_autonomous_team.py --mode verification
+
+      - name: 検証結果をgit保存
+        run: |
+          git config --global user.email "actions@github.com"
+          git config --global user.name "Autonomous Team Bot"
+          git add data/team_verification_*.json logs/autonomous_team.log || true
+          git diff --staged --quiet || git commit -m "🔬 自動検証: 前日の予測検証結果を記録"
+          git push origin main || echo "プッシュスキップ（変更なし）"
+
+      - name: 検証結果をTelegramに通知
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        if: always()
+        run: |
+          python -c "
+          import requests
+          import json
+          from pathlib import Path
+          
+          # 最新の検証結果を読み込む
+          verification_files = sorted(Path('data').glob('team_verification_*.json'), reverse=True)
+          
+          if verification_files:
+              with open(verification_files[0]) as f:
+                  result = json.load(f)
+              
+              message = f'''🔬 【自律チーム検証結果】
+              
+📊 予測: {result.get('predicted', '---')}
+📈 実績: {result.get('actual_change', 0):+.2f}%
+✅ 判定: {'正解 ✅' if result.get('correct') else '外れ ❌'}
+📝 理由: {result.get('lesson_learned', '---')}
+              '''
+              
+              requests.post(
+                  f'https://api.telegram.org/bot{os.environ[\"TELEGRAM_BOT_TOKEN\"]}/sendMessage',
+                  json={'chat_id': os.environ['TELEGRAM_CHAT_ID'], 'text': message}
+              )
+          " || echo "通知スキップ"

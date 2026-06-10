@@ -40,7 +40,7 @@ jobs:
                       lxml python-dotenv PyYAML yfinance plotly \
                       matplotlib kaleido google-generativeai
 
-      - name: 市場データ取得・レポート生成・Telegram通知
+      - name: 完全自律AIチームシステム - 朝の分析を実行
         env:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
@@ -48,7 +48,23 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GITHUB_PAGES_URL: "https://youn24.github.io/market-ai-secretary"
         run: |
-          python cloud_run.py --mode morning
+          echo "🤖 完全自律AIチームシステムを起動..."
+          python run_autonomous_team.py --mode morning
+
+      - name: 従来型の市場レポートも生成（バックアップ）
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GITHUB_PAGES_URL: "https://youn24.github.io/market-ai-secretary"
+        run: |
+          echo "📋 従来型レポート生成中..."
+          python cloud_run.py --mode morning || true
+          # 拡張版レポート生成
+          python generate_expanded_report.py || true
+          # モバイル対応版レポート生成
+          python generate_mobile_report.py || true
 
       - name: 予測学習データをmainブランチに保存（永続化）
         run: |
