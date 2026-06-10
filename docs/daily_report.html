@@ -558,7 +558,7 @@ section { margin-bottom: 20px; }
     <div class="char-title-block">
       <div class="char-main-title">ガネ先生とカワウソくんの<br>今日の相場ダイジェスト</div>
       <div class="char-sub-title">AIチーム自動分析レポート</div>
-      <div class="char-date-badge">📅 2026-06-10 15:58</div><br>
+      <div class="char-date-badge">📅 2026-06-10 16:32</div><br>
       <span class="char-signal-badge" style="color:#f85149;border-color:#f85149;background:rgba(248,81,73,.15)">😟 やや弱気</span>
       <div style="margin-top:10px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
         <span style="font-size:12px;color:#f0c040">
@@ -757,11 +757,81 @@ section { margin-bottom: 20px; }
   </div>
 </section>
 
+<!-- ── リアルタイムチャート（TradingView） ── -->
+<section>
+  <div class="section-header">
+    <span class="section-icon">📈</span>
+    <span class="section-title">リアルタイムチャート</span>
+    <span class="section-tag">TradingView</span>
+  </div>
+  <div class="grid-2">
+    <!-- 日経225 チャート -->
+    <div class="card fade-up" style="padding:0;overflow:hidden">
+      <div style="padding:10px 12px 6px;font-size:11px;font-weight:700;color:var(--muted)">🇯🇵 日経225 (NI225)</div>
+      <div class="tradingview-widget-container">
+        <div class="tradingview-widget-container__widget"></div>
+        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
+        {
+          "symbol": "TVC:NI225",
+          "width": "100%",
+          "height": 180,
+          "locale": "ja",
+          "dateRange": "1D",
+          "colorTheme": "dark",
+          "isTransparent": true,
+          "autosize": true,
+          "largeChartUrl": ""
+        }
+        </script>
+      </div>
+    </div>
+    <!-- S&P500 チャート -->
+    <div class="card fade-up" style="padding:0;overflow:hidden">
+      <div style="padding:10px 12px 6px;font-size:11px;font-weight:700;color:var(--muted)">🇺🇸 S&amp;P500 (SPX)</div>
+      <div class="tradingview-widget-container">
+        <div class="tradingview-widget-container__widget"></div>
+        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
+        {
+          "symbol": "SP:SPX",
+          "width": "100%",
+          "height": 180,
+          "locale": "ja",
+          "dateRange": "1D",
+          "colorTheme": "dark",
+          "isTransparent": true,
+          "autosize": true
+        }
+        </script>
+      </div>
+    </div>
+  </div>
+
+  <!-- ドル円チャート -->
+  <div class="card fade-up" style="padding:0;overflow:hidden;margin-top:10px">
+    <div style="padding:10px 12px 6px;font-size:11px;font-weight:700;color:var(--muted)">💴 USD/JPY ドル円レート</div>
+    <div class="tradingview-widget-container">
+      <div class="tradingview-widget-container__widget"></div>
+      <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
+      {
+        "symbol": "FX:USDJPY",
+        "width": "100%",
+        "height": 150,
+        "locale": "ja",
+        "dateRange": "1D",
+        "colorTheme": "dark",
+        "isTransparent": true,
+        "autosize": true
+      }
+      </script>
+    </div>
+  </div>
+</section>
+
 <!-- ── マーケット概況（詳細カード）── -->
 <section>
   <div class="section-header">
     <span class="section-icon">💹</span>
-    <span class="section-title">マーケット詳細</span>
+    <span class="section-title">マーケット詳細データ</span>
     <span class="section-tag">2026-06-10</span>
   </div>
   <div class="grid-auto">
@@ -868,6 +938,69 @@ section { margin-bottom: 20px; }
   <div class="card fade-up">
     <p style="color:var(--muted);font-size:13px">セクターデータなし（平日のみ）</p>
   </div>
+  <!-- TradingView マーケット概況 -->
+  <div style="margin-top:12px;border-radius:10px;overflow:hidden">
+    <div class="tradingview-widget-container">
+      <div class="tradingview-widget-container__widget"></div>
+      <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-market-overview.js" async>
+      {
+        "colorTheme": "dark",
+        "dateRange": "1D",
+        "showChart": true,
+        "locale": "ja",
+        "width": "100%",
+        "height": 400,
+        "largeChartUrl": "",
+        "isTransparent": true,
+        "showSymbolLogo": false,
+        "showFloatingTooltip": false,
+        "plotLineColorGrowing": "rgba(41, 98, 255, 1)",
+        "plotLineColorFalling": "rgba(41, 98, 255, 1)",
+        "gridLineColor": "rgba(240, 243, 250, 0)",
+        "scaleFontColor": "rgba(120, 123, 134, 1)",
+        "belowLineFillColorGrowing": "rgba(41, 98, 255, 0.12)",
+        "belowLineFillColorFalling": "rgba(41, 98, 255, 0.12)",
+        "belowLineFillColorGrowingBottom": "rgba(41, 98, 255, 0)",
+        "belowLineFillColorFallingBottom": "rgba(41, 98, 255, 0)",
+        "symbolActiveColor": "rgba(41, 98, 255, 0.12)",
+        "tabs": [
+          {
+            "title": "日本株",
+            "symbols": [
+              {"s": "TVC:NI225",  "d": "日経225"},
+              {"s": "TSE:TOPIX",  "d": "TOPIX"},
+              {"s": "TVC:NI225",  "d": "グロース250"}
+            ]
+          },
+          {
+            "title": "米国株",
+            "symbols": [
+              {"s": "SP:SPX",     "d": "S&P500"},
+              {"s": "NASDAQ:NDX", "d": "Nasdaq100"},
+              {"s": "DJ:DJI",     "d": "Dow Jones"}
+            ]
+          },
+          {
+            "title": "為替",
+            "symbols": [
+              {"s": "FX:USDJPY",  "d": "ドル円"},
+              {"s": "FX:EURJPY",  "d": "ユーロ円"},
+              {"s": "FX:GBPJPY",  "d": "ポンド円"}
+            ]
+          },
+          {
+            "title": "コモディティ",
+            "symbols": [
+              {"s": "TVC:GOLD",   "d": "金"},
+              {"s": "TVC:USOIL",  "d": "原油"},
+              {"s": "TVC:SILVER", "d": "銀"}
+            ]
+          }
+        ]
+      }
+      </script>
+    </div>
+  </div>
 </section>
 
 <!-- ── AIチーム議論 ── -->
@@ -931,7 +1064,7 @@ section { margin-bottom: 20px; }
 <!-- ── フッター ── -->
 <footer style="text-align:center;padding:24px 16px;color:var(--muted);font-size:11px;border-top:1px solid var(--border);margin-top:20px;background:linear-gradient(0deg,#1a0f00,transparent)">
   <div style="font-size:16px;margin-bottom:6px">🐘 ガネ先生 &amp; 🦦 カワウソくん</div>
-  <div>AIチーム自動生成レポート · 2026-06-10 15:58 JST</div>
+  <div>AIチーム自動生成レポート · 2026-06-10 16:32 JST</div>
   <div style="margin-top:4px">このレポートはAIによる自動分析です。投資は自己判断でお願いします。</div>
 </footer>
 

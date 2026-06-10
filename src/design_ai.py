@@ -658,32 +658,61 @@ def _kawauso_svg(mood: str) -> str:
 </svg>"""
 
 
+def _char_img_b64(path: Path) -> str:
+    """PNG画像をbase64エンコードしてdata URIを返す。失敗時はNone"""
+    try:
+        import base64
+        data = path.read_bytes()
+        b64  = base64.b64encode(data).decode()
+        return f"data:image/png;base64,{b64}"
+    except Exception:
+        return None
+
+
 def _character_header(score: float, prices: dict, mood: str, today: str, now: str) -> str:
-    """キャラクター入りヘッダーHTML"""
+    """キャラクター入りヘッダーHTML — PNG画像があれば使い、なければSVGフォールバック"""
     signal_text = _signal_text(score)
     risk_color  = _risk_color(score)
 
     if score >= 0.5:
-        sig_style = f"color:{GREEN};border-color:{GREEN};background:rgba(63,185,80,.15)"
-        gane_mood = "bullish"
+        sig_style    = f"color:{GREEN};border-color:{GREEN};background:rgba(63,185,80,.15)"
+        gane_mood    = "bullish"
         kawauso_mood = "bullish"
-        gane_say  = "相場が良さそう\nですね！"
-        kawa_say  = "チャンスかも！\n積極的に！"
+        gane_say     = "相場が良さそう\nですね！"
+        kawa_say     = "チャンスかも！\n積極的に！"
     elif score >= -0.5:
-        sig_style = f"color:{YELLOW};border-color:{YELLOW};background:rgba(210,153,34,.15)"
-        gane_mood = "analyzing"
+        sig_style    = f"color:{YELLOW};border-color:{YELLOW};background:rgba(210,153,34,.15)"
+        gane_mood    = "analyzing"
         kawauso_mood = "uncertain"
-        gane_say  = "様子を見ながら\n慎重に判断を"
-        kawa_say  = "うーん...\n迷うところ"
+        gane_say     = "様子を見ながら\n慎重に判断を"
+        kawa_say     = "うーん...\n迷うところ"
     else:
-        sig_style = f"color:{RED};border-color:{RED};background:rgba(248,81,73,.15)"
-        gane_mood = "bearish"
+        sig_style    = f"color:{RED};border-color:{RED};background:rgba(248,81,73,.15)"
+        gane_mood    = "bearish"
         kawauso_mood = "bearish"
-        gane_say  = "リスク管理を\n徹底しましょう"
-        kawa_say  = "気をつけて！\n守りが大事"
+        gane_say     = "リスク管理を\n徹底しましょう"
+        kawa_say     = "気をつけて！\n守りが大事"
 
-    gane_svg    = _gane_svg(gane_mood)
-    kawauso_svg = _kawauso_svg(kawauso_mood)
+    # PNG画像を優先して使用（docs/assets/ または src/assets/）
+    root = Path(__file__).parent.parent
+    gane_png_paths = [
+        root / "docs" / "assets" / "gane_sensei.png",
+        root / "docs" / "assets" / f"gane_{gane_mood}.png",
+        root / "src"  / "assets" / "gane_sensei.png",
+    ]
+    kawa_png_paths = [
+        root / "docs" / "assets" / "kawauso.png",
+        root / "docs" / "assets" / f"kawauso_{kawauso_mood}.png",
+        root / "src"  / "assets" / "kawauso.png",
+    ]
+
+    gane_uri = next((u for p in gane_png_paths if (u := _char_img_b64(p))), None)
+    kawa_uri = next((u for p in kawa_png_paths if (u := _char_img_b64(p))), None)
+
+    gane_html    = (f'<img src="{gane_uri}" style="width:100px;height:100px;object-fit:contain">'
+                    if gane_uri else _gane_svg(gane_mood))
+    kawauso_html = (f'<img src="{kawa_uri}" style="width:100px;height:100px;object-fit:contain">'
+                    if kawa_uri else _kawauso_svg(kawauso_mood))
 
     nikkei  = prices.get("^N225",   {})
     sp500   = prices.get("^GSPC",   {})
@@ -702,7 +731,7 @@ def _character_header(score: float, prices: dict, mood: str, today: str, now: st
   <div class="char-header-inner">
     <!-- ガネ先生 (左) -->
     <div class="char-figure">
-      {gane_svg}
+      {gane_html}
       <div class="char-figure-label">ガネ先生</div>
       <div class="char-balloon">{gane_say.replace(chr(10), '<br>')}</div>
     </div>
@@ -730,7 +759,7 @@ def _character_header(score: float, prices: dict, mood: str, today: str, now: st
 
     <!-- カワウソくん (右) -->
     <div class="char-figure">
-      {kawauso_svg}
+      {kawauso_html}
       <div class="char-figure-label">カワウソくん</div>
       <div class="char-balloon">{kawa_say.replace(chr(10), '<br>')}</div>
     </div>
@@ -1394,11 +1423,81 @@ def generate(
   </div>
 </section>
 
+<!-- ── リアルタイムチャート（TradingView） ── -->
+<section>
+  <div class="section-header">
+    <span class="section-icon">📈</span>
+    <span class="section-title">リアルタイムチャート</span>
+    <span class="section-tag">TradingView</span>
+  </div>
+  <div class="grid-2">
+    <!-- 日経225 チャート -->
+    <div class="card fade-up" style="padding:0;overflow:hidden">
+      <div style="padding:10px 12px 6px;font-size:11px;font-weight:700;color:var(--muted)">🇯🇵 日経225 (NI225)</div>
+      <div class="tradingview-widget-container">
+        <div class="tradingview-widget-container__widget"></div>
+        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
+        {{
+          "symbol": "TVC:NI225",
+          "width": "100%",
+          "height": 180,
+          "locale": "ja",
+          "dateRange": "1D",
+          "colorTheme": "dark",
+          "isTransparent": true,
+          "autosize": true,
+          "largeChartUrl": ""
+        }}
+        </script>
+      </div>
+    </div>
+    <!-- S&P500 チャート -->
+    <div class="card fade-up" style="padding:0;overflow:hidden">
+      <div style="padding:10px 12px 6px;font-size:11px;font-weight:700;color:var(--muted)">🇺🇸 S&amp;P500 (SPX)</div>
+      <div class="tradingview-widget-container">
+        <div class="tradingview-widget-container__widget"></div>
+        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
+        {{
+          "symbol": "SP:SPX",
+          "width": "100%",
+          "height": 180,
+          "locale": "ja",
+          "dateRange": "1D",
+          "colorTheme": "dark",
+          "isTransparent": true,
+          "autosize": true
+        }}
+        </script>
+      </div>
+    </div>
+  </div>
+
+  <!-- ドル円チャート -->
+  <div class="card fade-up" style="padding:0;overflow:hidden;margin-top:10px">
+    <div style="padding:10px 12px 6px;font-size:11px;font-weight:700;color:var(--muted)">💴 USD/JPY ドル円レート</div>
+    <div class="tradingview-widget-container">
+      <div class="tradingview-widget-container__widget"></div>
+      <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
+      {{
+        "symbol": "FX:USDJPY",
+        "width": "100%",
+        "height": 150,
+        "locale": "ja",
+        "dateRange": "1D",
+        "colorTheme": "dark",
+        "isTransparent": true,
+        "autosize": true
+      }}
+      </script>
+    </div>
+  </div>
+</section>
+
 <!-- ── マーケット概況（詳細カード）── -->
 <section>
   <div class="section-header">
     <span class="section-icon">💹</span>
-    <span class="section-title">マーケット詳細</span>
+    <span class="section-title">マーケット詳細データ</span>
     <span class="section-tag">{today}</span>
   </div>
   {stocks_html}
@@ -1428,6 +1527,69 @@ def generate(
   </div>
   <div class="card fade-up">
     {sector_html}
+  </div>
+  <!-- TradingView マーケット概況 -->
+  <div style="margin-top:12px;border-radius:10px;overflow:hidden">
+    <div class="tradingview-widget-container">
+      <div class="tradingview-widget-container__widget"></div>
+      <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-market-overview.js" async>
+      {{
+        "colorTheme": "dark",
+        "dateRange": "1D",
+        "showChart": true,
+        "locale": "ja",
+        "width": "100%",
+        "height": 400,
+        "largeChartUrl": "",
+        "isTransparent": true,
+        "showSymbolLogo": false,
+        "showFloatingTooltip": false,
+        "plotLineColorGrowing": "rgba(41, 98, 255, 1)",
+        "plotLineColorFalling": "rgba(41, 98, 255, 1)",
+        "gridLineColor": "rgba(240, 243, 250, 0)",
+        "scaleFontColor": "rgba(120, 123, 134, 1)",
+        "belowLineFillColorGrowing": "rgba(41, 98, 255, 0.12)",
+        "belowLineFillColorFalling": "rgba(41, 98, 255, 0.12)",
+        "belowLineFillColorGrowingBottom": "rgba(41, 98, 255, 0)",
+        "belowLineFillColorFallingBottom": "rgba(41, 98, 255, 0)",
+        "symbolActiveColor": "rgba(41, 98, 255, 0.12)",
+        "tabs": [
+          {{
+            "title": "日本株",
+            "symbols": [
+              {{"s": "TVC:NI225",  "d": "日経225"}},
+              {{"s": "TSE:TOPIX",  "d": "TOPIX"}},
+              {{"s": "TVC:NI225",  "d": "グロース250"}}
+            ]
+          }},
+          {{
+            "title": "米国株",
+            "symbols": [
+              {{"s": "SP:SPX",     "d": "S&P500"}},
+              {{"s": "NASDAQ:NDX", "d": "Nasdaq100"}},
+              {{"s": "DJ:DJI",     "d": "Dow Jones"}}
+            ]
+          }},
+          {{
+            "title": "為替",
+            "symbols": [
+              {{"s": "FX:USDJPY",  "d": "ドル円"}},
+              {{"s": "FX:EURJPY",  "d": "ユーロ円"}},
+              {{"s": "FX:GBPJPY",  "d": "ポンド円"}}
+            ]
+          }},
+          {{
+            "title": "コモディティ",
+            "symbols": [
+              {{"s": "TVC:GOLD",   "d": "金"}},
+              {{"s": "TVC:USOIL",  "d": "原油"}},
+              {{"s": "TVC:SILVER", "d": "銀"}}
+            ]
+          }}
+        ]
+      }}
+      </script>
+    </div>
   </div>
 </section>
 
