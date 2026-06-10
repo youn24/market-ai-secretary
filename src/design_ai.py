@@ -698,11 +698,15 @@ def _character_header(score: float, prices: dict, mood: str, today: str, now: st
     gane_png_paths = [
         root / "docs" / "assets" / "gane_sensei.png",
         root / "docs" / "assets" / f"gane_{gane_mood}.png",
+        root / "assets"          / "gane_sensei.png",
+        root / "assets"          / f"gane_{gane_mood}.png",
         root / "src"  / "assets" / "gane_sensei.png",
     ]
     kawa_png_paths = [
         root / "docs" / "assets" / "kawauso.png",
         root / "docs" / "assets" / f"kawauso_{kawauso_mood}.png",
+        root / "assets"          / "kawauso.png",
+        root / "assets"          / f"kawauso_{kawauso_mood}.png",
         root / "src"  / "assets" / "kawauso.png",
     ]
 
