@@ -503,7 +503,21 @@ def _sector_heatmap(sector_analysis: dict) -> str:
     if not sa.get("available"):
         return '<p style="color:var(--muted);font-size:13px">セクターデータなし（平日のみ）</p>'
 
-    sectors = sa.get("sectors", {})
+    sectors_raw = sa.get("sectors", [])
+
+    # list形式: [{name, chg_1d, ...}, ...] → dict形式に正規化
+    if isinstance(sectors_raw, list):
+        sectors = {}
+        for item in sectors_raw:
+            if isinstance(item, dict):
+                n = item.get("name") or item.get("symbol", "")
+                c = item.get("chg_1d") or item.get("change_pct") or item.get("chg") or 0
+                sectors[n] = {"change_pct": c}
+    elif isinstance(sectors_raw, dict):
+        sectors = sectors_raw
+    else:
+        sectors = {}
+
     if not sectors:
         top3    = sa.get("top3",    [])
         bottom3 = sa.get("bottom3", [])

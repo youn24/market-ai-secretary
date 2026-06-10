@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>市場AI秘書 — 2026-06-10 日次レポート</title>
+<style>
+
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&display=swap');
+
+:root {
+  --bg:      #0d1117;
+  --card:    #161b22;
+  --card2:   #1c2128;
+  --border:  #30363d;
+  --text:    #c9d1d9;
+  --muted:   #8b949e;
+  --green:   #3fb950;
+  --red:     #f85149;
+  --yellow:  #d29922;
+  --orange:  #db6d28;
+  --blue:    #58a6ff;
+  --purple:  #bc8cff;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Noto Sans JP', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* ── Layout ── */
+.container { max-width: 960px; margin: 0 auto; padding: 16px; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.grid-auto { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
+
+@media (max-width: 600px) {
+  .grid-2, .grid-3 { grid-template-columns: 1fr; }
+  .grid-auto { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ── Card ── */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+}
+.card-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+
+/* ── Header ── */
+.header {
+  background: linear-gradient(135deg, #0d1117 0%, #161b22 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 20px 0 16px;
+  margin-bottom: 20px;
+}
+.header-inner {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.header-title {
+  font-size: 20px;
+  font-weight: 900;
+  background: linear-gradient(90deg, #3fb950, #58a6ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.header-sub {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+.signal-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  border: 1.5px solid;
+}
+.signal-bull   { color: #3fb950;  border-color: #3fb950;  background: rgba(63,185,80,.1); }
+.signal-bear   { color: #f85149;    border-color: #f85149;    background: rgba(248,81,73,.1); }
+.signal-neutral { color: #d29922; border-color: #d29922; background: rgba(210,153,34,.1); }
+
+/* ── Gauge (SVG) ── */
+.gauge-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.gauge-svg { width: 200px; height: 130px; overflow: visible; }
+.gauge-score-label {
+  font-size: 11px;
+  color: var(--muted);
+  text-align: center;
+}
+
+/* ── Stat row ── */
+.stat-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+.stat-value { font-size: 22px; font-weight: 700; }
+.stat-unit  { font-size: 11px; color: var(--muted); }
+
+/* ── Price cards ── */
+.price-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+}
+.price-name  { font-size: 11px; color: var(--muted); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.price-value { font-size: 18px; font-weight: 700; }
+.price-chg   { font-size: 12px; margin-top: 3px; }
+.chg-up   { color: #3fb950; }
+.chg-down { color: #f85149; }
+.chg-flat { color: #8b949e; }
+.rsi-bar-wrap {
+  margin-top: 6px;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.rsi-bar { height: 100%; border-radius: 2px; transition: width .3s; }
+.rsi-label { font-size: 10px; color: var(--muted); margin-top: 3px; }
+
+/* ── Sector heatmap ── */
+.sector-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 8px;
+}
+.sector-cell {
+  border-radius: 8px;
+  padding: 10px 8px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  border: 1px solid transparent;
+}
+.sector-name { font-size: 10px; opacity: .75; margin-top: 2px; }
+
+/* ── News ── */
+.news-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.news-item:last-child { border-bottom: none; }
+.news-badge {
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  margin-top: 2px;
+}
+.badge-high   { background: rgba(248,81,73,.2);   color: #f85149; }
+.badge-mid    { background: rgba(210,153,34,.2);  color: #d29922; }
+.badge-low    { background: rgba(139,148,158,.15); color: #8b949e; }
+.news-title   { font-size: 13px; line-height: 1.5; color: var(--text); text-decoration: none; }
+.news-title:hover { color: #58a6ff; }
+.news-source  { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+/* ── AI discussion ── */
+.debate-member {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.debate-avatar {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  border: 2px solid;
+}
+.av-bull   { border-color: #3fb950; background: rgba(63,185,80,.12); }
+.av-bear   { border-color: #f85149;   background: rgba(248,81,73,.12); }
+.av-neutral { border-color: #d29922; background: rgba(210,153,34,.12); }
+.debate-bubble {
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 13px;
+  line-height: 1.6;
+  flex: 1;
+}
+.debate-name { font-size: 11px; font-weight: 700; margin-bottom: 4px; }
+.debate-verdict {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: var(--card2);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+.verdict-icon { font-size: 22px; }
+.verdict-text { font-size: 14px; font-weight: 700; }
+.verdict-conf { font-size: 12px; color: var(--muted); margin-top: 1px; }
+
+/* ── Calendar ── */
+.cal-item {
+  display: flex;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  align-items: flex-start;
+}
+.cal-item:last-child { border-bottom: none; }
+.cal-date {
+  flex-shrink: 0;
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  min-width: 60px;
+  text-align: center;
+}
+.cal-event { font-size: 13px; line-height: 1.5; }
+.cal-impact-high   { color: #f85149; font-weight: 700; }
+.cal-impact-mid    { color: #d29922; }
+
+/* ── Prediction tracker ── */
+.acc-bar-wrap {
+  height: 8px;
+  background: var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 8px 0;
+}
+.acc-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #58a6ff, #3fb950);
+  border-radius: 4px;
+  transition: width .5s;
+}
+.pred-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--border);
+}
+.pred-row:last-child { border-bottom: none; }
+.pred-hit  { color: #3fb950; font-weight: 700; }
+.pred-miss { color: #f85149;   font-weight: 700; }
+
+/* ── Fear & Greed meter ── */
+.fg-meter {
+  position: relative;
+  height: 10px;
+  background: linear-gradient(90deg, #f85149, #d29922, #3fb950);
+  border-radius: 5px;
+  margin: 8px 0 4px;
+}
+.fg-pointer {
+  position: absolute;
+  top: -4px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: white;
+  border: 2px solid var(--bg);
+  transform: translateX(-50%);
+  box-shadow: 0 0 6px rgba(0,0,0,.5);
+}
+
+/* ── Scroll anim ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fade-up {
+  animation: fadeUp .5s ease forwards;
+  opacity: 0;
+}
+section { margin-bottom: 20px; }
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.section-icon { font-size: 18px; }
+.section-title { font-size: 16px; font-weight: 700; }
+.section-tag {
+  margin-left: auto;
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: var(--card2);
+  color: var(--muted);
+}
+
+</style>
+</head>
+<body>
+
+<!-- ── Header ── -->
+<header class="header">
+  <div class="header-inner">
+    <div>
+      <div class="header-title">📊 市場AI秘書</div>
+      <div class="header-sub">2026-06-10 13:57 JST ／ TESTレポート</div>
+    </div>
+    <div class="signal-badge signal-neutral">😐 中立</div>
+  </div>
+</header>
+
+<main class="container">
+
+<!-- ── Row 1: ゲージ / FearGreed ── -->
+<section>
+  <div class="grid-2">
+    <!-- リスクゲージ -->
+    <div class="card fade-up">
+      <div class="card-title">リスクゲージ</div>
+      <div class="gauge-wrap">
+        
+<svg class="gauge-svg" viewBox="0 0 200 130" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="ggrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   stop-color="#f85149"/>
+      <stop offset="30%"  stop-color="#db6d28"/>
+      <stop offset="50%"  stop-color="#d29922"/>
+      <stop offset="75%"  stop-color="#39d353"/>
+      <stop offset="100%" stop-color="#3fb950"/>
+    </linearGradient>
+  </defs>
+  <!-- 背景トラック -->
+  <path d="M 20,110 A 80,80 0 0,1 180,110"
+        stroke="#30363d" stroke-width="20" fill="none" stroke-linecap="round"/>
+  <!-- カラーアーク -->
+  <path d="M 20,110 A 80,80 0 0,1 180,110"
+        stroke="url(#ggrad)" stroke-width="16" fill="none" stroke-linecap="round"/>
+  <!-- マスク(中央を塗りつぶし) -->
+  <circle cx="100" cy="110" r="60" fill="#161b22"/>
+  <!-- 針: 上向き基準(x1=100,y1=110 → x2=100,y2=40) をneedle_angle°回転 -->
+  <line x1="100" y1="110" x2="100" y2="42"
+        stroke="white" stroke-width="3" stroke-linecap="round">
+    <animateTransform attributeName="transform" type="rotate"
+      from="-90 100 110" to="-14.7 100 110"
+      dur="1.2s" calcMode="spline" keySplines="0.4 0 0.2 1" fill="freeze"/>
+  </line>
+  <!-- センタードット -->
+  <circle cx="100" cy="110" r="6" fill="white" stroke="#161b22" stroke-width="2"/>
+  <!-- スコア表示 -->
+  <text x="100" y="96" text-anchor="middle"
+        fill="#db6d28" font-family="'Noto Sans JP', sans-serif"
+        font-size="20" font-weight="900">-0.49</text>
+  <!-- ラベル -->
+  <text x="22"  y="128" fill="#f85149"    font-family="sans-serif" font-size="10">弱気</text>
+  <text x="162" y="128" fill="#3fb950"  font-family="sans-serif" font-size="10">強気</text>
+  <text x="100" y="20"  fill="#d29922" font-family="sans-serif" font-size="10"
+        text-anchor="middle">中立</text>
+</svg>
+        <div class="gauge-score-label">リスクスコア（−3〜＋3）</div>
+      </div>
+      <div style="margin-top:12px;font-size:12px;color:var(--muted)">
+        シグナル: FG低下
+      </div>
+    </div>
+
+    <!-- Fear & Greed -->
+    <div class="card fade-up">
+      <div class="card-title">Fear &amp; Greed 指数</div>
+      
+<div class="stat-row">
+  <span class="stat-value" style="color:#db6d28">33.4</span>
+  <span class="stat-unit">/100 — 恐怖</span>
+</div>
+<div class="fg-meter">
+  <div class="fg-pointer" style="left:33.4%"></div>
+</div>
+<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:6px">
+  <span>恐怖</span><span>中立</span><span>強欲</span>
+</div>
+      <div style="margin-top:14px">
+        <div class="card-title">今日の判断</div>
+        <div style="font-size:24px;margin:4px 0">😐 中立</div>
+        <div style="font-size:12px;color:var(--muted)">
+          地合い: <span style="color:#db6d28;font-weight:700">中立</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── 銘柄カード ── -->
+<section>
+  <div class="section-header">
+    <span class="section-icon">💹</span>
+    <span class="section-title">マーケット概況</span>
+    <span class="section-tag">2026-06-10</span>
+  </div>
+  <div class="grid-auto">
+<div class="price-card fade-up">
+  <div class="price-name">日経225 <span style="font-size:9px;opacity:.6">^N225</span></div>
+  <div class="price-value" style="color:#39d353">64,284 <span style="font-size:11px;color:var(--muted)">JPY</span></div>
+  <div class="price-chg chg-up">▲ +0.40%<span style="color:#3fb950;font-size:10px;font-weight:700"> 売られすぎ</span></div>
+  
+</div>
+<div class="price-card fade-up">
+  <div class="price-name">S&P500 <span style="font-size:9px;opacity:.6">^GSPC</span></div>
+  <div class="price-value" style="color:#39d353">7,406 <span style="font-size:11px;color:var(--muted)">USD</span></div>
+  <div class="price-chg chg-up">▲ +0.30%<span style="color:#3fb950;font-size:10px;font-weight:700"> 売られすぎ</span></div>
+  
+</div>
+<div class="price-card fade-up">
+  <div class="price-name">USD/JPY <span style="font-size:9px;opacity:.6">USDJPY=X</span></div>
+  <div class="price-value" style="color:#d29922">160.36 <span style="font-size:11px;color:var(--muted)"></span></div>
+  <div class="price-chg chg-flat">━ +0.12%<span style="color:#3fb950;font-size:10px;font-weight:700"> 売られすぎ</span></div>
+  
+</div>
+<div class="price-card fade-up">
+  <div class="price-name">VIX <span style="font-size:9px;opacity:.6">^VIX</span></div>
+  <div class="price-value" style="color:#3fb950">19.87 <span style="font-size:11px;color:var(--muted)"></span></div>
+  <div class="price-chg chg-up">▲ +5.02%<span style="color:#3fb950;font-size:10px;font-weight:700"> 売られすぎ</span></div>
+  
+</div>
+<div class="price-card fade-up">
+  <div class="price-name">金 <span style="font-size:9px;opacity:.6">GC=F</span></div>
+  <div class="price-value" style="color:#db6d28">4,203 <span style="font-size:11px;color:var(--muted)">USD</span></div>
+  <div class="price-chg chg-down">▼ -1.33%<span style="color:#3fb950;font-size:10px;font-weight:700"> 売られすぎ</span></div>
+  
+</div>
+<div class="price-card fade-up">
+  <div class="price-name">BTC <span style="font-size:9px;opacity:.6">BTC-USD</span></div>
+  <div class="price-value" style="color:#f85149">61,304 <span style="font-size:11px;color:var(--muted)">USD</span></div>
+  <div class="price-chg chg-down">▼ -2.83%<span style="color:#3fb950;font-size:10px;font-weight:700"> 売られすぎ</span></div>
+  
+</div>
+<div class="price-card fade-up">
+  <div class="price-name">Nasdaq <span style="font-size:9px;opacity:.6">^IXIC</span></div>
+  <div class="price-value" style="color:#39d353">25,930 <span style="font-size:11px;color:var(--muted)">USD</span></div>
+  <div class="price-chg chg-up">▲ +0.86%<span style="color:#3fb950;font-size:10px;font-weight:700"> 売られすぎ</span></div>
+  
+</div>
+<div class="price-card fade-up">
+  <div class="price-name">米10年債 <span style="font-size:9px;opacity:.6">^TNX</span></div>
+  <div class="price-value" style="color:#db6d28">4.53 <span style="font-size:11px;color:var(--muted)"></span></div>
+  <div class="price-chg chg-down">▼ -0.53%<span style="color:#3fb950;font-size:10px;font-weight:700"> 売られすぎ</span></div>
+  
+</div></div>
+</section>
+
+<!-- ── AIチーム議論 ── -->
+<section>
+  <div class="section-header">
+    <span class="section-icon">🤖</span>
+    <span class="section-title">AIチーム議論</span>
+  </div>
+  <div class="card fade-up">
+    <p style="color:var(--muted);font-size:13px">AI議論データなし</p>
+  </div>
+</section>
+
+<!-- ── シナリオ分析 ── -->
+
+
+<!-- ── セクターヒートマップ ── -->
+<section>
+  <div class="section-header">
+    <span class="section-icon">🏭</span>
+    <span class="section-title">セクター別パフォーマンス</span>
+  </div>
+  <div class="card fade-up">
+    <div class="sector-grid">
+<div class="sector-cell" style="background:rgba(63,185,80,.25);color:#3fb950">
+  <div style="font-size:15px">+2.2%</div>
+  <div class="sector-name">テクノロジー</div>
+</div>
+<div class="sector-cell" style="background:rgba(63,185,80,.12);color:#39d353">
+  <div style="font-size:15px">+1.1%</div>
+  <div class="sector-name">エネルギー</div>
+</div>
+<div class="sector-cell" style="background:rgba(139,148,158,.1);color:#8b949e">
+  <div style="font-size:15px">+0.5%</div>
+  <div class="sector-name">一般消費財</div>
+</div>
+<div class="sector-cell" style="background:rgba(139,148,158,.1);color:#8b949e">
+  <div style="font-size:15px">-0.2%</div>
+  <div class="sector-name">ヘルスケア</div>
+</div>
+<div class="sector-cell" style="background:rgba(139,148,158,.1);color:#8b949e">
+  <div style="font-size:15px">-0.3%</div>
+  <div class="sector-name">資本財</div>
+</div>
+<div class="sector-cell" style="background:rgba(139,148,158,.1);color:#8b949e">
+  <div style="font-size:15px">-0.4%</div>
+  <div class="sector-name">生活必需品</div>
+</div>
+<div class="sector-cell" style="background:rgba(219,109,40,.2);color:#db6d28">
+  <div style="font-size:15px">-0.5%</div>
+  <div class="sector-name">通信</div>
+</div>
+<div class="sector-cell" style="background:rgba(219,109,40,.2);color:#db6d28">
+  <div style="font-size:15px">-0.6%</div>
+  <div class="sector-name">金融</div>
+</div>
+<div class="sector-cell" style="background:rgba(219,109,40,.2);color:#db6d28">
+  <div style="font-size:15px">-1.3%</div>
+  <div class="sector-name">素材</div>
+</div>
+<div class="sector-cell" style="background:rgba(219,109,40,.2);color:#db6d28">
+  <div style="font-size:15px">-1.5%</div>
+  <div class="sector-name">不動産</div>
+</div>
+<div class="sector-cell" style="background:rgba(219,109,40,.2);color:#db6d28">
+  <div style="font-size:15px">-1.9%</div>
+  <div class="sector-name">公益</div>
+</div></div>
+  </div>
+</section>
+
+<!-- ── ニュース ── -->
+<section>
+  <div class="section-header">
+    <span class="section-icon">📰</span>
+    <span class="section-title">注目ニュース</span>
+    <span class="section-tag">重要度別</span>
+  </div>
+  <div class="card fade-up">
+    
+<div class="news-item">
+  <span class="news-badge badge-high">高</span>
+  <div>
+    <a class="news-title" href="https://news.google.com/rss/articles/CBMiX0FVX3lxTFBqN3hudG12UUdfSERoZXAyQ3pYMEtETHNGU1JHOXppbDlWZUhfSjR4cklBVGxXYkJ1VmlQSzVqVHZ2LTMzNC03elJTZXYtRHR6VjZSSWQxY0FCeE8tVnhJ?oc=5" target="_blank" rel="noopener">日銀 “政策金利１％程度へ” 来週の会合で利上げを最終判断へ - NHKニュース</a>
+    <div class="news-source">NHKニュース</div>
+  </div>
+</div>
+
+<div class="news-item">
+  <span class="news-badge badge-high">高</span>
+  <div>
+    <a class="news-title" href="https://news.google.com/rss/articles/CBMif0FVX3lxTE9Cc1d2dm4tczFLQzBQTmFweFhGX0Fma3hZTEtHYlBSN0l5N1JoLVluOTVLR3pvWjVCM3lYc1VsVGtSdVVXa1VqeEFzUjhsWi1jSFBlVTB3Vk04NlRPQnBWV184TTVuRGRqeTZxblNiQWF1Y2hkVjRxVkhfTE5QVTA?oc=5" target="_blank" rel="noopener">利上げで住宅ローン返済負担重く 預金利息が増える恩恵も（共同通信） - Yahoo!ニュース</a>
+    <div class="news-source">Yahoo!ニュース</div>
+  </div>
+</div>
+
+<div class="news-item">
+  <span class="news-badge badge-high">高</span>
+  <div>
+    <a class="news-title" href="https://news.google.com/rss/articles/CBMibEFVX3lxTE1kOHlHUktpWFVKQ3lHZVBma2x6eTRicW9FdWt6aXZ5Q2l2UVpvc21WbkNVSnV3UzExcE9nRnRVX2hMbWR1dmtQZmFJTEFEZUhHYkY3Rl9JWVJzUHZkOU1tMEE0ZEtTNFd6cVB5dA?oc=5" target="_blank" rel="noopener">日銀利上げ、6月の次は年内にも 切り上がる政策金利「到達点」予想 - 日本経済新聞</a>
+    <div class="news-source">日本経済新聞</div>
+  </div>
+</div>
+
+<div class="news-item">
+  <span class="news-badge badge-high">高</span>
+  <div>
+    <a class="news-title" href="https://news.google.com/rss/articles/CBMiX0FVX3lxTE00bHlidmhreUtHYVVJQ1ItVjc1cTBZei1kbjBfMks3eUhnRHh0ampqS3BqXzJqeWlxbHBvc2FlY3VwR2JsVUtRVDlXRGFLMXMxQVdONWV1RzdGTDZnZlZz?oc=5" target="_blank" rel="noopener">米金融政策見通しを変更 年2回の利下げから据え置きへ 米国野村證券・雨宮愛知 - nomura.co.jp</a>
+    <div class="news-source">nomura.co.jp</div>
+  </div>
+</div>
+
+<div class="news-item">
+  <span class="news-badge badge-high">高</span>
+  <div>
+    <a class="news-title" href="https://news.google.com/rss/articles/CBMibEFVX3lxTFBNSTYwbEdCd2pHOHRveDNLYWo5akVLa1NiM200cWdHaTAxNHFYWV90ektiRWV6bXc2ODljc2dkMk1kZXFFWW9OSzFBMkc0N29rMnM0UE1XN3pQSnFaUVRXQ21vZDg5TENhMno2eA?oc=5" target="_blank" rel="noopener">トランプ氏「金利下げて」 FRB新議長に「判断任せる」も本音隠せず - 日本経済新聞</a>
+    <div class="news-source">日本経済新聞</div>
+  </div>
+</div>
+
+<div class="news-item">
+  <span class="news-badge badge-high">高</span>
+  <div>
+    <a class="news-title" href="https://news.google.com/rss/articles/CBMif0FVX3lxTE5BTlZnQWlYc3JWWng2WkZtUnBqV3ItM0tBS01hNmlrZFdEdERwOFljT1paanlzcXVsbkZKc2l6elpFcTJCYVhyZVRoMFk1YWdiQ3AtVkxhTmtSX0l5TEprZFdMbmNlQlJXZG5LOU02OXpLblNUdlJkaS15bU5fakU?oc=5" target="_blank" rel="noopener">トランプ氏、FRB利上げは誤り-雇用統計好調でも「むしろ利下げを」（TBS CROSS DIG with Bloomberg） - Yahoo!ニュース</a>
+    <div class="news-source">Yahoo!ニュース</div>
+  </div>
+</div>
+
+<div class="news-item">
+  <span class="news-badge badge-high">高</span>
+  <div>
+    <a class="news-title" href="https://news.google.com/rss/articles/CBMiY0FVX3lxTE12aEp3MGU0NDBxUVRLM1o0Yl92ejluMDU1TV9IbjlVTGFxMld2QzZXTDRGbUhOTjRJUnZuS3pmMEI3VzczeGdwX1lkWkJQRzRmanZyMUNyMUthUW5JcWFRRm1Ycw?oc=5" target="_blank" rel="noopener">ドル円見通し｜米国CPI直前チェック！ドル円はどう動く？ - 外為どっとコム</a>
+    <div class="news-source">外為どっとコム</div>
+  </div>
+</div>
+
+<div class="news-item">
+  <span class="news-badge badge-high">高</span>
+  <div>
+    <a class="news-title" href="https://news.google.com/rss/articles/CBMiX0FVX3lxTE51SUdtUjJFZGx4THI2V1ZqY01DNkJTVUZfMGlnSGxEQUFvMkt6b0p3Ql9WQWdweFhiNGszZG5xZkNnWW12SG1FeHRGRHFxRkJNNzNoUEdBc0M2b09NTXBz?oc=5" target="_blank" rel="noopener">【米国】5月CPI、前月比0.5%上昇か インフレ期待の乖離が2022年以来の大きさに - finance.biggo.jp</a>
+    <div class="news-source">finance.biggo.jp</div>
+  </div>
+</div>
+
+<div class="news-item">
+  <span class="news-badge badge-high">高</span>
+  <div>
+    <a class="news-title" href="https://news.google.com/rss/articles/CBMiSEFVX3lxTE1LOXVJYmppdlNJckpsV2hDT2dadk9Jb3pzTEQ3QktzSHJjTjdBcmY0QlFxNmgzMXRIX2x5a08zdUZjTDZxS0IwSg?oc=5" target="_blank" rel="noopener">ドル円、１６０円台を固める展開が続く インフレ指標を見極めへ＝ＮＹ為替概況 - みんかぶ FX/為替</a>
+    <div class="news-source">みんかぶ FX/為替</div>
+  </div>
+</div>
+
+<div class="news-item">
+  <span class="news-badge badge-high">高</span>
+  <div>
+    <a class="news-title" href="https://news.google.com/rss/articles/CBMieEFVX3lxTE1aX0pwMmZFbG5ZWWlpbFd2UE5Ca0JDZHRWa0RSekNXeFp4dmo3eGhyVkZaSkVuaEVnZkRDTmt0LXkxLU1yTFhTeEwxcmNrSHpqQzRVbkw4SkozOVVyaTRSYk1QMUhlWVcyZm1CZDJ0cXFiWk96aHBHSw?oc=5" target="_blank" rel="noopener">米5月雇用、堅調な伸び：識者はこうみる - Reuters</a>
+    <div class="news-source">Reuters</div>
+  </div>
+</div>
+
+<div class="news-item">
+  <span class="news-badge badge-high">高</span>
+  <div>
+    <a class="news-title" href="https://news.google.com/rss/articles/CBMif0FVX3lxTFBQVFJZNjU1YmdPMEs2bFBtLVJOaWxhZGVEQmZQTGktS0R6SVR5dElOakNJc00xMkViXzdZaTRSa0ZsdU5HMmJlX1NHaFFJNzVsbGhxaXFxSVl2SWlrVTloaTdfUnJCSU5TZzNPUWMxZ1diWVR3TFV0VFRRUGNSQjg?oc=5" target="_blank" rel="noopener">5月の米雇用統計、労働市場への懸念は後退 - ピクテ・ジャパン</a>
+    <div class="news-source">ピクテ・ジャパン</div>
+  </div>
+</div>
+
+<div class="news-item">
+  <span class="news-badge badge-high">高</span>
+  <div>
+    <a class="news-title" href="https://news.google.com/rss/articles/CBMib0FVX3lxTE40Y0V0NUdYNzJtcnRjS052SWVTTzItY0FmVk15Uk05QjRObXVEam5udmVNRHBvRmZlM1gzRm01MWNwNGhCYVlka1ZiTy0xNUhzeHc5dDUzak9sVVFEa2FYOGZaMldYRHBRNTR4MGZjMNIBf0FVX3lxTE00QkdiWGRINWNjOTdHQ3NDUmlxeDN1akQ2R0xMQ3plcDI2a2FzTmt5WkZzaTNrcV9kbWRqZy0yNGJ5a2dmWjl1MWxyZ1U3d2R1Q2NSWUljUzRyN08wM3NJQThfT2RWX3p6YmFVZUNoa1BYcVJvQ0J3UC1IdlNIVzg?oc=5" target="_blank" rel="noopener">米雇用統計（26年5月）－非農業部門雇用者数（前月比）は+17.2万人と地方政府、娯楽・宿泊の増加主導で市場予想（+8.8万人）を大幅に上回る - nli-research.co.jp</a>
+    <div class="news-source">nli-research.co.jp</div>
+  </div>
+</div>
+  </div>
+</section>
+
+<!-- ── イベントカレンダー / 予測精度 ── -->
+<section>
+  <div class="grid-2">
+    <div>
+      <div class="section-header">
+        <span class="section-icon">📅</span>
+        <span class="section-title">今週のイベント</span>
+      </div>
+      <div class="card fade-up">
+        <p style="color:var(--muted);font-size:13px">今週の主要イベントなし</p>
+      </div>
+    </div>
+    <div>
+      <div class="section-header">
+        <span class="section-icon">🎯</span>
+        <span class="section-title">AI予測精度</span>
+      </div>
+      <div class="card fade-up">
+        
+<div class="stat-row">
+  <span class="stat-value" style="color:#f85149">0%</span>
+  <span class="stat-unit">正解率 (0/0件)</span>
+</div>
+<div class="acc-bar-wrap">
+  <div class="acc-bar" style="width:0%;background:#f85149"></div>
+</div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer style="text-align:center;padding:20px;color:var(--muted);font-size:11px;border-top:1px solid var(--border);margin-top:20px">
+  市場AI秘書 · 自動生成 2026-06-10 13:57 JST · データは参考情報です
+</footer>
+
+<script>
+(function(){
+  const els = document.querySelectorAll('.fade-up');
+  const io  = new IntersectionObserver(entries => {
+    entries.forEach(e => { if(e.isIntersecting) e.target.style.animationDelay = '0s'; });
+  }, {threshold:0.1});
+  els.forEach((el,i) => {
+    el.style.animationDelay = (i * 0.06) + 's';
+    io.observe(el);
+  });
+})();
+</script>
+
+</body>
+</html>
