@@ -544,7 +544,7 @@ section { margin-bottom: 20px; }
     <div class="char-title-block">
       <div class="char-main-title">ガネ先生とカワウソくんの<br>今日の相場ダイジェスト</div>
       <div class="char-sub-title">AIチーム自動分析レポート</div>
-      <div class="char-date-badge">📅 2026-06-11 00:04</div><br>
+      <div class="char-date-badge">📅 2026-06-11 00:16</div><br>
       <span class="char-signal-badge" style="color:#f85149;border-color:#f85149;background:rgba(248,81,73,.15)">😟 やや弱気</span>
       <div style="margin-top:10px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
         <span style="font-size:12px;color:#f0c040">
@@ -572,10 +572,9 @@ section { margin-bottom: 20px; }
 
 <main class="container">
 
-<!-- ── リアルタイム価格（JS自動更新）── -->
-<div id="rt-update-bar" style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:8px 14px;margin-bottom:12px;font-size:11px;color:#8b949e;display:flex;align-items:center;gap:8px">
-  <span id="rt-status">⏳ リアルタイムデータを取得中...</span>
-  <span id="rt-time" style="margin-left:auto"></span>
+<!-- ── データ生成時刻の注記 ── -->
+<div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:8px 14px;margin-bottom:12px;font-size:11px;color:#8b949e;display:flex;align-items:center;gap:8px">
+  <span>📊 下の数値はレポート生成時刻（2026-06-11 00:16 JST）のデータです。リアルタイムチャートはTradingViewウィジェットをご覧ください。</span>
 </div>
 
 <!-- ── クイックサマリー ── -->
@@ -602,8 +601,8 @@ section { margin-bottom: 20px; }
 </div><div class="qs-card">
   <div class="qs-icon">🎭</div>
   <div class="qs-label">Fear &amp; Greed</div>
-  <div class="qs-value" style="color:#f85149">34</div>
-  <div class="qs-chg" style="color:#f85149">恐怖</div>
+  <div class="qs-value" style="color:#d29922">50</div>
+  <div class="qs-chg" style="color:#d29922">---</div>
 </div></div>
 
 <!-- ── 市場ステータスバー ── -->
@@ -617,8 +616,8 @@ section { margin-bottom: 20px; }
   <span class="ms-chg" style="color:#3fb950">+0.42%</span>
 </div><div class="ms-sep"></div><div class="ms-item">
   <span class="ms-label">Nasdaq</span>
-  <span class="ms-value" style="color:#3fb950">19,850</span>
-  <span class="ms-chg" style="color:#3fb950">+0.33%</span>
+  <span class="ms-value" style="color:#3fb950">0.00</span>
+  <span class="ms-chg" style="color:#3fb950">+0.00%</span>
 </div><div class="ms-sep"></div><div class="ms-item">
   <span class="ms-label">USD/JPY</span>
   <span class="ms-value" style="color:#3fb950">160</span>
@@ -681,7 +680,7 @@ section { margin-bottom: 20px; }
         <div class="gauge-score-label">リスクスコア（−3〜＋3）</div>
       </div>
       <div style="margin-top:12px;font-size:12px;color:var(--muted)">
-        シグナル: VIX上昇, 日経下落
+        シグナル: VIX上昇
       </div>
     </div>
 
@@ -690,11 +689,11 @@ section { margin-bottom: 20px; }
       <div class="card-title">Fear &amp; Greed 指数</div>
       
 <div class="stat-row">
-  <span class="stat-value" style="color:#db6d28">33.5</span>
-  <span class="stat-unit">/100 — 恐怖</span>
+  <span class="stat-value" style="color:#d29922">50</span>
+  <span class="stat-unit">/100 — </span>
 </div>
 <div class="fg-meter">
-  <div class="fg-pointer" style="left:33.5%"></div>
+  <div class="fg-pointer" style="left:50%"></div>
 </div>
 <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:6px">
   <span>恐怖</span><span>中立</span><span>強欲</span>
@@ -720,34 +719,74 @@ section { margin-bottom: 20px; }
   <div class="grid-2">
     <!-- 日経225 チャート -->
     <div class="card fade-up" style="padding:0;overflow:hidden">
-      <div style="padding:10px 12px 6px;font-size:11px;font-weight:700;color:var(--muted)">🇯🇵 日経225 (NI225)</div>
+      <div style="padding:10px 12px 6px;font-size:11px;font-weight:700;color:var(--muted)">🇯🇵 日経225（現物）</div>
       <div class="tradingview-widget-container">
         <div class="tradingview-widget-container__widget"></div>
         <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
         {
           "symbol": "TVC:NI225",
           "width": "100%",
-          "height": 180,
+          "height": 200,
           "locale": "ja",
           "dateRange": "1D",
           "colorTheme": "dark",
           "isTransparent": true,
-          "autosize": true,
-          "largeChartUrl": ""
+          "autosize": true
         }
         </script>
       </div>
     </div>
+    <!-- 日経先物 チャート -->
+    <div class="card fade-up" style="padding:0;overflow:hidden">
+      <div style="padding:10px 12px 6px;font-size:11px;font-weight:700;color:var(--muted)">🇯🇵 日経225先物（CME）</div>
+      <div class="tradingview-widget-container">
+        <div class="tradingview-widget-container__widget"></div>
+        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
+        {
+          "symbol": "CME:NKD1!",
+          "width": "100%",
+          "height": 200,
+          "locale": "ja",
+          "dateRange": "1D",
+          "colorTheme": "dark",
+          "isTransparent": true,
+          "autosize": true
+        }
+        </script>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-2" style="margin-top:10px">
     <!-- S&P500 チャート -->
     <div class="card fade-up" style="padding:0;overflow:hidden">
-      <div style="padding:10px 12px 6px;font-size:11px;font-weight:700;color:var(--muted)">🇺🇸 S&amp;P500 (SPX)</div>
+      <div style="padding:10px 12px 6px;font-size:11px;font-weight:700;color:var(--muted)">🇺🇸 S&amp;P500（現物）</div>
       <div class="tradingview-widget-container">
         <div class="tradingview-widget-container__widget"></div>
         <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
         {
           "symbol": "SP:SPX",
           "width": "100%",
-          "height": 180,
+          "height": 200,
+          "locale": "ja",
+          "dateRange": "1D",
+          "colorTheme": "dark",
+          "isTransparent": true,
+          "autosize": true
+        }
+        </script>
+      </div>
+    </div>
+    <!-- S&P500先物 チャート -->
+    <div class="card fade-up" style="padding:0;overflow:hidden">
+      <div style="padding:10px 12px 6px;font-size:11px;font-weight:700;color:var(--muted)">🇺🇸 S&amp;P500先物（E-mini）</div>
+      <div class="tradingview-widget-container">
+        <div class="tradingview-widget-container__widget"></div>
+        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
+        {
+          "symbol": "CME_MINI:ES1!",
+          "width": "100%",
+          "height": 200,
           "locale": "ja",
           "dateRange": "1D",
           "colorTheme": "dark",
@@ -761,14 +800,14 @@ section { margin-bottom: 20px; }
 
   <!-- ドル円チャート -->
   <div class="card fade-up" style="padding:0;overflow:hidden;margin-top:10px">
-    <div style="padding:10px 12px 6px;font-size:11px;font-weight:700;color:var(--muted)">💴 USD/JPY ドル円レート</div>
+    <div style="padding:10px 12px 6px;font-size:11px;font-weight:700;color:var(--muted)">💴 USD/JPY ドル円（リアルタイム）</div>
     <div class="tradingview-widget-container">
       <div class="tradingview-widget-container__widget"></div>
       <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
       {
         "symbol": "FX:USDJPY",
         "width": "100%",
-        "height": 150,
+        "height": 160,
         "locale": "ja",
         "dateRange": "1D",
         "colorTheme": "dark",
@@ -817,18 +856,6 @@ section { margin-bottom: 20px; }
   <div class="price-value" style="color:#39d353">0.00 <span style="font-size:11px;color:var(--muted)">USD</span></div>
   <div class="price-chg chg-up">▲ +0.60%<span style="color:#3fb950;font-size:10px;font-weight:700"> 売られすぎ</span></div>
   
-</div>
-<div class="price-card fade-up">
-  <div class="price-name">BTC <span style="font-size:9px;opacity:.6">BTC-USD</span></div>
-  <div class="price-value" style="color:#3fb950">0.00 <span style="font-size:11px;color:var(--muted)">USD</span></div>
-  <div class="price-chg chg-up">▲ +1.80%<span style="color:#3fb950;font-size:10px;font-weight:700"> 売られすぎ</span></div>
-  
-</div>
-<div class="price-card fade-up">
-  <div class="price-name">Nasdaq <span style="font-size:9px;opacity:.6">^IXIC</span></div>
-  <div class="price-value" style="color:#39d353">0.00 <span style="font-size:11px;color:var(--muted)">USD</span></div>
-  <div class="price-chg chg-up">▲ +0.33%<span style="color:#3fb950;font-size:10px;font-weight:700"> 売られすぎ</span></div>
-  
 </div></div>
 </section>
 
@@ -850,8 +877,8 @@ section { margin-bottom: 20px; }
 <div class="watch-item">
   <span class="watch-rank">2</span>
   <div class="watch-name">💻 Nasdaq<br><span class="watch-theme">テック</span></div>
-  <span class="watch-price chg-up">19,850</span>
-  <span class="watch-chg chg-up">+0.33%</span>
+  <span class="watch-price chg-up">0.00</span>
+  <span class="watch-chg chg-up">+0.00%</span>
   <span class="watch-signal sig-hold">---</span>
 </div>
 <div class="watch-item">
@@ -864,15 +891,15 @@ section { margin-bottom: 20px; }
 <div class="watch-item">
   <span class="watch-rank">4</span>
   <div class="watch-name">₿ Bitcoin<br><span class="watch-theme">暗号資産</span></div>
-  <span class="watch-price chg-up">97,500</span>
-  <span class="watch-chg chg-up">+1.80%</span>
+  <span class="watch-price chg-up">0.00</span>
+  <span class="watch-chg chg-up">+0.00%</span>
   <span class="watch-signal sig-hold">---</span>
 </div>
 <div class="watch-item">
   <span class="watch-rank">5</span>
   <div class="watch-name">🛢 原油 WTI<br><span class="watch-theme">コモディティ</span></div>
-  <span class="watch-price chg-down">79.32</span>
-  <span class="watch-chg chg-down">-0.50%</span>
+  <span class="watch-price chg-up">0.00</span>
+  <span class="watch-chg chg-up">+0.00%</span>
   <span class="watch-signal sig-hold">---</span>
 </div>
   </div>
@@ -1017,7 +1044,7 @@ section { margin-bottom: 20px; }
 <!-- ── フッター ── -->
 <footer style="text-align:center;padding:24px 16px;color:var(--muted);font-size:11px;border-top:1px solid var(--border);margin-top:20px;background:linear-gradient(0deg,#1a0f00,transparent)">
   <div style="font-size:16px;margin-bottom:6px">🐘 ガネ先生 &amp; 🦦 カワウソくん</div>
-  <div>AIチーム自動生成レポート · 2026-06-11 00:04 JST</div>
+  <div>AIチーム自動生成レポート · 2026-06-11 00:16 JST</div>
   <div style="margin-top:4px">このレポートはAIによる自動分析です。投資は自己判断でお願いします。</div>
 </footer>
 
@@ -1033,85 +1060,6 @@ section { margin-bottom: 20px; }
   });
 })();
 
-// ── リアルタイム価格自動更新 ──────────────────────────────
-(async function rtUpdate() {
-  const SYMBOLS = [
-    { tv: 'TVC:NI225',       yf: '%5EN225',   label: '日経225',   id: 'rt-nk'  },
-    { tv: 'SP:SPX',          yf: '%5EGSPC',   label: 'S&P500',    id: 'rt-sp'  },
-    { tv: 'FX:USDJPY',       yf: 'USDJPY%3DX',label: 'USD/JPY',   id: 'rt-fx'  },
-    { tv: 'CBOE:VIX',        yf: '%5EVIX',    label: 'VIX',       id: 'rt-vix' },
-  ];
-
-  function jstNow() {
-    return new Date().toLocaleString('ja-JP', {timeZone:'Asia/Tokyo',hour12:false});
-  }
-
-  function fmtNum(v) {
-    return v > 999 ? v.toLocaleString('ja-JP', {maximumFractionDigits:0})
-                   : v.toFixed(2);
-  }
-
-  function colorClass(chg) {
-    return chg >= 0 ? '#3fb950' : '#f85149';
-  }
-
-  async function fetchQuote(yf) {
-    try {
-      const url = `https://query1.finance.yahoo.com/v8/finance/chart/${yf}?interval=1m&range=1d`;
-      const r   = await fetch(url, {mode:'cors'});
-      if (!r.ok) return null;
-      const d   = await r.json();
-      const meta = d?.chart?.result?.[0]?.meta;
-      if (!meta) return null;
-      const price = meta.regularMarketPrice ?? meta.previousClose;
-      const prev  = meta.previousClose ?? price;
-      const chg   = prev ? (price - prev) / prev * 100 : 0;
-      return { price, chg };
-    } catch(e) { return null; }
-  }
-
-  const bar = document.getElementById('rt-status');
-  const tim = document.getElementById('rt-time');
-
-  // qs-cardのvalueとchgを更新するヘルパー
-  function updateCard(idx, price, chg) {
-    const cards = document.querySelectorAll('.qs-card');
-    if (!cards[idx]) return;
-    const valEl = cards[idx].querySelector('.qs-value');
-    const chgEl = cards[idx].querySelector('.qs-chg');
-    if (valEl) { valEl.textContent = fmtNum(price); valEl.style.color = colorClass(chg); }
-    if (chgEl) {
-      const sgn = chg >= 0 ? '+' : '';
-      chgEl.textContent = sgn + chg.toFixed(2) + '%';
-      chgEl.style.color = colorClass(chg);
-    }
-  }
-
-  async function doUpdate() {
-    let ok = 0;
-    const results = await Promise.allSettled(
-      SYMBOLS.map(s => fetchQuote(s.yf))
-    );
-    results.forEach((r, i) => {
-      if (r.status === 'fulfilled' && r.value) {
-        updateCard(i, r.value.price, r.value.chg);
-        ok++;
-      }
-    });
-    if (ok > 0) {
-      bar.innerHTML = `✅ リアルタイムデータ取得成功（${ok}/${SYMBOLS.length}銘柄）`;
-      bar.style.color = '#3fb950';
-    } else {
-      bar.innerHTML = '⚠️ リアルタイム取得失敗（TradingViewチャートは最新です）';
-      bar.style.color = '#d29922';
-    }
-    tim.textContent = '最終更新: ' + jstNow();
-  }
-
-  // 初回実行 + 3分ごとに自動更新
-  doUpdate();
-  setInterval(doUpdate, 3 * 60 * 1000);
-})();
 </script>
 
 </body>

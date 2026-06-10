@@ -1419,10 +1419,9 @@ def generate(
 
 <main class="container">
 
-<!-- ── リアルタイム価格（JS自動更新）── -->
-<div id="rt-update-bar" style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:8px 14px;margin-bottom:12px;font-size:11px;color:#8b949e;display:flex;align-items:center;gap:8px">
-  <span id="rt-status">⏳ リアルタイムデータを取得中...</span>
-  <span id="rt-time" style="margin-left:auto"></span>
+<!-- ── データ生成時刻の注記 ── -->
+<div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:8px 14px;margin-bottom:12px;font-size:11px;color:#8b949e;display:flex;align-items:center;gap:8px">
+  <span>📊 下の数値はレポート生成時刻（{now}）のデータです。リアルタイムチャートはTradingViewウィジェットをご覧ください。</span>
 </div>
 
 <!-- ── クイックサマリー ── -->
@@ -1471,34 +1470,74 @@ def generate(
   <div class="grid-2">
     <!-- 日経225 チャート -->
     <div class="card fade-up" style="padding:0;overflow:hidden">
-      <div style="padding:10px 12px 6px;font-size:11px;font-weight:700;color:var(--muted)">🇯🇵 日経225 (NI225)</div>
+      <div style="padding:10px 12px 6px;font-size:11px;font-weight:700;color:var(--muted)">🇯🇵 日経225（現物）</div>
       <div class="tradingview-widget-container">
         <div class="tradingview-widget-container__widget"></div>
         <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
         {{
           "symbol": "TVC:NI225",
           "width": "100%",
-          "height": 180,
+          "height": 200,
           "locale": "ja",
           "dateRange": "1D",
           "colorTheme": "dark",
           "isTransparent": true,
-          "autosize": true,
-          "largeChartUrl": ""
+          "autosize": true
         }}
         </script>
       </div>
     </div>
+    <!-- 日経先物 チャート -->
+    <div class="card fade-up" style="padding:0;overflow:hidden">
+      <div style="padding:10px 12px 6px;font-size:11px;font-weight:700;color:var(--muted)">🇯🇵 日経225先物（CME）</div>
+      <div class="tradingview-widget-container">
+        <div class="tradingview-widget-container__widget"></div>
+        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
+        {{
+          "symbol": "CME:NKD1!",
+          "width": "100%",
+          "height": 200,
+          "locale": "ja",
+          "dateRange": "1D",
+          "colorTheme": "dark",
+          "isTransparent": true,
+          "autosize": true
+        }}
+        </script>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-2" style="margin-top:10px">
     <!-- S&P500 チャート -->
     <div class="card fade-up" style="padding:0;overflow:hidden">
-      <div style="padding:10px 12px 6px;font-size:11px;font-weight:700;color:var(--muted)">🇺🇸 S&amp;P500 (SPX)</div>
+      <div style="padding:10px 12px 6px;font-size:11px;font-weight:700;color:var(--muted)">🇺🇸 S&amp;P500（現物）</div>
       <div class="tradingview-widget-container">
         <div class="tradingview-widget-container__widget"></div>
         <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
         {{
           "symbol": "SP:SPX",
           "width": "100%",
-          "height": 180,
+          "height": 200,
+          "locale": "ja",
+          "dateRange": "1D",
+          "colorTheme": "dark",
+          "isTransparent": true,
+          "autosize": true
+        }}
+        </script>
+      </div>
+    </div>
+    <!-- S&P500先物 チャート -->
+    <div class="card fade-up" style="padding:0;overflow:hidden">
+      <div style="padding:10px 12px 6px;font-size:11px;font-weight:700;color:var(--muted)">🇺🇸 S&amp;P500先物（E-mini）</div>
+      <div class="tradingview-widget-container">
+        <div class="tradingview-widget-container__widget"></div>
+        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
+        {{
+          "symbol": "CME_MINI:ES1!",
+          "width": "100%",
+          "height": 200,
           "locale": "ja",
           "dateRange": "1D",
           "colorTheme": "dark",
@@ -1512,14 +1551,14 @@ def generate(
 
   <!-- ドル円チャート -->
   <div class="card fade-up" style="padding:0;overflow:hidden;margin-top:10px">
-    <div style="padding:10px 12px 6px;font-size:11px;font-weight:700;color:var(--muted)">💴 USD/JPY ドル円レート</div>
+    <div style="padding:10px 12px 6px;font-size:11px;font-weight:700;color:var(--muted)">💴 USD/JPY ドル円（リアルタイム）</div>
     <div class="tradingview-widget-container">
       <div class="tradingview-widget-container__widget"></div>
       <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
       {{
         "symbol": "FX:USDJPY",
         "width": "100%",
-        "height": 150,
+        "height": 160,
         "locale": "ja",
         "dateRange": "1D",
         "colorTheme": "dark",
@@ -1700,85 +1739,6 @@ def generate(
   }});
 }})();
 
-// ── リアルタイム価格自動更新 ──────────────────────────────
-(async function rtUpdate() {{
-  const SYMBOLS = [
-    {{ tv: 'TVC:NI225',       yf: '%5EN225',   label: '日経225',   id: 'rt-nk'  }},
-    {{ tv: 'SP:SPX',          yf: '%5EGSPC',   label: 'S&P500',    id: 'rt-sp'  }},
-    {{ tv: 'FX:USDJPY',       yf: 'USDJPY%3DX',label: 'USD/JPY',   id: 'rt-fx'  }},
-    {{ tv: 'CBOE:VIX',        yf: '%5EVIX',    label: 'VIX',       id: 'rt-vix' }},
-  ];
-
-  function jstNow() {{
-    return new Date().toLocaleString('ja-JP', {{timeZone:'Asia/Tokyo',hour12:false}});
-  }}
-
-  function fmtNum(v) {{
-    return v > 999 ? v.toLocaleString('ja-JP', {{maximumFractionDigits:0}})
-                   : v.toFixed(2);
-  }}
-
-  function colorClass(chg) {{
-    return chg >= 0 ? '#3fb950' : '#f85149';
-  }}
-
-  async function fetchQuote(yf) {{
-    try {{
-      const url = `https://query1.finance.yahoo.com/v8/finance/chart/${{yf}}?interval=1m&range=1d`;
-      const r   = await fetch(url, {{mode:'cors'}});
-      if (!r.ok) return null;
-      const d   = await r.json();
-      const meta = d?.chart?.result?.[0]?.meta;
-      if (!meta) return null;
-      const price = meta.regularMarketPrice ?? meta.previousClose;
-      const prev  = meta.previousClose ?? price;
-      const chg   = prev ? (price - prev) / prev * 100 : 0;
-      return {{ price, chg }};
-    }} catch(e) {{ return null; }}
-  }}
-
-  const bar = document.getElementById('rt-status');
-  const tim = document.getElementById('rt-time');
-
-  // qs-cardのvalueとchgを更新するヘルパー
-  function updateCard(idx, price, chg) {{
-    const cards = document.querySelectorAll('.qs-card');
-    if (!cards[idx]) return;
-    const valEl = cards[idx].querySelector('.qs-value');
-    const chgEl = cards[idx].querySelector('.qs-chg');
-    if (valEl) {{ valEl.textContent = fmtNum(price); valEl.style.color = colorClass(chg); }}
-    if (chgEl) {{
-      const sgn = chg >= 0 ? '+' : '';
-      chgEl.textContent = sgn + chg.toFixed(2) + '%';
-      chgEl.style.color = colorClass(chg);
-    }}
-  }}
-
-  async function doUpdate() {{
-    let ok = 0;
-    const results = await Promise.allSettled(
-      SYMBOLS.map(s => fetchQuote(s.yf))
-    );
-    results.forEach((r, i) => {{
-      if (r.status === 'fulfilled' && r.value) {{
-        updateCard(i, r.value.price, r.value.chg);
-        ok++;
-      }}
-    }});
-    if (ok > 0) {{
-      bar.innerHTML = `✅ リアルタイムデータ取得成功（${{ok}}/${{SYMBOLS.length}}銘柄）`;
-      bar.style.color = '#3fb950';
-    }} else {{
-      bar.innerHTML = '⚠️ リアルタイム取得失敗（TradingViewチャートは最新です）';
-      bar.style.color = '#d29922';
-    }}
-    tim.textContent = '最終更新: ' + jstNow();
-  }}
-
-  // 初回実行 + 3分ごとに自動更新
-  doUpdate();
-  setInterval(doUpdate, 3 * 60 * 1000);
-}})();
 </script>
 
 </body>
