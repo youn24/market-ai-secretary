@@ -1315,6 +1315,18 @@ a:hover{{text-decoration:underline;}}
     with open(md_path, "w", encoding="utf-8") as f:
         f.write(f"# 市場レポート {today_str} [{mode.upper()}]\n生成: {now}\n\n地合い: {sentiment} ({score:+.2f})\nFear&Greed: {fg_score} ({fg_rating})\n")
 
+    # モバイル最適化レポートも同時生成
+    try:
+        from src.mobile_html import generate as gen_mobile
+        gen_mobile(
+            mode=mode, prices=prices, news=news, risk=risk,
+            fear_greed=fear_greed, chart_paths=chart_paths,
+            ai_summary=ai_summary, scenario=scenario,
+            prediction_tracker=prediction_tracker, technical=technical,
+        )
+    except Exception:
+        logger.debug("モバイルHTML生成スキップ")
+
     logger.info(f"HTMLレポート保存: {html_path}")
 
 

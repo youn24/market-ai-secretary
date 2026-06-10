@@ -125,10 +125,19 @@ def run():
     except Exception:
         logger.error("自己改善AIエラー"); logger.debug(traceback.format_exc())
 
+    # 週間パフォーマンスチャート生成
+    weekly_chart_path = None
+    try:
+        from src.weekly_chart import make_weekly_chart
+        weekly_chart_path = make_weekly_chart(prices)
+    except Exception:
+        logger.warning("週間チャート生成スキップ（src/weekly_chart.py未定義）")
+
     # Telegram送信
     _send_weekly_report(weekly_analysis, youtube, memory_analysis, prices, fear_greed, risk,
                         calendar_data, sector, sector_chart_path, pred_summary,
-                        self_improve_result=self_improve_result)
+                        self_improve_result=self_improve_result,
+                        weekly_chart_path=weekly_chart_path)
 
     logger.info("====== 週次レポート完了 ======")
 
@@ -223,9 +232,34 @@ Fear&Greed: {fear_greed.get('score','---')} ({fear_greed.get('rating_ja','---')}
         return {"available": False}
 
 
+def _weekly_movers(prices: dict) -> str:
+    """今週の主要銘柄の騰落をテキスト形式で返す"""
+    watch = [
+        ("^N225", "日経平均"), ("^GSPC", "S&P500"), ("^IXIC", "NASDAQ"),
+        ("USDJPY=X", "ドル円"), ("GC=F", "金"), ("CL=F", "原油"),
+        ("BTC-USD", "BTC"), ("^VIX", "VIX"),
+    ]
+    movers = []
+    for sym, name in watch:
+        chg = prices.get(sym, {}).get("change_pct")
+        if chg is not None:
+            movers.append((name, chg))
+    if not movers:
+        return ""
+    movers.sort(key=lambda x: x[1], reverse=True)
+    lines = []
+    for name, chg in movers[:4]:
+        lines.append(f"🟢 {name} {chg:+.2f}%")
+    for name, chg in reversed(movers[-3:]):
+        if (name, chg) not in movers[:4]:
+            lines.append(f"🔴 {name} {chg:+.2f}%")
+    return "\n".join(lines)
+
+
 def _send_weekly_report(weekly, youtube, memory_analysis, prices, fear_greed, risk,
                         calendar_data=None, sector=None, sector_chart_path=None,
-                        pred_summary=None, self_improve_result=None):
+                        pred_summary=None, self_improve_result=None,
+                        weekly_chart_path=None):
     """週次レポートをTelegramに送信"""
     try:
         from src.notify_telegram import send_message, send_photo
@@ -241,21 +275,43 @@ def _send_weekly_report(weekly, youtube, memory_analysis, prices, fear_greed, ri
             s = f"{'▲' if (chg or 0)>=0 else '▼'}{abs(chg):.2f}%" if chg else ""
             return f"{v:,.2f}{unit} {s}"
 
-        # メッセージ①：週次サマリー
-        msg1 = "\n".join([
-            f"📅 *週次マーケットレポート*",
+        # 信号機判定
+        score = risk.get("score", 0)
+        if   score >= 2:    sig = "🟢🟢 強気継続"
+        elif score >= 0.5:  sig = "🟢 やや強気"
+        elif score >= -0.5: sig = "🟡 中立"
+        elif score >= -2:   sig = "🟠 要注意"
+        else:               sig = "🔴🔴 弱気警戒"
+
+        # 注目銘柄騰落
+        movers_txt = _weekly_movers(prices)
+
+        # メッセージ①：週次サマリー + 注目銘柄
+        msg1_lines = [
+            f"📅 *週次マーケットレポート* [{today}]",
             f"━━━━━━━━━━━━━━━",
+            f"🚦 *今週のシグナル: {sig}*",
+            f"",
             f"📊 今週末の主要指標",
             f"🇯🇵 日経: {fmt('^N225','円')}",
             f"🇺🇸 S&P: {fmt('^GSPC')}",
             f"💵 ドル円: {fmt('USDJPY=X','円')}",
             f"😰 VIX: {fmt('^VIX')}",
+            f"🥇 金: {fmt('GC=F','$')}",
             f"₿ BTC: {fmt('BTC-USD','$')}",
             f"━━━━━━━━━━━━━━━",
-            f"🌡 地合い: {risk.get('sentiment','---')}",
+            f"🌡 地合い: {risk.get('sentiment','---')} (スコア:{score:+.2f})",
             f"😱 Fear&Greed: {fear_greed.get('score','---')} ({fear_greed.get('rating_ja','---')})",
-        ])
-        send_message(msg1)
+        ]
+        if movers_txt:
+            msg1_lines += ["━━━━━━━━━━━━━━━", "📊 *今週の注目騰落*", movers_txt]
+
+        # 週間チャート付きで送信
+        msg1 = "\n".join(msg1_lines)
+        if weekly_chart_path and os.path.exists(str(weekly_chart_path)):
+            send_photo(str(weekly_chart_path), caption=msg1)
+        else:
+            send_message(msg1)
 
         # メッセージ②：AI週次分析
         if weekly.get("available"):

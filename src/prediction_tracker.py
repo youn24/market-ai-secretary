@@ -42,7 +42,8 @@ def _save(data: dict):
 # 予測を保存
 # ──────────────────────────────────────────────────────────────
 
-def save_prediction(prices: dict, risk: dict, ai_summary: dict, scenario: dict):
+def save_prediction(prices: dict, risk: dict, ai_summary: dict, scenario: dict,
+                    fear_greed: dict = None):
     """
     今日の「予測」を記録する。
     - AIが「強気」「弱気」「中立」どれを言ったか
@@ -61,7 +62,7 @@ def save_prediction(prices: dict, risk: dict, ai_summary: dict, scenario: dict):
         "date":         today,
         "direction":    direction,      # "bull" / "bear" / "neutral"
         "score":        risk.get("score", 0),
-        "fg":           None,           # fear_greedは外から渡せないので省略
+        "fg":           (fear_greed or {}).get("score"),   # Fear&Greed スコア
         "nikkei":       p("^N225"),
         "sp500":        p("^GSPC"),
         "usdjpy":       p("USDJPY=X"),
@@ -417,8 +418,8 @@ def run(prices: dict, risk: dict, fear_greed: dict, news: list,
     # Step 2: 正解率を計算
     stats = calc_accuracy()
 
-    # Step 3: 今日の予測を記録
-    pred = save_prediction(prices, risk, ai_summary, scenario)
+    # Step 3: 今日の予測を記録（Fear&Greed も保存）
+    pred = save_prediction(prices, risk, ai_summary, scenario, fear_greed=fear_greed)
 
     # Step 4: 学習フィードバック付き分析
     learning_analysis = analyze_with_learning(

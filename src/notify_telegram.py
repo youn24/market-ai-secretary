@@ -51,6 +51,31 @@ def _fg_bar(score) -> str:
     return f"{emoji} {bar} {n} ({label})"
 
 
+def _notable_stocks(prices: dict) -> str:
+    """注目銘柄トップ3騰落・ワースト3騰落を返す"""
+    watch = [
+        ("^N225", "日経"), ("^GSPC", "S&P"), ("^IXIC", "NAS"),
+        ("USDJPY=X", "ドル円"), ("GC=F", "金"), ("CL=F", "原油"),
+        ("BTC-USD", "BTC"), ("^VIX", "VIX"),
+    ]
+    movers = []
+    for sym, name in watch:
+        chg = prices.get(sym, {}).get("change_pct")
+        if chg is not None:
+            movers.append((name, chg))
+    if not movers:
+        return ""
+    movers.sort(key=lambda x: x[1], reverse=True)
+    top3  = movers[:3]
+    bot3  = movers[-3:]
+    lines = []
+    for name, chg in top3:
+        lines.append(f"🟢 {name} {chg:+.2f}%")
+    for name, chg in bot3:
+        lines.append(f"🔴 {name} {chg:+.2f}%")
+    return "\n".join(lines)
+
+
 def build_three_messages(risk, analysis, mode,
                          prices=None, news=None,
                          fear_greed=None, ai_summary=None,
@@ -74,42 +99,39 @@ def build_three_messages(risk, analysis, mode,
     elif vix_val < 30: vix_icon, vix_txt = "🟠", "警戒"
     else:              vix_icon, vix_txt = "🔴", "危険！"
 
+    # 信号機（大きく目立つように）
+    if   score >= 2:    sig_line = "🟢🟢🟢 *強気シグナル！積極的に注目*"
+    elif score >= 0.5:  sig_line = "🟢 *やや強気・通常ポジションOK*"
+    elif score >= -0.5: sig_line = "🟡 *中立・様子見で問題なし*"
+    elif score >= -2:   sig_line = "🟠 *要注意・リスク管理強化*"
+    else:               sig_line = "🔴🔴🔴 *危険信号！守りのポジション*"
+
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     # 通知①：今日の相場まとめ（シンプル・わかりやすく）
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     # ニュースをカテゴリ別に整理
-    cat_news: dict[str, list] = {}
     sorted_news = sorted(news, key=lambda x: {"A":0,"B":1,"C":2}.get(x.get("importance","C"),2))
-    for item in sorted_news:
-        cat = item.get("category", item.get("label","その他"))
-        if cat not in cat_news:
-            cat_news[cat] = []
-        if len(cat_news[cat]) < 2:   # カテゴリごと最大2件
-            cat_news[cat].append(item)
-
-    # 重要Aニュースを優先、カテゴリ偏りなし
     news_lines = []
     imp_icon   = {"A": "🔴", "B": "🟡", "C": "⚪"}
-    seen_cats  = set()
     for item in sorted_news:
         if len(news_lines) >= 8:
             break
-        cat  = item.get("category", "その他")
-        imp  = item.get("importance", "C")
-        icon = imp_icon.get(imp, "⚪")
-        title = item.get("title", "")[:42]
-        # 同カテゴリは最大2件
         cat_count = sum(1 for l in news_lines if item.get("category","") in l)
         if cat_count < 2:
+            icon  = imp_icon.get(item.get("importance","C"), "⚪")
+            title = item.get("title", "")[:42]
             news_lines.append(f"{icon} {title}")
+
+    # 注目銘柄
+    notable = _notable_stocks(prices)
 
     msg1 = (
         f"📊 *今日の市場まとめ* [{today}]\n"
         f"━━━━━━━━━━━━━━━━━━\n"
         f"\n"
-        f"*今日の相場は？*\n"
-        f"{tl} *{mood}*\n"
+        f"*🚦 今日のシグナル*\n"
+        f"{sig_line}\n"
         f"\n"
         f"*みんなの心理* 😱\n"
         f"`{fg_bar}`\n"
@@ -128,6 +150,14 @@ def build_three_messages(risk, analysis, mode,
         f"\n"
         f"*⚡ 市場の怖さ（VIX）*\n"
         f"{vix_icon} {_fmt(prices,'^VIX')} → {vix_txt}\n"
+    )
+    if notable:
+        msg1 += (
+            f"━━━━━━━━━━━━━━━━━━\n"
+            f"*📊 本日の注目騰落*\n"
+            f"{notable}\n"
+        )
+    msg1 += (
         f"━━━━━━━━━━━━━━━━━━\n"
         f"*📰 今日のニュース（カテゴリ別）*\n"
         + "\n".join(news_lines)
@@ -298,8 +328,19 @@ def run(risk, analysis, report_paths, mode,
             report_paths=report_paths,
         )
 
-        # ① 数字・ニュース速報
-        send_message(msgs[0])
+        # ① リスクゲージ画像（新：相場まとめのキャプション付き）
+        gauge_sent = False
+        try:
+            from src.risk_gauge import make_gauge_image
+            gauge_path = make_gauge_image(risk, fear_greed or {}, prices or {})
+            if gauge_path and os.path.exists(gauge_path):
+                send_photo(gauge_path, caption=msgs[0])
+                gauge_sent = True
+                logger.info("✅ リスクゲージ画像送信")
+        except Exception as _e:
+            logger.warning(f"ゲージ画像スキップ: {_e}")
+        if not gauge_sent:
+            send_message(msgs[0])
 
         # ①.5 キャラクターコメント（ガネーシャ＆カワウソ）
         _send_character_messages(character_comments)
