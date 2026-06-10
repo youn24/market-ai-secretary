@@ -157,6 +157,27 @@
       "problemMatcher": []
     },
     {
+      "label": "📊 財務分析: 川崎重工業 (7012)",
+      "type": "shell",
+      "command": "python analyze_stock.py 7012",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "📊 財務分析: キオクシア (285A)",
+      "type": "shell",
+      "command": "python analyze_stock.py 285A",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "📊 財務分析: 信越化学工業 (4063)",
+      "type": "shell",
+      "command": "python analyze_stock.py 4063",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
       "label": "📊 財務分析: 銘柄コードを入力して分析",
       "type": "shell",
       "command": "python analyze_stock.py ${input:stockCode}",

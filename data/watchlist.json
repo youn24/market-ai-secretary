@@ -6,6 +6,9 @@
     {"symbol": "7203.T", "name": "トヨタ自動車",        "sector": "自動車"},
     {"symbol": "9432.T", "name": "NTT",                "sector": "通信"},
     {"symbol": "6762.T", "name": "TDK",               "sector": "電子部品"},
-    {"symbol": "6501.T", "name": "日立製作所",          "sector": "電機・インフラ"}
+    {"symbol": "6501.T", "name": "日立製作所",          "sector": "電機・インフラ"},
+    {"symbol": "7012.T", "name": "川崎重工業",          "sector": "重工業・防衛"},
+    {"symbol": "285A.T", "name": "キオクシア",           "sector": "半導体・メモリ"},
+    {"symbol": "4063.T", "name": "信越化学工業",         "sector": "化学・半導体材料"}
   ]
 }
