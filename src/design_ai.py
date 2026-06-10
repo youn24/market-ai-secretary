@@ -1441,7 +1441,7 @@ def generate(
         <div class="gauge-score-label">リスクスコア（−3〜＋3）</div>
       </div>
       <div style="margin-top:12px;font-size:12px;color:var(--muted)">
-        シグナル: {", ".join(risk.get("signals", [])[:3]) or "なし"}
+        シグナル: {", ".join(s.get("indicator","") + s.get("direction","") for s in risk.get("signals", [])[:3]) or "なし"}
       </div>
     </div>
 
