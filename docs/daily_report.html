@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>市場AI秘書 — 2026-06-10 日次レポート</title>
+<title>ガネ先生とカワウソくんの相場ダイジェスト — 2026-06-10</title>
 <style>
 
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&display=swap');
@@ -336,29 +336,356 @@ section { margin-bottom: 20px; }
   color: var(--muted);
 }
 
+/* ── キャラクターヘッダー ── */
+.char-header {
+  background: linear-gradient(160deg, #1a0f00 0%, #2d1f00 40%, #1a1200 100%);
+  border-bottom: 3px solid #c8992a;
+  padding: 0;
+  overflow: hidden;
+  position: relative;
+  margin-bottom: 20px;
+}
+.char-header-inner {
+  max-width: 960px;
+  margin: 0 auto;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+.char-title-block {
+  text-align: center;
+  flex: 1;
+  padding: 20px 10px 16px;
+}
+.char-main-title {
+  font-size: 20px;
+  font-weight: 900;
+  color: #f0c040;
+  text-shadow: 0 2px 12px rgba(0,0,0,.9);
+  line-height: 1.4;
+}
+.char-sub-title {
+  font-size: 11px;
+  color: #c8992a;
+  margin-top: 4px;
+  letter-spacing: 1.5px;
+}
+.char-date-badge {
+  display: inline-block;
+  background: rgba(200,153,42,.2);
+  border: 1px solid #c8992a;
+  border-radius: 20px;
+  padding: 3px 14px;
+  font-size: 11px;
+  color: #f0c040;
+  margin-top: 8px;
+}
+.char-signal-badge {
+  display: inline-block;
+  padding: 5px 18px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 900;
+  margin-top: 8px;
+  border: 2px solid;
+}
+.char-figure {
+  width: 130px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-bottom: 4px;
+}
+.char-figure-label {
+  font-size: 10px;
+  color: #c8992a;
+  font-weight: 700;
+  text-align: center;
+  margin-top: 4px;
+}
+.char-svg { width: 100px; height: 100px; }
+.char-balloon {
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(200,153,42,.4);
+  border-radius: 8px;
+  padding: 4px 8px;
+  font-size: 10px;
+  color: #f0c040;
+  text-align: center;
+  max-width: 110px;
+  margin-top: 4px;
+}
+@media (max-width: 600px) {
+  .char-main-title { font-size: 15px; }
+  .char-figure { width: 80px; }
+  .char-svg { width: 70px; height: 70px; }
+}
+
+/* ── クイックサマリーカード ── */
+.qs-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  margin-bottom: 20px;
+}
+@media (max-width: 600px) {
+  .qs-grid { grid-template-columns: repeat(2, 1fr); }
+}
+.qs-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 8px;
+  text-align: center;
+  transition: transform .2s, box-shadow .2s;
+}
+.qs-card:hover { transform: translateY(-3px); box-shadow: 0 6px 16px rgba(0,0,0,.4); }
+.qs-icon  { font-size: 18px; margin-bottom: 4px; }
+.qs-label { font-size: 10px; color: var(--muted); margin-bottom: 5px; }
+.qs-value { font-size: 16px; font-weight: 800; }
+.qs-chg   { font-size: 11px; margin-top: 4px; }
+
+/* ── ウォッチリスト ── */
+.watch-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  gap: 8px;
+}
+.watch-item:last-child { border-bottom: none; }
+.watch-rank  { font-size: 12px; color: var(--muted); min-width: 20px; }
+.watch-name  { flex: 1; font-size: 13px; font-weight: 700; }
+.watch-theme { font-size: 10px; color: var(--muted); }
+.watch-price { font-size: 14px; font-weight: 700; min-width: 80px; text-align: right; }
+.watch-chg   { font-size: 13px; font-weight: 700; min-width: 55px; text-align: right; }
+.watch-signal { font-size: 10px; padding: 2px 7px; border-radius: 4px; white-space: nowrap; }
+.sig-buy  { background: rgba(63,185,80,.2); color: #3fb950; }
+.sig-sell { background: rgba(248,81,73,.2); color: #f85149; }
+.sig-hold { background: rgba(210,153,34,.2); color: #d29922; }
+
+/* ── シナリオカード(改良) ── */
+.scenario-card-new {
+  border-radius: 12px;
+  padding: 16px;
+  border: 2px solid;
+  text-align: center;
+}
+.sc-icon   { font-size: 30px; margin-bottom: 6px; }
+.sc-label  { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+.sc-prob   { font-size: 26px; font-weight: 900; }
+.sc-range  { font-size: 12px; margin-top: 4px; opacity: .85; }
+.sc-desc   { font-size: 11px; line-height: 1.6; margin-top: 8px; text-align: left; }
+
+/* ── 市場ステータスバー ── */
+.market-status-bar {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 16px;
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin-bottom: 16px;
+  align-items: center;
+}
+.ms-item { display: flex; flex-direction: column; align-items: center; min-width: 70px; }
+.ms-label { font-size: 9px; color: var(--muted); margin-bottom: 2px; }
+.ms-value { font-size: 13px; font-weight: 700; }
+.ms-chg   { font-size: 10px; }
+.ms-sep   { width: 1px; height: 30px; background: var(--border); }
+
 </style>
 </head>
 <body>
 
-<!-- ── Header ── -->
-<header class="header">
-  <div class="header-inner">
-    <div>
-      <div class="header-title">📊 市場AI秘書</div>
-      <div class="header-sub">2026-06-10 14:36 JST ／ TESTレポート</div>
+<!-- ── キャラクターヘッダー ── -->
+<header class="char-header">
+  <div class="char-header-inner">
+    <!-- ガネ先生 (左) -->
+    <div class="char-figure">
+      <svg class="char-svg" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+  <!-- 後光 -->
+  <circle cx="60" cy="58" r="48" fill="rgba(240,192,64,.08)"/>
+  <!-- 胴体 -->
+  <ellipse cx="60" cy="95" rx="26" ry="18" fill="#e8b830"/>
+  <!-- 腕(左) -->
+  <ellipse cx="32" cy="90" rx="9" ry="14" fill="#f0c040" transform="rotate(-20 32 90)"/>
+  <!-- 腕(右) -->
+  <ellipse cx="88" cy="90" rx="9" ry="14" fill="#f0c040" transform="rotate(20 88 90)"/>
+  <!-- 頭 -->
+  <circle cx="60" cy="55" r="36" fill="#f0c040"/>
+  <!-- 耳(左) -->
+  <ellipse cx="22" cy="50" rx="14" ry="20" fill="#e8b830" opacity=".9"/>
+  <ellipse cx="22" cy="50" rx="9" ry="14" fill="rgba(240,192,64,.5)"/>
+  <!-- 耳(右) -->
+  <ellipse cx="98" cy="50" rx="14" ry="20" fill="#e8b830" opacity=".9"/>
+  <ellipse cx="98" cy="50" rx="9" ry="14" fill="rgba(240,192,64,.5)"/>
+  <!-- 王冠 -->
+  <polygon points="44,28 52,18 60,26 68,18 76,28 78,35 42,35" fill="#e8b830" stroke="#c8992a" stroke-width="1.5"/>
+  <circle cx="60" cy="22" r="4" fill="#ff6060"/>
+  <circle cx="47" cy="31" r="3" fill="#60a0ff"/>
+  <circle cx="73" cy="31" r="3" fill="#60ff60"/>
+  <!-- 白い顔面 -->
+  <ellipse cx="60" cy="60" rx="24" ry="20" fill="rgba(255,255,240,.15)"/>
+  <!-- 目(左) -->
+  <circle cx="50" cy="56" r="6" fill="white"/>
+  <circle cx="51" cy="56" r="4" fill="#2a1800"/>
+  <circle cx="52" cy="54" r="1.5" fill="white"/>
+  <!-- 目(右) -->
+  <circle cx="70" cy="56" r="6" fill="white"/>
+  <circle cx="71" cy="56" r="4" fill="#2a1800"/>
+  <circle cx="72" cy="54" r="1.5" fill="white"/>
+  <!-- 眉毛 -->
+  <path d="M 52,50 L 60,54  M 68,54 L 76,50" stroke="#8B5A2B" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <!-- 鼻(象の鼻) -->
+  <path d="M 60,65 Q 58,72 62,78 Q 66,84 60,88" stroke="#e8b830" stroke-width="8"
+        fill="none" stroke-linecap="round"/>
+  <!-- 口 -->
+  <path d="M 55,75 Q 65,68 75,75" stroke="#8B5A2B" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <!-- ほっぺ -->
+  <circle cx="44" cy="65" r="7" fill="rgba(255,100,100,.2)"/>
+  <circle cx="76" cy="65" r="7" fill="rgba(255,100,100,.2)"/>
+  <!-- スパークル -->
+  <text x="78" y="28" font-size="12" opacity=".7">💧</text>
+</svg>
+      <div class="char-figure-label">ガネ先生</div>
+      <div class="char-balloon">リスク管理を<br>徹底しましょう</div>
     </div>
-    <div class="signal-badge signal-neutral">😐 中立</div>
+
+    <!-- タイトル (中央) -->
+    <div class="char-title-block">
+      <div class="char-main-title">ガネ先生とカワウソくんの<br>今日の相場ダイジェスト</div>
+      <div class="char-sub-title">AIチーム自動分析レポート</div>
+      <div class="char-date-badge">📅 2026-06-10 15:58</div><br>
+      <span class="char-signal-badge" style="color:#f85149;border-color:#f85149;background:rgba(248,81,73,.15)">😟 やや弱気</span>
+      <div style="margin-top:10px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+        <span style="font-size:12px;color:#f0c040">
+          🇯🇵 日経 <b style="color:#f85149">64,036</b>
+          <span class="chg-down">(-0.85%)</span>
+        </span>
+        <span style="font-size:12px;color:#f0c040">
+          🇺🇸 S&P <b style="color:#3fb950">7,406</b>
+          <span class="chg-up">(+0.42%)</span>
+        </span>
+        <span style="font-size:12px;color:#f0c040">
+          💴 USD/JPY <b>160.37</b>
+        </span>
+      </div>
+    </div>
+
+    <!-- カワウソくん (右) -->
+    <div class="char-figure">
+      <svg class="char-svg" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+  <!-- 胴体 -->
+  <ellipse cx="60" cy="96" rx="22" ry="16" fill="#6B3A2A"/>
+  <!-- 耳(左) -->
+  <ellipse cx="30" cy="38" rx="10" ry="12" fill="#6B3A2A"/>
+  <ellipse cx="30" cy="38" rx="6" ry="8" fill="#C4956A" opacity=".6"/>
+  <!-- 耳(右) -->
+  <ellipse cx="90" cy="38" rx="10" ry="12" fill="#6B3A2A"/>
+  <ellipse cx="90" cy="38" rx="6" ry="8" fill="#C4956A" opacity=".6"/>
+  <!-- 頭 -->
+  <circle cx="60" cy="58" r="34" fill="#6B3A2A"/>
+  <!-- 顔の白い部分 -->
+  <ellipse cx="60" cy="64" rx="22" ry="18" fill="#C4956A"/>
+  <!-- 目(左) -->
+  <circle cx="50" cy="55" r="7" fill="white"/>
+  <circle cx="51" cy="55" r="4.5" fill="#1a0a00"/>
+  <circle cx="52" cy="53" r="1.5" fill="white"/>
+  <!-- 目(右) -->
+  <circle cx="70" cy="55" r="7" fill="white"/>
+  <circle cx="71" cy="55" r="4.5" fill="#1a0a00"/>
+  <circle cx="72" cy="53" r="1.5" fill="white"/>
+  <!-- 鼻 -->
+  <ellipse cx="60" cy="66" rx="5" ry="3.5" fill="#3a1a10"/>
+  <!-- ひげ(左) -->
+  <line x1="36" y1="67" x2="50" y2="66" stroke="rgba(255,255,255,.6)" stroke-width="1.2"/>
+  <line x1="36" y1="70" x2="50" y2="69" stroke="rgba(255,255,255,.6)" stroke-width="1.2"/>
+  <!-- ひげ(右) -->
+  <line x1="70" y1="66" x2="84" y2="67" stroke="rgba(255,255,255,.6)" stroke-width="1.2"/>
+  <line x1="70" y1="69" x2="84" y2="70" stroke="rgba(255,255,255,.6)" stroke-width="1.2"/>
+  <!-- 口 -->
+  <path d="M 52,74 Q 60,68 68,74" stroke="#3a1a10" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <!-- ほっぺ -->
+  <circle cx="44" cy="67" r="7" fill="rgba(255,120,120,.25)"/>
+  <circle cx="76" cy="67" r="7" fill="rgba(255,120,120,.25)"/>
+  <!-- しっぽ -->
+  <path d="M 72,105 Q 95,110 100,98 Q 105,86 90,84" stroke="#6B3A2A" stroke-width="10"
+        fill="none" stroke-linecap="round"/>
+  <!-- アクセサリー -->
+  <text x="72" y="35" font-size="13">💧</text>
+</svg>
+      <div class="char-figure-label">カワウソくん</div>
+      <div class="char-balloon">気をつけて！<br>守りが大事</div>
+    </div>
   </div>
 </header>
 
 <main class="container">
+
+<!-- ── クイックサマリー ── -->
+<div class="qs-grid"><div class="qs-card">
+  <div class="qs-icon">🇯🇵</div>
+  <div class="qs-label">日経平均</div>
+  <div class="qs-value">64,036</div>
+  <div class="qs-chg chg-down">-0.85%</div>
+</div><div class="qs-card">
+  <div class="qs-icon">🇺🇸</div>
+  <div class="qs-label">S&P500</div>
+  <div class="qs-value">7,406</div>
+  <div class="qs-chg chg-up">+0.42%</div>
+</div><div class="qs-card">
+  <div class="qs-icon">💴</div>
+  <div class="qs-label">USD/JPY</div>
+  <div class="qs-value">160</div>
+  <div class="qs-chg chg-up">+0.13%</div>
+</div><div class="qs-card">
+  <div class="qs-icon">😨</div>
+  <div class="qs-label">VIX 恐怖指数</div>
+  <div class="qs-value" style="color:#d29922">18.9</div>
+  <div class="qs-chg chg-down">+2.10%</div>
+</div><div class="qs-card">
+  <div class="qs-icon">🎭</div>
+  <div class="qs-label">Fear &amp; Greed</div>
+  <div class="qs-value" style="color:#f85149">34</div>
+  <div class="qs-chg" style="color:#f85149">恐怖</div>
+</div></div>
+
+<!-- ── 市場ステータスバー ── -->
+<div class="market-status-bar"><div class="ms-item">
+  <span class="ms-label">日経225</span>
+  <span class="ms-value" style="color:#f85149">64,036</span>
+  <span class="ms-chg" style="color:#f85149">-0.85%</span>
+</div><div class="ms-sep"></div><div class="ms-item">
+  <span class="ms-label">S&P500</span>
+  <span class="ms-value" style="color:#3fb950">7,406</span>
+  <span class="ms-chg" style="color:#3fb950">+0.42%</span>
+</div><div class="ms-sep"></div><div class="ms-item">
+  <span class="ms-label">Nasdaq</span>
+  <span class="ms-value" style="color:#3fb950">19,850</span>
+  <span class="ms-chg" style="color:#3fb950">+0.33%</span>
+</div><div class="ms-sep"></div><div class="ms-item">
+  <span class="ms-label">USD/JPY</span>
+  <span class="ms-value" style="color:#3fb950">160</span>
+  <span class="ms-chg" style="color:#3fb950">+0.13%</span>
+</div><div class="ms-sep"></div><div class="ms-item">
+  <span class="ms-label">VIX</span>
+  <span class="ms-value" style="color:#f85149">18.92</span>
+  <span class="ms-chg" style="color:#f85149">+2.10%</span>
+</div><div class="ms-sep"></div><div class="ms-item">
+  <span class="ms-label">金(USD)</span>
+  <span class="ms-value" style="color:#3fb950">2,374</span>
+  <span class="ms-chg" style="color:#3fb950">+0.60%</span>
+</div></div>
 
 <!-- ── Row 1: ゲージ / FearGreed ── -->
 <section>
   <div class="grid-2">
     <!-- リスクゲージ -->
     <div class="card fade-up">
-      <div class="card-title">リスクゲージ</div>
+      <div class="card-title">AIリスクゲージ</div>
       <div class="gauge-wrap">
         
 <svg class="gauge-svg" viewBox="0 0 200 130" xmlns="http://www.w3.org/2000/svg">
@@ -383,7 +710,7 @@ section { margin-bottom: 20px; }
   <line x1="100" y1="110" x2="100" y2="42"
         stroke="white" stroke-width="3" stroke-linecap="round">
     <animateTransform attributeName="transform" type="rotate"
-      from="-90 100 110" to="-14.7 100 110"
+      from="-90 100 110" to="-21.0 100 110"
       dur="1.2s" calcMode="spline" keySplines="0.4 0 0.2 1" fill="freeze"/>
   </line>
   <!-- センタードット -->
@@ -391,7 +718,7 @@ section { margin-bottom: 20px; }
   <!-- スコア表示 -->
   <text x="100" y="96" text-anchor="middle"
         fill="#db6d28" font-family="'Noto Sans JP', sans-serif"
-        font-size="20" font-weight="900">-0.49</text>
+        font-size="20" font-weight="900">-0.70</text>
   <!-- ラベル -->
   <text x="22"  y="128" fill="#f85149"    font-family="sans-serif" font-size="10">弱気</text>
   <text x="162" y="128" fill="#3fb950"  font-family="sans-serif" font-size="10">強気</text>
@@ -401,7 +728,7 @@ section { margin-bottom: 20px; }
         <div class="gauge-score-label">リスクスコア（−3〜＋3）</div>
       </div>
       <div style="margin-top:12px;font-size:12px;color:var(--muted)">
-        シグナル: FG低下, VIX上昇
+        シグナル: VIX上昇, 日経下落
       </div>
     </div>
 
@@ -410,150 +737,148 @@ section { margin-bottom: 20px; }
       <div class="card-title">Fear &amp; Greed 指数</div>
       
 <div class="stat-row">
-  <span class="stat-value" style="color:#db6d28">33.4</span>
+  <span class="stat-value" style="color:#db6d28">33.5</span>
   <span class="stat-unit">/100 — 恐怖</span>
 </div>
 <div class="fg-meter">
-  <div class="fg-pointer" style="left:33.4%"></div>
+  <div class="fg-pointer" style="left:33.5%"></div>
 </div>
 <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:6px">
   <span>恐怖</span><span>中立</span><span>強欲</span>
 </div>
       <div style="margin-top:14px">
         <div class="card-title">今日の判断</div>
-        <div style="font-size:24px;margin:4px 0">😐 中立</div>
+        <div style="font-size:24px;margin:4px 0">😟 やや弱気</div>
         <div style="font-size:12px;color:var(--muted)">
-          地合い: <span style="color:#db6d28;font-weight:700">中立</span>
+          地合い: <span style="color:#db6d28;font-weight:700">やや弱気</span>
         </div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ── 銘柄カード ── -->
+<!-- ── マーケット概況（詳細カード）── -->
 <section>
   <div class="section-header">
     <span class="section-icon">💹</span>
-    <span class="section-title">マーケット概況</span>
+    <span class="section-title">マーケット詳細</span>
     <span class="section-tag">2026-06-10</span>
   </div>
   <div class="grid-auto">
 <div class="price-card fade-up">
   <div class="price-name">日経225 <span style="font-size:9px;opacity:.6">^N225</span></div>
-  <div class="price-value" style="color:#d29922">64,036 <span style="font-size:11px;color:var(--muted)">JPY</span></div>
-  <div class="price-chg chg-flat">━ +0.02%<span style="color:#3fb950;font-size:10px;font-weight:700"> 売られすぎ</span></div>
+  <div class="price-value" style="color:#db6d28">0.00 <span style="font-size:11px;color:var(--muted)">JPY</span></div>
+  <div class="price-chg chg-down">▼ -0.85%<span style="color:#3fb950;font-size:10px;font-weight:700"> 売られすぎ</span></div>
   
 </div>
 <div class="price-card fade-up">
   <div class="price-name">S&P500 <span style="font-size:9px;opacity:.6">^GSPC</span></div>
-  <div class="price-value" style="color:#39d353">7,406 <span style="font-size:11px;color:var(--muted)">USD</span></div>
-  <div class="price-chg chg-up">▲ +0.30%<span style="color:#3fb950;font-size:10px;font-weight:700"> 売られすぎ</span></div>
+  <div class="price-value" style="color:#39d353">0.00 <span style="font-size:11px;color:var(--muted)">USD</span></div>
+  <div class="price-chg chg-up">▲ +0.42%<span style="color:#3fb950;font-size:10px;font-weight:700"> 売られすぎ</span></div>
   
 </div>
 <div class="price-card fade-up">
   <div class="price-name">USD/JPY <span style="font-size:9px;opacity:.6">USDJPY=X</span></div>
-  <div class="price-value" style="color:#d29922">160.37 <span style="font-size:11px;color:var(--muted)"></span></div>
-  <div class="price-chg chg-flat">━ +0.12%<span style="color:#3fb950;font-size:10px;font-weight:700"> 売られすぎ</span></div>
+  <div class="price-value" style="color:#d29922">0.00 <span style="font-size:11px;color:var(--muted)"></span></div>
+  <div class="price-chg chg-flat">━ +0.13%<span style="color:#3fb950;font-size:10px;font-weight:700"> 売られすぎ</span></div>
   
 </div>
 <div class="price-card fade-up">
   <div class="price-name">VIX <span style="font-size:9px;opacity:.6">^VIX</span></div>
-  <div class="price-value" style="color:#f85149">18.92 <span style="font-size:11px;color:var(--muted)"></span></div>
-  <div class="price-chg chg-down">▼ -12.04%<span style="color:#3fb950;font-size:10px;font-weight:700"> 売られすぎ</span></div>
+  <div class="price-value" style="color:#3fb950">0.00 <span style="font-size:11px;color:var(--muted)"></span></div>
+  <div class="price-chg chg-up">▲ +2.10%<span style="color:#3fb950;font-size:10px;font-weight:700"> 売られすぎ</span></div>
   
 </div>
 <div class="price-card fade-up">
   <div class="price-name">金 <span style="font-size:9px;opacity:.6">GC=F</span></div>
-  <div class="price-value" style="color:#db6d28">4,198 <span style="font-size:11px;color:var(--muted)">USD</span></div>
-  <div class="price-chg chg-down">▼ -1.46%<span style="color:#3fb950;font-size:10px;font-weight:700"> 売られすぎ</span></div>
+  <div class="price-value" style="color:#39d353">0.00 <span style="font-size:11px;color:var(--muted)">USD</span></div>
+  <div class="price-chg chg-up">▲ +0.60%<span style="color:#3fb950;font-size:10px;font-weight:700"> 売られすぎ</span></div>
   
 </div>
 <div class="price-card fade-up">
   <div class="price-name">BTC <span style="font-size:9px;opacity:.6">BTC-USD</span></div>
-  <div class="price-value" style="color:#f85149">61,111 <span style="font-size:11px;color:var(--muted)">USD</span></div>
-  <div class="price-chg chg-down">▼ -3.14%<span style="color:#3fb950;font-size:10px;font-weight:700"> 売られすぎ</span></div>
+  <div class="price-value" style="color:#3fb950">0.00 <span style="font-size:11px;color:var(--muted)">USD</span></div>
+  <div class="price-chg chg-up">▲ +1.80%<span style="color:#3fb950;font-size:10px;font-weight:700"> 売られすぎ</span></div>
   
 </div>
 <div class="price-card fade-up">
   <div class="price-name">Nasdaq <span style="font-size:9px;opacity:.6">^IXIC</span></div>
-  <div class="price-value" style="color:#39d353">25,930 <span style="font-size:11px;color:var(--muted)">USD</span></div>
-  <div class="price-chg chg-up">▲ +0.86%<span style="color:#3fb950;font-size:10px;font-weight:700"> 売られすぎ</span></div>
-  
-</div>
-<div class="price-card fade-up">
-  <div class="price-name">米10年債 <span style="font-size:9px;opacity:.6">^TNX</span></div>
-  <div class="price-value" style="color:#39d353">4.55 <span style="font-size:11px;color:var(--muted)"></span></div>
-  <div class="price-chg chg-up">▲ +0.35%<span style="color:#3fb950;font-size:10px;font-weight:700"> 売られすぎ</span></div>
+  <div class="price-value" style="color:#39d353">0.00 <span style="font-size:11px;color:var(--muted)">USD</span></div>
+  <div class="price-chg chg-up">▲ +0.33%<span style="color:#3fb950;font-size:10px;font-weight:700"> 売られすぎ</span></div>
   
 </div></div>
 </section>
 
-<!-- ── AIチーム議論 ── -->
+<!-- ── 注目ウォッチリスト ── -->
 <section>
   <div class="section-header">
-    <span class="section-icon">🤖</span>
-    <span class="section-title">AIチーム議論</span>
+    <span class="section-icon">👀</span>
+    <span class="section-title">今日のウォッチリスト</span>
+    <span class="section-tag">注目銘柄・資産</span>
   </div>
   <div class="card fade-up">
-    <p style="color:var(--muted);font-size:13px">AI議論データなし</p>
+    <div class="watch-item">
+  <span class="watch-rank">1</span>
+  <div class="watch-name">🇯🇵 日経225<br><span class="watch-theme">総合指数</span></div>
+  <span class="watch-price chg-down">64,036</span>
+  <span class="watch-chg chg-down">-0.85%</span>
+  <span class="watch-signal sig-hold">---</span>
+</div>
+<div class="watch-item">
+  <span class="watch-rank">2</span>
+  <div class="watch-name">💻 Nasdaq<br><span class="watch-theme">テック</span></div>
+  <span class="watch-price chg-up">19,850</span>
+  <span class="watch-chg chg-up">+0.33%</span>
+  <span class="watch-signal sig-hold">---</span>
+</div>
+<div class="watch-item">
+  <span class="watch-rank">3</span>
+  <div class="watch-name">🥇 金 (Gold)<br><span class="watch-theme">安全資産</span></div>
+  <span class="watch-price chg-up">2,374</span>
+  <span class="watch-chg chg-up">+0.60%</span>
+  <span class="watch-signal sig-hold">---</span>
+</div>
+<div class="watch-item">
+  <span class="watch-rank">4</span>
+  <div class="watch-name">₿ Bitcoin<br><span class="watch-theme">暗号資産</span></div>
+  <span class="watch-price chg-up">97,500</span>
+  <span class="watch-chg chg-up">+1.80%</span>
+  <span class="watch-signal sig-hold">---</span>
+</div>
+<div class="watch-item">
+  <span class="watch-rank">5</span>
+  <div class="watch-name">🛢 原油 WTI<br><span class="watch-theme">コモディティ</span></div>
+  <span class="watch-price chg-down">79.32</span>
+  <span class="watch-chg chg-down">-0.50%</span>
+  <span class="watch-signal sig-hold">---</span>
+</div>
   </div>
 </section>
 
-<!-- ── シナリオ分析 ── -->
+<!-- ── 3シナリオ分析 ── -->
 
 
 <!-- ── セクターヒートマップ ── -->
 <section>
   <div class="section-header">
     <span class="section-icon">🏭</span>
-    <span class="section-title">セクター別パフォーマンス</span>
+    <span class="section-title">セクター別ヒートマップ</span>
+    <span class="section-tag">前日比</span>
   </div>
   <div class="card fade-up">
-    <div class="sector-grid">
-<div class="sector-cell" style="background:rgba(63,185,80,.25);color:#3fb950">
-  <div style="font-size:15px">+2.2%</div>
-  <div class="sector-name">テクノロジー</div>
-</div>
-<div class="sector-cell" style="background:rgba(63,185,80,.12);color:#39d353">
-  <div style="font-size:15px">+1.1%</div>
-  <div class="sector-name">エネルギー</div>
-</div>
-<div class="sector-cell" style="background:rgba(139,148,158,.1);color:#8b949e">
-  <div style="font-size:15px">+0.5%</div>
-  <div class="sector-name">一般消費財</div>
-</div>
-<div class="sector-cell" style="background:rgba(139,148,158,.1);color:#8b949e">
-  <div style="font-size:15px">-0.2%</div>
-  <div class="sector-name">ヘルスケア</div>
-</div>
-<div class="sector-cell" style="background:rgba(139,148,158,.1);color:#8b949e">
-  <div style="font-size:15px">-0.3%</div>
-  <div class="sector-name">資本財</div>
-</div>
-<div class="sector-cell" style="background:rgba(139,148,158,.1);color:#8b949e">
-  <div style="font-size:15px">-0.4%</div>
-  <div class="sector-name">生活必需品</div>
-</div>
-<div class="sector-cell" style="background:rgba(219,109,40,.2);color:#db6d28">
-  <div style="font-size:15px">-0.5%</div>
-  <div class="sector-name">通信</div>
-</div>
-<div class="sector-cell" style="background:rgba(219,109,40,.2);color:#db6d28">
-  <div style="font-size:15px">-0.6%</div>
-  <div class="sector-name">金融</div>
-</div>
-<div class="sector-cell" style="background:rgba(219,109,40,.2);color:#db6d28">
-  <div style="font-size:15px">-1.3%</div>
-  <div class="sector-name">素材</div>
-</div>
-<div class="sector-cell" style="background:rgba(219,109,40,.2);color:#db6d28">
-  <div style="font-size:15px">-1.5%</div>
-  <div class="sector-name">不動産</div>
-</div>
-<div class="sector-cell" style="background:rgba(219,109,40,.2);color:#db6d28">
-  <div style="font-size:15px">-1.9%</div>
-  <div class="sector-name">公益</div>
-</div></div>
+    <p style="color:var(--muted);font-size:13px">セクターデータなし（平日のみ）</p>
+  </div>
+</section>
+
+<!-- ── AIチーム議論 ── -->
+<section>
+  <div class="section-header">
+    <span class="section-icon">🤖</span>
+    <span class="section-title">AIチーム分析・議論</span>
+    <span class="section-tag">ガネ先生チーム</span>
+  </div>
+  <div class="card fade-up">
+    <p style="color:var(--muted);font-size:13px">AI議論データなし</p>
   </div>
 </section>
 
@@ -566,101 +891,6 @@ section { margin-bottom: 20px; }
   </div>
   <div class="card fade-up">
     
-<div class="news-item">
-  <span class="news-badge badge-high">高</span>
-  <div>
-    <a class="news-title" href="https://news.google.com/rss/articles/CBMiX0FVX3lxTFBqN3hudG12UUdfSERoZXAyQ3pYMEtETHNGU1JHOXppbDlWZUhfSjR4cklBVGxXYkJ1VmlQSzVqVHZ2LTMzNC03elJTZXYtRHR6VjZSSWQxY0FCeE8tVnhJ?oc=5" target="_blank" rel="noopener">日銀 “政策金利１％程度へ” 来週の会合で利上げを最終判断へ - NHKニュース</a>
-    <div class="news-source">NHKニュース</div>
-  </div>
-</div>
-
-<div class="news-item">
-  <span class="news-badge badge-high">高</span>
-  <div>
-    <a class="news-title" href="https://news.google.com/rss/articles/CBMif0FVX3lxTE9Cc1d2dm4tczFLQzBQTmFweFhGX0Fma3hZTEtHYlBSN0l5N1JoLVluOTVLR3pvWjVCM3lYc1VsVGtSdVVXa1VqeEFzUjhsWi1jSFBlVTB3Vk04NlRPQnBWV184TTVuRGRqeTZxblNiQWF1Y2hkVjRxVkhfTE5QVTA?oc=5" target="_blank" rel="noopener">利上げで住宅ローン返済負担重く 預金利息が増える恩恵も（共同通信） - Yahoo!ニュース</a>
-    <div class="news-source">Yahoo!ニュース</div>
-  </div>
-</div>
-
-<div class="news-item">
-  <span class="news-badge badge-high">高</span>
-  <div>
-    <a class="news-title" href="https://news.google.com/rss/articles/CBMiZ0FVX3lxTFBVLXZCUUM2bTh5SHROUG1aajctYVJVN1Q2OVl0UDNtLWtCZC1NWTNXMWVwaGd4bXlvRk01NnBnYVpQMk95WXktdnlRRnB0OTgtdGt2bEhFeEliV1F4MHpNejhxSzJzZ2M?oc=5" target="_blank" rel="noopener">日銀、6月会合で利上げの公算大 31年ぶり政策金利1.0%程度へ - 朝日新聞</a>
-    <div class="news-source">朝日新聞</div>
-  </div>
-</div>
-
-<div class="news-item">
-  <span class="news-badge badge-high">高</span>
-  <div>
-    <a class="news-title" href="https://news.google.com/rss/articles/CBMiX0FVX3lxTE00bHlidmhreUtHYVVJQ1ItVjc1cTBZei1kbjBfMks3eUhnRHh0ampqS3BqXzJqeWlxbHBvc2FlY3VwR2JsVUtRVDlXRGFLMXMxQVdONWV1RzdGTDZnZlZz?oc=5" target="_blank" rel="noopener">米金融政策見通しを変更 年2回の利下げから据え置きへ 米国野村證券・雨宮愛知 - nomura.co.jp</a>
-    <div class="news-source">nomura.co.jp</div>
-  </div>
-</div>
-
-<div class="news-item">
-  <span class="news-badge badge-high">高</span>
-  <div>
-    <a class="news-title" href="https://news.google.com/rss/articles/CBMibEFVX3lxTFBNSTYwbEdCd2pHOHRveDNLYWo5akVLa1NiM200cWdHaTAxNHFYWV90ektiRWV6bXc2ODljc2dkMk1kZXFFWW9OSzFBMkc0N29rMnM0UE1XN3pQSnFaUVRXQ21vZDg5TENhMno2eA?oc=5" target="_blank" rel="noopener">トランプ氏「金利下げて」 FRB新議長に「判断任せる」も本音隠せず - 日本経済新聞</a>
-    <div class="news-source">日本経済新聞</div>
-  </div>
-</div>
-
-<div class="news-item">
-  <span class="news-badge badge-high">高</span>
-  <div>
-    <a class="news-title" href="https://news.google.com/rss/articles/CBMif0FVX3lxTE5BTlZnQWlYc3JWWng2WkZtUnBqV3ItM0tBS01hNmlrZFdEdERwOFljT1paanlzcXVsbkZKc2l6elpFcTJCYVhyZVRoMFk1YWdiQ3AtVkxhTmtSX0l5TEprZFdMbmNlQlJXZG5LOU02OXpLblNUdlJkaS15bU5fakU?oc=5" target="_blank" rel="noopener">トランプ氏、FRB利上げは誤り-雇用統計好調でも「むしろ利下げを」（TBS CROSS DIG with Bloomberg） - Yahoo!ニュース</a>
-    <div class="news-source">Yahoo!ニュース</div>
-  </div>
-</div>
-
-<div class="news-item">
-  <span class="news-badge badge-high">高</span>
-  <div>
-    <a class="news-title" href="https://news.google.com/rss/articles/CBMiY0FVX3lxTE12aEp3MGU0NDBxUVRLM1o0Yl92ejluMDU1TV9IbjlVTGFxMld2QzZXTDRGbUhOTjRJUnZuS3pmMEI3VzczeGdwX1lkWkJQRzRmanZyMUNyMUthUW5JcWFRRm1Ycw?oc=5" target="_blank" rel="noopener">ドル円見通し｜米国CPI直前チェック！ドル円はどう動く？ - 外為どっとコム</a>
-    <div class="news-source">外為どっとコム</div>
-  </div>
-</div>
-
-<div class="news-item">
-  <span class="news-badge badge-high">高</span>
-  <div>
-    <a class="news-title" href="https://news.google.com/rss/articles/CBMiX0FVX3lxTE51SUdtUjJFZGx4THI2V1ZqY01DNkJTVUZfMGlnSGxEQUFvMkt6b0p3Ql9WQWdweFhiNGszZG5xZkNnWW12SG1FeHRGRHFxRkJNNzNoUEdBc0M2b09NTXBz?oc=5" target="_blank" rel="noopener">【米国】5月CPI、前月比0.5%上昇か インフレ期待の乖離が2022年以来の大きさに - finance.biggo.jp</a>
-    <div class="news-source">finance.biggo.jp</div>
-  </div>
-</div>
-
-<div class="news-item">
-  <span class="news-badge badge-high">高</span>
-  <div>
-    <a class="news-title" href="https://news.google.com/rss/articles/CBMiSEFVX3lxTE1LOXVJYmppdlNJckpsV2hDT2dadk9Jb3pzTEQ3QktzSHJjTjdBcmY0QlFxNmgzMXRIX2x5a08zdUZjTDZxS0IwSg?oc=5" target="_blank" rel="noopener">ドル円、１６０円台を固める展開が続く インフレ指標を見極めへ＝ＮＹ為替概況 - みんかぶ FX/為替</a>
-    <div class="news-source">みんかぶ FX/為替</div>
-  </div>
-</div>
-
-<div class="news-item">
-  <span class="news-badge badge-high">高</span>
-  <div>
-    <a class="news-title" href="https://news.google.com/rss/articles/CBMieEFVX3lxTE1aX0pwMmZFbG5ZWWlpbFd2UE5Ca0JDZHRWa0RSekNXeFp4dmo3eGhyVkZaSkVuaEVnZkRDTmt0LXkxLU1yTFhTeEwxcmNrSHpqQzRVbkw4SkozOVVyaTRSYk1QMUhlWVcyZm1CZDJ0cXFiWk96aHBHSw?oc=5" target="_blank" rel="noopener">米5月雇用、堅調な伸び：識者はこうみる - Reuters</a>
-    <div class="news-source">Reuters</div>
-  </div>
-</div>
-
-<div class="news-item">
-  <span class="news-badge badge-high">高</span>
-  <div>
-    <a class="news-title" href="https://news.google.com/rss/articles/CBMif0FVX3lxTFBQVFJZNjU1YmdPMEs2bFBtLVJOaWxhZGVEQmZQTGktS0R6SVR5dElOakNJc00xMkViXzdZaTRSa0ZsdU5HMmJlX1NHaFFJNzVsbGhxaXFxSVl2SWlrVTloaTdfUnJCSU5TZzNPUWMxZ1diWVR3TFV0VFRRUGNSQjg?oc=5" target="_blank" rel="noopener">5月の米雇用統計、労働市場への懸念は後退 - ピクテ・ジャパン</a>
-    <div class="news-source">ピクテ・ジャパン</div>
-  </div>
-</div>
-
-<div class="news-item">
-  <span class="news-badge badge-high">高</span>
-  <div>
-    <a class="news-title" href="https://news.google.com/rss/articles/CBMib0FVX3lxTE40Y0V0NUdYNzJtcnRjS052SWVTTzItY0FmVk15Uk05QjRObXVEam5udmVNRHBvRmZlM1gzRm01MWNwNGhCYVlka1ZiTy0xNUhzeHc5dDUzak9sVVFEa2FYOGZaMldYRHBRNTR4MGZjMNIBf0FVX3lxTE00QkdiWGRINWNjOTdHQ3NDUmlxeDN1akQ2R0xMQ3plcDI2a2FzTmt5WkZzaTNrcV9kbWRqZy0yNGJ5a2dmWjl1MWxyZ1U3d2R1Q2NSWUljUzRyN08wM3NJQThfT2RWX3p6YmFVZUNoa1BYcVJvQ0J3UC1IdlNIVzg?oc=5" target="_blank" rel="noopener">米雇用統計（26年5月）－非農業部門雇用者数（前月比）は+17.2万人と地方政府、娯楽・宿泊の増加主導で市場予想（+8.8万人）を大幅に上回る - nli-research.co.jp</a>
-    <div class="news-source">nli-research.co.jp</div>
-  </div>
-</div>
   </div>
 </section>
 
@@ -698,8 +928,11 @@ section { margin-bottom: 20px; }
 
 </main>
 
-<footer style="text-align:center;padding:20px;color:var(--muted);font-size:11px;border-top:1px solid var(--border);margin-top:20px">
-  市場AI秘書 · 自動生成 2026-06-10 14:36 JST · データは参考情報です
+<!-- ── フッター ── -->
+<footer style="text-align:center;padding:24px 16px;color:var(--muted);font-size:11px;border-top:1px solid var(--border);margin-top:20px;background:linear-gradient(0deg,#1a0f00,transparent)">
+  <div style="font-size:16px;margin-bottom:6px">🐘 ガネ先生 &amp; 🦦 カワウソくん</div>
+  <div>AIチーム自動生成レポート · 2026-06-10 15:58 JST</div>
+  <div style="margin-top:4px">このレポートはAIによる自動分析です。投資は自己判断でお願いします。</div>
 </footer>
 
 <script>

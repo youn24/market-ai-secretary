@@ -360,12 +360,544 @@ section {{ margin-bottom: 20px; }}
   background: var(--card2);
   color: var(--muted);
 }}
+
+/* ── キャラクターヘッダー ── */
+.char-header {{
+  background: linear-gradient(160deg, #1a0f00 0%, #2d1f00 40%, #1a1200 100%);
+  border-bottom: 3px solid #c8992a;
+  padding: 0;
+  overflow: hidden;
+  position: relative;
+  margin-bottom: 20px;
+}}
+.char-header-inner {{
+  max-width: 960px;
+  margin: 0 auto;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+}}
+.char-title-block {{
+  text-align: center;
+  flex: 1;
+  padding: 20px 10px 16px;
+}}
+.char-main-title {{
+  font-size: 20px;
+  font-weight: 900;
+  color: #f0c040;
+  text-shadow: 0 2px 12px rgba(0,0,0,.9);
+  line-height: 1.4;
+}}
+.char-sub-title {{
+  font-size: 11px;
+  color: #c8992a;
+  margin-top: 4px;
+  letter-spacing: 1.5px;
+}}
+.char-date-badge {{
+  display: inline-block;
+  background: rgba(200,153,42,.2);
+  border: 1px solid #c8992a;
+  border-radius: 20px;
+  padding: 3px 14px;
+  font-size: 11px;
+  color: #f0c040;
+  margin-top: 8px;
+}}
+.char-signal-badge {{
+  display: inline-block;
+  padding: 5px 18px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 900;
+  margin-top: 8px;
+  border: 2px solid;
+}}
+.char-figure {{
+  width: 130px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-bottom: 4px;
+}}
+.char-figure-label {{
+  font-size: 10px;
+  color: #c8992a;
+  font-weight: 700;
+  text-align: center;
+  margin-top: 4px;
+}}
+.char-svg {{ width: 100px; height: 100px; }}
+.char-balloon {{
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(200,153,42,.4);
+  border-radius: 8px;
+  padding: 4px 8px;
+  font-size: 10px;
+  color: #f0c040;
+  text-align: center;
+  max-width: 110px;
+  margin-top: 4px;
+}}
+@media (max-width: 600px) {{
+  .char-main-title {{ font-size: 15px; }}
+  .char-figure {{ width: 80px; }}
+  .char-svg {{ width: 70px; height: 70px; }}
+}}
+
+/* ── クイックサマリーカード ── */
+.qs-grid {{
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  margin-bottom: 20px;
+}}
+@media (max-width: 600px) {{
+  .qs-grid {{ grid-template-columns: repeat(2, 1fr); }}
+}}
+.qs-card {{
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 8px;
+  text-align: center;
+  transition: transform .2s, box-shadow .2s;
+}}
+.qs-card:hover {{ transform: translateY(-3px); box-shadow: 0 6px 16px rgba(0,0,0,.4); }}
+.qs-icon  {{ font-size: 18px; margin-bottom: 4px; }}
+.qs-label {{ font-size: 10px; color: var(--muted); margin-bottom: 5px; }}
+.qs-value {{ font-size: 16px; font-weight: 800; }}
+.qs-chg   {{ font-size: 11px; margin-top: 4px; }}
+
+/* ── ウォッチリスト ── */
+.watch-item {{
+  display: flex;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  gap: 8px;
+}}
+.watch-item:last-child {{ border-bottom: none; }}
+.watch-rank  {{ font-size: 12px; color: var(--muted); min-width: 20px; }}
+.watch-name  {{ flex: 1; font-size: 13px; font-weight: 700; }}
+.watch-theme {{ font-size: 10px; color: var(--muted); }}
+.watch-price {{ font-size: 14px; font-weight: 700; min-width: 80px; text-align: right; }}
+.watch-chg   {{ font-size: 13px; font-weight: 700; min-width: 55px; text-align: right; }}
+.watch-signal {{ font-size: 10px; padding: 2px 7px; border-radius: 4px; white-space: nowrap; }}
+.sig-buy  {{ background: rgba(63,185,80,.2); color: {GREEN}; }}
+.sig-sell {{ background: rgba(248,81,73,.2); color: {RED}; }}
+.sig-hold {{ background: rgba(210,153,34,.2); color: {YELLOW}; }}
+
+/* ── シナリオカード(改良) ── */
+.scenario-card-new {{
+  border-radius: 12px;
+  padding: 16px;
+  border: 2px solid;
+  text-align: center;
+}}
+.sc-icon   {{ font-size: 30px; margin-bottom: 6px; }}
+.sc-label  {{ font-size: 13px; font-weight: 700; margin-bottom: 4px; }}
+.sc-prob   {{ font-size: 26px; font-weight: 900; }}
+.sc-range  {{ font-size: 12px; margin-top: 4px; opacity: .85; }}
+.sc-desc   {{ font-size: 11px; line-height: 1.6; margin-top: 8px; text-align: left; }}
+
+/* ── 市場ステータスバー ── */
+.market-status-bar {{
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 16px;
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin-bottom: 16px;
+  align-items: center;
+}}
+.ms-item {{ display: flex; flex-direction: column; align-items: center; min-width: 70px; }}
+.ms-label {{ font-size: 9px; color: var(--muted); margin-bottom: 2px; }}
+.ms-value {{ font-size: 13px; font-weight: 700; }}
+.ms-chg   {{ font-size: 10px; }}
+.ms-sep   {{ width: 1px; height: 30px; background: var(--border); }}
 """
 
 
 # ────────────────────────────────────────────────────────────────
 # ヘルパー関数
 # ────────────────────────────────────────────────────────────────
+
+def _gane_svg(mood: str) -> str:
+    """ガネ先生のインラインSVGキャラクター（相場ムードに応じた表情）"""
+    # 体の色 / 表情パラメータ
+    body_color  = "#f0c040"
+    skin_color  = "#e8b830"
+    eye_l = eye_r = "😊"
+
+    if mood in ("bullish",):
+        mouth = "M 55,70 Q 65,80 75,70"   # 笑顔
+        eyebrow = "M 52,52 L 60,48  M 68,48 L 76,52"
+        sparkle = '<text x="80" y="25" font-size="14" opacity=".9">✨</text>'
+    elif mood in ("bearish", "crash"):
+        mouth = "M 55,75 Q 65,68 75,75"   # 下がり口
+        eyebrow = "M 52,50 L 60,54  M 68,54 L 76,50"
+        sparkle = '<text x="78" y="28" font-size="12" opacity=".7">💧</text>'
+    elif mood in ("volatile", "uncertain"):
+        mouth = "M 57,72 Q 65,72 73,72"   # まっすぐ
+        eyebrow = "M 52,51 L 60,48  M 68,48 L 76,51"
+        sparkle = '<text x="79" y="26" font-size="13" opacity=".8">❓</text>'
+    else:  # analyzing / neutral
+        mouth = "M 55,70 Q 65,77 75,70"   # 軽い笑顔
+        eyebrow = "M 52,50 L 60,48  M 68,48 L 76,50"
+        sparkle = '<text x="80" y="26" font-size="12" opacity=".8">📊</text>'
+
+    return f"""<svg class="char-svg" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+  <!-- 後光 -->
+  <circle cx="60" cy="58" r="48" fill="rgba(240,192,64,.08)"/>
+  <!-- 胴体 -->
+  <ellipse cx="60" cy="95" rx="26" ry="18" fill="{skin_color}"/>
+  <!-- 腕(左) -->
+  <ellipse cx="32" cy="90" rx="9" ry="14" fill="{body_color}" transform="rotate(-20 32 90)"/>
+  <!-- 腕(右) -->
+  <ellipse cx="88" cy="90" rx="9" ry="14" fill="{body_color}" transform="rotate(20 88 90)"/>
+  <!-- 頭 -->
+  <circle cx="60" cy="55" r="36" fill="{body_color}"/>
+  <!-- 耳(左) -->
+  <ellipse cx="22" cy="50" rx="14" ry="20" fill="{skin_color}" opacity=".9"/>
+  <ellipse cx="22" cy="50" rx="9" ry="14" fill="rgba(240,192,64,.5)"/>
+  <!-- 耳(右) -->
+  <ellipse cx="98" cy="50" rx="14" ry="20" fill="{skin_color}" opacity=".9"/>
+  <ellipse cx="98" cy="50" rx="9" ry="14" fill="rgba(240,192,64,.5)"/>
+  <!-- 王冠 -->
+  <polygon points="44,28 52,18 60,26 68,18 76,28 78,35 42,35" fill="#e8b830" stroke="#c8992a" stroke-width="1.5"/>
+  <circle cx="60" cy="22" r="4" fill="#ff6060"/>
+  <circle cx="47" cy="31" r="3" fill="#60a0ff"/>
+  <circle cx="73" cy="31" r="3" fill="#60ff60"/>
+  <!-- 白い顔面 -->
+  <ellipse cx="60" cy="60" rx="24" ry="20" fill="rgba(255,255,240,.15)"/>
+  <!-- 目(左) -->
+  <circle cx="50" cy="56" r="6" fill="white"/>
+  <circle cx="51" cy="56" r="4" fill="#2a1800"/>
+  <circle cx="52" cy="54" r="1.5" fill="white"/>
+  <!-- 目(右) -->
+  <circle cx="70" cy="56" r="6" fill="white"/>
+  <circle cx="71" cy="56" r="4" fill="#2a1800"/>
+  <circle cx="72" cy="54" r="1.5" fill="white"/>
+  <!-- 眉毛 -->
+  <path d="{eyebrow}" stroke="#8B5A2B" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <!-- 鼻(象の鼻) -->
+  <path d="M 60,65 Q 58,72 62,78 Q 66,84 60,88" stroke="{skin_color}" stroke-width="8"
+        fill="none" stroke-linecap="round"/>
+  <!-- 口 -->
+  <path d="{mouth}" stroke="#8B5A2B" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <!-- ほっぺ -->
+  <circle cx="44" cy="65" r="7" fill="rgba(255,100,100,.2)"/>
+  <circle cx="76" cy="65" r="7" fill="rgba(255,100,100,.2)"/>
+  <!-- スパークル -->
+  {sparkle}
+</svg>"""
+
+
+def _kawauso_svg(mood: str) -> str:
+    """カワウソくんのインラインSVGキャラクター"""
+    body_color = "#6B3A2A"
+    face_color = "#C4956A"
+
+    if mood in ("bullish",):
+        mouth = "M 52,70 Q 60,78 68,70"
+        accessory = '<text x="72" y="35" font-size="14">🎉</text>'
+    elif mood in ("bearish", "crash"):
+        mouth = "M 52,74 Q 60,68 68,74"
+        accessory = '<text x="72" y="35" font-size="13">💧</text>'
+    elif mood in ("volatile", "uncertain"):
+        mouth = "M 54,72 Q 60,72 66,72"
+        accessory = '<text x="70" y="33" font-size="13">❓</text>'
+    else:
+        mouth = "M 52,70 Q 60,76 68,70"
+        accessory = '<text x="72" y="34" font-size="12">📝</text>'
+
+    return f"""<svg class="char-svg" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+  <!-- 胴体 -->
+  <ellipse cx="60" cy="96" rx="22" ry="16" fill="{body_color}"/>
+  <!-- 耳(左) -->
+  <ellipse cx="30" cy="38" rx="10" ry="12" fill="{body_color}"/>
+  <ellipse cx="30" cy="38" rx="6" ry="8" fill="{face_color}" opacity=".6"/>
+  <!-- 耳(右) -->
+  <ellipse cx="90" cy="38" rx="10" ry="12" fill="{body_color}"/>
+  <ellipse cx="90" cy="38" rx="6" ry="8" fill="{face_color}" opacity=".6"/>
+  <!-- 頭 -->
+  <circle cx="60" cy="58" r="34" fill="{body_color}"/>
+  <!-- 顔の白い部分 -->
+  <ellipse cx="60" cy="64" rx="22" ry="18" fill="{face_color}"/>
+  <!-- 目(左) -->
+  <circle cx="50" cy="55" r="7" fill="white"/>
+  <circle cx="51" cy="55" r="4.5" fill="#1a0a00"/>
+  <circle cx="52" cy="53" r="1.5" fill="white"/>
+  <!-- 目(右) -->
+  <circle cx="70" cy="55" r="7" fill="white"/>
+  <circle cx="71" cy="55" r="4.5" fill="#1a0a00"/>
+  <circle cx="72" cy="53" r="1.5" fill="white"/>
+  <!-- 鼻 -->
+  <ellipse cx="60" cy="66" rx="5" ry="3.5" fill="#3a1a10"/>
+  <!-- ひげ(左) -->
+  <line x1="36" y1="67" x2="50" y2="66" stroke="rgba(255,255,255,.6)" stroke-width="1.2"/>
+  <line x1="36" y1="70" x2="50" y2="69" stroke="rgba(255,255,255,.6)" stroke-width="1.2"/>
+  <!-- ひげ(右) -->
+  <line x1="70" y1="66" x2="84" y2="67" stroke="rgba(255,255,255,.6)" stroke-width="1.2"/>
+  <line x1="70" y1="69" x2="84" y2="70" stroke="rgba(255,255,255,.6)" stroke-width="1.2"/>
+  <!-- 口 -->
+  <path d="{mouth}" stroke="#3a1a10" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <!-- ほっぺ -->
+  <circle cx="44" cy="67" r="7" fill="rgba(255,120,120,.25)"/>
+  <circle cx="76" cy="67" r="7" fill="rgba(255,120,120,.25)"/>
+  <!-- しっぽ -->
+  <path d="M 72,105 Q 95,110 100,98 Q 105,86 90,84" stroke="{body_color}" stroke-width="10"
+        fill="none" stroke-linecap="round"/>
+  <!-- アクセサリー -->
+  {accessory}
+</svg>"""
+
+
+def _character_header(score: float, prices: dict, mood: str, today: str, now: str) -> str:
+    """キャラクター入りヘッダーHTML"""
+    signal_text = _signal_text(score)
+    risk_color  = _risk_color(score)
+
+    if score >= 0.5:
+        sig_style = f"color:{GREEN};border-color:{GREEN};background:rgba(63,185,80,.15)"
+        gane_mood = "bullish"
+        kawauso_mood = "bullish"
+        gane_say  = "相場が良さそう\nですね！"
+        kawa_say  = "チャンスかも！\n積極的に！"
+    elif score >= -0.5:
+        sig_style = f"color:{YELLOW};border-color:{YELLOW};background:rgba(210,153,34,.15)"
+        gane_mood = "analyzing"
+        kawauso_mood = "uncertain"
+        gane_say  = "様子を見ながら\n慎重に判断を"
+        kawa_say  = "うーん...\n迷うところ"
+    else:
+        sig_style = f"color:{RED};border-color:{RED};background:rgba(248,81,73,.15)"
+        gane_mood = "bearish"
+        kawauso_mood = "bearish"
+        gane_say  = "リスク管理を\n徹底しましょう"
+        kawa_say  = "気をつけて！\n守りが大事"
+
+    gane_svg    = _gane_svg(gane_mood)
+    kawauso_svg = _kawauso_svg(kawauso_mood)
+
+    nikkei  = prices.get("^N225",   {})
+    sp500   = prices.get("^GSPC",   {})
+    usdjpy  = prices.get("USDJPY=X",{})
+    nk_val  = nikkei.get("price",  0)
+    nk_chg  = nikkei.get("change_pct", 0)
+    sp_val  = sp500.get("price",   0)
+    sp_chg  = sp500.get("change_pct",  0)
+    fx_val  = usdjpy.get("price",  0)
+    nk_cls  = "chg-up" if nk_chg >= 0 else "chg-down"
+    sp_cls  = "chg-up" if sp_chg >= 0 else "chg-down"
+    nk_sign = "+" if nk_chg >= 0 else ""
+    sp_sign = "+" if sp_chg >= 0 else ""
+
+    return f"""<header class="char-header">
+  <div class="char-header-inner">
+    <!-- ガネ先生 (左) -->
+    <div class="char-figure">
+      {gane_svg}
+      <div class="char-figure-label">ガネ先生</div>
+      <div class="char-balloon">{gane_say.replace(chr(10), '<br>')}</div>
+    </div>
+
+    <!-- タイトル (中央) -->
+    <div class="char-title-block">
+      <div class="char-main-title">ガネ先生とカワウソくんの<br>今日の相場ダイジェスト</div>
+      <div class="char-sub-title">AIチーム自動分析レポート</div>
+      <div class="char-date-badge">📅 {today} {now.split()[1] if ' ' in now else ''}</div><br>
+      <span class="char-signal-badge" style="{sig_style}">{signal_text}</span>
+      <div style="margin-top:10px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+        <span style="font-size:12px;color:#f0c040">
+          🇯🇵 日経 <b style="color:{'#3fb950' if nk_chg>=0 else '#f85149'}">{nk_val:,.0f}</b>
+          <span class="{nk_cls}">({nk_sign}{nk_chg:.2f}%)</span>
+        </span>
+        <span style="font-size:12px;color:#f0c040">
+          🇺🇸 S&P <b style="color:{'#3fb950' if sp_chg>=0 else '#f85149'}">{sp_val:,.0f}</b>
+          <span class="{sp_cls}">({sp_sign}{sp_chg:.2f}%)</span>
+        </span>
+        <span style="font-size:12px;color:#f0c040">
+          💴 USD/JPY <b>{fx_val:.2f}</b>
+        </span>
+      </div>
+    </div>
+
+    <!-- カワウソくん (右) -->
+    <div class="char-figure">
+      {kawauso_svg}
+      <div class="char-figure-label">カワウソくん</div>
+      <div class="char-balloon">{kawa_say.replace(chr(10), '<br>')}</div>
+    </div>
+  </div>
+</header>"""
+
+
+def _quick_summary(prices: dict, risk: dict, fear_greed: dict, technical: dict) -> str:
+    """5つのクイックサマリーカード（日本株・米国株・為替・VIX・FearGreed）"""
+    def _fmt(sym, label, icon):
+        p   = prices.get(sym, {})
+        val = p.get("price", 0)
+        chg = p.get("change_pct", 0)
+        cls = "chg-up" if chg >= 0 else "chg-down"
+        sgn = "+" if chg >= 0 else ""
+        fmt_val = f"{val:,.0f}" if val > 100 else f"{val:.2f}"
+        return f"""<div class="qs-card">
+  <div class="qs-icon">{icon}</div>
+  <div class="qs-label">{label}</div>
+  <div class="qs-value">{fmt_val}</div>
+  <div class="qs-chg {cls}">{sgn}{chg:.2f}%</div>
+</div>"""
+
+    vix_p = prices.get("^VIX", {})
+    vix_v = vix_p.get("price", 0)
+    vix_chg = vix_p.get("change_pct", 0)
+    vix_cls = "chg-down" if vix_chg >= 0 else "chg-up"  # VIXは逆
+    vix_sgn = "+" if vix_chg >= 0 else ""
+
+    fg   = fear_greed or {}
+    fg_s = fg.get("score") or 50
+    fg_r = fg.get("rating_ja", fg.get("rating", "---"))
+    fg_c = GREEN if fg_s >= 60 else (YELLOW if fg_s >= 40 else RED)
+
+    cards = [
+        _fmt("^N225",    "日経平均",  "🇯🇵"),
+        _fmt("^GSPC",    "S&P500",   "🇺🇸"),
+        _fmt("USDJPY=X", "USD/JPY",  "💴"),
+        f"""<div class="qs-card">
+  <div class="qs-icon">😨</div>
+  <div class="qs-label">VIX 恐怖指数</div>
+  <div class="qs-value" style="color:{'#f85149' if vix_v>=25 else ('#d29922' if vix_v>=18 else '#3fb950')}">{vix_v:.1f}</div>
+  <div class="qs-chg {vix_cls}">{vix_sgn}{vix_chg:.2f}%</div>
+</div>""",
+        f"""<div class="qs-card">
+  <div class="qs-icon">🎭</div>
+  <div class="qs-label">Fear &amp; Greed</div>
+  <div class="qs-value" style="color:{fg_c}">{fg_s:.0f}</div>
+  <div class="qs-chg" style="color:{fg_c}">{fg_r}</div>
+</div>""",
+    ]
+    return f'<div class="qs-grid">{"".join(cards)}</div>'
+
+
+def _watchlist(prices: dict, technical: dict) -> str:
+    """注目銘柄ウォッチリスト"""
+    tech = technical or {}
+    watch_syms = [
+        ("^N225",    "日経225",      "🇯🇵", "総合指数"),
+        ("^IXIC",    "Nasdaq",       "💻", "テック"),
+        ("GC=F",     "金 (Gold)",    "🥇", "安全資産"),
+        ("BTC-USD",  "Bitcoin",      "₿",  "暗号資産"),
+        ("CL=F",     "原油 WTI",     "🛢",  "コモディティ"),
+    ]
+    rows = []
+    for i, (sym, name, icon, theme) in enumerate(watch_syms, 1):
+        p   = prices.get(sym, {})
+        val = p.get("price", 0)
+        chg = p.get("change_pct", 0)
+        cls = "chg-up" if chg >= 0 else "chg-down"
+        sgn = "+" if chg >= 0 else ""
+        fmt_val = f"{val:,.0f}" if val > 100 else f"{val:.2f}"
+
+        # テクニカルシグナル
+        t   = tech.get(sym, {})
+        rsi = t.get("rsi", 0)
+        if rsi:
+            if rsi >= 70:   sig, sig_cls = "過熱", "sig-sell"
+            elif rsi <= 30: sig, sig_cls = "売られ過ぎ", "sig-buy"
+            else:           sig, sig_cls = f"RSI {rsi:.0f}", "sig-hold"
+        else:
+            sig, sig_cls = "---", "sig-hold"
+
+        rows.append(f"""<div class="watch-item">
+  <span class="watch-rank">{i}</span>
+  <div class="watch-name">{icon} {name}<br><span class="watch-theme">{theme}</span></div>
+  <span class="watch-price {'chg-up' if chg >= 0 else 'chg-down'}">{fmt_val}</span>
+  <span class="watch-chg {cls}">{sgn}{chg:.2f}%</span>
+  <span class="watch-signal {sig_cls}">{sig}</span>
+</div>""")
+
+    return "\n".join(rows)
+
+
+def _scenarios_html(scenario: dict) -> str:
+    """3シナリオカード (強気/基本/弱気)"""
+    sc = scenario or {}
+    if not sc.get("available"):
+        return ""
+
+    cards = []
+    configs = [
+        ("bull", "🚀 強気シナリオ", GREEN,  "rgba(63,185,80,.08)"),
+        ("base", "😐 基本シナリオ", YELLOW, "rgba(210,153,34,.08)"),
+        ("bear", "🐻 弱気シナリオ", RED,    "rgba(248,81,73,.08)"),
+    ]
+    for key, label, color, bg in configs:
+        sec  = sc.get(key, {})
+        if not sec:
+            continue
+        prob = sec.get("probability", sec.get("prob", 0))
+        desc = sec.get("description", sec.get("desc", sec.get("text", "")))
+        prob_str = f"{prob*100:.0f}%" if prob and prob <= 1 else (f"{prob}%" if prob else "?")
+        nikkei_range = sec.get("nikkei_range", sec.get("range", ""))
+        range_html = f'<div class="sc-range">日経 {nikkei_range}</div>' if nikkei_range else ""
+        cards.append(f"""<div class="scenario-card-new" style="border-color:{color};background:{bg}">
+  <div class="sc-label" style="color:{color}">{label}</div>
+  <div class="sc-prob" style="color:{color}">{prob_str}</div>
+  {range_html}
+  <div class="sc-desc">{str(desc)[:160]}</div>
+</div>""")
+
+    if not cards:
+        return ""
+    return f"""<section>
+  <div class="section-header">
+    <span class="section-icon">🔭</span>
+    <span class="section-title">3シナリオ分析</span>
+    <span class="section-tag">AI確率算出</span>
+  </div>
+  <div class="grid-3">{"".join(cards)}</div>
+</section>"""
+
+
+def _market_status_bar(prices: dict) -> str:
+    """横並び市場ステータスバー"""
+    syms = [
+        ("^N225",    "日経225",  True),
+        ("^GSPC",    "S&P500",   True),
+        ("^IXIC",    "Nasdaq",   True),
+        ("USDJPY=X", "USD/JPY",  True),
+        ("^VIX",     "VIX",      False),  # VIXは逆色
+        ("GC=F",     "金(USD)",  True),
+    ]
+    items = []
+    for sym, label, normal_dir in syms:
+        p   = prices.get(sym, {})
+        val = p.get("price", 0)
+        chg = p.get("change_pct", 0)
+        if normal_dir:
+            color = GREEN if chg >= 0 else RED
+        else:
+            color = RED if chg >= 0 else GREEN  # VIX上昇=悪い
+        sgn = "+" if chg >= 0 else ""
+        fmt_val = f"{val:,.0f}" if val > 100 else f"{val:.2f}"
+        items.append(f"""<div class="ms-item">
+  <span class="ms-label">{label}</span>
+  <span class="ms-value" style="color:{color}">{fmt_val}</span>
+  <span class="ms-chg" style="color:{color}">{sgn}{chg:.2f}%</span>
+</div>""")
+        items.append('<div class="ms-sep"></div>')
+
+    if items and items[-1] == '<div class="ms-sep"></div>':
+        items.pop()
+
+    return f'<div class="market-status-bar">{"".join(items)}</div>'
+
 
 def _risk_color(score: float) -> str:
     if score >= 1.5:   return GREEN
@@ -787,6 +1319,14 @@ def generate(
     signal_text = _signal_text(score)
     risk_color  = _risk_color(score)
 
+    # ムード判定（VIX/USD/JPY変化率から）
+    usdjpy_chg = (prices.get("USDJPY=X") or {}).get("change_pct", 0) or 0
+    vix_val    = (prices.get("^VIX")     or {}).get("price",      18) or 18
+    if score >= 1:      mood = "bullish"
+    elif score >= 0:    mood = "analyzing"
+    elif score >= -1:   mood = "uncertain"
+    else:               mood = "bearish"
+
     gauge_svg    = _gauge_svg(score)
     stocks_html  = _stock_cards(prices, technical)
     sector_html  = _sector_heatmap(sector_analysis)
@@ -795,60 +1335,41 @@ def generate(
     cal_html     = _calendar_section(weekly_calendar)
     pred_html    = _prediction_section(prediction_tracker)
     fg_html      = _fg_section(fear_greed)
-
-    # シナリオ
-    sc = scenario or {}
-    sc_html = ""
-    if sc.get("available"):
-        for key, icon, color in [("bull", "🐂", GREEN), ("base", "😐", YELLOW), ("bear", "🐻", RED)]:
-            sec = sc.get(key, {})
-            if not sec:
-                continue
-            label = {"bull":"楽観シナリオ","base":"基本シナリオ","bear":"悲観シナリオ"}.get(key, key)
-            prob  = sec.get("probability", sec.get("prob", 0))
-            desc  = sec.get("description", sec.get("desc", sec.get("text", "")))
-            prob_str = f"{prob*100:.0f}%" if prob and prob <= 1 else (f"{prob}%" if prob else "?")
-            sc_html += f"""
-<div class="card fade-up" style="border-color:{color}22">
-  <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-    <span style="font-size:20px">{icon}</span>
-    <span style="font-weight:700;color:{color}">{label}</span>
-    <span style="margin-left:auto;font-size:12px;color:var(--muted)">確率 {prob_str}</span>
-  </div>
-  <div style="font-size:13px;line-height:1.6">{str(desc)[:180]}</div>
-</div>"""
+    char_header  = _character_header(score, prices, mood, today, now)
+    qs_html      = _quick_summary(prices, risk, fear_greed, technical)
+    watch_html   = _watchlist(prices, technical)
+    status_bar   = _market_status_bar(prices)
+    sc_html      = _scenarios_html(scenario)
 
     html = f"""<!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>市場AI秘書 — {today} 日次レポート</title>
+<title>ガネ先生とカワウソくんの相場ダイジェスト — {today}</title>
 <style>
 {_CSS}
 </style>
 </head>
 <body>
 
-<!-- ── Header ── -->
-<header class="header">
-  <div class="header-inner">
-    <div>
-      <div class="header-title">📊 市場AI秘書</div>
-      <div class="header-sub">{now} ／ {mode.upper()}レポート</div>
-    </div>
-    <div class="signal-badge {signal_cls}">{signal_text}</div>
-  </div>
-</header>
+<!-- ── キャラクターヘッダー ── -->
+{char_header}
 
 <main class="container">
+
+<!-- ── クイックサマリー ── -->
+{qs_html}
+
+<!-- ── 市場ステータスバー ── -->
+{status_bar}
 
 <!-- ── Row 1: ゲージ / FearGreed ── -->
 <section>
   <div class="grid-2">
     <!-- リスクゲージ -->
     <div class="card fade-up">
-      <div class="card-title">リスクゲージ</div>
+      <div class="card-title">AIリスクゲージ</div>
       <div class="gauge-wrap">
         {gauge_svg}
         <div class="gauge-score-label">リスクスコア（−3〜＋3）</div>
@@ -873,45 +1394,52 @@ def generate(
   </div>
 </section>
 
-<!-- ── 銘柄カード ── -->
+<!-- ── マーケット概況（詳細カード）── -->
 <section>
   <div class="section-header">
     <span class="section-icon">💹</span>
-    <span class="section-title">マーケット概況</span>
+    <span class="section-title">マーケット詳細</span>
     <span class="section-tag">{today}</span>
   </div>
   {stocks_html}
+</section>
+
+<!-- ── 注目ウォッチリスト ── -->
+<section>
+  <div class="section-header">
+    <span class="section-icon">👀</span>
+    <span class="section-title">今日のウォッチリスト</span>
+    <span class="section-tag">注目銘柄・資産</span>
+  </div>
+  <div class="card fade-up">
+    {watch_html}
+  </div>
+</section>
+
+<!-- ── 3シナリオ分析 ── -->
+{sc_html}
+
+<!-- ── セクターヒートマップ ── -->
+<section>
+  <div class="section-header">
+    <span class="section-icon">🏭</span>
+    <span class="section-title">セクター別ヒートマップ</span>
+    <span class="section-tag">前日比</span>
+  </div>
+  <div class="card fade-up">
+    {sector_html}
+  </div>
 </section>
 
 <!-- ── AIチーム議論 ── -->
 <section>
   <div class="section-header">
     <span class="section-icon">🤖</span>
-    <span class="section-title">AIチーム議論</span>
+    <span class="section-title">AIチーム分析・議論</span>
+    <span class="section-tag">ガネ先生チーム</span>
   </div>
   <div class="card fade-up">
     {debate_html}
-  </div>
-</section>
-
-<!-- ── シナリオ分析 ── -->
-{"" if not sc_html else f"""
-<section>
-  <div class="section-header">
-    <span class='section-icon'>🔭</span>
-    <span class='section-title'>3シナリオ分析</span>
-  </div>
-  <div class='grid-3'>{sc_html}</div>
-</section>"""}
-
-<!-- ── セクターヒートマップ ── -->
-<section>
-  <div class="section-header">
-    <span class="section-icon">🏭</span>
-    <span class="section-title">セクター別パフォーマンス</span>
-  </div>
-  <div class="card fade-up">
-    {sector_html}
   </div>
 </section>
 
@@ -953,8 +1481,11 @@ def generate(
 
 </main>
 
-<footer style="text-align:center;padding:20px;color:var(--muted);font-size:11px;border-top:1px solid var(--border);margin-top:20px">
-  市場AI秘書 · 自動生成 {now} · データは参考情報です
+<!-- ── フッター ── -->
+<footer style="text-align:center;padding:24px 16px;color:var(--muted);font-size:11px;border-top:1px solid var(--border);margin-top:20px;background:linear-gradient(0deg,#1a0f00,transparent)">
+  <div style="font-size:16px;margin-bottom:6px">🐘 ガネ先生 &amp; 🦦 カワウソくん</div>
+  <div>AIチーム自動生成レポート · {now}</div>
+  <div style="margin-top:4px">このレポートはAIによる自動分析です。投資は自己判断でお願いします。</div>
 </footer>
 
 <script>
