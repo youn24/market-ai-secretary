@@ -511,6 +511,23 @@ def run(mode: str):
     except Exception:
         logger.error("LINE通知エラー"); logger.debug(traceback.format_exc())
 
+    # Step L5k: デザインAIレポート（docs/daily_report.html）
+    design_report = {"available": False}
+    try:
+        logger.info("--- Step L5k: デザインAIレポート ---")
+        from src.design_ai import run as run_design
+        design_report = run_design(
+            prices=prices, news=news, risk=risk, fear_greed=fear_greed,
+            ai_summary=ai_summary, scenario=scenario, technical=technical,
+            sector_analysis=sector_analysis, prediction_tracker=prediction_tracker,
+            weekly_calendar=weekly_calendar, team_debate=team_debate,
+            mode=mode,
+        )
+        if design_report.get("available"):
+            logger.info(f"✅ デザインAIレポート: {design_report.get('path','')}")
+    except Exception:
+        logger.error("デザインAIエラー"); logger.debug(traceback.format_exc())
+
     # Step 7: HTMLレポート生成
     report_paths = {}
     try:
