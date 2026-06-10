@@ -9,6 +9,12 @@
     {"symbol": "6501.T", "name": "日立製作所",          "sector": "電機・インフラ"},
     {"symbol": "7012.T", "name": "川崎重工業",          "sector": "重工業・防衛"},
     {"symbol": "285A.T", "name": "キオクシア",           "sector": "半導体・メモリ"},
-    {"symbol": "4063.T", "name": "信越化学工業",         "sector": "化学・半導体材料"}
+    {"symbol": "4063.T", "name": "信越化学工業",         "sector": "化学・半導体材料"},
+    {"symbol": "9983.T", "name": "ファーストリテイリング", "sector": "小売・アパレル",    "nikkei_weight": "約11%（寄与度1位）"},
+    {"symbol": "8035.T", "name": "東京エレクトロン",      "sector": "半導体製造装置",    "nikkei_weight": "約5%（寄与度2位）"},
+    {"symbol": "6954.T", "name": "ファナック",            "sector": "FA・産業用ロボット","nikkei_weight": "約3%"},
+    {"symbol": "6857.T", "name": "アドバンテスト",        "sector": "半導体テスト装置",  "nikkei_weight": "約3%"},
+    {"symbol": "9433.T", "name": "KDDI",                 "sector": "通信",             "nikkei_weight": "約2%"},
+    {"symbol": "6367.T", "name": "ダイキン工業",          "sector": "空調・冷熱",        "nikkei_weight": "約2%"}
   ]
 }

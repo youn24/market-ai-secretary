@@ -178,6 +178,48 @@
       "problemMatcher": []
     },
     {
+      "label": "📊 財務分析: ファーストリテイリング (9983) 日経寄与度1位",
+      "type": "shell",
+      "command": "python analyze_stock.py 9983",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "📊 財務分析: 東京エレクトロン (8035) 日経寄与度2位",
+      "type": "shell",
+      "command": "python analyze_stock.py 8035",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "📊 財務分析: ファナック (6954)",
+      "type": "shell",
+      "command": "python analyze_stock.py 6954",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "📊 財務分析: アドバンテスト (6857)",
+      "type": "shell",
+      "command": "python analyze_stock.py 6857",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "📊 財務分析: KDDI (9433)",
+      "type": "shell",
+      "command": "python analyze_stock.py 9433",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "📊 財務分析: ダイキン工業 (6367)",
+      "type": "shell",
+      "command": "python analyze_stock.py 6367",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
       "label": "📊 財務分析: 銘柄コードを入力して分析",
       "type": "shell",
       "command": "python analyze_stock.py ${input:stockCode}",
