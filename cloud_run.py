@@ -60,6 +60,17 @@ def run(mode: str):
     except Exception:
         logger.error("追加ニュース取得エラー"); logger.debug(traceback.format_exc())
 
+    # Step NEW-A: 煽りニュース検出
+    news_bias = {"available": False}
+    try:
+        logger.info("--- Step NEW-A: 煽りニュース検出 ---")
+        from src.news_bias_detector import analyze_news_bias
+        news_bias = analyze_news_bias(news)
+        if news_bias.get("available"):
+            logger.info(f"✅ 煽りニュース検出: 平均スコア{news_bias.get('avg_score',0):.1f}")
+    except Exception:
+        logger.error("煽りニュース検出エラー"); logger.debug(traceback.format_exc())
+
     # Step 4: 指標計算
     try:
         logger.info("--- Step 4: 指標計算 ---")
@@ -146,6 +157,17 @@ def run(mode: str):
     except Exception:
         logger.error("ポートフォリオエラー"); logger.debug(traceback.format_exc())
 
+    # Step NEW-F: 保有銘柄アラート
+    portfolio_alerts = {"available": False}
+    try:
+        logger.info("--- Step NEW-F: 保有銘柄アラート ---")
+        from src.portfolio_alert import check_portfolio_alerts
+        portfolio_alerts = check_portfolio_alerts(prices)
+        if portfolio_alerts.get("available"):
+            logger.info(f"✅ 保有銘柄アラート: {len(portfolio_alerts.get('alerts',[]))}件")
+    except Exception:
+        logger.error("保有銘柄アラートエラー"); logger.debug(traceback.format_exc())
+
     # Step L3d: シナリオ分析
     scenario = {"available": False}
     try:
@@ -204,6 +226,34 @@ def run(mode: str):
             logger.info(f"✅ 歴史分析完了: {reg.get('regime','---')}")
     except Exception:
         logger.error("歴史分析エラー"); logger.debug(traceback.format_exc())
+
+    # Step NEW-B: 割安株スキャン（月曜のみ）
+    bargain = {"available": False}
+    try:
+        if get_jst_now().weekday() == 0 or mode == "test":
+            logger.info("--- Step NEW-B: 割安株スキャン ---")
+            from src.bargain_scanner import scan_bargain_stocks
+            bargain = scan_bargain_stocks()
+            if bargain.get("available"):
+                logger.info(f"✅ 割安株スキャン: TOP{len(bargain.get('top_stocks',[]))}銘柄")
+        else:
+            logger.info("割安株スキャン: 月曜以外のためスキップ")
+    except Exception:
+        logger.error("割安株スキャンエラー"); logger.debug(traceback.format_exc())
+
+    # Step NEW-D: 積立タイミング分析（月曜のみ）
+    dca = {"available": False}
+    try:
+        if get_jst_now().weekday() == 0 or mode == "test":
+            logger.info("--- Step NEW-D: 積立タイミング分析 ---")
+            from src.dca_optimizer import analyze_dca_timing
+            dca = analyze_dca_timing()
+            if dca.get("available"):
+                logger.info(f"✅ 積立最適日: {dca.get('best_day','---')}日 節約率{dca.get('saving_pct',0):.1f}%")
+        else:
+            logger.info("積立タイミング: 月曜以外のためスキップ")
+    except Exception:
+        logger.error("積立タイミング分析エラー"); logger.debug(traceback.format_exc())
 
     # Step L4c: FRED経済指標
     fred_data = {"available": False}
@@ -465,6 +515,28 @@ def run(mode: str):
     except Exception:
         logger.error("AI記憶エラー"); logger.debug(traceback.format_exc())
 
+    # Step NEW-C: 今日の投資レッスン
+    tutor = {"available": False}
+    try:
+        logger.info("--- Step NEW-C: 今日の投資レッスン ---")
+        from src.investment_tutor import generate_daily_lesson
+        tutor = generate_daily_lesson(prices, risk, fear_greed)
+        if tutor.get("available"):
+            logger.info(f"✅ 投資レッスン: {tutor.get('topic','')}")
+    except Exception:
+        logger.error("投資レッスンエラー"); logger.debug(traceback.format_exc())
+
+    # Step NEW-E: FIREシミュレーター
+    fire_result = {"available": False}
+    try:
+        logger.info("--- Step NEW-E: FIREシミュレーター ---")
+        from src.fire_simulator import calc_fire_years
+        fire_result = calc_fire_years()
+        if fire_result.get("available"):
+            logger.info(f"✅ FIRE: {fire_result.get('fire_age','---')}歳達成（あと{fire_result.get('fire_years','---')}年）")
+    except Exception:
+        logger.error("FIREシミュレーターエラー"); logger.debug(traceback.format_exc())
+
     # Step 6: チャート生成（matplotlibが使える場合）
     try:
         logger.info("--- Step 6: チャート生成 ---")
@@ -535,7 +607,10 @@ def run(mode: str):
         _save_html_report(mode, prices, news, risk, analysis, fear_greed, chart_paths,
                           ai_summary, econ_analysis, youtube_summary, memory_analysis,
                           agent_report, technical, portfolio, scenario, prediction_tracker,
-                          character_comments=character_comments)
+                          character_comments=character_comments,
+                          news_bias=news_bias, fire_result=fire_result, bargain=bargain,
+                          tutor=tutor, dca=dca, notif_filter=notif_filter,
+                          portfolio_alerts=portfolio_alerts)
         today = get_today_str()
         report_paths = {
             "html": str(get_dirs()["reports"] / f"{today}_{mode}.html"),
@@ -544,6 +619,16 @@ def run(mode: str):
         }
     except Exception:
         logger.error("レポート生成エラー"); logger.debug(traceback.format_exc())
+
+    # Step NEW-G: 通知重要度フィルター
+    notif_filter = {"importance_score": 5, "level": "MEDIUM", "send_full_report": True}
+    try:
+        logger.info("--- Step NEW-G: 通知重要度フィルター ---")
+        from src.notification_filter import score_notification_importance
+        notif_filter = score_notification_importance(prices, risk, fear_greed)
+        logger.info(f"✅ 通知重要度: {notif_filter.get('importance_score',0):.1f} [{notif_filter.get('level','---')}]")
+    except Exception:
+        logger.error("通知フィルターエラー"); logger.debug(traceback.format_exc())
 
     # Step 8: Telegram通知
     try:
@@ -600,7 +685,9 @@ def _save_html_report(mode, prices, news, risk, analysis, fear_greed, chart_path
                       ai_summary=None, econ_analysis=None, youtube_summary=None,
                       memory_analysis="", agent_report=None, technical=None,
                       portfolio=None, scenario=None, prediction_tracker=None,
-                      character_comments=None):
+                      character_comments=None,
+                      news_bias=None, fire_result=None, bargain=None,
+                      tutor=None, dca=None, notif_filter=None, portfolio_alerts=None):
     """初心者でもわかる見やすいダッシュボードHTMLを保存"""
     import base64
     today = get_today_str()
@@ -880,6 +967,90 @@ def _save_html_report(mode, prices, news, risk, analysis, fear_greed, chart_path
             yt_html += f'<div class="yt-section"><div class="yt-head">📊 市場への示唆</div><div class="yt-text">{youtube_summary["impact"]}</div></div>'
         for v in youtube_summary.get("videos",[])[:4]:
             yt_html += f'<div class="yt-video"><span>🎬</span><a href="{v.get("url","")}" target="_blank" rel="noopener">{v.get("title","")}</a></div>'
+
+    # ── 煽りニュース検出HTML ─────────────────────────────────
+    news_bias = news_bias or {}
+    bias_html = ""
+    if news_bias.get("available"):
+        avg = news_bias.get("avg_score", 0)
+        top = news_bias.get("top_biased", [])
+        bias_color = "#ff1744" if avg >= 6 else "#ff9800" if avg >= 4 else "#00e676"
+        bias_html += f'<div style="text-align:center;margin-bottom:14px;"><span style="font-size:1.8em;font-weight:900;color:{bias_color};">{avg:.1f}<span style="font-size:0.5em;color:#8899aa;"> / 10</span></span><div style="color:#8899aa;font-size:0.75em;margin-top:2px;">平均煽りスコア</div></div>'
+        for item in top[:3]:
+            sc = item.get("bias_score", 0)
+            lbl = item.get("bias_label", "")
+            sc_c = "#ff1744" if sc >= 6 else "#ff9800" if sc >= 4 else "#8899aa"
+            bias_html += f'<div class="econ-row"><div class="econ-icon">📰</div><div><div class="econ-lbl" style="color:{sc_c};">{lbl} (スコア:{sc:.1f})</div><div style="font-size:0.82em;">{item.get("title","")[:80]}</div></div></div>'
+
+    # ── FIREシミュレーターHTML ─────────────────────────────
+    fire_result = fire_result or {}
+    fire_html = ""
+    if fire_result.get("available"):
+        fy = fire_result.get("fire_years", "?")
+        fa = fire_result.get("fire_age", "?")
+        fpct = fire_result.get("progress_pct", 0)
+        ftgt = fire_result.get("fire_target", 0)
+        bar_c = "#3fb950" if fpct >= 50 else "#ffd740" if fpct >= 25 else "#ff6d00"
+        fire_html += f'<div style="text-align:center;margin-bottom:16px;"><div style="font-size:2em;font-weight:900;color:#ffd740;">{fa}歳</div><div style="color:#8899aa;font-size:0.8em;">FIRE達成目標（あと{fy}年）</div><div style="color:#8899aa;font-size:0.72em;margin-top:4px;">目標額: {int(ftgt)//10000}万円</div></div>'
+        fire_html += f'<div style="background:#1e2d42;border-radius:8px;height:16px;margin-bottom:4px;overflow:hidden;"><div style="height:100%;background:{bar_c};width:{min(fpct,100):.1f}%;border-radius:8px;"></div></div>'
+        fire_html += f'<div style="display:flex;justify-content:space-between;font-size:0.68em;color:#7a8fa8;margin-bottom:12px;"><span>現在達成率</span><span style="color:{bar_c};font-weight:700;">{fpct:.1f}%</span></div>'
+        for ms in fire_result.get("milestones", [])[:4]:
+            done = ms.get("reached", False)
+            ic = "✅" if done else "⏳"
+            fire_html += f'<div class="econ-row"><div class="econ-icon">{ic}</div><div><div class="econ-lbl">{ms.get("label","")}</div><div style="font-size:0.8em;color:#8899aa;">{ms.get("years",0):.1f}年後達成</div></div></div>'
+
+    # ── 割安株スキャンHTML ─────────────────────────────────
+    bargain = bargain or {}
+    bargain_html = ""
+    if bargain.get("available"):
+        for s in bargain.get("top_stocks", [])[:5]:
+            score_v = s.get("total_score", 0)
+            sc_c = "#ffd740" if score_v >= 60 else "#8899aa"
+            per_v = s.get("per") or 0
+            pbr_v = s.get("pbr") or 0
+            div_v = s.get("dividend") or 0
+            bargain_html += f'<div class="econ-row"><div class="econ-icon">🏆</div><div><div class="econ-lbl" style="color:{sc_c};">{s.get("name", s.get("symbol",""))} (スコア:{score_v:.0f})</div><div style="font-size:0.8em;color:#8899aa;">PER:{per_v:.1f} PBR:{pbr_v:.2f} 配当:{div_v:.1f}%</div></div></div>'
+
+    # ── 投資レッスンHTML ──────────────────────────────────
+    tutor = tutor or {}
+    tutor_html = ""
+    if tutor.get("available"):
+        topic = tutor.get("topic", "")
+        lesson = tutor.get("lesson", "")
+        takeaway = tutor.get("key_takeaway", "")
+        tutor_html += f'<div style="background:linear-gradient(135deg,#0a1428,#0f1a33);border:1px solid #7b61ff44;border-radius:12px;padding:14px;margin-bottom:10px;"><div style="color:#7b61ff;font-weight:700;font-size:0.85em;margin-bottom:8px;">📚 今日のテーマ: {topic}</div><div style="font-size:0.88em;line-height:1.75;white-space:pre-wrap;">{lesson}</div></div>'
+        if takeaway:
+            tutor_html += f'<div style="background:#0d1f10;border:1px solid #3fb95044;border-radius:10px;padding:12px;"><div style="color:#3fb950;font-weight:700;font-size:0.8em;margin-bottom:6px;">💡 今日のポイント</div><div style="font-size:0.88em;">{takeaway}</div></div>'
+
+    # ── 積立タイミングHTML ────────────────────────────────
+    dca = dca or {}
+    dca_html = ""
+    if dca.get("available"):
+        best = dca.get("best_day", "?")
+        worst = dca.get("worst_day", "?")
+        saving = dca.get("saving_pct", 0)
+        insight = dca.get("insight", "")
+        dca_html += f'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;"><div style="background:#0a1f10;border:1px solid #3fb95044;border-radius:10px;padding:12px;text-align:center;"><div style="font-size:1.5em;font-weight:900;color:#3fb950;">{best}日</div><div style="color:#8899aa;font-size:0.72em;">最適な積立日</div></div><div style="background:#1f0a0a;border:1px solid #f4433644;border-radius:10px;padding:12px;text-align:center;"><div style="font-size:1.5em;font-weight:900;color:#f44336;">{worst}日</div><div style="color:#8899aa;font-size:0.72em;">コスト高になる日</div></div></div>'
+        if saving > 0:
+            dca_html += f'<div style="text-align:center;color:#ffd740;font-size:0.85em;margin-bottom:8px;">💰 最適日と最悪日の差: {saving:.2f}%節約</div>'
+        if insight:
+            dca_html += f'<div style="background:#0f1623;border-radius:8px;padding:10px;font-size:0.85em;color:#8899aa;">{insight}</div>'
+
+    # ── 保有銘柄アラートHTML ──────────────────────────────
+    portfolio_alerts = portfolio_alerts or {}
+    palert_html = ""
+    if portfolio_alerts.get("available"):
+        alerts = portfolio_alerts.get("alerts", [])
+        for a in alerts:
+            alv = a.get("level", "info")
+            alc = "#ff1744" if alv == "critical" else "#ff9800" if alv == "warning" else "#3fb950"
+            chg = a.get("change_pct") or 0
+            unr = a.get("unrealized_pnl_pct") or 0
+            chg_c = "#3fb950" if chg >= 0 else "#f44336"
+            unr_c = "#3fb950" if unr >= 0 else "#f44336"
+            palert_html += f'<div style="background:#1a0d00;border:1px solid {alc}55;border-radius:10px;padding:12px;margin-bottom:8px;"><div style="color:{alc};font-weight:700;font-size:0.85em;">{a.get("name","")}</div><div style="font-size:0.8em;color:#8899aa;margin-top:4px;">当日変動: <span style="color:{chg_c};">{chg:+.1f}%</span>　含み損益: <span style="color:{unr_c};">{unr:+.1f}%</span></div><div style="font-size:0.78em;color:{alc};margin-top:4px;">{a.get("message","")}</div></div>'
+        if not alerts:
+            palert_html += '<div style="text-align:center;color:#3fb950;padding:12px;">✅ 異常なし — 保有銘柄は正常範囲内です</div>'
 
     html = f"""<!DOCTYPE html>
 <html lang="ja">
@@ -1308,6 +1479,24 @@ a:hover{{text-decoration:underline;}}
 
   <!-- YouTube -->
   {f'<div class="sec-head">📺 YouTube注目動画まとめ</div><div class="yt-wrap">{yt_html}</div>' if yt_html else ""}
+
+  <!-- 煽りニュース検出 -->
+  {f'<div class="sec-head">🔍 ニュース煽り度チェック</div><div class="econ-wrap">{bias_html}</div>' if bias_html else ""}
+
+  <!-- 今日の投資レッスン -->
+  {f'<div class="sec-head">📚 今日の投資レッスン</div><div class="econ-wrap">{tutor_html}</div>' if tutor_html else ""}
+
+  <!-- 割安株スキャン（月曜のみ） -->
+  {f'<div class="sec-head">🏆 割安株スキャン（バリュー投資候補）</div><div class="econ-wrap">{bargain_html}</div>' if bargain_html else ""}
+
+  <!-- 積立タイミング分析（月曜のみ） -->
+  {f'<div class="sec-head">📅 積立最適タイミング分析（過去10年データ）</div><div class="econ-wrap">{dca_html}</div>' if dca_html else ""}
+
+  <!-- FIREシミュレーター -->
+  {f'<div class="sec-head">🔥 FIREシミュレーター（経済的自由への道）</div><div class="econ-wrap">{fire_html}</div>' if fire_html else ""}
+
+  <!-- 保有銘柄アラート -->
+  {f'<div class="sec-head">🔔 保有銘柄アラート</div><div class="econ-wrap">{palert_html}</div>' if palert_html else ""}
 
   <!-- ニュース -->
   <div class="sec-head">📰 注目ニュース一覧</div>
