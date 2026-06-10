@@ -5,15 +5,9 @@ src/character_selector.py
 ■ キャラクターグリッド (4列 × 9行 = 36枚)
   assets/characters_grid.png に保存すること
 
-■ レイアウト（上から）
-  Row 0-1: カワウソちゃん (8枚) — 短期・FX向き
-  Row 2-8: ガネーシャ象くん (28枚) — 中長期・総合分析向き
-
-■ 列の感情マッピング (各行共通)
-  Col 0: アイデア・分析中
-  Col 1: 驚き・重大ニュース
-  Col 2: 疑問・不確実
-  Col 3: 落ち着いた分析・執筆中
+■ レイアウト
+  Row 0-1: カワウソちゃん (8枚) — FX短期分析向き
+  Row 2-8: ガネーシャ象くん (28枚) — 総合市場分析向き
 """
 
 import matplotlib
@@ -28,57 +22,63 @@ import traceback
 
 GRID_PATH = Path(__file__).parent.parent / "assets" / "characters_grid.png"
 
-# ─── キャラクターグリッド定義 ─────────────────────────────────────────────────
-# (row, col) → 意味
+# ─── キャラクターグリッド定義（4列 × 9行）────────────────────────────────────
 CHARACTER_MAP = {
-    # カワウソちゃん (Row 0-1)
-    (0, 0): {"name": "カワウソ_アイデア",   "mood": "bullish",   "desc": "💡 アイデア発見！"},
-    (0, 1): {"name": "カワウソ_急落ショック","mood": "crash",     "desc": "😱 急落！"},
-    (0, 2): {"name": "カワウソ_様子見",      "mood": "neutral",   "desc": "😐 様子見"},
-    (0, 3): {"name": "カワウソ_雨天分析",    "mood": "bearish",   "desc": "☔ 慎重に"},
-    (1, 0): {"name": "カワウソ_強気",        "mood": "bullish",   "desc": "🎉 強気！"},
-    (1, 1): {"name": "カワウソ_画面ショック","mood": "volatile",  "desc": "🖥 急変！"},
-    (1, 2): {"name": "カワウソ_疑問",        "mood": "uncertain", "desc": "❓ 不確実"},
-    (1, 3): {"name": "カワウソ_ノート分析",  "mood": "analyzing", "desc": "📝 分析中"},
-    # ガネーシャ象くん (Row 2-8)
-    (2, 0): {"name": "象_目標達成",          "mood": "bullish",   "desc": "🎯 目標達成！"},
-    (2, 1): {"name": "象_急変警戒",          "mood": "volatile",  "desc": "⚡ 急変注意"},
-    (2, 2): {"name": "象_プレゼン強気",      "mood": "bullish",   "desc": "📊 強気分析"},
-    (2, 3): {"name": "象_チャート分析",      "mood": "analyzing", "desc": "📈 チャート確認"},
-    (3, 0): {"name": "象_指差しOK",          "mood": "bullish",   "desc": "👆 注目！"},
-    (3, 1): {"name": "象_市場低迷嘆き",      "mood": "bearish",   "desc": "😔 低迷..."},
-    (3, 2): {"name": "象_損失ショック",      "mood": "crash",     "desc": "📉 損失警告"},
-    (3, 3): {"name": "象_リスク防衛",        "mood": "defensive", "desc": "🛡 防衛モード"},
-    (4, 0): {"name": "象_ローソク足分析",    "mood": "analyzing", "desc": "🕯 テクニカル分析"},
-    (4, 1): {"name": "象_急騰興奮",          "mood": "bullish",   "desc": "🚀 急騰！"},
-    (4, 2): {"name": "象_急落ショック",      "mood": "crash",     "desc": "💥 急落警報"},
-    (4, 3): {"name": "象_強気ジャンプ",      "mood": "bullish",   "desc": "🏆 勝利！"},
-    (5, 0): {"name": "象_分析指差し",        "mood": "analyzing", "desc": "🔍 分析"},
-    (5, 1): {"name": "象_注目呼びかけ",      "mood": "alert",     "desc": "📢 注目！"},
+    # ── カワウソちゃん Row 0 ──
+    (0, 0): {"name": "カワウソ_アイデア",    "mood": "bullish",   "desc": "💡 チャンス発見！"},
+    (0, 1): {"name": "カワウソ_急落",        "mood": "crash",     "desc": "😱 急落警報！"},
+    (0, 2): {"name": "カワウソ_様子見",      "mood": "neutral",   "desc": "😐 様子見中"},
+    (0, 3): {"name": "カワウソ_雨天",        "mood": "bearish",   "desc": "☔ 慎重に"},
+    # ── カワウソちゃん Row 1 ──
+    (1, 0): {"name": "カワウソ_強気",        "mood": "bullish",   "desc": "🎉 強気！上昇！"},
+    (1, 1): {"name": "カワウソ_急変",        "mood": "volatile",  "desc": "⚡ 急変注意！"},
+    (1, 2): {"name": "カワウソ_疑問",        "mood": "uncertain", "desc": "❓ 方向感なし"},
+    (1, 3): {"name": "カワウソ_ノート",      "mood": "analyzing", "desc": "📝 レポート分析"},
+    # ── ガネーシャ象くん Row 2 ──
+    (2, 0): {"name": "象_目標",              "mood": "bullish",   "desc": "🎯 目標達成！"},
+    (2, 1): {"name": "象_急変警戒",          "mood": "volatile",  "desc": "⚠️ 急変警戒中"},
+    (2, 2): {"name": "象_プレゼン強気",      "mood": "bullish",   "desc": "📊 強気シグナル"},
+    (2, 3): {"name": "象_チャート確認",      "mood": "analyzing", "desc": "📈 チャート確認"},
+    # ── Row 3 ──
+    (3, 0): {"name": "象_指差し",            "mood": "bullish",   "desc": "👆 ここが狙い目！"},
+    (3, 1): {"name": "象_低迷嘆き",          "mood": "bearish",   "desc": "😔 市場低迷中"},
+    (3, 2): {"name": "象_損失",              "mood": "crash",     "desc": "📉 損失警告"},
+    (3, 3): {"name": "象_防衛",              "mood": "defensive", "desc": "🛡 防衛モード"},
+    # ── Row 4 ──
+    (4, 0): {"name": "象_ローソク足",        "mood": "analyzing", "desc": "🕯 テクニカル分析"},
+    (4, 1): {"name": "象_急騰",              "mood": "bullish",   "desc": "🚀 急騰！"},
+    (4, 2): {"name": "象_急落",              "mood": "crash",     "desc": "💥 急落警報"},
+    (4, 3): {"name": "象_勝利",              "mood": "bullish",   "desc": "🏆 強気継続！"},
+    # ── Row 5 ──
+    (5, 0): {"name": "象_深掘り",            "mood": "analyzing", "desc": "🔍 深掘り分析"},
+    (5, 1): {"name": "象_注目",              "mood": "alert",     "desc": "📢 要注目！"},
     (5, 2): {"name": "象_上昇喜び",          "mood": "bullish",   "desc": "🎊 上昇！"},
-    (5, 3): {"name": "象_勝利ガッツポーズ",  "mood": "bullish",   "desc": "✊ 強気！"},
-    (6, 0): {"name": "象_ボード説明",        "mood": "analyzing", "desc": "📋 解説"},
-    (6, 1): {"name": "象_直立説明",          "mood": "neutral",   "desc": "📝 説明"},
-    (6, 2): {"name": "象_上昇チャート喜び",  "mood": "bullish",   "desc": "📈 上昇継続"},
-    (6, 3): {"name": "象_リスク警戒ボード",  "mood": "defensive", "desc": "⚠️ リスク注意"},
-    (7, 0): {"name": "象_急落悲しむ",        "mood": "bearish",   "desc": "😢 下落"},
-    (7, 1): {"name": "象_下落チャート",      "mood": "bearish",   "desc": "📉 下落"},
-    (7, 2): {"name": "カワウソ_ノート確認",  "mood": "analyzing", "desc": "📋 確認中"},
-    (7, 3): {"name": "象_小さい強気",        "mood": "bullish",   "desc": "💪 強気"},
-    (8, 0): {"name": "象_コイン集め",        "mood": "bullish",   "desc": "💰 利益！"},
-    (8, 1): {"name": "カワウソ_ほのぼの",    "mood": "neutral",   "desc": "😊 安定"},
-    (8, 2): {"name": "象_笑顔",              "mood": "bullish",   "desc": "😊 良好"},
-    (8, 3): {"name": "カワウソ_ポーズ",      "mood": "neutral",   "desc": "👌 OK"},
+    (5, 3): {"name": "象_ガッツ",            "mood": "bullish",   "desc": "✊ 強気全開！"},
+    # ── Row 6 ──
+    (6, 0): {"name": "象_ボード解説",        "mood": "analyzing", "desc": "📋 解説"},
+    (6, 1): {"name": "象_直立",              "mood": "neutral",   "desc": "📝 まとめ"},
+    (6, 2): {"name": "象_上昇継続",          "mood": "bullish",   "desc": "📈 上昇継続"},
+    (6, 3): {"name": "象_リスク注意",        "mood": "defensive", "desc": "⚠️ リスク注意"},
+    # ── Row 7 ──
+    (7, 0): {"name": "象_下落",              "mood": "bearish",   "desc": "😢 下落局面"},
+    (7, 1): {"name": "象_下落チャート",      "mood": "bearish",   "desc": "📉 下落注意"},
+    (7, 2): {"name": "カワウソ_確認",        "mood": "analyzing", "desc": "📋 確認中"},
+    (7, 3): {"name": "象_強気小",            "mood": "bullish",   "desc": "💪 強気"},
+    # ── Row 8 ──
+    (8, 0): {"name": "象_コイン",            "mood": "bullish",   "desc": "💰 利益機会！"},
+    (8, 1): {"name": "カワウソ_安定",        "mood": "neutral",   "desc": "😊 安定相場"},
+    (8, 2): {"name": "象_笑顔",              "mood": "bullish",   "desc": "😊 好調！"},
+    (8, 3): {"name": "カワウソ_OK",          "mood": "neutral",   "desc": "👌 OK"},
 }
 
 # ─── 相場状況 → キャラクター選択ルール ───────────────────────────────────────
 MOOD_TO_CHARS = {
-    "bullish":   [(1, 0), (2, 0), (4, 3), (5, 2), (5, 3), (6, 2), (8, 0)],
+    "bullish":   [(0, 0), (1, 0), (2, 0), (2, 2), (4, 1), (4, 3), (5, 2), (5, 3), (6, 2), (8, 0), (8, 2)],
     "bearish":   [(0, 3), (3, 1), (7, 0), (7, 1)],
     "crash":     [(0, 1), (3, 2), (4, 2)],
     "volatile":  [(0, 1), (1, 1), (2, 1), (4, 2)],
     "uncertain": [(0, 2), (1, 2)],
-    "analyzing": [(0, 0), (1, 3), (2, 3), (4, 0), (5, 0), (6, 0), (7, 2)],
+    "analyzing": [(1, 3), (2, 3), (4, 0), (5, 0), (6, 0), (7, 2)],
     "neutral":   [(0, 2), (6, 1), (8, 1), (8, 3)],
     "defensive": [(3, 3), (6, 3)],
     "alert":     [(5, 1)],
@@ -200,7 +200,7 @@ def get_character_for_market(
     if GRID_PATH.exists():
         Path(out_dir).mkdir(parents=True, exist_ok=True)
         out_path = str(Path(out_dir) / f"character_{mood}_{row}_{col}.png")
-        if crop_character(row, col, out_path):
+        if crop_character(row, col, out_path, n_rows=9, n_cols=4):
             result["available"] = True
             result["path"]      = out_path
 

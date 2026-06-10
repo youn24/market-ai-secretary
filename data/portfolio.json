@@ -1,0 +1,29 @@
+{
+  "holdings": [
+    {"symbol": "7203.T", "name": "トヨタ自動車", "shares": 100, "avg_cost": 2800},
+    {"symbol": "9432.T", "name": "NTT", "shares": 500, "avg_cost": 180}
+  ],
+  "watchlist": [
+    {
+      "symbol": "^N225",
+      "name": "日経平均"
+    },
+    {
+      "symbol": "^GSPC",
+      "name": "S&P500"
+    },
+    {
+      "symbol": "USDJPY=X",
+      "name": "ドル円"
+    },
+    {
+      "symbol": "BTC-USD",
+      "name": "Bitcoin"
+    }
+  ],
+  "alerts": {
+    "loss_pct": -5.0,
+    "gain_pct": 10.0
+  },
+  "history": []
+}
