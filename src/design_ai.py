@@ -658,21 +658,36 @@ def _kawauso_svg(mood: str) -> str:
 </svg>"""
 
 
-def _char_img_b64(path: Path) -> str:
-    """PNG画像をbase64エンコードしてdata URIを返す。失敗時はNone"""
-    try:
-        import base64
-        data = path.read_bytes()
-        b64  = base64.b64encode(data).decode()
-        return f"data:image/png;base64,{b64}"
-    except Exception:
+def _copy_char_to_docs(root: Path) -> tuple:
+    """キャラクター画像をdocs/assets/にコピーして相対パスを返す。なければNone"""
+    import shutil
+    docs_assets = root / "docs" / "assets"
+    docs_assets.mkdir(parents=True, exist_ok=True)
+
+    def find_and_copy(names, dest_name):
+        search_dirs = [
+            root / "assets",
+            root / "docs" / "assets",
+            root / "src" / "assets",
+        ]
+        for d in search_dirs:
+            for name in names:
+                p = d / name
+                if p.exists() and p.stat().st_size > 10000:  # 10KB以上のみ
+                    dest = docs_assets / dest_name
+                    if p != dest:
+                        shutil.copy2(str(p), str(dest))
+                    return f"assets/{dest_name}"
         return None
+
+    gane_path = find_and_copy(["gane_sensei.png"], "gane_sensei.png")
+    kawa_path = find_and_copy(["kawauso.png"],     "kawauso.png")
+    return gane_path, kawa_path
 
 
 def _character_header(score: float, prices: dict, mood: str, today: str, now: str) -> str:
-    """キャラクター入りヘッダーHTML — PNG画像があれば使い、なければSVGフォールバック"""
+    """キャラクター入りヘッダーHTML — PNG画像があれば相対パスで使い、なければSVG"""
     signal_text = _signal_text(score)
-    risk_color  = _risk_color(score)
 
     if score >= 0.5:
         sig_style    = f"color:{GREEN};border-color:{GREEN};background:rgba(63,185,80,.15)"
@@ -693,30 +708,13 @@ def _character_header(score: float, prices: dict, mood: str, today: str, now: st
         gane_say     = "リスク管理を\n徹底しましょう"
         kawa_say     = "気をつけて！\n守りが大事"
 
-    # PNG画像を優先して使用（docs/assets/ または src/assets/）
     root = Path(__file__).parent.parent
-    gane_png_paths = [
-        root / "docs" / "assets" / "gane_sensei.png",
-        root / "docs" / "assets" / f"gane_{gane_mood}.png",
-        root / "assets"          / "gane_sensei.png",
-        root / "assets"          / f"gane_{gane_mood}.png",
-        root / "src"  / "assets" / "gane_sensei.png",
-    ]
-    kawa_png_paths = [
-        root / "docs" / "assets" / "kawauso.png",
-        root / "docs" / "assets" / f"kawauso_{kawauso_mood}.png",
-        root / "assets"          / "kawauso.png",
-        root / "assets"          / f"kawauso_{kawauso_mood}.png",
-        root / "src"  / "assets" / "kawauso.png",
-    ]
+    gane_path, kawa_path = _copy_char_to_docs(root)
 
-    gane_uri = next((u for p in gane_png_paths if (u := _char_img_b64(p))), None)
-    kawa_uri = next((u for p in kawa_png_paths if (u := _char_img_b64(p))), None)
-
-    gane_html    = (f'<img src="{gane_uri}" style="width:100px;height:100px;object-fit:contain">'
-                    if gane_uri else _gane_svg(gane_mood))
-    kawauso_html = (f'<img src="{kawa_uri}" style="width:100px;height:100px;object-fit:contain">'
-                    if kawa_uri else _kawauso_svg(kawauso_mood))
+    gane_html    = (f'<img src="{gane_path}" style="width:110px;height:110px;object-fit:contain;filter:drop-shadow(0 4px 12px rgba(0,0,0,.6))">'
+                    if gane_path else _gane_svg(gane_mood))
+    kawauso_html = (f'<img src="{kawa_path}" style="width:110px;height:110px;object-fit:contain;filter:drop-shadow(0 4px 12px rgba(0,0,0,.6))">'
+                    if kawa_path else _kawauso_svg(kawauso_mood))
 
     nikkei  = prices.get("^N225",   {})
     sp500   = prices.get("^GSPC",   {})
@@ -1386,10 +1384,46 @@ def generate(
 </head>
 <body>
 
+<!-- ── リアルタイムティッカーテープ（TradingView）── -->
+<div style="position:sticky;top:0;z-index:100;background:#0d1117;border-bottom:1px solid #30363d">
+  <div class="tradingview-widget-container">
+    <div class="tradingview-widget-container__widget"></div>
+    <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js" async>
+    {{
+      "symbols": [
+        {{"proName":"TVC:NI225",      "title":"日経225"}},
+        {{"proName":"TSE:TOPIX",      "title":"TOPIX"}},
+        {{"proName":"SP:SPX",         "title":"S&P500"}},
+        {{"proName":"NASDAQ:NDX",     "title":"Nasdaq100"}},
+        {{"proName":"FX:USDJPY",      "title":"ドル円"}},
+        {{"proName":"FX:EURJPY",      "title":"ユーロ円"}},
+        {{"proName":"TVC:GOLD",       "title":"金"}},
+        {{"proName":"TVC:USOIL",      "title":"原油"}},
+        {{"proName":"BITSTAMP:BTCUSD","title":"BTC"}},
+        {{"proName":"CBOE:VIX",       "title":"VIX"}}
+      ],
+      "showSymbolLogo": false,
+      "isTransparent": true,
+      "displayMode": "adaptive",
+      "colorTheme": "dark",
+      "locale": "ja",
+      "width": "100%",
+      "height": 44
+    }}
+    </script>
+  </div>
+</div>
+
 <!-- ── キャラクターヘッダー ── -->
 {char_header}
 
 <main class="container">
+
+<!-- ── リアルタイム価格（JS自動更新）── -->
+<div id="rt-update-bar" style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:8px 14px;margin-bottom:12px;font-size:11px;color:#8b949e;display:flex;align-items:center;gap:8px">
+  <span id="rt-status">⏳ リアルタイムデータを取得中...</span>
+  <span id="rt-time" style="margin-left:auto"></span>
+</div>
 
 <!-- ── クイックサマリー ── -->
 {qs_html}
@@ -1664,6 +1698,86 @@ def generate(
     el.style.animationDelay = (i * 0.06) + 's';
     io.observe(el);
   }});
+}})();
+
+// ── リアルタイム価格自動更新 ──────────────────────────────
+(async function rtUpdate() {{
+  const SYMBOLS = [
+    {{ tv: 'TVC:NI225',       yf: '%5EN225',   label: '日経225',   id: 'rt-nk'  }},
+    {{ tv: 'SP:SPX',          yf: '%5EGSPC',   label: 'S&P500',    id: 'rt-sp'  }},
+    {{ tv: 'FX:USDJPY',       yf: 'USDJPY%3DX',label: 'USD/JPY',   id: 'rt-fx'  }},
+    {{ tv: 'CBOE:VIX',        yf: '%5EVIX',    label: 'VIX',       id: 'rt-vix' }},
+  ];
+
+  function jstNow() {{
+    return new Date().toLocaleString('ja-JP', {{timeZone:'Asia/Tokyo',hour12:false}});
+  }}
+
+  function fmtNum(v) {{
+    return v > 999 ? v.toLocaleString('ja-JP', {{maximumFractionDigits:0}})
+                   : v.toFixed(2);
+  }}
+
+  function colorClass(chg) {{
+    return chg >= 0 ? '#3fb950' : '#f85149';
+  }}
+
+  async function fetchQuote(yf) {{
+    try {{
+      const url = `https://query1.finance.yahoo.com/v8/finance/chart/${{yf}}?interval=1m&range=1d`;
+      const r   = await fetch(url, {{mode:'cors'}});
+      if (!r.ok) return null;
+      const d   = await r.json();
+      const meta = d?.chart?.result?.[0]?.meta;
+      if (!meta) return null;
+      const price = meta.regularMarketPrice ?? meta.previousClose;
+      const prev  = meta.previousClose ?? price;
+      const chg   = prev ? (price - prev) / prev * 100 : 0;
+      return {{ price, chg }};
+    }} catch(e) {{ return null; }}
+  }}
+
+  const bar = document.getElementById('rt-status');
+  const tim = document.getElementById('rt-time');
+
+  // qs-cardのvalueとchgを更新するヘルパー
+  function updateCard(idx, price, chg) {{
+    const cards = document.querySelectorAll('.qs-card');
+    if (!cards[idx]) return;
+    const valEl = cards[idx].querySelector('.qs-value');
+    const chgEl = cards[idx].querySelector('.qs-chg');
+    if (valEl) {{ valEl.textContent = fmtNum(price); valEl.style.color = colorClass(chg); }}
+    if (chgEl) {{
+      const sgn = chg >= 0 ? '+' : '';
+      chgEl.textContent = sgn + chg.toFixed(2) + '%';
+      chgEl.style.color = colorClass(chg);
+    }}
+  }}
+
+  async function doUpdate() {{
+    let ok = 0;
+    const results = await Promise.allSettled(
+      SYMBOLS.map(s => fetchQuote(s.yf))
+    );
+    results.forEach((r, i) => {{
+      if (r.status === 'fulfilled' && r.value) {{
+        updateCard(i, r.value.price, r.value.chg);
+        ok++;
+      }}
+    }});
+    if (ok > 0) {{
+      bar.innerHTML = `✅ リアルタイムデータ取得成功（${{ok}}/${{SYMBOLS.length}}銘柄）`;
+      bar.style.color = '#3fb950';
+    }} else {{
+      bar.innerHTML = '⚠️ リアルタイム取得失敗（TradingViewチャートは最新です）';
+      bar.style.color = '#d29922';
+    }}
+    tim.textContent = '最終更新: ' + jstNow();
+  }}
+
+  // 初回実行 + 3分ごとに自動更新
+  doUpdate();
+  setInterval(doUpdate, 3 * 60 * 1000);
 }})();
 </script>
 
