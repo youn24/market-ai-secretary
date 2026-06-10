@@ -220,6 +220,41 @@
       "problemMatcher": []
     },
     {
+      "label": "🤖 テーマ分析: AIテーマ（さくらインターネット）",
+      "type": "shell",
+      "command": "python analyze_stock.py 3778",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "🛡️ テーマ分析: 防衛テーマ（三菱重工・IHI）",
+      "type": "shell",
+      "command": "python analyze_stock.py 7011 7013",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "💾 テーマ分析: 半導体材料（SUMCO・レゾナック）",
+      "type": "shell",
+      "command": "python analyze_stock.py 3436 4004",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "✈️ テーマ分析: インバウンド（ANA・オリエンタルランド）",
+      "type": "shell",
+      "command": "python analyze_stock.py 9202 4661",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "🏦 テーマ分析: 金利恩恵・高配当（三菱UFJ・商船三井・三菱商事）",
+      "type": "shell",
+      "command": "python analyze_stock.py 8306 9104 8058",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
       "label": "📊 財務分析: 銘柄コードを入力して分析",
       "type": "shell",
       "command": "python analyze_stock.py ${input:stockCode}",

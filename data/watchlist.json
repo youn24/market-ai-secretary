@@ -15,6 +15,17 @@
     {"symbol": "6954.T", "name": "ファナック",            "sector": "FA・産業用ロボット","nikkei_weight": "約3%"},
     {"symbol": "6857.T", "name": "アドバンテスト",        "sector": "半導体テスト装置",  "nikkei_weight": "約3%"},
     {"symbol": "9433.T", "name": "KDDI",                 "sector": "通信",             "nikkei_weight": "約2%"},
-    {"symbol": "6367.T", "name": "ダイキン工業",          "sector": "空調・冷熱",        "nikkei_weight": "約2%"}
+    {"symbol": "6367.T", "name": "ダイキン工業",          "sector": "空調・冷熱",        "nikkei_weight": "約2%"},
+
+    {"symbol": "3778.T", "name": "さくらインターネット",   "sector": "AI・国産クラウド",   "theme": "AIテーマ"},
+    {"symbol": "7011.T", "name": "三菱重工業",            "sector": "重工業・防衛",       "theme": "防衛テーマ"},
+    {"symbol": "7013.T", "name": "IHI",                  "sector": "航空エンジン・防衛",  "theme": "防衛テーマ"},
+    {"symbol": "3436.T", "name": "SUMCO",                 "sector": "シリコンウェーハ",   "theme": "半導体材料テーマ"},
+    {"symbol": "4004.T", "name": "レゾナック",             "sector": "半導体材料・化学",   "theme": "半導体材料テーマ"},
+    {"symbol": "9202.T", "name": "ANAホールディングス",    "sector": "航空・インバウンド", "theme": "インバウンドテーマ"},
+    {"symbol": "4661.T", "name": "オリエンタルランド",     "sector": "テーマパーク",       "theme": "インバウンドテーマ"},
+    {"symbol": "8306.T", "name": "三菱UFJフィナンシャル",  "sector": "メガバンク",         "theme": "金利上昇恩恵テーマ"},
+    {"symbol": "9104.T", "name": "商船三井",               "sector": "海運・高配当",       "theme": "高配当テーマ"},
+    {"symbol": "8058.T", "name": "三菱商事",               "sector": "総合商社",           "theme": "商社・バフェットテーマ"}
   ]
 }
