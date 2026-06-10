@@ -1,0 +1,39 @@
+# 夜の相場振り返り + 感情売買ガード
+# 毎晩23:00 JST（UTC 14:00）に自動送信
+
+name: 夜の振り返り通知
+
+on:
+  schedule:
+    - cron: "0 14 * * 1-5"   # UTC 月〜金 14:00 = JST 月〜金 23:00
+  workflow_dispatch:           # 手動テストボタン
+
+jobs:
+  evening-recap:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: リポジトリをチェックアウト
+        uses: actions/checkout@v4
+
+      - name: Python 3.11 セットアップ
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: ライブラリインストール
+        run: |
+          pip install --upgrade pip
+          pip install pandas numpy requests python-dotenv PyYAML \
+                      yfinance google-generativeai
+
+      - name: 夜の振り返り + 感情売買ガード送信
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID:   ${{ secrets.TELEGRAM_CHAT_ID }}
+          GEMINI_API_KEY:     ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          echo "🌙 夜の振り返りを送信中..."
+          python evening_run.py
