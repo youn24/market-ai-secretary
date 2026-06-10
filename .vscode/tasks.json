@@ -143,6 +143,20 @@
       "problemMatcher": []
     },
     {
+      "label": "📊 財務分析: TDK (6762)",
+      "type": "shell",
+      "command": "python analyze_stock.py 6762",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "📊 財務分析: 日立製作所 (6501)",
+      "type": "shell",
+      "command": "python analyze_stock.py 6501",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
       "label": "📊 財務分析: 銘柄コードを入力して分析",
       "type": "shell",
       "command": "python analyze_stock.py ${input:stockCode}",
