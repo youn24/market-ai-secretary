@@ -31,12 +31,12 @@
     {
       "date": "2026-06-11",
       "direction": "bear",
-      "score": -4.24,
-      "fg": 28.5,
+      "score": -6.07,
+      "fg": 27.5,
       "nikkei": 65416.6289,
-      "sp500": 7306.0601,
-      "usdjpy": 160.516,
-      "vix": 21.85,
+      "sp500": 7266.9902,
+      "usdjpy": 160.504,
+      "vix": 22.22,
       "verified": false,
       "correct": null,
       "actual_move": null
