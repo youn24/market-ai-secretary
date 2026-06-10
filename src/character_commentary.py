@@ -4,45 +4,49 @@ AIガネーシャ（知恵の象の神）とAIカワウソが市場を解説す�
 
 【画像スプライトシート仕様】
   ファイル: src/assets/characters.png
-  グリッド: 4列 × 9行 = 36コマ
-  上段(行0-2): カワウソ
-  下段(行2-8): ガネーシャ
+  グリッド: 4列 × 9行 = 36コマ（各206×203px）
+  上段(行0-2): カワウソ（一部混在）
+  下段(行2-8): ガネーシャ（一部混在）
 
   カワウソ配置:
-    (col=0,row=0): 調査・ルーペ           → neutral/analytical
-    (col=1,row=0): アラーム・赤い稲妻      → crisis
-    (col=2,row=0): ハッピー・チャート上昇  → bull
-    (col=3,row=0): 悲しい・お金袋          → bear
-    (col=0,row=1): 大興奮・バンザイ        → strong_bull
-    (col=1,row=1): ショック・モニター前    → crash
-    (col=2,row=1): 困惑・？マーク          → fear/uncertain
-    (col=3,row=1): 勉強中・ノート分析      → neutral
-    (col=0,row=2): 集中・ターゲット        → analytical
-    (col=1,row=2): 怖い・上下チャート      → volatile
+    (col=0,row=0): 指差し上・電球・ノート   → analytical
+    (col=1,row=0): パニック・急落チャート   → crisis
+    (col=2,row=0): 余裕・サムズアップ       → bull
+    (col=3,row=0): 悲しい・下落チャート     → bear
+    (col=0,row=1): 大興奮・バンザイ         → strong_bull
+    (col=1,row=1): 疲れた・モニター前       → neutral（疲弊）
+    (col=2,row=1): ?マーク・困惑            → fear
+    (col=3,row=1): 勉強・ノート記録         → neutral
+    (col=0,row=2): 集中・目標ダーツ         → analytical
+    (col=1,row=2): 目が回る・急落急騰       → volatile
+    (col=2,row=7): ノート・単体立ち姿       → neutral（サブ）
+    (col=1,row=8): ハート背景・かわいい     → strong_bull（特別）
+    (col=3,row=8): ハート背景・かわいい     → strong_bull（特別）
 
   ガネーシャ配置:
-    (col=2,row=2): 発表・緑チャート        → bull
-    (col=3,row=2): コイン・好調            → very_bull
-    (col=0,row=3): 説明・指差し            → neutral
-    (col=1,row=3): 心配・不安              → fear
-    (col=2,row=3): 損失・落ち込み          → bear
-    (col=3,row=3): 防御・シールド警告      → cautious
-    (col=0,row=4): ロウソク足分析          → analytical
-    (col=1,row=4): 強気・指さし上           → bull
-    (col=2,row=4): ショック・赤い稲妻       → crisis
-    (col=3,row=4): 大喜び・お祝い           → strong_bull
-    (col=0,row=5): ターゲット・目標         → goal
-    (col=1,row=5): ボード説明              → neutral
-    (col=2,row=5): 喜び・お祝い2           → bull
-    (col=3,row=5): 超喜び                  → strong_bull
-    (col=0,row=6): 勉強・分析中            → analytical
-    (col=1,row=6): ホワイトボード          → presenting
-    (col=2,row=6): メモ・記録              → research
-    (col=3,row=6): 警告シールド            → cautious
-    (col=0,row=7): 悲しい・赤い矢印        → bear/crash
-    (col=1,row=7): ニュートラル立ち姿      → neutral
-    (col=3,row=7): 成長・上昇              → bull
-    (col=0,row=8): コイン・繁栄            → wealth/bull
+    (col=2,row=2): ボード・ポインター        → analytical
+    (col=3,row=2): サムズアップ・上昇        → bull
+    (col=0,row=3): 指差し上・急上昇         → bull
+    (col=1,row=3): 眠い・退屈相場（YAWN）   → neutral（低ボラ）
+    (col=2,row=3): 悲しい・LOSS表示         → bear
+    (col=3,row=3): 防御・シールド（PLAN.PROTECT.PROSPER） → cautious
+    (col=0,row=4): 考え中・ロウソク足       → analytical
+    (col=1,row=4): 強気・指差し上           → bull
+    (col=2,row=4): パニック・急落・貯金箱壊 → crisis
+    (col=3,row=4): 大喜び・急上昇・コイン   → strong_bull
+    (col=0,row=5): 指差し・目標             → analytical
+    (col=1,row=5): 眠い・フラット相場       → neutral
+    (col=2,row=5): ピースサイン・上昇       → bull
+    (col=3,row=5): ガッツポーズ・急上昇     → strong_bull
+    (col=0,row=6): ノート・サムズアップ     → bull（サブ）
+    (col=1,row=6): ボード・プレゼン         → analytical
+    (col=2,row=6): 考え中・ロウソク足       → neutral
+    (col=3,row=6): 防御・警告サイン・下落   → fear
+    (col=0,row=7): パニック・急落           → crisis（サブ）
+    (col=1,row=7): 悲しい・下落チャート     → bear（サブ）
+    (col=3,row=7): 指差し・上昇グラフ       → bull（サブ）
+    (col=0,row=8): ハート背景・かわいい     → strong_bull（特別）
+    (col=2,row=8): ハート背景・バルーン     → strong_bull（特別）
 
 ガネーシャ: 格調高く・深い分析（〜じゃ / 〜ですぞ / 〜であります）
 カワウソ: かわいく・中学生でもわかる言葉で（〜だよ〜！ / 〜なの〜♪）
@@ -62,26 +66,26 @@ SPRITE_ROWS = 9
 # ── 気分マッピング（相場状況 → スプライト座標） ───────────────────
 # カワウソ: mood → (col, row)
 OTTER_MOOD_MAP = {
-    "crisis":      (1, 1),   # ショック・モニター前
-    "bear":        (3, 0),   # 悲しい・お金袋
-    "fear":        (2, 1),   # 困惑・？マーク
-    "neutral":     (3, 1),   # 勉強中・ノート
-    "bull":        (2, 0),   # ハッピー・チャート上昇
+    "crisis":      (1, 0),   # パニック・急落チャート
+    "bear":        (3, 0),   # 悲しい・下落チャート
+    "fear":        (2, 1),   # ?マーク・困惑
+    "neutral":     (3, 1),   # 勉強・ノート記録
+    "bull":        (2, 0),   # 余裕・サムズアップ
     "strong_bull": (0, 1),   # 大興奮・バンザイ
-    "analytical":  (0, 0),   # 調査・ルーペ
-    "volatile":    (1, 2),   # 怖い・上下チャート
+    "analytical":  (0, 0),   # 指差し上・電球・ノート
+    "volatile":    (1, 2),   # 目が回る・急落急騰
 }
 
 # ガネーシャ: mood → (col, row)
 GANESHA_MOOD_MAP = {
-    "crisis":      (2, 4),   # ショック・赤い稲妻
-    "bear":        (2, 3),   # 損失・落ち込み
-    "fear":        (1, 3),   # 心配・不安
-    "neutral":     (1, 5),   # ボード説明
-    "bull":        (1, 4),   # 強気・指さし上
-    "strong_bull": (3, 4),   # 大喜び・お祝い
-    "cautious":    (3, 3),   # 防御・シールド
-    "analytical":  (0, 4),   # ロウソク足分析
+    "crisis":      (2, 4),   # パニック・急落・貯金箱壊れる
+    "bear":        (2, 3),   # 悲しい・LOSS表示
+    "fear":        (3, 6),   # 防御・警告サイン・下落チャート
+    "neutral":     (1, 5),   # 眠い・フラット相場（低ボラ）
+    "bull":        (1, 4),   # 強気・指差し上
+    "strong_bull": (3, 4),   # 大喜び・急上昇・コイン
+    "cautious":    (3, 3),   # 防御・シールド（PLAN.PROTECT.PROSPER）
+    "analytical":  (0, 4),   # 考え中・ロウソク足分析
 }
 
 
