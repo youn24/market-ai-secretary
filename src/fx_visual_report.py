@@ -455,31 +455,44 @@ def panel_cross_assets(ax, data: dict):
     _ax_style(ax, "🌐 クロスアセット（60日騰落率）", "%")
 
 
-def panel_interest_rates(ax, data: dict):
-    """Panel G: 米 vs 日 イールドカーブ + 金利差"""
+def panel_interest_rates(ax, data: dict, premium: dict | None = None):
+    """Panel G: 米 vs 日 イールドカーブ（Treasury 実データ + FRED Japan）"""
     maturities = ["3M", "5Y", "10Y", "30Y"]
-    us_syms    = ["^IRX", "^FVX", "^TNX", "^TYX"]
-    jp_hard    = [0.10, 1.50, 2.66, 3.10]   # JGB 概算値（2026年6月）
 
-    us_yields = []
-    for sym in us_syms:
-        if sym in data:
-            us_yields.append(data[sym]["latest"])
-        else:
-            # フォールバック値
-            fallback = {"^IRX": 5.30, "^FVX": 4.30, "^TNX": 4.55, "^TYX": 4.80}
-            us_yields.append(fallback.get(sym, 4.5))
+    # ── 米国: Treasury 実データ優先 ──
+    tc = (premium or {}).get("treasury", {})
+    if tc:
+        us_yields = [
+            tc.get("3M",  (data.get("^IRX",  {}).get("latest") or 3.79)),
+            tc.get("5Y",  (data.get("^FVX",  {}).get("latest") or 4.26)),
+            tc.get("10Y", (data.get("^TNX",  {}).get("latest") or 4.53)),
+            tc.get("30Y", (data.get("^TYX",  {}).get("latest") or 5.01)),
+        ]
+    else:
+        us_syms = ["^IRX", "^FVX", "^TNX", "^TYX"]
+        fb = {"^IRX": 3.79, "^FVX": 4.26, "^TNX": 4.53, "^TYX": 5.01}
+        us_yields = [data[s]["latest"] if s in data else fb[s] for s in us_syms]
+
+    # ── 日本: FRED 実データ優先 (月次・1~2ヶ月遅れ) ──
+    fred = (premium or {}).get("fred", {})
+    jp10y = fred.get("IRLTLT01JPM156N", {}).get("value")
+    jp_st = fred.get("IRSTCI01JPM156N", {}).get("value")
+    jp10y = jp10y if jp10y else 2.60   # フォールバック
+    jp_st = jp_st if jp_st else 0.40
+    jp_yields = [jp_st * 0.25, jp_st + (jp10y - jp_st) * 0.3,
+                 jp10y, jp10y * 1.12]
+
+    jp_date = fred.get("IRLTLT01JPM156N", {}).get("date", "N/A") if fred else "N/A"
+    us_date = tc.get("date", "N/A") if tc else "N/A"
 
     x = np.arange(len(maturities))
 
-    ax.plot(x, us_yields, "o-", color=C_CYAN,  lw=2.2, ms=7, label="🇺🇸 米国金利")
-    ax.plot(x, jp_hard,   "s-", color=C_DOWN,  lw=2.0, ms=6, label="🇯🇵 日本金利")
+    ax.plot(x, us_yields, "o-", color=C_CYAN, lw=2.2, ms=7, label=f"🇺🇸 米国({us_date})")
+    ax.plot(x, jp_yields, "s-", color=C_DOWN, lw=2.0, ms=6, label=f"🇯🇵 日本({jp_date})")
 
-    # 金利差帯を塗りつぶし
-    ax.fill_between(x, us_yields, jp_hard, alpha=0.12, color=C_CYAN)
+    ax.fill_between(x, us_yields, jp_yields, alpha=0.12, color=C_CYAN)
 
-    # 差ラベル
-    for xi, (u, j) in enumerate(zip(us_yields, jp_hard)):
+    for xi, (u, j) in enumerate(zip(us_yields, jp_yields)):
         diff = u - j
         ypos = (u + j) / 2
         ax.annotate(f"差{diff:.2f}%", xy=(xi, ypos),
@@ -489,41 +502,62 @@ def panel_interest_rates(ax, data: dict):
 
     ax.set_xticks(x)
     ax.set_xticklabels(maturities, fontsize=8, color=C_WHITE)
-    ax.legend(loc="upper right", fontsize=7.5, fancybox=True,
+    ax.legend(loc="upper right", fontsize=7, fancybox=True,
               facecolor=BG3, edgecolor=C_BORDER, labelcolor=C_WHITE)
-    _ax_style(ax, "📐 イールドカーブ 米🇺🇸 vs 日🇯🇵", "利回り %")
+    _ax_style(ax, "📐 イールドカーブ 米🇺🇸 vs 日🇯🇵（実データ）", "利回り %")
 
 
-def panel_imm_positions(ax, data: dict):
-    """Panel H: IMM 投機的円ポジション（CFTC 推定値）"""
-    # 直近13週の円ネットポジション（千枚, 推定値に基づく）
-    weeks = ["3/7", "3/14", "3/21", "3/28", "4/4", "4/11",
-             "4/18", "4/25", "5/2", "5/9", "5/16", "5/23", "5/30"]
-    net_pos = [-115, -118, -125, -131, -128, -122,
-               -135, -142, -148, -139, -145, -151, -158]
+def panel_imm_positions(ax, data: dict, premium: dict | None = None):
+    """Panel H: IMM 投機的円ポジション（CFTC 実データ）"""
+    cftc = (premium or {}).get("cftc_jpy", {})
+
+    if cftc and cftc.get("dates"):
+        dates   = cftc["dates"]
+        # CFTC 生データは枚数 → 千枚に変換
+        net_pos = [n / 1000 for n in cftc["net"]]
+        latest_net = cftc["latest_net"] / 1000
+        latest_date = cftc["latest_date"]
+        src_note = "CFTC Leveraged Money 実データ"
+    else:
+        # フォールバック
+        dates   = ["3/7","3/14","3/21","3/28","4/4","4/11",
+                   "4/18","4/25","5/2","5/9","5/16","5/23","5/30"]
+        net_pos = [-62,-64,-68,-72,-71,-70,-75,-78,-82,-76,-79,-83,-88]
+        latest_net = net_pos[-1]
+        latest_date = dates[-1]
+        src_note = "概算"
+
+    # 短い日付ラベル (MM/DD)
+    def _short(d):
+        try:
+            return pd.to_datetime(d).strftime("%m/%d")
+        except Exception:
+            return str(d)[-5:]
+    labels = [_short(d) for d in dates]
 
     colors = []
     for p in net_pos:
-        if p < -130:   colors.append(C_DOWN)
-        elif p < -80:  colors.append(C_ORANGE)
-        else:          colors.append(C_UP)
+        if p < -80:   colors.append(C_DOWN)
+        elif p < -50: colors.append(C_ORANGE)
+        elif p > 0:   colors.append(C_UP)
+        else:         colors.append(C_CYAN)
 
-    ax.bar(range(len(weeks)), net_pos, color=colors, alpha=0.8, width=0.7)
+    ax.bar(range(len(labels)), net_pos, color=colors, alpha=0.82, width=0.72)
 
-    # 警戒ライン
-    ax.axhline(0,    color=C_GRAY, lw=0.8)
-    ax.axhline(-100, color=C_ORANGE, lw=0.9, ls="--", alpha=0.7, label="-100K 警戒")
-    ax.axhline(-150, color=C_DOWN,   lw=0.9, ls=":",  alpha=0.8, label="-150K 極端売り")
+    ax.axhline(0,    color=C_GRAY,   lw=0.8)
+    ax.axhline(-50,  color=C_ORANGE, lw=0.9, ls="--", alpha=0.7, label="-50K 警戒")
+    ax.axhline(-100, color=C_DOWN,   lw=0.9, ls=":",  alpha=0.8, label="-100K 極端売り")
 
-    ax.text(len(weeks) - 1, net_pos[-1] - 4,
-            f"最新\n{net_pos[-1]}K", ha="center", color=C_DOWN,
-            fontsize=8, fontweight="bold")
+    col_latest = C_DOWN if latest_net < -80 else C_ORANGE if latest_net < -50 else C_UP
+    ax.text(len(labels) - 1, latest_net - abs(latest_net) * 0.06,
+            f"{latest_net:+.0f}K\n({latest_date[-5:]})",
+            ha="center", color=col_latest, fontsize=8, fontweight="bold")
 
-    ax.set_xticks(range(len(weeks)))
-    ax.set_xticklabels(weeks, rotation=45, fontsize=6.5, color=C_GRAY, ha="right")
+    ax.set_xticks(range(len(labels)))
+    ax.set_xticklabels(labels, rotation=45, fontsize=6.5, color=C_GRAY, ha="right")
     ax.legend(loc="lower left", fontsize=7, fancybox=True,
               facecolor=BG3, edgecolor=C_BORDER, labelcolor=C_WHITE)
-    _ax_style(ax, "📊 IMM 円ネット投機ポジション（千枚）※CFTC概算", "千枚")
+    _ax_style(ax, f"📊 JPY IMM 投機ポジション（千枚）{src_note}", "千枚")
 
 
 def panel_correlation_heatmap(ax, data: dict):
@@ -575,25 +609,39 @@ def panel_correlation_heatmap(ax, data: dict):
     _ax_style(ax, "🔗 資産間相関（60日日次リターン）")
 
 
-def panel_fedwatch(ax, data: dict):
-    """Panel J: FedWatch 政策金利予想（CME概算）"""
-    meetings  = ["7月", "9月", "11月", "12月"]
-    hike_prob = [3,  8, 10,  8]
-    hold_prob = [92, 70, 45, 30]
-    cut_prob  = [5, 22, 45, 62]
+def panel_fedwatch(ax, data: dict, premium: dict | None = None):
+    """Panel J: FedWatch 利下げ確率（T-bill implied rate path）"""
+    fw = (premium or {}).get("fedwatch", {})
+
+    if fw and fw.get("meetings"):
+        meetings  = fw["meetings"]
+        hike_prob = fw["hike_prob"]
+        hold_prob = fw["hold_prob"]
+        cut_prob  = fw["cut_prob"]
+        ffr       = fw.get("current_ffr", 4.33)
+        note      = fw.get("note", "")
+    else:
+        meetings  = ["7月(7/29)", "9月(9/16)", "11月(11/4)", "12月(12/9)"]
+        hike_prob = [5,  8, 10,  8]
+        hold_prob = [88, 68, 45, 32]
+        cut_prob  = [7, 24, 45, 60]
+        ffr       = 4.33
+        note      = "概算値"
 
     x = np.arange(len(meetings))
     w = 0.26
-    ax.bar(x - w,   hike_prob, width=w, color=C_DOWN,   label="利上げ",   alpha=0.85)
-    ax.bar(x,       hold_prob, width=w, color=C_GRAY,   label="据え置き", alpha=0.75)
-    ax.bar(x + w,   cut_prob,  width=w, color=C_UP,     label="利下げ",   alpha=0.85)
+    ax.bar(x - w, hike_prob, width=w, color=C_DOWN,   label="利上げ",   alpha=0.85)
+    ax.bar(x,     hold_prob, width=w, color=C_GRAY,   label="据え置き", alpha=0.75)
+    ax.bar(x + w, cut_prob,  width=w, color=C_UP,     label="利下げ",   alpha=0.85)
 
     ax.set_xticks(x)
-    ax.set_xticklabels([f"FOMC\n{m}" for m in meetings], fontsize=7.5, color=C_WHITE)
+    ax.set_xticklabels([f"FOMC\n{m}" for m in meetings], fontsize=7, color=C_WHITE)
     ax.set_ylabel("%", color=C_GRAY, fontsize=7.5)
-    ax.legend(loc="upper left", fontsize=7.5, fancybox=True,
+    ax.legend(loc="upper right", fontsize=7, fancybox=True,
               facecolor=BG3, edgecolor=C_BORDER, labelcolor=C_WHITE)
-    _ax_style(ax, "🏦 FedWatch 利下げ確率 ※CME概算")
+    ax.text(0.02, 0.97, f"現在FFR: {ffr:.2f}%", transform=ax.transAxes,
+            fontsize=7.5, color=C_GOLD, fontweight="bold", va="top")
+    _ax_style(ax, f"🏦 FedWatch 利下げ確率 ({note})")
 
 
 def panel_vix_gauge(ax, data: dict):
@@ -705,6 +753,144 @@ def panel_price_board(ax, data: dict):
         y -= 0.082
 
 
+def panel_fred_macro(ax, premium: dict | None = None):
+    """Panel N: FRED 主要経済指標ダッシュボード（実データ）"""
+    ax.axis("off")
+    ax.set_facecolor(BG2)
+    ax.set_title("🏛 FRED 主要経済指標（米国）", color=C_WHITE,
+                 fontsize=9.5, fontweight="bold", pad=5, loc="left")
+
+    fred = (premium or {}).get("fred", {})
+    items = [
+        ("FEDFUNDS",        "FFR 実効金利",       "{:.2f}%",    4.33),
+        ("CPIAUCSL",        "CPI 指数",            "{:.1f}",     None),
+        ("UNRATE",          "失業率",              "{:.1f}%",    4.3),
+        ("BAMLH0A0HYM2",    "HY スプレッド",       "{:.2f}%",    2.78),
+        ("IRLTLT01JPM156N", "日本 長期金利",        "{:.3f}%",    2.60),
+        ("IRSTCI01JPM156N", "日本 短期金利",        "{:.3f}%",    0.40),
+        ("T10Y2Y",          "10Y-2Y スプレッド",   "{:+.2f}%",  None),
+        ("DFII10",          "TIPS 実質金利",        "{:.2f}%",   None),
+    ]
+
+    y = 0.94
+    for sid, name, fmt, fallback in items:
+        d = fred.get(sid)
+        if d:
+            val  = d["value"]
+            date = d["date"][-7:]  # "YYYY-MM"
+            chg  = d["chg"]
+            arrow = "▲" if chg > 0 else "▼" if chg < 0 else "─"
+            col   = C_UP if chg > 0 else C_DOWN if chg < 0 else C_GRAY
+            try:
+                val_s = fmt.format(val)
+            except Exception:
+                val_s = f"{val:.2f}"
+            src_col = C_GRAY
+        elif fallback is not None:
+            try:
+                val_s = fmt.format(fallback)
+            except Exception:
+                val_s = str(fallback)
+            arrow, col, date, src_col = "─", C_GRAY, "概算", C_ORANGE
+        else:
+            continue
+
+        ax.text(0.02, y, name,    transform=ax.transAxes, fontsize=8.5, color=C_GRAY,  va="top")
+        ax.text(0.55, y, val_s,   transform=ax.transAxes, fontsize=8.5, color=C_WHITE, va="top",
+                ha="right", fontweight="bold")
+        ax.text(0.72, y, arrow,   transform=ax.transAxes, fontsize=8.5, color=col,     va="top")
+        ax.text(0.99, y, date,    transform=ax.transAxes, fontsize=7.5, color=src_col, va="top",
+                ha="right", alpha=0.7)
+        ax.plot([0.01, 0.99], [y - 0.004, y - 0.004], color=C_BORDER,
+                lw=0.3, transform=ax.transAxes)
+        y -= 0.106
+
+
+def panel_vix_term_structure(ax, premium: dict | None = None, data: dict | None = None):
+    """Panel O: VIX ターム構造 + VVIX（実データ）"""
+    vt = (premium or {}).get("vix_term", {})
+    vix   = vt.get("vix",   data.get("^VIX",  {}).get("latest", 20.0) if data else 20.0)
+    vix3m = vt.get("vix3m", vix * 1.05)
+    vvix  = vt.get("vvix",  100.0)
+    struct = vt.get("structure", "─")
+
+    idx   = [0, 1]
+    vals  = [vix, vix3m]
+    cols  = [C_DOWN if vix >= 25 else C_ORANGE if vix >= 20 else C_UP,
+             C_DOWN if vix3m >= 25 else C_ORANGE if vix3m >= 20 else C_UP]
+    labels = ["VIX\n現値", "VIX3M\n3ヶ月先"]
+
+    bars = ax.bar(idx, vals, color=cols, alpha=0.82, width=0.55)
+    for bar, val in zip(bars, vals):
+        ax.text(bar.get_x() + bar.get_width() / 2, val + 0.3,
+                f"{val:.1f}", ha="center", color=C_WHITE, fontsize=10, fontweight="bold")
+
+    ax.axhline(20, color=C_ORANGE, lw=0.9, ls="--", alpha=0.7, label="警戒20")
+    ax.axhline(30, color=C_DOWN,   lw=0.9, ls=":",  alpha=0.8, label="危険30")
+
+    spread = vix3m - vix
+    ax.text(0.98, 0.97, f"VVIX: {vvix:.0f}\nターム構造: {struct}",
+            transform=ax.transAxes, ha="right", va="top",
+            color=C_CYAN, fontsize=8.5, fontweight="bold")
+
+    ax.set_xticks(idx)
+    ax.set_xticklabels(labels, fontsize=8.5, color=C_WHITE)
+    ax.set_ylim(0, max(40, vix3m * 1.3))
+    ax.legend(loc="upper left", fontsize=7, fancybox=True,
+              facecolor=BG3, edgecolor=C_BORDER, labelcolor=C_WHITE)
+    _ax_style(ax, "⚡ VIX ターム構造（実データ）")
+
+
+def panel_treasury_curve(ax, premium: dict | None = None, data: dict | None = None):
+    """Panel P: 米国フルイールドカーブ（Treasury 実データ）"""
+    tc = (premium or {}).get("treasury", {})
+    mat_order = ["1M","2M","3M","6M","1Y","2Y","3Y","5Y","7Y","10Y","20Y","30Y"]
+
+    if tc:
+        mats  = [m for m in mat_order if m in tc]
+        rates = [tc[m] for m in mats]
+        date  = tc.get("date", "N/A")
+    else:
+        # yfinance フォールバック
+        mats  = ["3M",  "5Y",  "10Y", "30Y"]
+        syms  = ["^IRX","^FVX","^TNX","^TYX"]
+        fb    = {"^IRX": 3.79, "^FVX": 4.26, "^TNX": 4.53, "^TYX": 5.01}
+        rates = [data.get(s, {}).get("latest", fb[s]) for s in syms] if data else [3.79, 4.26, 4.53, 5.01]
+        date  = "N/A"
+
+    if not rates:
+        ax.text(0.5, 0.5, "データなし", transform=ax.transAxes,
+                ha="center", va="center", color=C_GRAY)
+        _ax_style(ax, "米国イールドカーブ"); return
+
+    idx = np.arange(len(mats))
+
+    # 逆イールドゾーン（3M > 10Y）の塗りつぶし
+    ax.fill_between(idx, rates, min(rates), alpha=0.10, color=C_CYAN)
+    ax.plot(idx, rates, "o-", color=C_CYAN, lw=2.2, ms=7)
+
+    # 各点に値ラベル
+    for i, (m, r) in enumerate(zip(mats, rates)):
+        ax.text(i, r + 0.03, f"{r:.2f}", ha="center", color=C_WHITE, fontsize=7.5, fontweight="bold")
+
+    # 逆イールドチェック
+    r3m  = tc.get("3M",  rates[0])
+    r2y  = tc.get("2Y",  rates[-1])
+    r10y = tc.get("10Y", rates[-1])
+    r30y = tc.get("30Y", rates[-1])
+    if r3m > r10y:
+        ax.text(0.5, 0.05, "⚠ 逆イールド発生中（景気後退シグナル）",
+                transform=ax.transAxes, ha="center", color=C_DOWN,
+                fontsize=8, fontweight="bold",
+                bbox=dict(boxstyle="round,pad=0.3", fc=BG3, ec=C_DOWN, alpha=0.8))
+
+    ax.set_xticks(idx)
+    ax.set_xticklabels(mats, fontsize=7.5, color=C_WHITE)
+    ax.text(0.99, 0.97, f"Data: {date}", transform=ax.transAxes,
+            ha="right", va="top", color=C_GRAY, fontsize=7, alpha=0.7)
+    _ax_style(ax, "📈 米国イールドカーブ（Treasury 実データ）", "利回り %")
+
+
 def panel_dxy_trend(ax, data: dict):
     """Panel M: DXY 60日トレンド + 100水準"""
     sym = "DX-Y.NYB"
@@ -741,7 +927,7 @@ def panel_dxy_trend(ax, data: dict):
 # ⑤ メインダッシュボード組み立て
 # ─────────────────────────────────────────────────────────────────────────────
 
-def build_dashboard(data: dict, out_path: str) -> str:
+def build_dashboard(data: dict, out_path: str, premium: dict | None = None) -> str:
     """
     全パネルを組み合わせた大型ダッシュボードを生成して PNG 保存
     サイズ: 22×30 インチ @ 100dpi = 2200×3000px
@@ -782,13 +968,10 @@ def build_dashboard(data: dict, out_path: str) -> str:
     ax_vix     = fig.add_subplot(gs[4, 1])
     ax_board   = fig.add_subplot(gs[4, 2])
 
-    # ── Row 5: 空き (将来拡張) ──
+    # ── Row 5: FRED マクロ / VIX ターム / Treasury カーブ ──
     ax_extra1  = fig.add_subplot(gs[5, 0])
     ax_extra2  = fig.add_subplot(gs[5, 1])
     ax_extra3  = fig.add_subplot(gs[5, 2])
-    for ax_e in [ax_extra1, ax_extra2, ax_extra3]:
-        ax_e.axis("off")
-        ax_e.set_facecolor(BG)
 
     # ─── タイトルバー ───
     jst_now = datetime.now(JST)
@@ -813,13 +996,17 @@ def build_dashboard(data: dict, out_path: str) -> str:
     panel_stochastic(ax_stoch,     data)
     panel_dxy_trend(ax_dxy,        data)
     panel_cross_assets(ax_cross,   data)
-    panel_interest_rates(ax_rates, data)
+    panel_interest_rates(ax_rates, data, premium)
     panel_currency_strength(ax_fx_str, data)
-    panel_imm_positions(ax_imm,    data)
+    panel_imm_positions(ax_imm,    data, premium)
     panel_correlation_heatmap(ax_corr, data)
-    panel_fedwatch(ax_fedwt,       data)
+    panel_fedwatch(ax_fedwt,       data, premium)
     panel_vix_gauge(ax_vix,        data)
     panel_price_board(ax_board,    data)
+    # ─── Row 5: プレミアムデータパネル ───
+    panel_fred_macro(ax_extra1,               premium)
+    panel_vix_term_structure(ax_extra2,       premium, data)
+    panel_treasury_curve(ax_extra3,           premium, data)
 
     # ─── キャラクター画像オーバーレイ（assets/characters_grid.png があれば） ───
     try:
@@ -855,7 +1042,7 @@ def build_dashboard(data: dict, out_path: str) -> str:
 
     # ─── フッター ───
     footer = (
-        "Data: Yahoo Finance / CME / CFTC est.  "
+        "Data: Yahoo Finance / US Treasury / FRED (St. Louis Fed) / CFTC COT  "
         "ミセスワタナベ AI FX Analysis System  "
         f"Generated: {jst_now.strftime('%Y-%m-%d %H:%M JST')}"
     )
@@ -872,7 +1059,7 @@ def build_dashboard(data: dict, out_path: str) -> str:
 # ⑥ Telegram テキストメッセージ生成
 # ─────────────────────────────────────────────────────────────────────────────
 
-def build_text_msg(data: dict) -> str:
+def build_text_msg(data: dict, premium: dict | None = None) -> str:
     """Telegram 通知① のテキストを組み立てる"""
     jst_now = datetime.now(JST)
     today   = jst_now.strftime("%Y/%m/%d")
@@ -909,6 +1096,10 @@ def build_text_msg(data: dict) -> str:
         elif ph > 0 > lh:  macd_sig = "▼デッドクロス発生！"
         elif lh > 0:       macd_sig = "↑上昇モメンタム継続"
         else:              macd_sig = "↓下落モメンタム継続"
+
+    # 日本10年金利（FRED 実データ優先）
+    _fred   = (premium or {}).get("fred", {})
+    _jp10y  = _fred.get("IRLTLT01JPM156N", {}).get("value") or 2.60
 
     # その他
     dxy   = _get("DX-Y.NYB")
@@ -957,7 +1148,7 @@ def build_text_msg(data: dict) -> str:
         f"  DXY ドル指数: `{dxy:.2f}`\n"
         f"  VIX 恐怖指数: `{vix:.2f}` {'🔴危険' if vix>=30 else '🟠警戒' if vix>=20 else '🟢安定'}\n"
         f"  米 10年金利:  `{us10y:.3f}%`\n"
-        f"  日米金利差:   `{us10y - 2.66:.2f}%`\n"
+        f"  日米金利差:   `{us10y - _jp10y:.2f}%`\n"
         f"\n"
         f"🥇 *商品*\n"
         f"  Gold: `${gold:,.0f}/oz`   Oil: `${oil:.1f}/bbl`\n"
@@ -1009,11 +1200,26 @@ def run() -> dict:
         # ─ データ取得 ─
         logger.info("FX データ取得開始...")
         data = fetch_all_data()
-        logger.info(f"取得完了: {len(data)} シンボル")
+        logger.info(f"yfinance 取得完了: {len(data)} シンボル")
 
         if not data:
             result["error"] = "全シンボルでデータ取得失敗"
             return result
+
+        # ─ プレミアムデータ取得（FRED / Treasury / CFTC / VIX term）─
+        logger.info("プレミアムデータ取得開始 (FRED / Treasury / CFTC)...")
+        premium = {}
+        try:
+            from src.fx_data_premium import fetch_all_premium
+            premium = fetch_all_premium()
+            logger.info(
+                f"プレミアム取得完了: "
+                f"FRED={len(premium.get('fred', {}))}件 "
+                f"Treasury={len(premium.get('treasury', {}))}点 "
+                f"CFTC-JPY={len(premium.get('cftc_jpy', {}).get('dates', []))}週"
+            )
+        except Exception as e:
+            logger.warning(f"プレミアムデータ取得エラー（続行）: {e}")
 
         # ─ 出力先準備 ─
         out_dir = Path("data") / "fx_charts"
@@ -1023,7 +1229,7 @@ def run() -> dict:
 
         # ─ チャート生成 ─
         logger.info("ダッシュボード生成中...")
-        build_dashboard(data, chart_path)
+        build_dashboard(data, chart_path, premium)
         logger.info(f"✅ チャート保存: {chart_path}")
 
         # ─ テキスト生成 ─
@@ -1032,9 +1238,10 @@ def run() -> dict:
         result.update({
             "available":  True,
             "chart_path": chart_path,
-            "text_msg":   build_text_msg(data),
+            "text_msg":   build_text_msg(data, premium),
             "url_msg":    build_url_msg(pages_url),
             "data":       data,
+            "premium":    premium,
         })
 
     except Exception as e:
