@@ -113,6 +113,49 @@
       "command": "python -c \"mods=['news_bias_detector','fire_simulator','bargain_scanner','investment_tutor','dca_optimizer','notification_filter','portfolio_alert','weekly_performance','evening_summary']; [(__import__(f'src.{m}',fromlist=[m]) and print(f'✅ {m}')) or None for m in mods]\"",
       "presentation": { "reveal": "always", "panel": "shared", "clear": true },
       "problemMatcher": []
+    },
+    {
+      "label": "📊 財務分析: ウォッチリスト全銘柄",
+      "type": "shell",
+      "command": "python analyze_stock.py",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "📊 財務分析: フジクラ (5803)",
+      "type": "shell",
+      "command": "python analyze_stock.py 5803",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "📊 財務分析: ソフトバンクG (9984)",
+      "type": "shell",
+      "command": "python analyze_stock.py 9984",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "📊 財務分析: 村田製作所 (6981)",
+      "type": "shell",
+      "command": "python analyze_stock.py 6981",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "📊 財務分析: 銘柄コードを入力して分析",
+      "type": "shell",
+      "command": "python analyze_stock.py ${input:stockCode}",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    }
+  ],
+  "inputs": [
+    {
+      "id": "stockCode",
+      "type": "promptString",
+      "description": "証券コードを入力（例: 7203 / 6758 / 4063）",
+      "default": "9984"
     }
   ]
 }

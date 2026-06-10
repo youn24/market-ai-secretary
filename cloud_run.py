@@ -227,6 +227,20 @@ def run(mode: str):
     except Exception:
         logger.error("歴史分析エラー"); logger.debug(traceback.format_exc())
 
+    # Step FA: 財務・決算書分析（月曜のみ）
+    financial_analysis = {"available": False}
+    try:
+        if get_jst_now().weekday() == 0 or mode == "test":
+            logger.info("--- Step FA: 財務・決算書分析 ---")
+            from src.financial_analyzer import run as run_fa
+            financial_analysis = run_fa(prices, risk, fear_greed)
+            if financial_analysis.get("available"):
+                logger.info(f"✅ 財務分析: {financial_analysis.get('count',0)}社完了")
+        else:
+            logger.info("財務分析: 月曜以外のためスキップ")
+    except Exception:
+        logger.error("財務分析エラー"); logger.debug(traceback.format_exc())
+
     # Step NEW-B: 割安株スキャン（月曜のみ）
     bargain = {"available": False}
     try:
@@ -610,7 +624,8 @@ def run(mode: str):
                           character_comments=character_comments,
                           news_bias=news_bias, fire_result=fire_result, bargain=bargain,
                           tutor=tutor, dca=dca, notif_filter=notif_filter,
-                          portfolio_alerts=portfolio_alerts)
+                          portfolio_alerts=portfolio_alerts,
+                          financial_analysis=financial_analysis)
         today = get_today_str()
         report_paths = {
             "html": str(get_dirs()["reports"] / f"{today}_{mode}.html"),
@@ -687,7 +702,8 @@ def _save_html_report(mode, prices, news, risk, analysis, fear_greed, chart_path
                       portfolio=None, scenario=None, prediction_tracker=None,
                       character_comments=None,
                       news_bias=None, fire_result=None, bargain=None,
-                      tutor=None, dca=None, notif_filter=None, portfolio_alerts=None):
+                      tutor=None, dca=None, notif_filter=None, portfolio_alerts=None,
+                      financial_analysis=None):
     """初心者でもわかる見やすいダッシュボードHTMLを保存"""
     import base64
     today = get_today_str()
@@ -967,6 +983,16 @@ def _save_html_report(mode, prices, news, risk, analysis, fear_greed, chart_path
             yt_html += f'<div class="yt-section"><div class="yt-head">📊 市場への示唆</div><div class="yt-text">{youtube_summary["impact"]}</div></div>'
         for v in youtube_summary.get("videos",[])[:4]:
             yt_html += f'<div class="yt-video"><span>🎬</span><a href="{v.get("url","")}" target="_blank" rel="noopener">{v.get("title","")}</a></div>'
+
+    # ── 財務・決算書分析HTML ──────────────────────────────────
+    financial_analysis = financial_analysis or {}
+    fa_html = ""
+    if financial_analysis.get("available"):
+        try:
+            from src.financial_analyzer import get_html as fa_get_html
+            fa_html = fa_get_html(financial_analysis)
+        except Exception:
+            fa_html = ""
 
     # ── 煽りニュース検出HTML ─────────────────────────────────
     news_bias = news_bias or {}
@@ -1479,6 +1505,9 @@ a:hover{{text-decoration:underline;}}
 
   <!-- YouTube -->
   {f'<div class="sec-head">📺 YouTube注目動画まとめ</div><div class="yt-wrap">{yt_html}</div>' if yt_html else ""}
+
+  <!-- 財務・決算書分析（月曜のみ） -->
+  {f'<div class="sec-head">📊 財務・決算書分析（フジクラ・ソフトバンクG・村田製作所 他）</div>{fa_html}' if fa_html else ""}
 
   <!-- 煽りニュース検出 -->
   {f'<div class="sec-head">🔍 ニュース煽り度チェック</div><div class="econ-wrap">{bias_html}</div>' if bias_html else ""}
