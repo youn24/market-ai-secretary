@@ -1,0 +1,38 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "🌅 朝のレポート（デバッグ）",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/cloud_run.py",
+      "args": ["--mode", "test"],
+      "console": "integratedTerminal",
+      "env": { "PYTHONPATH": "${workspaceFolder}" }
+    },
+    {
+      "name": "🌙 夜の振り返り（デバッグ）",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/evening_run.py",
+      "console": "integratedTerminal",
+      "env": { "PYTHONPATH": "${workspaceFolder}" }
+    },
+    {
+      "name": "📊 週次レポート（デバッグ）",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/weekly_run.py",
+      "console": "integratedTerminal",
+      "env": { "PYTHONPATH": "${workspaceFolder}" }
+    },
+    {
+      "name": "💱 FXレポート（デバッグ）",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/fx_noon_run.py",
+      "console": "integratedTerminal",
+      "env": { "PYTHONPATH": "${workspaceFolder}" }
+    }
+  ]
+}

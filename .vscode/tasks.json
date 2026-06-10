@@ -1,0 +1,118 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "🌅 朝のレポート（テスト実行）",
+      "type": "shell",
+      "command": "python cloud_run.py --mode test",
+      "group": { "kind": "build", "isDefault": true },
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "🌙 夜の振り返り＋感情売買ガード",
+      "type": "shell",
+      "command": "python evening_run.py",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "📊 週次レポート（日曜）",
+      "type": "shell",
+      "command": "python weekly_run.py",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "💱 FX午後レポート（14:00）",
+      "type": "shell",
+      "command": "python fx_noon_run.py",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "🔔 急変モニター（15分ごと）",
+      "type": "shell",
+      "command": "python monitor_run.py",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "📱 Streamlitダッシュボード起動",
+      "type": "shell",
+      "command": "streamlit run streamlit_app.py",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "🔍 煽りニュース検出テスト",
+      "type": "shell",
+      "command": "python -c \"from src.news_bias_detector import analyze_news_bias; r=analyze_news_bias([{'title':'日経大暴落！今すぐ売れ！緊急速報'},{'title':'米国市場は小幅上昇'},{'title':'激震！FRBが前代未聞の緊急利上げ！絶対に見逃すな'}]); [print(f\\\"{i['bias_label']} ({i['bias_score']:.1f}) {i['title'][:30]}\\\") for i in r['items']]\"",
+      "presentation": { "reveal": "always", "panel": "shared", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "🔥 FIREシミュレーターテスト",
+      "type": "shell",
+      "command": "python -c \"from src.fire_simulator import calc_fire_years; import json; r=calc_fire_years(); print(f\\\"FIRE達成: {r.get('fire_age')}歳（あと{r.get('fire_years')}年）\\\"); print(f\\\"目標額: {r.get('fire_target',0)/10000:.0f}万円\\\"); print(f\\\"現在達成率: {r.get('progress_pct',0):.1f}%\\\")\"",
+      "presentation": { "reveal": "always", "panel": "shared", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "🏆 割安株スキャンテスト（TOP3）",
+      "type": "shell",
+      "command": "python -c \"from src.bargain_scanner import scan_bargain_stocks; r=scan_bargain_stocks(3); print(r.get('telegram_message','スキャン失敗'))\"",
+      "presentation": { "reveal": "always", "panel": "shared", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "📚 今日の投資レッスンテスト",
+      "type": "shell",
+      "command": "python -c \"from src.investment_tutor import generate_daily_lesson; r=generate_daily_lesson({},{},{}); print('テーマ:', r.get('topic')); print(r.get('lesson',''))\"",
+      "presentation": { "reveal": "always", "panel": "shared", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "📅 積立タイミング分析テスト（日経225）",
+      "type": "shell",
+      "command": "python -c \"from src.dca_optimizer import analyze_dca_timing; r=analyze_dca_timing(); print(r.get('insight','分析失敗'))\"",
+      "presentation": { "reveal": "always", "panel": "shared", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "📡 保有銘柄アラートチェック",
+      "type": "shell",
+      "command": "python -c \"from src.portfolio_alert import check_portfolio_alerts; r=check_portfolio_alerts(); alerts=r.get('alerts',[]); print(f'アラート{len(alerts)}件'); [print(f\\\"  {a['name']}: {a['change_pct']:+.1f}% 含み損益{a['unrealized_pnl_pct']:+.1f}%\\\") for a in alerts] if alerts else print('  異常なし')\"",
+      "presentation": { "reveal": "always", "panel": "shared", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "🔕 通知重要度スコアテスト",
+      "type": "shell",
+      "command": "python -c \"from src.notification_filter import score_notification_importance; r=score_notification_importance({'USDJPY=X':{'latest':157},'\\^VIX':{'latest':22},'\\^GSPC':{'change_pct':-1.5},'\\^N225':{'change_pct':-0.8}},{},{'score':45}); print(f\\\"重要度: {r['importance_score']:.1f} [{r['level']}]  フル送信: {r['send_full_report']}\\\")\"",
+      "presentation": { "reveal": "always", "panel": "shared", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "📊 週次AIパフォーマンスレポートテスト",
+      "type": "shell",
+      "command": "python -c \"from src.weekly_performance import generate_weekly_report; r=generate_weekly_report(); print(r.get('telegram_message') if r.get('available') else '予測データが蓄積されていません（1週間後に有効）')\"",
+      "presentation": { "reveal": "always", "panel": "shared", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "🌙 夜の振り返りメッセージプレビュー",
+      "type": "shell",
+      "command": "python -c \"from src.fetch_prices import run as fp; from src.indicators import calc_risk_score; prices,fg=fp(); risk=calc_risk_score(prices); from src.evening_summary import generate_evening_message; print(generate_evening_message(prices,fg,risk))\"",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "🔧 全モジュール インポートチェック",
+      "type": "shell",
+      "command": "python -c \"mods=['news_bias_detector','fire_simulator','bargain_scanner','investment_tutor','dca_optimizer','notification_filter','portfolio_alert','weekly_performance','evening_summary']; [(__import__(f'src.{m}',fromlist=[m]) and print(f'✅ {m}')) or None for m in mods]\"",
+      "presentation": { "reveal": "always", "panel": "shared", "clear": true },
+      "problemMatcher": []
+    }
+  ]
+}
