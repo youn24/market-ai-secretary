@@ -1,0 +1,8 @@
+{
+  "current_assets": 3000000,
+  "monthly_savings": 50000,
+  "annual_return_pct": 5.0,
+  "annual_expense": 2400000,
+  "current_age": 35,
+  "safe_withdrawal_rate": 4.0
+}

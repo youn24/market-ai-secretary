@@ -1,0 +1,23 @@
+name: 週次AIパフォーマンス報告
+
+on:
+  schedule:
+    - cron: "45 22 * * 0"  # UTC日曜22:45 = JST月曜7:45
+  workflow_dispatch:
+
+jobs:
+  weekly-performance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install pandas numpy requests python-dotenv PyYAML yfinance google-generativeai
+      - name: 週次パフォーマンス報告送信
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: python -c "from src.weekly_performance import generate_weekly_report, send_weekly_telegram; r = generate_weekly_report(); send_weekly_telegram(r.get('telegram_message', ''))"
