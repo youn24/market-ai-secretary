@@ -116,7 +116,126 @@ def _fetch_exchangerate(symbol: str) -> dict | None:
     return {"latest": round(rate, 4), "prev_close": None, "change_pct": None, "source": "ExchangeRate-API"}
 
 
-# ─── ④ Stooq CSV（補完） ────────────────────────────────────────────────────
+# ─── ④ 日本市場プロ指標（株探 / Yahoo!ファイナンス日本版 / 日経公式CSV） ──────
+
+def _fetch_kabutan(code: str) -> dict | None:
+    """株探（kabutan.jp）から指数値をスクレイピング。
+    TOPIX=0010, 日経平均=0000, グロース250=0012, ドル円=0950
+    """
+    import re
+    url = f"https://kabutan.jp/stock/?code={code}"
+    try:
+        r = requests.get(url, headers=_HEADERS, timeout=15)
+        r.raise_for_status()
+        m = re.search(r'<span class="kabuka">([\d,\.]+)', r.text)
+        if not m:
+            return None
+        latest = float(m.group(1).replace(",", ""))
+        # 前日比: <dt>前日比</dt><dd><span class="down">-17.25</span></dd><dd><span class="down">-0.45</span>%</dd>
+        change = None
+        prev = None
+        m2 = re.search(
+            r'<dt>前日比</dt>\s*'
+            r'<dd><span(?: class="[^"]*")?>([+\-]?[\d,\.]+)</span></dd>\s*'
+            r'<dd><span(?: class="[^"]*")?>([+\-]?[\d,\.]+)</span>%',
+            r.text)
+        if m2:
+            diff   = float(m2.group(1).replace(",", ""))
+            change = float(m2.group(2))
+            prev   = round(latest - diff, 2)
+        return {"latest": round(latest, 2), "prev_close": prev,
+                "change_pct": change, "source": f"株探({code})"}
+    except Exception as e:
+        logger.warning(f"株探 失敗 [{code}]: {e}")
+    return None
+
+
+def _fetch_yahoo_japan(code: str) -> dict | None:
+    """Yahoo!ファイナンス日本版のページからJSON埋め込み値を抽出。TOPIX=998405.T"""
+    import re
+    url = f"https://finance.yahoo.co.jp/quote/{code}"
+    try:
+        r = requests.get(url, headers=_HEADERS, timeout=15)
+        r.raise_for_status()
+        m = re.search(r'"price"\s*:\s*"([\d,\.]+)"', r.text)
+        if not m:
+            return None
+        latest = float(m.group(1).replace(",", ""))
+        change = None
+        prev = None
+        m2 = re.search(r'"changePriceRate"\s*:\s*"(-?[\d,\.]+)"', r.text)
+        if m2:
+            change = float(m2.group(1).replace(",", ""))
+        m3 = re.search(r'"previousPrice"\s*:\s*"([\d,\.]+)"', r.text)
+        if m3:
+            prev = float(m3.group(1).replace(",", ""))
+        return {"latest": round(latest, 2), "prev_close": prev,
+                "change_pct": change, "source": f"Yahoo!Japan({code})"}
+    except Exception as e:
+        logger.warning(f"Yahoo!Japan 失敗 [{code}]: {e}")
+    return None
+
+
+def _fetch_nikkei_official_csv(csv_name: str) -> dict | None:
+    """日経公式CSV（indexes.nikkei.co.jp）。日経VI・日経平均の公式日次データ。
+    形式: "日付","終値","始値","高値","安値"
+    """
+    url = f"https://indexes.nikkei.co.jp/nkave/historical/{csv_name}"
+    try:
+        r = requests.get(url, headers=_HEADERS, timeout=15)
+        r.raise_for_status()
+        lines = r.content.decode("shift_jis", errors="replace").strip().splitlines()
+        # データ行のみ（日付で始まる行）を抽出
+        rows = []
+        for ln in lines:
+            parts = [p.strip().strip('"') for p in ln.split(",")]
+            if len(parts) >= 2 and "/" in parts[0]:
+                try:
+                    rows.append((parts[0], float(parts[1])))
+                except ValueError:
+                    continue
+        if not rows:
+            return None
+        latest = rows[-1][1]
+        prev   = rows[-2][1] if len(rows) >= 2 else None
+        change = round((latest - prev) / abs(prev) * 100, 2) if prev else None
+        return {"latest": round(latest, 2), "prev_close": round(prev, 2) if prev else None,
+                "change_pct": change, "source": "日経公式CSV"}
+    except Exception as e:
+        logger.warning(f"日経公式CSV 失敗 [{csv_name}]: {e}")
+    return None
+
+
+def _fetch_topix() -> dict | None:
+    """TOPIX指数（本物）: 株探 → Yahoo!Japan の2段フォールバック"""
+    return _fetch_kabutan("0010") or _fetch_yahoo_japan("998405.T")
+
+
+def _fetch_nikkei_vi() -> dict | None:
+    """日経VI（日経平均ボラティリティー・インデックス）: 日経公式CSV"""
+    return _fetch_nikkei_official_csv("nikkei_stock_average_vi_daily_jp.csv")
+
+
+def _fetch_growth250() -> dict | None:
+    """東証グロース市場250指数（本物）: 株探(0012) → ETF(2516.T)代替の順"""
+    data = _fetch_kabutan("0012")
+    if data:
+        return data
+    etf = _fetch_yahoo_direct("2516.T")
+    if etf:
+        etf["source"] = "グロース250ETF(2516.T)代替"
+    return etf
+
+
+# 特殊シンボル → 専用フェッチャーのディスパッチ
+_SPECIAL_FETCHERS = {
+    "^TOPX":     _fetch_topix,
+    "NIKKEI_VI": _fetch_nikkei_vi,
+    "GROWTH250": _fetch_growth250,
+}
+
+
+# ─── ⑤ Stooq CSV（補完） ────────────────────────────────────────────────────
 
 def _fetch_stooq(stooq_symbol: str) -> dict | None:
     url = f"https://stooq.com/q/d/l/?s={stooq_symbol}&i=d"
@@ -145,8 +264,13 @@ def _fetch_single(sym: str, name: str, category: str, fallback_map: dict) -> dic
     fetch_time = get_jst_now().isoformat()
     base = {"symbol": sym, "name": name, "category": category, "fetch_time": fetch_time}
 
+    # ⓪ 特殊シンボル（TOPIX・日経VI・グロース250）は専用ルート
+    special = _SPECIAL_FETCHERS.get(sym)
+    data = special() if special else None
+
     # ① Yahoo Finance直接API（全シンボル共通）
-    data = _fetch_yahoo_direct(sym)
+    if data is None:
+        data = _fetch_yahoo_direct(sym)
 
     # ② 仮想通貨はCoinGeckoも試す
     if data is None and sym in _COINGECKO_IDS:
@@ -185,6 +309,29 @@ def fetch_all_prices() -> dict:
                 item.get("category", cat), fallback_map
             )
             time.sleep(0.3)
+
+    # ─── NT倍率（日経平均 ÷ TOPIX）を自動計算 ───
+    n225  = results.get("^N225", {}).get("latest")
+    topix = results.get("^TOPX", {}).get("latest")
+    nt = {"symbol": "NT_RATIO", "name": "NT倍率", "category": "japan",
+          "fetch_time": get_jst_now().isoformat(),
+          "latest": None, "prev_close": None, "change_pct": None,
+          "source": "計算値(日経平均÷TOPIX)", "error": None}
+    if n225 and topix:
+        nt["latest"] = round(n225 / topix, 2)
+        # 前日NT倍率も計算できれば変化率を出す
+        n225_prev  = results.get("^N225", {}).get("prev_close")
+        topix_prev = results.get("^TOPX", {}).get("prev_close")
+        if n225_prev and topix_prev:
+            prev_nt = n225_prev / topix_prev
+            nt["prev_close"] = round(prev_nt, 2)
+            nt["change_pct"] = round((nt["latest"] - prev_nt) / prev_nt * 100, 2)
+        logger.info(f"[OK] NT倍率 = {nt['latest']} [計算値]")
+    else:
+        nt["error"] = "日経平均またはTOPIX欠損のため計算不可"
+        logger.warning("[--] NT倍率: 計算に必要なデータが不足")
+    results["NT_RATIO"] = nt
+
     return results
 
 
