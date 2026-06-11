@@ -227,6 +227,19 @@ def run(mode: str):
     except Exception:
         logger.error("歴史分析エラー"); logger.debug(traceback.format_exc())
 
+    # Step TR: テーマ株人気ランキング
+    theme_ranking = {"available": False}
+    try:
+        logger.info("--- Step TR: テーマ株人気ランキング ---")
+        from src.theme_ranker import run as run_tr
+        theme_ranking = run_tr(prices=prices, risk=risk, fear_greed=fear_greed, news=news)
+        if theme_ranking.get("available"):
+            top = theme_ranking.get("top5", [])
+            top_name = top[0]["theme"] if top else "---"
+            logger.info(f"✅ テーマランキング完了: 1位={top_name}")
+    except Exception:
+        logger.error("テーマランキングエラー"); logger.debug(traceback.format_exc())
+
     # Step FA: 財務・決算書分析（月曜のみ）
     financial_analysis = {"available": False}
     try:
@@ -625,7 +638,8 @@ def run(mode: str):
                           news_bias=news_bias, fire_result=fire_result, bargain=bargain,
                           tutor=tutor, dca=dca, notif_filter=notif_filter,
                           portfolio_alerts=portfolio_alerts,
-                          financial_analysis=financial_analysis)
+                          financial_analysis=financial_analysis,
+                          theme_ranking=theme_ranking)
         today = get_today_str()
         report_paths = {
             "html": str(get_dirs()["reports"] / f"{today}_{mode}.html"),
@@ -703,7 +717,7 @@ def _save_html_report(mode, prices, news, risk, analysis, fear_greed, chart_path
                       character_comments=None,
                       news_bias=None, fire_result=None, bargain=None,
                       tutor=None, dca=None, notif_filter=None, portfolio_alerts=None,
-                      financial_analysis=None):
+                      financial_analysis=None, theme_ranking=None):
     """初心者でもわかる見やすいダッシュボードHTMLを保存"""
     import base64
     today = get_today_str()
@@ -983,6 +997,10 @@ def _save_html_report(mode, prices, news, risk, analysis, fear_greed, chart_path
             yt_html += f'<div class="yt-section"><div class="yt-head">📊 市場への示唆</div><div class="yt-text">{youtube_summary["impact"]}</div></div>'
         for v in youtube_summary.get("videos",[])[:4]:
             yt_html += f'<div class="yt-video"><span>🎬</span><a href="{v.get("url","")}" target="_blank" rel="noopener">{v.get("title","")}</a></div>'
+
+    # ── テーマ株ランキングHTML ────────────────────────────────
+    theme_ranking = theme_ranking or {}
+    theme_html = theme_ranking.get("html", "") if theme_ranking.get("available") else ""
 
     # ── 財務・決算書分析HTML ──────────────────────────────────
     financial_analysis = financial_analysis or {}
@@ -1505,6 +1523,9 @@ a:hover{{text-decoration:underline;}}
 
   <!-- YouTube -->
   {f'<div class="sec-head">📺 YouTube注目動画まとめ</div><div class="yt-wrap">{yt_html}</div>' if yt_html else ""}
+
+  <!-- テーマ株人気ランキング -->
+  {f'<div class="sec-head">🔥 テーマ株人気ランキング（今週どのテーマが熱い？）</div>{theme_html}' if theme_html else ""}
 
   <!-- 財務・決算書分析（月曜のみ） -->
   {f'<div class="sec-head">📊 財務・決算書分析（フジクラ・ソフトバンクG・村田製作所 他）</div>{fa_html}' if fa_html else ""}

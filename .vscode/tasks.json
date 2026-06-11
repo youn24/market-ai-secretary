@@ -220,6 +220,13 @@
       "problemMatcher": []
     },
     {
+      "label": "🔥 テーマ株人気ランキング（今すぐ確認）",
+      "type": "shell",
+      "command": "python -c \"from src.theme_ranker import run; r=run(); [print(f\\\"{i+1}位 {x['theme']} | 5日{x['perf_5d']:+.1f}% | ニュース{x['news_count']}件\\\") for i,x in enumerate(r['rankings'][:10])]\"",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
       "label": "🤖 テーマ分析: AIテーマ（さくらインターネット）",
       "type": "shell",
       "command": "python analyze_stock.py 3778",
