@@ -51,6 +51,14 @@ RSS_SOURCES = [
         "importance": "B",
         "max":      5,
     },
+    {
+        "id":       "tv_tokyo_wbs",
+        "name":     "テレ東WBS（ワールドビジネスサテライト）",
+        "url":      "https://txbiz.tv-tokyo.co.jp/news_media/sitemap/rss.xml",
+        "lang":     "ja",
+        "importance": "A",
+        "max":      6,
+    },
     # ─ 英語：金融専門 ────────────────────────────────────
     {
         "id":       "marketwatch",

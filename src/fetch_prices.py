@@ -175,7 +175,8 @@ def fetch_all_prices() -> dict:
     cfg = load_symbols()
     fallback_map = cfg.get("stooq_fallback", {})
     all_categories = ["indices", "fear_indices", "forex", "rates",
-                      "commodities", "crypto", "us_stocks", "jp_stocks"]
+                      "commodities", "crypto", "us_stocks", "jp_stocks",
+                      "shipping_proxy"]
     results = {}
     for cat in all_categories:
         for item in cfg.get(cat, []):

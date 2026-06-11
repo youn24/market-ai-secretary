@@ -89,11 +89,22 @@ def _fetch_minkabu_themes() -> list:
         return []
 
 
-def _get_theme_performance(symbols: list) -> dict:
-    """テーマ代表銘柄の騰落率を取得"""
+def _get_theme_performance(symbols: list, prices: dict = None) -> dict:
+    """テーマ代表銘柄の騰落率を取得。prices辞書があれば優先使用（yfinance呼び出しを削減）"""
+    perfs = []
+
+    # prices辞書から取得を試みる
+    if prices:
+        for sym in symbols[:3]:
+            entry = prices.get(sym)
+            if entry and entry.get("change_pct") is not None:
+                perfs.append(entry["change_pct"])
+        if perfs:
+            return {"avg_5d": sum(perfs) / len(perfs), "count": len(perfs)}
+
+    # fallback: yfinance
     try:
         import yfinance as yf
-        perfs = []
         for sym in symbols[:3]:
             try:
                 ticker = yf.Ticker(sym)
@@ -170,8 +181,8 @@ def run(prices: dict = None, risk: dict = None, fear_greed: dict = None,
                 external_bonus = 3
                 break
 
-        # 代表銘柄の5日騰落率
-        perf = _get_theme_performance(meta["symbols"])
+        # 代表銘柄の5日騰落率（pricesがあればyfinance呼び出し不要）
+        perf = _get_theme_performance(meta["symbols"], prices)
         perf_5d = perf.get("avg_5d", 0)
 
         # 総合スコア（ニュース×2 + 外部ボーナス + 騰落率×0.5）

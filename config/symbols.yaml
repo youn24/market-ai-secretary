@@ -112,6 +112,19 @@ jp_stocks:
     name: "信越化学"
     category: "jp_stock"
 
+# 海運株（バルチック海運指数の代替プロキシ）
+# ^BDI は yfinance 非対応のため、主要海運株で代替
+shipping_proxy:
+  - symbol: "9101.T"
+    name: "日本郵船（BDI代替）"
+    category: "shipping_proxy"
+  - symbol: "9104.T"
+    name: "商船三井（BDI代替）"
+    category: "shipping_proxy"
+  - symbol: "9107.T"
+    name: "川崎汽船（BDI代替）"
+    category: "shipping_proxy"
+
 stooq_fallback:
   "^N225": "^nkx"
   "^GSPC": "^spx"
