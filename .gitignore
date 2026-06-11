@@ -1,4 +1,5 @@
 .env
+.mcp.json
 __pycache__/
 # data/ は基本除外するが、学習データ(predictions.json)と記憶データは永続化のためGit管理
 data/*

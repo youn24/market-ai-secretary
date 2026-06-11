@@ -22,6 +22,31 @@ def load_symbols() -> dict:
         return yaml.safe_load(f)
 
 
+def _fetch_yahoo_direct(symbol: str) -> pd.DataFrame | None:
+    """Yahoo Finance chart API に直接リクエスト（yfinanceレート制限時のフォールバック）"""
+    url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?interval=1d&range=5d"
+    _HEADERS = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "application/json",
+        "Accept-Language": "ja,en;q=0.9",
+    }
+    try:
+        r = requests.get(url, headers=_HEADERS, timeout=15)
+        r.raise_for_status()
+        result = r.json()["chart"]["result"][0]
+        timestamps = result["timestamp"]
+        closes = result["indicators"]["quote"][0]["close"]
+        rows = [(pd.Timestamp(t, unit="s", tz="UTC"), c) for t, c in zip(timestamps, closes) if c is not None]
+        if not rows:
+            return None
+        df = pd.DataFrame(rows, columns=["Date", "Close"])
+        df = df.set_index("Date")
+        return df
+    except Exception as e:
+        logger.warning(f"Yahoo直接API 失敗 [{symbol}]: {e}")
+    return None
+
+
 def _fetch_yfinance(symbol: str, period: str = "5d") -> pd.DataFrame | None:
     try:
         import yfinance as yf
@@ -31,7 +56,8 @@ def _fetch_yfinance(symbol: str, period: str = "5d") -> pd.DataFrame | None:
             return df
     except Exception as e:
         logger.warning(f"yfinance 失敗 [{symbol}]: {e}")
-    return None
+    # フォールバック: Yahoo直接API
+    return _fetch_yahoo_direct(symbol)
 
 
 def _fetch_stooq(stooq_symbol: str) -> pd.DataFrame | None:

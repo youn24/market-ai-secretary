@@ -22,9 +22,13 @@ import json
 sys.path.insert(0, str(Path(__file__).parent))
 
 from src.autonomous_team import AutonomousTeamSystem
-from src.fetch_prices import fetch_prices  # 既存のデータ取得
-from src.fetch_news import fetch_news  # 既存のニュース取得
+from src.fetch_prices import run as _fp_run, fetch_all_prices  # 既存のデータ取得
+from src.fetch_news import run as fetch_news  # 既存のニュース取得
 from src.indicators import calc_risk_score  # 既存のリスク計算
+
+def fetch_prices():
+    prices, _ = _fp_run()
+    return prices
 
 # ロギング設定
 Path("logs").mkdir(exist_ok=True)
@@ -51,17 +55,36 @@ class AutonomousTeamRunner:
         
         logger.info("✅ AutonomousTeamRunner 初期化完了")
     
+    def _load_cached_prices(self) -> dict | None:
+        """本日保存済みの価格JSONがあれば読み込む（yfinanceレート制限対策）"""
+        import json
+        from datetime import date
+        today = date.today().strftime("%Y-%m-%d")
+        cache = Path("data/raw") / f"{today}_prices.json"
+        if cache.exists():
+            data = json.loads(cache.read_text(encoding="utf-8"))
+            prices = data.get("prices", {})
+            # 1件でも実データがあれば使用
+            if any(v.get("latest") is not None for v in prices.values()):
+                logger.info(f"✅ キャッシュから価格データを読み込み: {len(prices)}件")
+                return prices
+        return None
+
     def fetch_market_data(self) -> dict:
         """リアルタイム市場データを取得"""
         logger.info("📊 市場データを取得中...")
-        
+
         try:
-            # 既存の価格取得機能を使用
-            prices = fetch_prices()
+            # キャッシュ優先（同日内の重複取得によるレート制限を回避）
+            prices = self._load_cached_prices()
+            if prices is None:
+                prices = fetch_prices()
+                logger.info("🌐 yfinanceから新規取得しました")
             
             # VIX取得
-            vix = prices.get("^VIX", {}).get("latest", 20) or 20
-            
+            vix_data = prices.get("^VIX", {})
+            vix = vix_data.get("latest") or 20
+
             # S&P500トレンド判定
             sp500 = prices.get("^GSPC", {})
             change_pct = sp500.get("change_pct", 0) or 0
@@ -74,7 +97,7 @@ class AutonomousTeamRunner:
             # ドローダウン（簡易版）
             high = sp500.get("high", 0) or 0
             low = sp500.get("low", 0) or 0
-            current = sp500.get("close", 0) or 0
+            current = sp500.get("latest") or 0
             max_drawdown = -((high - current) / high * 100) if high > 0 else 0
             
             market_data = {
