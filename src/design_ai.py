@@ -930,6 +930,223 @@ def _market_status_bar(prices: dict) -> str:
     return f'<div class="market-status-bar">{"".join(items)}</div>'
 
 
+def _pro_insights(prices: dict) -> str:
+    """日本市場プロ・クロス分析セクション。
+    単独指標ではなく「指標間の関係」から市場の歪みを自動検出する。
+    ① 日米恐怖スプレッド ② CME先物ギャップ ③ VIX期間構造
+    ④ NT倍率ローテーション ⑤ グロース体温計 ⑥ 半導体動脈(SOX→東京)
+    """
+    def val(sym):
+        r = prices.get(sym) or {}
+        v = r.get("latest")
+        return v if v is not None else r.get("price")
+
+    def chg(sym):
+        return (prices.get(sym) or {}).get("change_pct")
+
+    n225   = val("^N225")
+    topix  = val("^TOPX")
+    nt     = val("NT_RATIO")
+    nvi    = val("NIKKEI_VI")
+    vix    = val("^VIX")
+    vix9   = val("^VIX9D")
+    vix3m  = val("^VIX3M")
+    fut    = val("NIY=F")
+    nt_chg   = chg("NT_RATIO")
+    n225_chg = chg("^N225")
+    g250_chg = chg("GROWTH250")
+    sox_chg  = chg("^SOX")
+    nvi_chg  = chg("NIKKEI_VI")
+
+    GREEN, YELLOW, RED = "#3fb950", "#d29922", "#f85149"
+    cards = []
+    reds = yellows = 0
+
+    def card(no, title, big, sub, color, light, pro, easy):
+        return f"""
+    <div class="card" style="padding:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:12px;color:#8b949e;font-weight:600">{no} {title}</span>
+        <span style="font-size:16px">{light}</span>
+      </div>
+      <div style="font-size:26px;font-weight:800;margin:6px 0;color:{color}">{big}</div>
+      <div style="font-size:11px;color:#8b949e">{sub}</div>
+      <div style="margin-top:10px;padding:10px;background:rgba(88,166,255,.05);border-left:3px solid {color};border-radius:6px">
+        <div style="font-size:12px;font-weight:700;color:{color}">🎩 プロの読み</div>
+        <div style="font-size:12px;margin-top:4px;line-height:1.7">{pro}</div>
+        <div style="font-size:11px;color:#8b949e;margin-top:6px;line-height:1.6">🦦 やさしく言うと：{easy}</div>
+      </div>
+    </div>"""
+
+    # ── ① 日米恐怖スプレッド（日経VI − VIX）──
+    if nvi is not None and vix is not None:
+        spread = nvi - vix
+        if spread >= 12:
+            c, l = RED, "🔴"; reds += 1
+            pro  = (f"日経VI {nvi:.1f} に対し米VIX {vix:.1f}。スプレッド +{spread:.1f}pt は明確な異常値。"
+                    f"恐怖の震源地は<b>日本側</b>にある（円金利・日銀・円キャリー巻き戻し等の国内要因）。"
+                    f"米国だけ見ていると足をすくわれる局面。")
+            easy = "アメリカは落ち着いているのに、日本だけが怖がっている状態。日本固有の悪材料に注意。"
+        elif spread >= 6:
+            c, l = YELLOW, "🟡"; yellows += 1
+            pro  = f"スプレッド +{spread:.1f}pt。日本側の警戒がやや先行。国内イベント（日銀・決算）の重みを増やして見るべき水準。"
+            easy = "日本のほうが少しだけ神経質になっています。"
+        elif spread <= -3:
+            c, l = YELLOW, "🟡"; yellows += 1
+            pro  = f"スプレッド {spread:.1f}pt と逆転。恐怖の震源は<b>米国側</b>。東京は米国発の下げをもらいやすい。"
+            easy = "アメリカのほうが怖がっています。米市場の下げが日本に飛び火しやすい形。"
+        else:
+            c, l = GREEN, "🟢"
+            pro  = f"スプレッド {spread:+.1f}pt は正常レンジ。日米の恐怖感は均衡しており、どちらか一方の固有リスクは観測されない。"
+            easy = "日本とアメリカ、どちらも同じくらいの緊張感。特別な歪みなし。"
+        cards.append(card("①", "日米 恐怖スプレッド", f"{spread:+.1f}pt",
+                          f"日経VI {nvi:.2f} − VIX {vix:.2f}", c, l, pro, easy))
+
+    # ── ② CME先物ギャップ（寄り付き予測）──
+    if fut is not None and n225 is not None:
+        gap = fut - n225
+        gap_pct = gap / n225 * 100
+        if abs(gap_pct) < 0.3:
+            c, l = GREEN, "🟢"
+            pro  = f"CME先物 {fut:,.0f} vs 現物 {n225:,.0f}。ギャップ {gap_pct:+.2f}% はほぼ無風。寄り付きは前日終値近辺でスタートする公算。"
+            easy = "明日の朝はだいたい昨日の続きから始まりそう。"
+        elif abs(gap_pct) < 0.8:
+            c, l = YELLOW, "🟡"; yellows += 1
+            d = "高く" if gap > 0 else "安く"
+            pro  = f"ギャップ {gap_pct:+.2f}%。寄り付きは小幅に{d}始まる示唆。ギャップ方向に飛びつかず、寄り後30分の値動きで本物か判断するのが定石。"
+            easy = f"朝は少し{d}始まりそう。あわてて飛び乗らないのがコツ。"
+        else:
+            c, l = RED, "🔴"; reds += 1
+            d = "大幅高" if gap > 0 else "大幅安"
+            pro  = f"ギャップ {gap_pct:+.2f}% の{d}スタート示唆。窓開け局面では寄り成り注文が偏り、最初の5分は値が飛ぶ。指値主体で。"
+            easy = f"朝から大きく動いて始まりそう。最初の数分は様子見が安全。"
+        cards.append(card("②", "CME先物ギャップ（寄り付き予測）", f"{gap_pct:+.2f}%",
+                          f"CME日経先物 {fut:,.0f} − 現物 {n225:,.0f} = {gap:+,.0f}円", c, l, pro, easy))
+
+    # ── ③ VIX期間構造（パニックの時間軸）──
+    if vix9 is not None and vix3m is not None:
+        ts = vix9 - vix3m
+        if ts >= 2:
+            c, l = RED, "🔴"; reds += 1
+            pro  = (f"VIX9D {vix9:.1f} > VIX3M {vix3m:.1f}（バックワーデーション {ts:+.1f}pt）。"
+                    f"「今この瞬間」の保険料が3ヶ月先より高い＝市場は直近イベントに身構えている。歴史的に底打ち反転もこの形から生まれる。")
+            easy = "「今週がいちばん怖い」とみんなが思っている形。荒れやすいけど、底打ちのサインになることも。"
+        elif ts > 0:
+            c, l = YELLOW, "🟡"; yellows += 1
+            pro  = f"期間構造 {ts:+.1f}pt の軽い逆転。平常時は右肩上がり（短期＜長期）が正常なので、短期警戒がやや過熱気味。"
+            easy = "ふだんより「直近への警戒」が少し強め。"
+        else:
+            c, l = GREEN, "🟢"
+            pro  = f"期間構造 {ts:+.1f}pt の正常コンタンゴ。短期＜長期の健全な形状で、目先のパニックは織り込まれていない。"
+            easy = "ボラティリティ市場は平常運転。差し迫った恐怖はなし。"
+        cards.append(card("③", "VIX期間構造（恐怖の時間軸）", f"{ts:+.1f}pt",
+                          f"VIX9D {vix9:.2f} − VIX3M {vix3m:.2f}", c, l, pro, easy))
+
+    # ── ④ NT倍率ローテーション ──
+    if nt is not None:
+        if nt_chg is not None and nt_chg <= -0.5:
+            c, l = "#58a6ff", "🔵"
+            pro  = (f"NT倍率 {nt:.2f}（{nt_chg:+.2f}%）と急低下。日経平均（半導体・値がさグロース）より"
+                    f"TOPIX（銀行・商社・バリュー）が相対的に強い。<b>金利上昇・バリュー回帰</b>の典型パターン。")
+            easy = "ハイテク株から銀行などの「地味だけど堅い株」へお金が引っ越し中。"
+        elif nt_chg is not None and nt_chg >= 0.5:
+            c, l = "#bc8cff", "🟣"
+            pro  = (f"NT倍率 {nt:.2f}（{nt_chg:+.2f}%）と上昇。半導体・値がさ株が指数を牽引する"
+                    f"<b>日経主導相場</b>。SOX指数との連動が強まる局面。")
+            easy = "半導体などの花形株が相場を引っ張っています。"
+        else:
+            c, l = GREEN, "⚪"
+            chg_s = f"{nt_chg:+.2f}%" if nt_chg is not None else "—"
+            pro  = f"NT倍率 {nt:.2f}（{chg_s}）。日経・TOPIXの力関係は拮抗。明確なローテーションは観測されない。"
+            easy = "ハイテク株もバリュー株も、今日は引き分け。"
+        cards.append(card("④", "NT倍率（資金ローテーション）", f"{nt:.2f}",
+                          f"日経平均 ÷ TOPIX ＝ 資金の流れの方位磁石", c, l, pro, easy))
+
+    # ── ⑤ グロース体温計（個人マネーのリスク食欲）──
+    if g250_chg is not None and n225_chg is not None:
+        rel = g250_chg - n225_chg
+        if rel >= 1.0:
+            c, l = GREEN, "🟢"
+            pro  = (f"グロース250 {g250_chg:+.2f}% vs 日経 {n225_chg:+.2f}%（相対 {rel:+.2f}pt）。"
+                    f"大型株が売られる中でも個人マネーは小型グロースを物色。<b>リスク食欲は維持</b>されており、全面リスクオフではない。")
+            easy = "プロが売っても個人投資家は元気。総崩れの心配はまだ薄い。"
+        elif rel <= -1.0:
+            c, l = RED, "🔴"; reds += 1
+            pro  = (f"グロース250が相対 {rel:+.2f}pt の劣後。小型グロースから先に資金が逃げるのは"
+                    f"<b>リスクオフの初期症状</b>。個人の信用買い残の投げに警戒。")
+            easy = "個人投資家が小型株から逃げ始めています。市場全体の弱気サイン。"
+        else:
+            c, l = GREEN, "⚪"
+            pro  = f"グロース250 {g250_chg:+.2f}% vs 日経 {n225_chg:+.2f}%。大型・小型のリスク選好に偏りなし。"
+            easy = "大きい株も小さい株も同じような動き。"
+        cards.append(card("⑤", "グロース体温計（個人のリスク食欲）", f"{rel:+.2f}pt",
+                          f"グロース250 {g250_chg:+.2f}% − 日経 {n225_chg:+.2f}%", c, l, pro, easy))
+
+    # ── ⑥ 半導体動脈（SOX → 東京への伝播）──
+    if sox_chg is not None:
+        if sox_chg <= -2.0:
+            c, l = RED, "🔴"; reds += 1
+            pro  = (f"フィラデルフィア半導体指数 {sox_chg:+.2f}%。SOXは東京エレク・アドバンテスト・レーザーテック"
+                    f"の翌日株価と高相関。日経の指数寄与度上位が直撃されるため、<b>指数の重し</b>として作用する。")
+            easy = "アメリカの半導体株が大きく下落。日本の半導体株も明日つられやすい。"
+        elif sox_chg <= -0.5:
+            c, l = YELLOW, "🟡"; yellows += 1
+            pro  = f"SOX {sox_chg:+.2f}%。東京の半導体関連には軽い逆風。指数寄与の大きいアドバンテストの寄り付きに注目。"
+            easy = "半導体株にちょっと向かい風。"
+        elif sox_chg >= 2.0:
+            c, l = GREEN, "🟢"
+            pro  = f"SOX {sox_chg:+.2f}% の急伸。東京の半導体株に強い追い風。日経はTOPIXをアウトパフォームしやすい（NT倍率上昇要因）。"
+            easy = "アメリカの半導体株が絶好調。日本の半導体株にも追い風。"
+        else:
+            c, l = GREEN, "⚪"
+            pro  = f"SOX {sox_chg:+.2f}%。半導体経由の東京への影響は限定的。"
+            easy = "半導体株は今日は静か。"
+        cards.append(card("⑥", "半導体動脈（SOX→東京）", f"{sox_chg:+.2f}%",
+                          "SOX指数 → 東エレク・アドテスト → 日経への伝播経路", c, l, pro, easy))
+
+    if not cards:
+        return ""
+
+    # ── 総合判定バナー（ガネ先生の天気図）──
+    if reds >= 2:
+        w_emoji, w_title, w_color = "⛈", "嵐に備える日", RED
+        verdict = "複数の警報が同時点灯。ポジションを軽くして現金比率を上げ、嵐が過ぎるのを待つのが上策じゃ。"
+    elif reds == 1 or yellows >= 2:
+        w_emoji, w_title, w_color = "🌥", "くもり・局地的に強風", YELLOW
+        verdict = "全面警戒ではないが、点灯中の警報の方角からの風には注意。新規の大口買いは急がんでよい。"
+    else:
+        w_emoji, w_title, w_color = "☀", "おおむね晴れ", GREEN
+        verdict = "指標間に大きな歪みはない。淡々といつもの戦略を続けてよい日じゃ。"
+
+    nvi_note = ""
+    if nvi is not None and nvi_chg is not None and nvi_chg >= 10:
+        nvi_note = f"""
+  <div style="margin-top:8px;padding:8px 12px;background:rgba(248,81,73,.1);border:1px solid rgba(248,81,73,.4);border-radius:8px;font-size:12px">
+    ⚡ <b>速報級シグナル:</b> 日経VIが前日比 <b>{nvi_chg:+.1f}%</b> の急騰。VI急騰日は値幅が普段の1.5〜2倍に拡がりやすい。指値は普段より深めに。
+  </div>"""
+
+    return f"""
+<section class="fade-up">
+  <h2 class="section-title">🏛 プロの目 — クロス指標分析</h2>
+  <div style="background:linear-gradient(135deg,#161b22,#1c2128);border:1px solid {w_color};border-radius:12px;padding:14px 18px;margin-bottom:14px">
+    <div style="display:flex;align-items:center;gap:12px">
+      <span style="font-size:34px">{w_emoji}</span>
+      <div>
+        <div style="font-weight:800;font-size:15px;color:{w_color}">本日の市場天気図：{w_title}</div>
+        <div style="font-size:12px;color:#c9d1d9;margin-top:3px;line-height:1.7">🐘 ガネ先生「{verdict}」</div>
+      </div>
+    </div>{nvi_note}
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:12px">
+    {''.join(cards)}
+  </div>
+  <div style="font-size:10px;color:#484f58;margin-top:8px">
+    分析対象: 日経VI(日経公式) / TOPIX・グロース250(東証) / CME先物・VIX系・SOX(CBOE・PHLX) — 全て一次ソースから自動取得
+  </div>
+</section>
+"""
+
+
 def _risk_color(score: float) -> str:
     if score >= 1.5:   return GREEN
     if score >= 0.3:   return TEAL
@@ -1371,6 +1588,7 @@ def generate(
     watch_html   = _watchlist(prices, technical)
     status_bar   = _market_status_bar(prices)
     sc_html      = _scenarios_html(scenario)
+    pro_html     = _pro_insights(prices)
 
     html = f"""<!DOCTYPE html>
 <html lang="ja">
@@ -1429,6 +1647,9 @@ def generate(
 
 <!-- ── 市場ステータスバー ── -->
 {status_bar}
+
+<!-- ── プロの目: クロス指標分析 ── -->
+{pro_html}
 
 <!-- ── Row 1: ゲージ / FearGreed ── -->
 <section>
