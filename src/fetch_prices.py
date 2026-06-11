@@ -1,8 +1,12 @@
 """
 価格データ取得モジュール
-優先順位: yfinance → Stooq CSV フォールバック
-Fear & Greed Index（CNN非公式エンドポイント）も取得
-APIキー不要の公開データのみ使用
+すべて無料・APIキー不要のソースのみ使用
+
+取得ソース（優先順位順）:
+  1. Yahoo Finance 直接API (query1.finance.yahoo.com/v8/finance/chart)
+  2. CoinGecko API (仮想通貨のみ)
+  3. open.er-api.com (為替のみ)
+  4. Stooq CSV (補完)
 """
 import json
 import time
@@ -16,91 +20,177 @@ from src.utils import BASE_DIR, get_jst_now, get_today_str, get_dirs, setup_logg
 
 logger = setup_logger("fetch_prices")
 
+_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36",
+    "Accept": "application/json",
+    "Accept-Language": "ja,en;q=0.9",
+}
+
 
 def load_symbols() -> dict:
     with open(BASE_DIR / "config" / "symbols.yaml", encoding="utf-8") as f:
         return yaml.safe_load(f)
 
 
-def _fetch_yahoo_direct(symbol: str) -> pd.DataFrame | None:
-    """Yahoo Finance chart API に直接リクエスト（yfinanceレート制限時のフォールバック）"""
+# ─── ① Yahoo Finance 直接API ────────────────────────────────────────────────
+
+def _fetch_yahoo_direct(symbol: str) -> dict | None:
+    """Yahoo Finance chart API に直接リクエスト。latestとchange_pctを返す。"""
     url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?interval=1d&range=5d"
-    _HEADERS = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36",
-        "Accept": "application/json",
-        "Accept-Language": "ja,en;q=0.9",
-    }
     try:
         r = requests.get(url, headers=_HEADERS, timeout=15)
         r.raise_for_status()
         result = r.json()["chart"]["result"][0]
-        timestamps = result["timestamp"]
-        closes = result["indicators"]["quote"][0]["close"]
-        rows = [(pd.Timestamp(t, unit="s", tz="UTC"), c) for t, c in zip(timestamps, closes) if c is not None]
-        if not rows:
+        closes = [c for c in result["indicators"]["quote"][0]["close"] if c is not None]
+        if not closes:
             return None
-        df = pd.DataFrame(rows, columns=["Date", "Close"])
-        df = df.set_index("Date")
-        return df
+        latest = round(closes[-1], 4)
+        prev   = round(closes[-2], 4) if len(closes) >= 2 else None
+        change = round((latest - prev) / abs(prev) * 100, 2) if prev else None
+        return {"latest": latest, "prev_close": prev, "change_pct": change, "source": "Yahoo直接API"}
     except Exception as e:
         logger.warning(f"Yahoo直接API 失敗 [{symbol}]: {e}")
     return None
 
 
-def _fetch_yfinance(symbol: str, period: str = "5d") -> pd.DataFrame | None:
+# ─── ② CoinGecko（仮想通貨） ─────────────────────────────────────────────────
+
+_COINGECKO_IDS = {
+    "BTC-USD": "bitcoin",
+    "ETH-USD": "ethereum",
+    "SOL-USD": "solana",
+}
+
+def _fetch_coingecko(symbol: str) -> dict | None:
+    cg_id = _COINGECKO_IDS.get(symbol)
+    if not cg_id:
+        return None
+    url = f"https://api.coingecko.com/api/v3/simple/price?ids={cg_id}&vs_currencies=usd&include_24hr_change=true"
     try:
-        import yfinance as yf
-        tk = yf.Ticker(symbol)
-        df = tk.history(period=period, auto_adjust=True)
-        if df is not None and not df.empty:
-            return df
+        r = requests.get(url, timeout=15)
+        r.raise_for_status()
+        data = r.json().get(cg_id, {})
+        price = data.get("usd")
+        change = data.get("usd_24h_change")
+        if price is None:
+            return None
+        return {
+            "latest": round(price, 2),
+            "prev_close": None,
+            "change_pct": round(change, 2) if change else None,
+            "source": "CoinGecko",
+        }
     except Exception as e:
-        logger.warning(f"yfinance 失敗 [{symbol}]: {e}")
-    # フォールバック: Yahoo直接API
-    return _fetch_yahoo_direct(symbol)
+        logger.warning(f"CoinGecko 失敗 [{symbol}]: {e}")
+    return None
 
 
-def _fetch_stooq(stooq_symbol: str) -> pd.DataFrame | None:
+# ─── ③ open.er-api.com（為替） ──────────────────────────────────────────────
+
+_ER_BASE_PAIRS = {
+    "USDJPY=X": ("USD", "JPY"),
+    "EURUSD=X": ("EUR", "USD"),
+    "GBPUSD=X": ("GBP", "USD"),
+    "EURJPY=X": ("EUR", "JPY"),
+}
+
+_er_cache: dict = {}
+
+def _fetch_exchangerate(symbol: str) -> dict | None:
+    pair = _ER_BASE_PAIRS.get(symbol)
+    if not pair:
+        return None
+    base, quote = pair
+    # 同じbaseは1回だけ取得してキャッシュ
+    if base not in _er_cache:
+        try:
+            r = requests.get(f"https://open.er-api.com/v6/latest/{base}", timeout=15)
+            r.raise_for_status()
+            _er_cache[base] = r.json().get("rates", {})
+        except Exception as e:
+            logger.warning(f"ExchangeRate-API 失敗 [{base}]: {e}")
+            return None
+    rate = _er_cache.get(base, {}).get(quote)
+    if rate is None:
+        return None
+    return {"latest": round(rate, 4), "prev_close": None, "change_pct": None, "source": "ExchangeRate-API"}
+
+
+# ─── ④ Stooq CSV（補完） ────────────────────────────────────────────────────
+
+def _fetch_stooq(stooq_symbol: str) -> dict | None:
     url = f"https://stooq.com/q/d/l/?s={stooq_symbol}&i=d"
     try:
-        resp = requests.get(url, timeout=15,
-                            headers={"User-Agent": "Mozilla/5.0"})
+        resp = requests.get(url, timeout=15, headers={"User-Agent": "Mozilla/5.0"})
         resp.raise_for_status()
         from io import StringIO
         df = pd.read_csv(StringIO(resp.text))
         if df.empty or "Close" not in df.columns:
             return None
-        df["Date"] = pd.to_datetime(df["Date"])
-        return df.sort_values("Date").tail(5)
+        closes = df.sort_values("Date")["Close"].dropna()
+        if closes.empty:
+            return None
+        latest = round(float(closes.iloc[-1]), 4)
+        prev   = round(float(closes.iloc[-2]), 4) if len(closes) >= 2 else None
+        change = round((latest - prev) / abs(prev) * 100, 2) if prev else None
+        return {"latest": latest, "prev_close": prev, "change_pct": change, "source": f"Stooq({stooq_symbol})"}
     except Exception as e:
         logger.warning(f"Stooq 失敗 [{stooq_symbol}]: {e}")
     return None
 
 
-def _extract_latest(df: pd.DataFrame) -> dict:
-    try:
-        closes = df["Close"].dropna()
-        if len(closes) < 1:
-            return {}
-        latest = float(closes.iloc[-1])
-        prev = float(closes.iloc[-2]) if len(closes) >= 2 else None
-        change = round((latest - prev) / abs(prev) * 100, 2) if prev else None
-        return {
-            "latest": round(latest, 4),
-            "prev_close": round(prev, 4) if prev else None,
-            "change_pct": change,
-        }
-    except Exception as e:
-        logger.warning(f"データ抽出失敗: {e}")
-        return {}
+# ─── メイン取得ロジック ───────────────────────────────────────────────────────
 
+def _fetch_single(sym: str, name: str, category: str, fallback_map: dict) -> dict:
+    fetch_time = get_jst_now().isoformat()
+    base = {"symbol": sym, "name": name, "category": category, "fetch_time": fetch_time}
+
+    # ① Yahoo Finance直接API（全シンボル共通）
+    data = _fetch_yahoo_direct(sym)
+
+    # ② 仮想通貨はCoinGeckoも試す
+    if data is None and sym in _COINGECKO_IDS:
+        data = _fetch_coingecko(sym)
+
+    # ③ 為替はExchangeRate-APIも試す
+    if data is None and sym in _ER_BASE_PAIRS:
+        data = _fetch_exchangerate(sym)
+
+    # ④ Stooqフォールバック
+    if data is None:
+        stooq_sym = fallback_map.get(sym)
+        if stooq_sym:
+            data = _fetch_stooq(stooq_sym)
+
+    if data:
+        logger.info(f"[OK] {name}({sym}) = {data['latest']} [{data['source']}]")
+        return {**base, **data, "error": None}
+
+    logger.error(f"[FAIL] {name}({sym}): 全ソースで取得失敗")
+    return {**base, "latest": None, "prev_close": None, "change_pct": None,
+            "source": None, "error": "全ソースで取得失敗"}
+
+
+def fetch_all_prices() -> dict:
+    cfg = load_symbols()
+    fallback_map = cfg.get("stooq_fallback", {})
+    all_categories = ["indices", "fear_indices", "forex", "rates",
+                      "commodities", "crypto", "us_stocks", "jp_stocks"]
+    results = {}
+    for cat in all_categories:
+        for item in cfg.get(cat, []):
+            results[item["symbol"]] = _fetch_single(
+                item["symbol"], item["name"],
+                item.get("category", cat), fallback_map
+            )
+            time.sleep(0.3)
+    return results
+
+
+# ─── Fear & Greed Index ───────────────────────────────────────────────────────
 
 def fetch_fear_and_greed() -> dict:
-    """
-    CNN Fear & Greed Index（株式市場版）を取得する
-    APIキー不要。スコア 0〜100
-    0-24: Extreme Fear / 25-44: Fear / 45-55: Neutral / 56-74: Greed / 75-100: Extreme Greed
-    """
+    """CNN Fear & Greed Index（無料・APIキー不要）"""
     from datetime import datetime, timedelta
     week_ago = (datetime.now() - timedelta(days=7)).strftime("%Y-%m-%d")
     url = f"https://production.dataviz.cnn.io/index/fearandgreed/graphdata/{week_ago}"
@@ -120,84 +210,29 @@ def fetch_fear_and_greed() -> dict:
     try:
         resp = requests.get(url, headers=headers, timeout=12)
         resp.raise_for_status()
-        data    = resp.json()
-        fg      = data.get("fear_and_greed", {})
-        score   = float(fg.get("score", 50))
-        prev_1w = fg.get("previous_1_week")
-        prev_1m = fg.get("previous_1_month")
-        prev_cl = fg.get("previous_close")
+        fg    = resp.json().get("fear_and_greed", {})
+        score = float(fg.get("score", 50))
         rating_en, rating_ja = _rating(score)
         result = {
-            "score":         round(score, 1),
-            "rating":        rating_en,
-            "rating_ja":     rating_ja,
-            "prev_close":    round(float(prev_cl), 1)  if prev_cl else None,
-            "prev_1_week":   round(float(prev_1w), 1)  if prev_1w else None,
-            "prev_1_month":  round(float(prev_1m), 1)  if prev_1m else None,
-            "fetch_time":    get_jst_now().isoformat(),
-            "source":        "CNN Fear & Greed Index（株式市場版）",
+            "score":        round(score, 1),
+            "rating":       rating_en,
+            "rating_ja":    rating_ja,
+            "prev_close":   round(float(fg["previous_close"]), 1)  if fg.get("previous_close") else None,
+            "prev_1_week":  round(float(fg["previous_1_week"]), 1) if fg.get("previous_1_week") else None,
+            "prev_1_month": round(float(fg["previous_1_month"]), 1) if fg.get("previous_1_month") else None,
+            "fetch_time":   get_jst_now().isoformat(),
+            "source":       "CNN Fear & Greed Index",
         }
         logger.info(f"[OK] CNN Fear & Greed: {score:.1f} ({rating_ja})")
         return result
     except Exception as e:
         logger.error(f"[FAIL] CNN Fear & Greed 取得失敗: {e}")
-        return {
-            "score": None, "rating": "", "rating_ja": "取得失敗",
-            "prev_close": None, "prev_1_week": None, "prev_1_month": None,
-            "fetch_time": get_jst_now().isoformat(),
-            "source": "CNN Fear & Greed Index",
-        }
+        return {"score": None, "rating": "", "rating_ja": "取得失敗",
+                "prev_close": None, "prev_1_week": None, "prev_1_month": None,
+                "fetch_time": get_jst_now().isoformat(), "source": "CNN Fear & Greed Index"}
 
 
-def _fetch_single(sym: str, name: str, category: str,
-                  fallback_map: dict) -> dict:
-    fetch_time = get_jst_now().isoformat()
-    record = {
-        "symbol": sym, "name": name, "category": category,
-        "fetch_time": fetch_time, "source": None,
-        "latest": None, "prev_close": None,
-        "change_pct": None, "error": None,
-    }
-    # yfinance
-    df = _fetch_yfinance(sym)
-    if df is not None and not df.empty:
-        extracted = _extract_latest(df)
-        if extracted:
-            record.update(extracted)
-            record["source"] = "yfinance"
-            logger.info(f"[OK] {name}({sym}) = {record['latest']}")
-            return record
-    # Stooq フォールバック
-    stooq_sym = fallback_map.get(sym)
-    if stooq_sym:
-        df2 = _fetch_stooq(stooq_sym)
-        if df2 is not None and not df2.empty:
-            extracted = _extract_latest(df2)
-            if extracted:
-                record.update(extracted)
-                record["source"] = f"stooq({stooq_sym})"
-                logger.info(f"[Stooq] {name}({sym}) = {record['latest']}")
-                return record
-    record["error"] = "全ソースで取得失敗"
-    logger.error(f"[FAIL] {name}({sym}): 全ソースで取得失敗")
-    return record
-
-
-def fetch_all_prices() -> dict:
-    cfg = load_symbols()
-    fallback_map = cfg.get("stooq_fallback", {})
-    all_categories = ["indices", "fear_indices", "forex", "rates",
-                      "commodities", "crypto", "us_stocks", "jp_stocks"]
-    results = {}
-    for cat in all_categories:
-        for item in cfg.get(cat, []):
-            results[item["symbol"]] = _fetch_single(
-                item["symbol"], item["name"],
-                item.get("category", cat), fallback_map
-            )
-            time.sleep(0.4)
-    return results
-
+# ─── 保存・実行 ───────────────────────────────────────────────────────────────
 
 def save_prices(prices: dict, fear_greed: dict) -> Path:
     dirs = get_dirs()
