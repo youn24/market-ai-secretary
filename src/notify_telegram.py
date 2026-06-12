@@ -373,19 +373,32 @@ def run(risk, analysis, report_paths, mode,
             report_paths=report_paths,
         )
 
-        # ① リスクゲージ画像（新：相場まとめのキャプション付き）
+        # ① 市場まとめ画像（新：サマリーカード → リスクゲージ → テキストの順でフォールバック）
         msg1_stamped = _stamp("📊 今日の市場まとめ") + msgs[0]
-        gauge_sent = False
+        msg1_sent = False
+        # (1) サマリーカード（A案・一目でわかるカード型ビジュアル）
         try:
-            from src.risk_gauge import make_gauge_image
-            gauge_path = make_gauge_image(risk, fear_greed or {}, prices or {})
-            if gauge_path and os.path.exists(gauge_path):
-                send_photo(gauge_path, caption=msg1_stamped)
-                gauge_sent = True
-                logger.info("✅ リスクゲージ画像送信")
+            from src.summary_card import make_summary_card
+            card_path = make_summary_card(prices or {}, fear_greed or {}, risk or {})
+            if card_path and os.path.exists(card_path):
+                send_photo(card_path, caption=msg1_stamped)
+                msg1_sent = True
+                logger.info("✅ サマリーカード画像送信")
         except Exception as _e:
-            logger.warning(f"ゲージ画像スキップ: {_e}")
-        if not gauge_sent:
+            logger.warning(f"サマリーカードスキップ: {_e}")
+        # (2) フォールバック：従来のリスクゲージ画像
+        if not msg1_sent:
+            try:
+                from src.risk_gauge import make_gauge_image
+                gauge_path = make_gauge_image(risk, fear_greed or {}, prices or {})
+                if gauge_path and os.path.exists(gauge_path):
+                    send_photo(gauge_path, caption=msg1_stamped)
+                    msg1_sent = True
+                    logger.info("✅ リスクゲージ画像送信")
+            except Exception as _e:
+                logger.warning(f"ゲージ画像スキップ: {_e}")
+        # (3) 最終フォールバック：テキストのみ
+        if not msg1_sent:
             send_message(msg1_stamped)
 
         # ①.5 キャラクターコメント（ガネーシャ＆カワウソ）

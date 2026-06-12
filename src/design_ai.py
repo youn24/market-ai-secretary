@@ -4,6 +4,7 @@ src/design_ai.py  ─  デザインAIエージェント
 """
 
 import math
+import json
 import traceback
 from pathlib import Path
 from src.utils import setup_logger, get_jst_now, get_today_str, get_dirs
@@ -49,6 +50,13 @@ _CSS = f"""
 }}
 
 *, *::before, *::after {{ box-sizing: border-box; margin: 0; padding: 0; }}
+
+.cj-toggle {{ display:flex; gap:4px; }}
+.cj-btn {{ background:transparent; color:var(--muted); border:1px solid var(--border);
+  border-radius:7px; padding:4px 10px; font-size:11px; font-weight:700;
+  cursor:pointer; transition:all .15s; }}
+.cj-btn:hover {{ border-color:var(--blue); color:var(--text); }}
+.cj-btn-on {{ background:var(--blue); color:#fff; border-color:var(--blue); }}
 
 html {{ scroll-behavior: smooth; }}
 
@@ -896,6 +904,175 @@ def _scenarios_html(scenario: dict) -> str:
 </section>"""
 
 
+def _chartjs_section(history: dict, prices: dict) -> str:
+    """B案：Chart.js インタラクティブチャート（1ヶ月の値動き比較＋本日の前日比）"""
+    history = history or {}
+    series  = history.get("series") or []
+    labels  = history.get("labels") or []
+
+    # ── 本日の前日比バー用データ（主要指標）──
+    bar_syms = [
+        ("^N225", "日経225"), ("^GSPC", "S&P500"), ("^IXIC", "Nasdaq"),
+        ("USDJPY=X", "ドル円"), ("GC=F", "金"), ("CL=F", "原油"),
+        ("BTC-USD", "BTC"), ("^VIX", "VIX"),
+    ]
+    bar_labels, bar_vals, bar_colors = [], [], []
+    for sym, name in bar_syms:
+        chg = (prices.get(sym) or {}).get("change_pct")
+        if chg is None:
+            continue
+        bar_labels.append(name)
+        bar_vals.append(chg)
+        # VIXだけ上昇＝赤、それ以外は上昇＝緑
+        up_is_good = sym != "^VIX"
+        good = (chg >= 0) if up_is_good else (chg < 0)
+        bar_colors.append("#3fb950" if good else "#f85149")
+
+    # 何も無ければ非表示
+    if not series and not bar_vals:
+        return ""
+
+    line_json   = json.dumps(series, ensure_ascii=False)
+    labels_json = json.dumps(labels, ensure_ascii=False)
+    bl_json     = json.dumps(bar_labels, ensure_ascii=False)
+    bv_json     = json.dumps(bar_vals, ensure_ascii=False)
+    bc_json     = json.dumps(bar_colors, ensure_ascii=False)
+
+    line_card = ""
+    if series:
+        line_card = """
+  <div class="card fade-up" style="margin-bottom:12px">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:6px">
+      <div class="card-title" style="margin:0">過去1ヶ月の値動き比較</div>
+      <div class="cj-toggle">
+        <button id="cjModePct" class="cj-btn cj-btn-on" onclick="cjSetMode('pct')">騰落率 %</button>
+        <button id="cjModeRaw" class="cj-btn" onclick="cjSetMode('raw')">実数</button>
+      </div>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:8px">
+      初日を起点に、どの資産が強かったかを同じ物差しで比較できます（線をタップで数値表示）
+    </div>
+    <div style="position:relative;height:280px"><canvas id="cjLine"></canvas></div>
+  </div>"""
+
+    bar_card = ""
+    if bar_vals:
+        bar_card = """
+  <div class="card fade-up">
+    <div class="card-title">本日の前日比ランキング</div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:8px">
+      緑＝好材料方向 / 赤＝警戒方向（VIXは上昇が赤）。バーをタップで正確な数値が出ます
+    </div>
+    <div style="position:relative;height:260px"><canvas id="cjBar"></canvas></div>
+  </div>"""
+
+    return f"""
+<!-- ── インタラクティブチャート（Chart.js・実データ）── -->
+<section>
+  <div class="section-header">
+    <span class="section-icon">📊</span>
+    <span class="section-title">インタラクティブ・データチャート</span>
+    <span class="section-tag">タップで操作</span>
+  </div>
+{line_card}
+{bar_card}
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+(function(){{
+  function init(){{
+    if (typeof Chart === 'undefined') {{ return setTimeout(init, 200); }}
+    Chart.defaults.color = '#8b949e';
+    Chart.defaults.font.family = "-apple-system,'Hiragino Sans','Yu Gothic',sans-serif";
+    Chart.defaults.font.size = 11;
+    var grid = 'rgba(139,148,158,0.12)';
+
+    var labels = {labels_json};
+    var series = {line_json};
+    var lineChart = null;
+
+    function buildLine(mode){{
+      var ds = series.map(function(s){{
+        return {{
+          label: s.name,
+          data: (mode === 'raw' ? s.data : s.pct),
+          borderColor: s.color,
+          backgroundColor: s.color,
+          borderWidth: 2,
+          pointRadius: 0,
+          pointHoverRadius: 4,
+          tension: 0.25,
+          yAxisID: (mode === 'raw' ? ('y_' + s.name) : 'y'),
+        }};
+      }});
+      var scales;
+      if (mode === 'raw') {{
+        // 実数モードは資産ごとにスケールが違うので各系列を非表示の個別軸へ（重なり比較は％モード推奨）
+        scales = {{ x: {{ grid: {{ color: grid }} }} }};
+        series.forEach(function(s){{
+          scales['y_' + s.name] = {{ display:false }};
+        }});
+      }} else {{
+        scales = {{
+          x: {{ grid: {{ color: grid }} }},
+          y: {{ grid: {{ color: grid }},
+                ticks: {{ callback: function(v){{ return v + '%'; }} }} }}
+        }};
+      }}
+      if (lineChart) lineChart.destroy();
+      lineChart = new Chart(document.getElementById('cjLine'), {{
+        type: 'line',
+        data: {{ labels: labels, datasets: ds }},
+        options: {{
+          responsive: true, maintainAspectRatio: false,
+          interaction: {{ mode: 'index', intersect: false }},
+          plugins: {{
+            legend: {{ position: 'top', labels: {{ usePointStyle: true, boxWidth: 8 }} }},
+            tooltip: {{ callbacks: {{ label: function(c){{
+              var suf = (mode === 'raw' ? '' : '%');
+              return c.dataset.label + ': ' + c.parsed.y + suf;
+            }} }} }}
+          }},
+          scales: scales
+        }}
+      }});
+    }}
+
+    window.cjSetMode = function(mode){{
+      document.getElementById('cjModePct').classList.toggle('cj-btn-on', mode==='pct');
+      document.getElementById('cjModeRaw').classList.toggle('cj-btn-on', mode==='raw');
+      buildLine(mode);
+    }};
+
+    if (document.getElementById('cjLine')) buildLine('pct');
+
+    if (document.getElementById('cjBar')) {{
+      new Chart(document.getElementById('cjBar'), {{
+        type: 'bar',
+        data: {{ labels: {bl_json},
+                 datasets: [{{ data: {bv_json}, backgroundColor: {bc_json},
+                              borderRadius: 4 }}] }},
+        options: {{
+          responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+          plugins: {{ legend: {{ display: false }},
+            tooltip: {{ callbacks: {{ label: function(c){{
+              return (c.parsed.x>=0?'+':'') + c.parsed.x + '%'; }} }} }} }},
+          scales: {{
+            x: {{ grid: {{ color: grid }},
+                  ticks: {{ callback: function(v){{ return v + '%'; }} }} }},
+            y: {{ grid: {{ display:false }} }}
+          }}
+        }}
+      }});
+    }}
+  }}
+  init();
+}})();
+</script>
+"""
+
+
 def _market_status_bar(prices: dict) -> str:
     """横並び市場ステータスバー"""
     syms = [
@@ -1590,6 +1767,15 @@ def generate(
     sc_html      = _scenarios_html(scenario)
     pro_html     = _pro_insights(prices)
 
+    # B案：Chart.js 用ヒストリー（取得失敗してもレポートは継続）
+    try:
+        from src.price_history import fetch_history
+        _history = fetch_history()
+    except Exception as _e:
+        logger.warning(f"ヒストリー取得スキップ: {_e}")
+        _history = {}
+    chartjs_html = _chartjs_section(_history, prices)
+
     html = f"""<!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -1790,6 +1976,9 @@ def generate(
     </div>
   </div>
 </section>
+
+<!-- ── インタラクティブ・データチャート（Chart.js）── -->
+{chartjs_html}
 
 <!-- ── マーケット概況（詳細カード）── -->
 <section>
