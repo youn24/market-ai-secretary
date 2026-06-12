@@ -45,12 +45,12 @@
     {
       "date": "2026-06-12",
       "direction": "bull",
-      "score": 7.58,
-      "fg": 29.7,
-      "nikkei": 64179.2695,
+      "score": 6.69,
+      "fg": 30.9,
+      "nikkei": 66020.0391,
       "sp500": 7394.2998,
-      "usdjpy": 160.134,
-      "vix": 19.44,
+      "usdjpy": 160.093,
+      "vix": 19.13,
       "verified": false,
       "correct": null,
       "actual_move": null
