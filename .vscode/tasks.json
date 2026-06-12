@@ -227,6 +227,27 @@
       "problemMatcher": []
     },
     {
+      "label": "📋 適時開示チェック（前営業日・ウォッチリスト）",
+      "type": "shell",
+      "command": "python -m src.tdnet_watcher",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "📋 適時開示チェック（過去3営業日分）",
+      "type": "shell",
+      "command": "python -m src.tdnet_watcher 3",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "📋 適時開示チェック（日付指定 例:20260611）",
+      "type": "shell",
+      "command": "python -m src.tdnet_watcher ${input:tdnetDate}",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
       "label": "🤖 テーマ分析: AIテーマ（さくらインターネット）",
       "type": "shell",
       "command": "python analyze_stock.py 3778",
@@ -275,6 +296,12 @@
       "type": "promptString",
       "description": "証券コードを入力（例: 7203 / 6758 / 4063）",
       "default": "9984"
+    },
+    {
+      "id": "tdnetDate",
+      "type": "promptString",
+      "description": "適時開示を見たい日付 YYYYMMDD（例: 20260611）",
+      "default": "20260611"
     }
   ]
 }

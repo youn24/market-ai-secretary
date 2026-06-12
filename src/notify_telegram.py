@@ -358,6 +358,7 @@ def run(risk, analysis, report_paths, mode,
         earnings_preview=None,
         market_chain=None,
         jquants=None,
+        tdnet=None,
         character_comments=None) -> bool:
     if not _is_configured():
         logger.info("Telegram 設定なし。スキップします。")
@@ -405,6 +406,10 @@ def run(risk, analysis, report_paths, mode,
 
         # ③ レポートURL
         send_message(_stamp("📱 詳細レポートURL") + msgs[2])
+
+        # ③.5 TDnet適時開示アラート（ウォッチリスト銘柄の決算・自社株買い等）
+        if tdnet and tdnet.get("available") and tdnet.get("telegram_message"):
+            send_message(_stamp("📋 適時開示アラート") + tdnet["telegram_message"])
 
         # ④ Level 3: シナリオ分析テキスト
         if scenario and scenario.get("available"):

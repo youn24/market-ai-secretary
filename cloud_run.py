@@ -240,6 +240,19 @@ def run(mode: str):
     except Exception:
         logger.error("テーマランキングエラー"); logger.debug(traceback.format_exc())
 
+    # Step TD: TDnet適時開示ウォッチャー（毎日・ウォッチリスト銘柄のみ）
+    tdnet = {"available": False}
+    try:
+        logger.info("--- Step TD: TDnet適時開示ウォッチャー ---")
+        from src.tdnet_watcher import run as run_td
+        tdnet = run_td(prices, risk, fear_greed)
+        if tdnet.get("available"):
+            logger.info(f"✅ 適時開示: {tdnet.get('count',0)}件（重要{tdnet.get('high_count',0)}件）")
+        else:
+            logger.info("適時開示: ウォッチリスト銘柄の開示なし")
+    except Exception:
+        logger.error("TDnetウォッチャーエラー"); logger.debug(traceback.format_exc())
+
     # Step FA: 財務・決算書分析（月曜のみ）
     financial_analysis = {"available": False}
     try:
@@ -639,7 +652,8 @@ def run(mode: str):
                           tutor=tutor, dca=dca, notif_filter=notif_filter,
                           portfolio_alerts=portfolio_alerts,
                           financial_analysis=financial_analysis,
-                          theme_ranking=theme_ranking)
+                          theme_ranking=theme_ranking,
+                          tdnet=tdnet)
         today = get_today_str()
         report_paths = {
             "html": str(get_dirs()["reports"] / f"{today}_{mode}.html"),
@@ -700,6 +714,7 @@ def run(mode: str):
                   earnings_preview=earnings_preview,
                   market_chain=market_chain,
                   jquants=jquants,
+                  tdnet=tdnet,
                   character_comments=character_comments)
     except Exception:
         logger.error("Telegram通知エラー"); logger.debug(traceback.format_exc())
@@ -717,7 +732,7 @@ def _save_html_report(mode, prices, news, risk, analysis, fear_greed, chart_path
                       character_comments=None,
                       news_bias=None, fire_result=None, bargain=None,
                       tutor=None, dca=None, notif_filter=None, portfolio_alerts=None,
-                      financial_analysis=None, theme_ranking=None):
+                      financial_analysis=None, theme_ranking=None, tdnet=None):
     """初心者でもわかる見やすいダッシュボードHTMLを保存"""
     import base64
     today = get_today_str()
@@ -1001,6 +1016,10 @@ def _save_html_report(mode, prices, news, risk, analysis, fear_greed, chart_path
     # ── テーマ株ランキングHTML ────────────────────────────────
     theme_ranking = theme_ranking or {}
     theme_html = theme_ranking.get("html", "") if theme_ranking.get("available") else ""
+
+    # ── TDnet適時開示HTML ─────────────────────────────────────
+    tdnet = tdnet or {}
+    tdnet_html = tdnet.get("html", "") if tdnet.get("available") else ""
 
     # ── 財務・決算書分析HTML ──────────────────────────────────
     financial_analysis = financial_analysis or {}
@@ -1523,6 +1542,9 @@ a:hover{{text-decoration:underline;}}
 
   <!-- YouTube -->
   {f'<div class="sec-head">📺 YouTube注目動画まとめ</div><div class="yt-wrap">{yt_html}</div>' if yt_html else ""}
+
+  <!-- TDnet適時開示アラート（ウォッチリスト銘柄のみ） -->
+  {f'<div class="sec-head">📋 適時開示アラート（あなたの注目銘柄）</div>{tdnet_html}' if tdnet_html else ""}
 
   <!-- テーマ株人気ランキング -->
   {f'<div class="sec-head">🔥 テーマ株人気ランキング（今週どのテーマが熱い？）</div>{theme_html}' if theme_html else ""}
