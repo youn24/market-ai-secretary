@@ -973,21 +973,30 @@ def build_dashboard(data: dict, out_path: str, premium: dict | None = None) -> s
     ax_extra2  = fig.add_subplot(gs[5, 1])
     ax_extra3  = fig.add_subplot(gs[5, 2])
 
-    # ─── タイトルバー ───
+    # ─── タイトルバー（為替専用ブランディング）───
     jst_now = datetime.now(JST)
+    _WD     = ["月", "火", "水", "木", "金", "土", "日"]
+    _wd     = _WD[jst_now.weekday()]
     title = (
-        f"ミセスワタナベ  FX Market Dashboard\n"
-        f"{jst_now.strftime('%Y/%m/%d  %H:%M JST')}  ─  東京市場午後2時レポート"
+        f"💱 ミセスワタナベ  FX 為替マーケット速報 💱\n"
+        f"{jst_now.year}年{jst_now.month}月{jst_now.day}日（{_wd}）"
+        f"  {jst_now.strftime('%H:%M')} JST  ─  東京市場 午後2時レポート"
     )
-    fig.suptitle(title, color=C_WHITE, fontsize=15,
-                 fontweight="bold", y=0.993, linespacing=1.5)
+    fig.suptitle(title, color=C_GOLD, fontsize=16,
+                 fontweight="bold", y=0.994, linespacing=1.6)
 
-    # ─── ボーダーライン（視認性向上）───
-    fig.add_artist(
-        plt.Line2D([0.01, 0.99], [0.986, 0.986],
-                   transform=fig.transFigure,
-                   color=C_GOLD, lw=1.0, alpha=0.5)
-    )
+    # ─── 為替専用バッジ（他ダッシュボードと一目で区別）───
+    fig.text(0.013, 0.9955, "  💱 FX 為替 専用レポート  ",
+             ha="left", va="top", color=BG, fontsize=11, fontweight="bold",
+             bbox=dict(boxstyle="round,pad=0.45", fc=C_GOLD, ec="none"))
+
+    # ─── ゴールド二重ボーダー（為替ブランドカラー）───
+    for yb, aa, lw in [(0.987, 0.85, 1.6), (0.9845, 0.4, 0.8)]:
+        fig.add_artist(
+            plt.Line2D([0.01, 0.99], [yb, yb],
+                       transform=fig.transFigure,
+                       color=C_GOLD, lw=lw, alpha=aa)
+        )
 
     # ─── 各パネル描画 ───
     panel_usdjpy_price(ax_price,   data)
@@ -1062,7 +1071,10 @@ def build_dashboard(data: dict, out_path: str, premium: dict | None = None) -> s
 def build_text_msg(data: dict, premium: dict | None = None) -> str:
     """Telegram 通知① のテキストを組み立てる"""
     jst_now = datetime.now(JST)
+    _WD     = ["月", "火", "水", "木", "金", "土", "日"]
+    _wd     = _WD[jst_now.weekday()]
     today   = jst_now.strftime("%Y/%m/%d")
+    date_jp = f"{jst_now.year}年{jst_now.month}月{jst_now.day}日（{_wd}）"
 
     def _get(sym, key="latest", default=0.0):
         return data.get(sym, {}).get(key, default) or default
@@ -1128,8 +1140,12 @@ def build_text_msg(data: dict, premium: dict | None = None) -> str:
     bot_cur  = min(strength, key=lambda k: strength[k]) if strength else "N/A"
 
     msg = (
-        f"💹 *FX 午後マーケットレポート*\n"
-        f"📅 {today}  14:00 JST\n"
+        f"💱〰〰〰〰〰〰〰〰〰〰〰💱\n"
+        f"　　〽️ *ミセスワタナベ FX* 〽️\n"
+        f"　 ＼ 為替マーケット速報 ／\n"
+        f"💱〰〰〰〰〰〰〰〰〰〰〰💱\n"
+        f"🗓 *{date_jp}*\n"
+        f"🕑 14:00 JST ─ 東京市場\n"
         f"━━━━━━━━━━━━━━━━━━━━\n"
         f"\n"
         f"🎯 *USD/JPY（ドル円）*\n"
@@ -1165,7 +1181,8 @@ def build_text_msg(data: dict, premium: dict | None = None) -> str:
 def build_url_msg(pages_url: str) -> str:
     """Telegram 通知③ URL メッセージ"""
     return (
-        f"🔗 *詳細レポート*\n"
+        f"💱〰〰〰 為替FX 〰〰〰💱\n"
+        f"🔗 *ミセスワタナベ 詳細レポート*\n"
         f"━━━━━━━━━━━━━━━━━━━━\n"
         f"{pages_url}\n\n"
         f"📱 iPhone Safari / Chrome で開けます\n"

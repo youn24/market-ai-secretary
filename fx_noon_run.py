@@ -105,6 +105,7 @@ def main():
         chart_path = fx_result.get("chart_path", "")
         if chart_path and os.path.exists(chart_path):
             caption = (
+                f"💱〰〰〰 *為替FX ダッシュボード* 〰〰〰💱\n"
                 f"{mood_emoji} *{char_info.get('desc', 'FX ダッシュボード')}*\n"
                 "━━━━━━━━━━━━━━━━━━━━\n"
                 "📈 USD/JPY + BB + MA5/25/75\n"
