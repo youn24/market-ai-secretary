@@ -163,6 +163,13 @@ def score_supply_demand(m: dict) -> int:
     if 45 <= m["mfi"] <= 70: s += 10
     elif m["mfi"] >= 85: s -= 10
     elif m["mfi"] <= 25: s += 4
+    # 空売り残高：踏み上げ余地（買い戻し進行）は加点、売り増しは減点
+    sr = m.get("short_ratio", 0)
+    st = m.get("short_trend", "")
+    if sr >= 1.5:
+        if st == "decreasing": s += 12   # 踏み上げ進行＝買い戻しの燃料
+        elif st == "increasing": s -= 10  # 機関が売り増し＝弱気
+        else: s += 6                      # 高水準で踏み上げ余地
     return int(max(0, min(100, s)))
 
 
@@ -203,6 +210,13 @@ def run(prices: dict = None, risk: dict = None, fear_greed: dict = None) -> dict
     if not symbols:
         return {"available": False, "reason": "watchlist空"}
 
+    # 空売り残高アナライザー（karauri.net）
+    try:
+        from src.short_selling import fetch_short_interest, judge_squeeze
+        _has_short = True
+    except Exception:
+        _has_short = False
+
     ranked = []
     for sym, name in symbols:
         try:
@@ -210,11 +224,25 @@ def run(prices: dict = None, risk: dict = None, fear_greed: dict = None) -> dict
             m = analyze_one(hist)
             if not m:
                 continue
+            # 空売り残高を取得して需給に反映
+            squeeze = None
+            if _has_short:
+                try:
+                    si = fetch_short_interest(sym)
+                    if si.get("available"):
+                        m["short_ratio"] = si["total_ratio"]
+                        m["short_trend"] = si["trend"]
+                        squeeze = judge_squeeze(si)
+                except Exception:
+                    pass
             pats = detect_patterns(m)
+            if squeeze and squeeze["sig"] != "none" and squeeze["name"]:
+                pats.insert(0, squeeze)  # 空売りシグナルを先頭に
             score = score_supply_demand(m)
             ranked.append({
                 "symbol": sym, "code": sym.split(".")[0], "name": name,
                 "metrics": m, "patterns": pats, "score": score,
+                "squeeze": squeeze,
             })
             time.sleep(0.15)
         except Exception:
@@ -282,7 +310,7 @@ def get_html(result: dict) -> str:
   </div>
   <div style="margin-left:36px;">
     <div style="font-size:0.72em;color:#7a8fa8;margin-top:3px;">
-      出来高{m["vol_ratio"]}倍 ・ MFI{m["mfi"]:.0f} ・ 資金フロー{m["cmf"]:+.2f} ・ OBV{"↑" if m["obv_rising"] else "↓"} ・ {"POC上" if m["above_poc"] else "POC下"}
+      出来高{m["vol_ratio"]}倍 ・ MFI{m["mfi"]:.0f} ・ 資金フロー{m["cmf"]:+.2f} ・ OBV{"↑" if m["obv_rising"] else "↓"} ・ {"POC上" if m["above_poc"] else "POC下"}{f' ・ 空売り{m["short_ratio"]}%' if m.get("short_ratio") else ""}
     </div>
     {pat_html}
   </div>
