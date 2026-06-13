@@ -253,6 +253,17 @@ def run(mode: str):
     except Exception:
         logger.error("TDnetウォッチャーエラー"); logger.debug(traceback.format_exc())
 
+    # Step AN: アノマリーカレンダー（毎日・該当する経験則を全部表示）
+    anomaly = {"available": False}
+    try:
+        logger.info("--- Step AN: アノマリーカレンダー ---")
+        from src.anomaly_calendar import run as run_an
+        anomaly = run_an(prices, risk, fear_greed)
+        if anomaly.get("available"):
+            logger.info(f"✅ アノマリー: {anomaly.get('count',0)}件該当")
+    except Exception:
+        logger.error("アノマリーカレンダーエラー"); logger.debug(traceback.format_exc())
+
     # Step FA: 財務・決算書分析（月曜のみ）
     financial_analysis = {"available": False}
     try:
@@ -654,7 +665,8 @@ def run(mode: str):
                           financial_analysis=financial_analysis,
                           theme_ranking=theme_ranking,
                           tdnet=tdnet,
-                          weekly_calendar=weekly_calendar)
+                          weekly_calendar=weekly_calendar,
+                          anomaly=anomaly)
         today = get_today_str()
         report_paths = {
             "html": str(get_dirs()["reports"] / f"{today}_{mode}.html"),
@@ -716,6 +728,7 @@ def run(mode: str):
                   market_chain=market_chain,
                   jquants=jquants,
                   tdnet=tdnet,
+                  anomaly=anomaly,
                   character_comments=character_comments)
     except Exception:
         logger.error("Telegram通知エラー"); logger.debug(traceback.format_exc())
@@ -734,7 +747,7 @@ def _save_html_report(mode, prices, news, risk, analysis, fear_greed, chart_path
                       news_bias=None, fire_result=None, bargain=None,
                       tutor=None, dca=None, notif_filter=None, portfolio_alerts=None,
                       financial_analysis=None, theme_ranking=None, tdnet=None,
-                      weekly_calendar=None):
+                      weekly_calendar=None, anomaly=None):
     """初心者でもわかる見やすいダッシュボードHTMLを保存"""
     import base64
     today = get_today_str()
@@ -1032,6 +1045,10 @@ def _save_html_report(mode, prices, news, risk, analysis, fear_greed, chart_path
             calendar_extra_html = cal_get_html(weekly_calendar)
         except Exception:
             calendar_extra_html = ""
+
+    # ── アノマリーカレンダーHTML ───────────────────────────────
+    anomaly = anomaly or {}
+    anomaly_html = anomaly.get("html", "") if anomaly.get("available") else ""
 
     # ── 財務・決算書分析HTML ──────────────────────────────────
     financial_analysis = financial_analysis or {}
@@ -1560,6 +1577,9 @@ a:hover{{text-decoration:underline;}}
 
   <!-- 今後の決算予定 + 天体イベント（月曜のみ） -->
   {f'<div class="sec-head">🗓️ 決算予定＆イベントカレンダー</div>{calendar_extra_html}' if calendar_extra_html else ""}
+
+  <!-- 今日のアノマリー（相場の経験則・毎日） -->
+  {f'<div class="sec-head">📜 今日のアノマリー</div>{anomaly_html}' if anomaly_html else ""}
 
   <!-- テーマ株人気ランキング -->
   {f'<div class="sec-head">🔥 テーマ株人気ランキング（今週どのテーマが熱い？）</div>{theme_html}' if theme_html else ""}

@@ -248,6 +248,20 @@
       "problemMatcher": []
     },
     {
+      "label": "📜 今日のアノマリーを確認",
+      "type": "shell",
+      "command": "python -m src.anomaly_calendar",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "🌙 天体イベント（今後45日）を確認",
+      "type": "shell",
+      "command": "python -m src.astro_calendar",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
       "label": "🤖 テーマ分析: AIテーマ（さくらインターネット）",
       "type": "shell",
       "command": "python analyze_stock.py 3778",
