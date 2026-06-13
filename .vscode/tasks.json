@@ -262,6 +262,13 @@
       "problemMatcher": []
     },
     {
+      "label": "📊 需給分析ランキング（ウォッチリスト26銘柄）",
+      "type": "shell",
+      "command": "python -m src.supply_demand",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
       "label": "🤖 テーマ分析: AIテーマ（さくらインターネット）",
       "type": "shell",
       "command": "python analyze_stock.py 3778",

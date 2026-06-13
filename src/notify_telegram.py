@@ -360,6 +360,7 @@ def run(risk, analysis, report_paths, mode,
         jquants=None,
         tdnet=None,
         anomaly=None,
+        supply_demand=None,
         character_comments=None) -> bool:
     if not _is_configured():
         logger.info("Telegram 設定なし。スキップします。")
@@ -428,6 +429,10 @@ def run(risk, analysis, report_paths, mode,
         # ③.6 今日のアノマリー（相場の経験則）
         if anomaly and anomaly.get("available") and anomaly.get("telegram_message"):
             send_message(_stamp("📜 今日のアノマリー") + anomaly["telegram_message"])
+
+        # ③.7 需給分析ランキング（月曜のみ）
+        if supply_demand and supply_demand.get("available") and supply_demand.get("telegram_message"):
+            send_message(_stamp("📊 需給分析ランキング") + supply_demand["telegram_message"])
 
         # ④ Level 3: シナリオ分析テキスト
         if scenario and scenario.get("available"):

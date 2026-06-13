@@ -278,6 +278,22 @@ def run(mode: str):
     except Exception:
         logger.error("財務分析エラー"); logger.debug(traceback.format_exc())
 
+    # Step SD: 需給分析ランキング（月曜のみ・26銘柄で重いため）
+    supply_demand = {"available": False}
+    try:
+        if get_jst_now().weekday() == 0 or mode == "test":
+            logger.info("--- Step SD: 需給分析ランキング ---")
+            from src.supply_demand import run as run_sd
+            supply_demand = run_sd(prices, risk, fear_greed)
+            if supply_demand.get("available"):
+                top = supply_demand.get("top", [])
+                top_name = top[0]["name"] if top else "---"
+                logger.info(f"✅ 需給分析: {supply_demand.get('count',0)}銘柄 / 1位={top_name}")
+        else:
+            logger.info("需給分析: 月曜以外のためスキップ")
+    except Exception:
+        logger.error("需給分析エラー"); logger.debug(traceback.format_exc())
+
     # Step NEW-B: 割安株スキャン（月曜のみ）
     bargain = {"available": False}
     try:
@@ -666,7 +682,8 @@ def run(mode: str):
                           theme_ranking=theme_ranking,
                           tdnet=tdnet,
                           weekly_calendar=weekly_calendar,
-                          anomaly=anomaly)
+                          anomaly=anomaly,
+                          supply_demand=supply_demand)
         today = get_today_str()
         report_paths = {
             "html": str(get_dirs()["reports"] / f"{today}_{mode}.html"),
@@ -729,6 +746,7 @@ def run(mode: str):
                   jquants=jquants,
                   tdnet=tdnet,
                   anomaly=anomaly,
+                  supply_demand=supply_demand,
                   character_comments=character_comments)
     except Exception:
         logger.error("Telegram通知エラー"); logger.debug(traceback.format_exc())
@@ -747,7 +765,7 @@ def _save_html_report(mode, prices, news, risk, analysis, fear_greed, chart_path
                       news_bias=None, fire_result=None, bargain=None,
                       tutor=None, dca=None, notif_filter=None, portfolio_alerts=None,
                       financial_analysis=None, theme_ranking=None, tdnet=None,
-                      weekly_calendar=None, anomaly=None):
+                      weekly_calendar=None, anomaly=None, supply_demand=None):
     """初心者でもわかる見やすいダッシュボードHTMLを保存"""
     import base64
     today = get_today_str()
@@ -1049,6 +1067,10 @@ def _save_html_report(mode, prices, news, risk, analysis, fear_greed, chart_path
     # ── アノマリーカレンダーHTML ───────────────────────────────
     anomaly = anomaly or {}
     anomaly_html = anomaly.get("html", "") if anomaly.get("available") else ""
+
+    # ── 需給分析ランキングHTML ─────────────────────────────────
+    supply_demand = supply_demand or {}
+    sd_html = supply_demand.get("html", "") if supply_demand.get("available") else ""
 
     # ── 財務・決算書分析HTML ──────────────────────────────────
     financial_analysis = financial_analysis or {}
@@ -1580,6 +1602,9 @@ a:hover{{text-decoration:underline;}}
 
   <!-- 今日のアノマリー（相場の経験則・毎日） -->
   {f'<div class="sec-head">📜 今日のアノマリー</div>{anomaly_html}' if anomaly_html else ""}
+
+  <!-- 需給分析ランキング（月曜のみ） -->
+  {f'<div class="sec-head">📊 需給分析ランキング（買いの勢いが強い順）</div>{sd_html}' if sd_html else ""}
 
   <!-- テーマ株人気ランキング -->
   {f'<div class="sec-head">🔥 テーマ株人気ランキング（今週どのテーマが熱い？）</div>{theme_html}' if theme_html else ""}
