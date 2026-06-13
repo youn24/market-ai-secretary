@@ -653,7 +653,8 @@ def run(mode: str):
                           portfolio_alerts=portfolio_alerts,
                           financial_analysis=financial_analysis,
                           theme_ranking=theme_ranking,
-                          tdnet=tdnet)
+                          tdnet=tdnet,
+                          weekly_calendar=weekly_calendar)
         today = get_today_str()
         report_paths = {
             "html": str(get_dirs()["reports"] / f"{today}_{mode}.html"),
@@ -732,7 +733,8 @@ def _save_html_report(mode, prices, news, risk, analysis, fear_greed, chart_path
                       character_comments=None,
                       news_bias=None, fire_result=None, bargain=None,
                       tutor=None, dca=None, notif_filter=None, portfolio_alerts=None,
-                      financial_analysis=None, theme_ranking=None, tdnet=None):
+                      financial_analysis=None, theme_ranking=None, tdnet=None,
+                      weekly_calendar=None):
     """初心者でもわかる見やすいダッシュボードHTMLを保存"""
     import base64
     today = get_today_str()
@@ -1020,6 +1022,16 @@ def _save_html_report(mode, prices, news, risk, analysis, fear_greed, chart_path
     # ── TDnet適時開示HTML ─────────────────────────────────────
     tdnet = tdnet or {}
     tdnet_html = tdnet.get("html", "") if tdnet.get("available") else ""
+
+    # ── 今後の決算予定 + 天体イベントHTML ─────────────────────
+    weekly_calendar = weekly_calendar or {}
+    calendar_extra_html = ""
+    if weekly_calendar.get("upcoming_earnings") or weekly_calendar.get("astro"):
+        try:
+            from src.economic_calendar import get_html as cal_get_html
+            calendar_extra_html = cal_get_html(weekly_calendar)
+        except Exception:
+            calendar_extra_html = ""
 
     # ── 財務・決算書分析HTML ──────────────────────────────────
     financial_analysis = financial_analysis or {}
@@ -1545,6 +1557,9 @@ a:hover{{text-decoration:underline;}}
 
   <!-- TDnet適時開示アラート（ウォッチリスト銘柄のみ） -->
   {f'<div class="sec-head">📋 適時開示アラート（あなたの注目銘柄）</div>{tdnet_html}' if tdnet_html else ""}
+
+  <!-- 今後の決算予定 + 天体イベント（月曜のみ） -->
+  {f'<div class="sec-head">🗓️ 決算予定＆イベントカレンダー</div>{calendar_extra_html}' if calendar_extra_html else ""}
 
   <!-- テーマ株人気ランキング -->
   {f'<div class="sec-head">🔥 テーマ株人気ランキング（今週どのテーマが熱い？）</div>{theme_html}' if theme_html else ""}

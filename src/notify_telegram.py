@@ -772,6 +772,29 @@ def run(risk, analysis, report_paths, mode,
                 send_photo(str(cal_path), caption=caption)
                 logger.info("✅ 週次カレンダー画像送信完了")
 
+            # 今後の決算予定（ウォッチリスト）+ 天体イベント
+            upcoming = weekly_calendar.get("upcoming_earnings", []) or []
+            astro    = weekly_calendar.get("astro", {}) or {}
+            if upcoming or astro.get("mercury_now"):
+                lines = [_stamp("🗓️ 決算予定＆イベント")]
+                if upcoming:
+                    lines.append("📊 *今後の決算予定（注目銘柄）*")
+                    for u in upcoming[:8]:
+                        d = u.get("date","")
+                        md = f"{int(d[5:7])}/{int(d[8:10])}" if len(d) >= 10 else d
+                        lines.append(f"  {md}  [{u.get('code','')}] {u.get('name','')}")
+                    lines.append("")
+                if astro.get("mercury_now"):
+                    lines.append(f"☿ *水星逆行中*（{astro.get('mercury_period','')}）")
+                    lines.append("　取引ミス・通信トラブルに注意の経験則")
+                aev = astro.get("events", []) or []
+                next_moon = next((e for e in aev if "月" in e.get("event","")), None)
+                if next_moon:
+                    nd = next_moon.get("date","")
+                    nmd = f"{int(nd[5:7])}/{int(nd[8:10])}" if len(nd) >= 10 else nd
+                    lines.append(f"{next_moon.get('event','')}　{nmd}")
+                send_message("\n".join(lines))
+
         # 最後に「配信もくじ」を送信（全通知のタイトル一覧）
         _send_toc()
 

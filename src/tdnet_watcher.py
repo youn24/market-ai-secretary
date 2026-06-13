@@ -61,6 +61,12 @@ def _classify(title: str) -> tuple[str, str, str]:
     # 3) 方向不明の予想修正（タイトルだけでは判断できない → 中身を見るべき）
     if any(k in title for k in ["業績予想の修正", "配当予想の修正", "業績予想及び", "配当予想及び"]):
         return ("📈", "予想修正（要確認）", "high")
+    # 3.5) 決算説明会（数字の決算短信とは別物。経営者の生の声・Q&A・動画）
+    #      「決算短信」より先に判定する（"通期決算説明会資料"等が決算ルールに吸われるのを防ぐ）
+    if any(k in title for k in ["説明会", "書き起こし", "カンファレンス・コール",
+                                 "カンファレンスコール", "スモールミーティング",
+                                 "ロードショー", "オンライン説明"]):
+        return ("🎤", "決算説明会", "medium")
     # 4) その他カテゴリ
     for emoji, label, importance, keywords in _CATEGORY_RULES:
         if any(k in title for k in keywords):

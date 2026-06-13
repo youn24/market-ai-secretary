@@ -8,7 +8,7 @@ import traceback
 import requests
 from datetime import datetime, timedelta
 from pathlib import Path
-from src.utils import setup_logger, get_dirs, get_jst_now
+from src.utils import setup_logger, get_dirs, get_jst_now, BASE_DIR
 
 logger = setup_logger("economic_calendar")
 
@@ -27,7 +27,24 @@ IMP_COLOR = {
     "決算":    "#ab47bc",   # 紫
     "日銀":    "#ef5350",   # 赤系
     "FRB":    "#e53935",   # 赤系
+    "天体":    "#7e57c2",   # 紫（天体イベント）
 }
+
+
+def _load_watchlist_symbols() -> list[tuple[str, str]]:
+    """data/watchlist.json から [(symbol, name), ...] を返す"""
+    path = BASE_DIR / "data" / "watchlist.json"
+    out = []
+    try:
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+        for s in data.get("stocks", []):
+            sym = s.get("symbol", "")
+            if sym:
+                out.append((sym, s.get("name", sym)))
+    except Exception as e:
+        logger.warning(f"watchlist読み込み失敗: {e}")
+    return out
 
 
 def get_week_dates() -> list[datetime]:
@@ -102,51 +119,85 @@ JSONのみ出力し、説明文は不要です。"""
 
 
 def fetch_earnings_yfinance(week_dates: list) -> list:
-    """yfinanceから主要企業決算を取得"""
+    """yfinanceから主要企業決算を取得（米国主要株。今週分のみ・カレンダー画像用）"""
     events = []
     try:
         import yfinance as yf
-        major_tickers = [
-            "AAPL","MSFT","GOOGL","AMZN","META","NVDA","TSLA",
-            "7203.T","6758.T","9984.T","8306.T","6861.T",
-        ]
+        major_tickers = ["AAPL","MSFT","GOOGL","AMZN","META","NVDA","TSLA"]
         start = week_dates[0].strftime("%Y-%m-%d")
         end   = week_dates[4].strftime("%Y-%m-%d")
 
-        for ticker in major_tickers[:6]:
+        for ticker in major_tickers:
             try:
-                t = yf.Ticker(ticker)
-                cal = t.calendar
-                if cal is None:
-                    continue
-                # 決算日チェック
-                if hasattr(cal, "get"):
-                    earn_date = cal.get("Earnings Date")
-                elif isinstance(cal, dict):
-                    earn_date = cal.get("Earnings Date")
-                else:
-                    continue
-                if earn_date is None:
-                    continue
-                if isinstance(earn_date, (list, tuple)) and len(earn_date) > 0:
-                    earn_date = earn_date[0]
-                if hasattr(earn_date, "strftime"):
-                    d_str = earn_date.strftime("%Y-%m-%d")
-                    if start <= d_str <= end:
-                        country = "JP" if ".T" in ticker else "US"
-                        events.append({
-                            "date": d_str,
-                            "time": "早朝",
-                            "country": country,
-                            "category": "決算",
-                            "importance": "high",
-                            "event": f"決算 {ticker.replace('.T','')}",
-                        })
+                d_str, _ = _get_earnings_date(yf, ticker)
+                if d_str and start <= d_str <= end:
+                    events.append({
+                        "date": d_str, "time": "早朝", "country": "US",
+                        "category": "決算", "importance": "high",
+                        "event": f"決算 {ticker}",
+                    })
             except Exception:
                 pass
     except Exception as e:
         logger.debug(f"yfinance決算取得: {e}")
     return events
+
+
+def _get_earnings_date(yf, ticker: str):
+    """1銘柄の次回決算日(YYYY-MM-DD)と売上予想Averageを返す"""
+    t = yf.Ticker(ticker)
+    cal = t.calendar
+    if not cal:
+        return None, None
+    earn_date = cal.get("Earnings Date") if isinstance(cal, dict) else None
+    rev_avg   = cal.get("Revenue Average") if isinstance(cal, dict) else None
+    if isinstance(earn_date, (list, tuple)) and earn_date:
+        earn_date = earn_date[0]
+    d_str = earn_date.strftime("%Y-%m-%d") if hasattr(earn_date, "strftime") else None
+    return d_str, rev_avg
+
+
+def fetch_watchlist_earnings(week_dates: list, days_ahead: int = 45) -> tuple[list, list]:
+    """
+    ウォッチリスト銘柄の決算予定を取得。
+    返り値: (今週分events, 今後days_ahead日分のupcoming一覧)
+    """
+    week_events = []
+    upcoming = []
+    try:
+        import yfinance as yf
+        symbols = _load_watchlist_symbols()
+        start = week_dates[0].strftime("%Y-%m-%d")
+        end   = week_dates[4].strftime("%Y-%m-%d")
+        today = get_jst_now().strftime("%Y-%m-%d")
+        horizon = (get_jst_now() + timedelta(days=days_ahead)).strftime("%Y-%m-%d")
+
+        for sym, name in symbols:
+            try:
+                d_str, rev_avg = _get_earnings_date(yf, sym)
+                if not d_str:
+                    continue
+                code4 = sym.split(".")[0]
+                # 今週分 → カレンダー画像に
+                if start <= d_str <= end:
+                    week_events.append({
+                        "date": d_str, "time": "決算", "country": "JP",
+                        "category": "決算", "importance": "high",
+                        "event": f"決算 {name}",
+                    })
+                # 今後days_ahead日分 → 先読みリストに
+                if today <= d_str <= horizon:
+                    upcoming.append({
+                        "date": d_str, "code": code4, "name": name,
+                        "rev_avg": rev_avg,
+                    })
+            except Exception:
+                pass
+        upcoming.sort(key=lambda x: x["date"])
+        logger.info(f"ウォッチリスト決算: 今週{len(week_events)}件 / 今後{len(upcoming)}件")
+    except Exception as e:
+        logger.debug(f"ウォッチリスト決算取得: {e}")
+    return week_events, upcoming
 
 
 def generate_calendar_image(events: list, week_dates: list) -> str | None:
@@ -358,9 +409,29 @@ def run() -> dict:
     # Geminiでカレンダーデータ取得
     events = fetch_calendar_via_gemini(week_dates)
 
-    # yfinanceで決算追加
-    earn_events = fetch_earnings_yfinance(week_dates)
-    events += earn_events
+    # yfinanceで米国主要株の決算追加（今週分）
+    events += fetch_earnings_yfinance(week_dates)
+
+    # ウォッチリスト銘柄の決算（今週分 + 今後の先読みリスト）
+    watch_week, upcoming_earnings = fetch_watchlist_earnings(week_dates, days_ahead=45)
+    events += watch_week
+
+    # 天体イベント（新月・満月・水星逆行）を今週分注入
+    astro_summary = {"available": False, "events": [], "mercury_now": False}
+    try:
+        from src.astro_calendar import get_astro_events, get_upcoming_summary
+        from datetime import timezone
+        JST = timezone(timedelta(hours=9))
+        wk_start = week_dates[0].replace(hour=0, minute=0)
+        wk_end   = week_dates[4].replace(hour=23, minute=59)
+        if wk_start.tzinfo is None:
+            wk_start = wk_start.replace(tzinfo=JST); wk_end = wk_end.replace(tzinfo=JST)
+        astro_week = get_astro_events(wk_start, wk_end)
+        events += astro_week
+        astro_summary = get_upcoming_summary(days=45)
+        logger.info(f"天体イベント: 今週{len(astro_week)}件 / 水星逆行中={astro_summary.get('mercury_now')}")
+    except Exception as e:
+        logger.debug(f"天体イベント取得: {e}")
 
     # 重複除去（同じ日・同じイベント名）
     seen = set()
@@ -379,6 +450,66 @@ def run() -> dict:
         "available": image_path is not None,
         "image_path": image_path,
         "events": unique_events,
+        "upcoming_earnings": upcoming_earnings,
+        "astro": astro_summary,
         "week_start": week_dates[0].strftime("%Y-%m-%d"),
         "week_end":   week_dates[4].strftime("%Y-%m-%d"),
     }
+
+
+def get_html(result: dict) -> str:
+    """今後の決算予定 + 天体イベントのHTMLセクションを生成"""
+    if not result:
+        return ""
+    upcoming = result.get("upcoming_earnings", []) or []
+    astro    = result.get("astro", {}) or {}
+
+    html = ""
+
+    # ── 今後の決算予定 ──
+    if upcoming:
+        rows = ""
+        for u in upcoming[:20]:
+            d = u["date"]
+            md = f"{int(d[5:7])}/{int(d[8:10])}"
+            rev = ""
+            if u.get("rev_avg"):
+                try:
+                    rev = f'<span style="color:#7a8fa8;font-size:0.78em;">　予想売上 {u["rev_avg"]/1e8:,.0f}億円</span>'
+                except Exception:
+                    rev = ""
+            rows += f'''
+<div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid #1e2d42;align-items:center;">
+  <div style="min-width:54px;font-weight:700;color:#ab47bc;">{md}</div>
+  <div style="flex:1;"><b>[{u["code"]}] {u["name"]}</b>{rev}</div>
+</div>'''
+        html += f'''
+<div style="background:#0f1623;border:1px solid #1e2d42;border-radius:14px;padding:16px;margin-bottom:16px;">
+  <div style="font-weight:700;margin-bottom:4px;">🗓️ 今後の決算予定（あなたの注目銘柄・45日先まで）</div>
+  <div style="font-size:0.75em;color:#7a8fa8;margin-bottom:10px;">予想売上はアナリスト平均（yfinance）。結果がこれを超えれば好決算の目安</div>
+  {rows}
+</div>'''
+
+    # ── 天体イベント（アノマリー） ──
+    aev = astro.get("events", []) if astro else []
+    if aev or astro.get("mercury_now"):
+        merc = ""
+        if astro.get("mercury_now"):
+            merc = f'<div style="background:#2a1a3a;border:1px solid #7e57c2;border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:0.85em;">☿ <b>現在 水星逆行中</b>（{astro.get("mercury_period","")}）— 取引ミス・通信障害に注意という経験則</div>'
+        rows = ""
+        for e in aev[:12]:
+            d = e["date"]
+            md = f"{int(d[5:7])}/{int(d[8:10])}"
+            rows += f'''
+<div style="display:flex;gap:10px;padding:6px 0;border-bottom:1px solid #1e2d42;">
+  <div style="min-width:54px;color:#7e57c2;font-weight:700;">{md}</div>
+  <div style="flex:1;font-size:0.9em;">{e["event"]}</div>
+</div>'''
+        html += f'''
+<div style="background:#0f1623;border:1px solid #1e2d42;border-radius:14px;padding:16px;margin-bottom:16px;">
+  <div style="font-weight:700;margin-bottom:4px;">🌙 天体イベント（相場アノマリー・参考）</div>
+  <div style="font-size:0.75em;color:#7a8fa8;margin-bottom:10px;">満月・新月や水星逆行は科学的根拠は薄いものの、投資家心理として意識されることがあります</div>
+  {merc}{rows}
+</div>'''
+
+    return html
