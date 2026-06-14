@@ -68,6 +68,19 @@
       "verified": false,
       "correct": null,
       "actual_move": null
+    },
+    {
+      "date": "2026-06-15",
+      "direction": "bull",
+      "score": 7.43,
+      "fg": 34.0,
+      "nikkei": 66020.0391,
+      "sp500": 7431.46,
+      "usdjpy": 159.929,
+      "vix": 17.68,
+      "verified": false,
+      "correct": null,
+      "actual_move": null
     }
   ],
   "accuracy": {}
