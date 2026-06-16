@@ -249,12 +249,12 @@ def build_three_messages(risk, analysis, mode,
 # 低レベル送信関数
 # ────────────────────────────────────────────────────────────────
 
-def send_message(text: str) -> bool:
+def send_message(text: str, chat_id: str = None) -> bool:
     if not _is_configured():
         logger.info("Telegram 未設定スキップ")
         return False
     token   = os.getenv("TELEGRAM_BOT_TOKEN")
-    chat_id = os.getenv("TELEGRAM_CHAT_ID")
+    chat_id = chat_id or os.getenv("TELEGRAM_CHAT_ID")
     try:
         r = requests.post(
             f"https://api.telegram.org/bot{token}/sendMessage",
@@ -269,11 +269,11 @@ def send_message(text: str) -> bool:
         return False
 
 
-def send_photo(image_path: str, caption: str = "") -> bool:
+def send_photo(image_path: str, caption: str = "", chat_id: str = None) -> bool:
     if not _is_configured():
         return False
     token   = os.getenv("TELEGRAM_BOT_TOKEN")
-    chat_id = os.getenv("TELEGRAM_CHAT_ID")
+    chat_id = chat_id or os.getenv("TELEGRAM_CHAT_ID")
     try:
         with open(image_path, "rb") as f:
             r = requests.post(
@@ -290,11 +290,11 @@ def send_photo(image_path: str, caption: str = "") -> bool:
         return False
 
 
-def send_document(file_path: str, caption: str = "") -> bool:
+def send_document(file_path: str, caption: str = "", chat_id: str = None) -> bool:
     if not _is_configured():
         return False
     token   = os.getenv("TELEGRAM_BOT_TOKEN")
-    chat_id = os.getenv("TELEGRAM_CHAT_ID")
+    chat_id = chat_id or os.getenv("TELEGRAM_CHAT_ID")
     try:
         with open(file_path, "rb") as f:
             r = requests.post(
@@ -361,6 +361,7 @@ def run(risk, analysis, report_paths, mode,
         tdnet=None,
         anomaly=None,
         supply_demand=None,
+        macro=None,
         character_comments=None) -> bool:
     if not _is_configured():
         logger.info("Telegram 設定なし。スキップします。")
@@ -421,6 +422,10 @@ def run(risk, analysis, report_paths, mode,
 
         # ③ レポートURL
         send_message(_stamp("📱 詳細レポートURL") + msgs[2])
+
+        # ③.4 マクロ要約（ファンダ＋金融政策）
+        if macro and macro.get("available") and macro.get("telegram_message"):
+            send_message(_stamp("🌐 ファンダ＆金融政策") + macro["telegram_message"])
 
         # ③.5 TDnet適時開示アラート（ウォッチリスト銘柄の決算・自社株買い等）
         if tdnet and tdnet.get("available") and tdnet.get("telegram_message"):

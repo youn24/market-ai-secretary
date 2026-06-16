@@ -276,6 +276,13 @@
       "problemMatcher": []
     },
     {
+      "label": "🌐 ファンダ＆金融政策の要約（今すぐ）",
+      "type": "shell",
+      "command": "python -m src.macro_summary",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
       "label": "🔥 空売り残高: 個別銘柄（コード入力）",
       "type": "shell",
       "command": "python -m src.short_selling ${input:stockCode}",

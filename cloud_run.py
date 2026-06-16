@@ -760,6 +760,7 @@ def run(mode: str):
                   tdnet=tdnet,
                   anomaly=anomaly,
                   supply_demand=supply_demand,
+                  macro=macro,
                   character_comments=character_comments)
     except Exception:
         logger.error("Telegram通知エラー"); logger.debug(traceback.format_exc())
@@ -1611,6 +1612,9 @@ a:hover{{text-decoration:underline;}}
 
   <!-- YouTube -->
   {f'<div class="sec-head">📺 YouTube注目動画まとめ</div><div class="yt-wrap">{yt_html}</div>' if yt_html else ""}
+
+  <!-- ファンダメンタル＋金融政策の要約（毎日） -->
+  {f'<div class="sec-head">🌐 ファンダ＆金融政策の要約</div>{macro_html}' if macro_html else ""}
 
   <!-- TDnet適時開示アラート（ウォッチリスト銘柄のみ） -->
   {f'<div class="sec-head">📋 適時開示アラート（あなたの注目銘柄）</div>{tdnet_html}' if tdnet_html else ""}
