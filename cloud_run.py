@@ -264,16 +264,8 @@ def run(mode: str):
     except Exception:
         logger.error("アノマリーカレンダーエラー"); logger.debug(traceback.format_exc())
 
-    # Step MA: マクロ要約（毎日・ファンダメンタル＋金融政策をAIが要約）
+    # Step MA（マクロ要約）はFRED/FOMC/議員取引の計算後に実行する（後段に配置）
     macro = {"available": False}
-    try:
-        logger.info("--- Step MA: マクロ要約（ファンダ＋金融政策） ---")
-        from src.macro_summary import run as run_ma
-        macro = run_ma(prices=prices, news=news, fear_greed=fear_greed, risk=risk)
-        if macro.get("available"):
-            logger.info(f"✅ マクロ要約: {'AI生成' if macro.get('ai_generated') else '簡易要約'}")
-    except Exception:
-        logger.error("マクロ要約エラー"); logger.debug(traceback.format_exc())
 
     # Step FA: 財務・決算書分析（月曜のみ）
     financial_analysis = {"available": False}
@@ -425,6 +417,19 @@ def run(mode: str):
                 logger.info(f"✅ 議員取引: {congress_trades.get('total_trades','---')}件")
     except Exception:
         logger.error("議員取引エラー"); logger.debug(traceback.format_exc())
+
+    # Step MA: マクロ要約（毎日・FRED/FOMC/議員取引など全マクロデータを統合してAI要約）
+    try:
+        logger.info("--- Step MA: マクロ要約（ファンダ＋金融政策） ---")
+        from src.macro_summary import run as run_ma
+        macro = run_ma(prices=prices, news=news, fear_greed=fear_greed, risk=risk,
+                       fred_data=fred_data, fomc_sentiment=fomc_sentiment,
+                       econ_analysis=econ_analysis, sector_analysis=sector_analysis,
+                       congress_trades=congress_trades)
+        if macro.get("available"):
+            logger.info(f"✅ マクロ要約: {'AI生成' if macro.get('ai_generated') else '簡易要約'} / 専門データ{len(macro.get('extra_sources',[]))}件統合")
+    except Exception:
+        logger.error("マクロ要約エラー"); logger.debug(traceback.format_exc())
 
     # ── Level 5 ─────────────────────────────────────────────
 

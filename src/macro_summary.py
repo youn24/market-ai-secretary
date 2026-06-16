@@ -42,6 +42,43 @@ def _classify_news(news: list) -> dict:
     return {"policy": policy[:10], "econ": econ[:8]}
 
 
+def _summarize_module(data, label: str) -> str:
+    """各分析モジュールの結果から人間可読な要約行を防御的に抽出する。
+    モジュールごとに構造が違うため、よくあるキーを順に探す。"""
+    if not isinstance(data, dict) or not data.get("available"):
+        return ""
+    # 既に人が読める要約テキストがあれば最優先
+    for k in ["summary", "ai_comment", "comment", "analysis", "analysis_text",
+              "stance_ja", "stance", "verdict", "verdict_text", "headline", "note"]:
+        v = data.get(k)
+        if isinstance(v, str) and v.strip():
+            return f"{label}：{v.strip()[:220]}"
+    # Telegram用テキストがあればマークダウンを除いて使う
+    tg = data.get("telegram_message")
+    if isinstance(tg, str) and tg.strip():
+        clean = tg.replace("*", "").replace("#", "").replace("━", "").strip()
+        clean = " ".join(clean.split())
+        return f"{label}：{clean[:220]}"
+    return ""
+
+
+def _build_extra_context(fred_data=None, fomc_sentiment=None, econ_analysis=None,
+                         sector_analysis=None, congress_trades=None) -> str:
+    """既存の専門分析モジュールの結果を要約文字列に束ねる"""
+    parts = []
+    for data, label in [
+        (econ_analysis,   "経済指標分析"),
+        (fred_data,       "FRED米経済指標(GDP/CPI/失業率/金利)"),
+        (fomc_sentiment,  "FOMC議事録のタカ派/ハト派判定"),
+        (sector_analysis, "セクターローテーション"),
+        (congress_trades, "米議員の株取引動向"),
+    ]:
+        line = _summarize_module(data, label)
+        if line:
+            parts.append("・" + line)
+    return "\n".join(parts)
+
+
 def _market_context(prices: dict, fear_greed: dict) -> dict:
     """価格データから金利・為替・恐怖指数などの現状を抜き出す"""
     prices = prices or {}
@@ -64,7 +101,7 @@ def _market_context(prices: dict, fear_greed: dict) -> dict:
     return ctx
 
 
-def _gemini_summary(ctx: dict, cls: dict) -> dict:
+def _gemini_summary(ctx: dict, cls: dict, extra_context: str = "") -> dict:
     """Gemini でファンダ＆金融政策の要約を生成"""
     api_key = os.getenv("GEMINI_API_KEY", "").strip()
     if not api_key:
@@ -78,15 +115,25 @@ def _gemini_summary(ctx: dict, cls: dict) -> dict:
         econ_titles   = "\n".join(f"・{n.get('title','')}" for n in cls["econ"][:6])
 
         ctx_txt = (
-            f"日経平均 {ctx.get('nikkei')}（{ctx.get('nikkei_chg')}%）, "
-            f"米10年金利 {ctx.get('us10y')}%, ドル円 {ctx.get('usdjpy')}, "
+            f"日経平均 {ctx.get('nikkei')}（前日比{ctx.get('nikkei_chg')}%）, "
+            f"米10年金利 {ctx.get('us10y')}%（前日比{ctx.get('us10y_chg')}%）, "
+            f"ドル円 {ctx.get('usdjpy')}, "
             f"VIX {ctx.get('vix')}, 日経VI {ctx.get('nikkei_vi')}, "
-            f"恐怖＆強欲 {ctx.get('fg_score')}（{ctx.get('fg_rating')}／1週前{ctx.get('fg_1w')}・1ヶ月前{ctx.get('fg_1m')}）"
+            f"恐怖＆強欲指数 {ctx.get('fg_score')}（{ctx.get('fg_rating')}／1週前{ctx.get('fg_1w')}・1ヶ月前{ctx.get('fg_1m')}）"
         )
 
-        prompt = f"""あなたは投資初心者にやさしく教えるエコノミストです。
-以下のデータをもとに、いまの相場を「金融政策」と「ファンダメンタル（景気・企業価値）」の
-観点から要約してください。中学生でもわかる言葉で、断定や投資助言は避けてください。
+        extra_block = f"\n\n【システムの専門分析データ（最重要・優先的に根拠として使う）】\n{extra_context}" if extra_context else ""
+
+        prompt = f"""あなたは個人投資家にやさしく教える一流のマーケットエコノミストです。
+以下のデータだけを根拠に、いまの相場を「金融政策」と「ファンダメンタル（景気・企業価値）」の
+観点から要約してください。
+
+【守るべきこと】
+- 中学生でもわかる言葉で、専門用語は必ず一言で噛み砕く（例：「タカ派＝利上げに前向き」）
+- 必ず具体的な数値・固有名詞（日銀/FRB/CPI%/金利/銘柄名など）を引用して根拠を示す
+- 4つの観点を互いに関連づける（例：金利↑→為替→株、のように因果でつなぐ）
+- 断定や「儲かる/必ず上がる」等の投資助言・予言はしない
+- データにない事柄を創作しない。情報が乏しい項目は「現時点で材料は限定的」と正直に書く
 
 【市場の現状】
 {ctx_txt}
@@ -95,17 +142,17 @@ def _gemini_summary(ctx: dict, cls: dict) -> dict:
 {policy_titles or '（なし）'}
 
 【経済指標ニュース】
-{econ_titles or '（なし）'}
+{econ_titles or '（なし）'}{extra_block}
 
-次の4項目を、それぞれ80〜120字で出力してください。各項目は「###」で始めてください：
+次の4項目を、それぞれ100〜140字で出力してください。各項目は必ず「###」見出しで始めてください：
 ### 金融政策
-（日銀とFRBの動きと、それが株・為替にどう効くか）
+（日銀とFRBの方向性と、それが金利・為替・株にどう波及するか。具体的な金利水準や会合日程に触れる）
 ### ファンダメンタル
-（景気の強さ・企業業績やバリュエーションの状況）
+（景気指標の強弱・企業業績やバリュエーション。割安/割高の判断材料を数値で）
 ### 注目のねじれ・リスク
-（株価と投資家心理、需給など、矛盾や注意点）
+（株価と投資家心理の矛盾、需給、タカ/ハトのズレなど、見落としがちな注意点を具体的に）
 ### 今後の注目
-（次に控える重要イベントと見るべきポイント）"""
+（次に控える重要イベントと、それぞれで何を確認すべきか）"""
 
         raw = model.generate_content(prompt).text.strip()
         # ### で分割
@@ -125,15 +172,18 @@ def _gemini_summary(ctx: dict, cls: dict) -> dict:
         return {}
 
 
-def _fallback_summary(ctx: dict, cls: dict) -> dict:
+def _fallback_summary(ctx: dict, cls: dict, extra: str = "") -> dict:
     """Geminiが使えないときの機械的要約"""
     s = {}
     # 金融政策（抽出ニュースの見出しから）
     pol = [n.get("title", "") for n in cls["policy"][:3]]
     s["金融政策"] = "／".join(pol) if pol else "主要な金融政策ニュースは検出されませんでした。"
-    # ファンダ
+    # ファンダ（経済指標ニュース＋専門分析データ）
     econ = [n.get("title", "") for n in cls["econ"][:2]]
-    s["ファンダメンタル"] = "／".join(econ) if econ else "主要な経済指標ニュースは検出されませんでした。"
+    fund = "／".join(econ) if econ else "主要な経済指標ニュースは検出されませんでした。"
+    if extra:
+        fund += "　【専門分析】" + extra.replace("\n", " ")[:300]
+    s["ファンダメンタル"] = fund
     # ねじれ
     fg = ctx.get("fg_score")
     nz = ""
@@ -150,14 +200,18 @@ def _fallback_summary(ctx: dict, cls: dict) -> dict:
 
 
 def run(prices: dict = None, news: list = None, fear_greed: dict = None,
-        risk: dict = None) -> dict:
+        risk: dict = None, fred_data: dict = None, fomc_sentiment: dict = None,
+        econ_analysis: dict = None, sector_analysis: dict = None,
+        congress_trades: dict = None) -> dict:
     try:
         cls = _classify_news(news)
         ctx = _market_context(prices, fear_greed)
-        sections = _gemini_summary(ctx, cls)
+        extra = _build_extra_context(fred_data, fomc_sentiment, econ_analysis,
+                                     sector_analysis, congress_trades)
+        sections = _gemini_summary(ctx, cls, extra)
         used_ai = bool(sections)
         if not sections:
-            sections = _fallback_summary(ctx, cls)
+            sections = _fallback_summary(ctx, cls, extra)
 
         result = {
             "available": True,
@@ -166,6 +220,7 @@ def run(prices: dict = None, news: list = None, fear_greed: dict = None,
             "policy_news": cls["policy"][:5],
             "econ_news": cls["econ"][:4],
             "ai_generated": used_ai,
+            "extra_sources": [l for l in extra.split("\n") if l.strip()],
         }
         result["html"] = get_html(result)
         result["telegram_message"] = build_telegram_message(result)
@@ -229,9 +284,16 @@ def get_html(result: dict) -> str:
   <div style="font-size:0.86em;line-height:1.7;color:#dde8ff;">{sec[name]}</div>
 </div>'''
 
+    n_src = len(result.get("extra_sources", []))
+    src_note = ""
+    if n_src:
+        src_note = (f'<div style="font-size:0.7em;color:#7a8fa8;margin-top:8px;">'
+                    f'📚 この要約はニュース＋価格に加え、システムの専門分析 {n_src} 件'
+                    f'（FRED経済指標・FOMC・経済指標・セクター・議員取引）を根拠にしています</div>')
     ai_note = "" if result.get("ai_generated") else (
         '<div style="font-size:0.7em;color:#7a8fa8;margin-top:6px;">'
         '※AI未使用時の簡易要約（GEMINI_API_KEY設定でAI要約に切替）</div>')
+    ai_note = src_note + ai_note
 
     return f'''
 <div style="background:#0f1623;border:1px solid #1e2d42;border-radius:14px;padding:16px;">
