@@ -14,20 +14,37 @@
 # ─────────────────────────────────────────────────────────────
 
 settings:
-  max_videos: 3          # 1回の実行で解析する最大本数（無料枠を守るため）
+  max_videos: 5          # 1回の実行で解析する最大本数（無料枠を守るため）
   within_hours: 30       # 「最近の動画」とみなす時間（これより古い動画は対象外）
   model: "gemini-2.5-flash"   # YouTube解析に使うGeminiモデル（2.5+推奨）
 
+# 質の高い・情報が正確な市場解説チャンネルを厳選登録
 channels:
   - name: "トウシル（楽天証券）"
     channel_id: "UC5BiTvy2Ni2MyigJPspjhOA"
-    # 日経平均・マーケットの解説動画を高頻度で配信
+    # 楽天証券公式。日経平均・マーケットの解説を高頻度で配信（信頼性◎）
 
-  - name: "後藤達也・経済チャンネル"
-    channel_id: "UCeLeyHAaZJb4tm0cAMxc60Q"
-    # 元日経記者。経済・相場のわかりやすい解説（主にライブ配信）
+  - name: "暁投資顧問（投資の寺子屋）"
+    channel_id: "UCOfzLmXpI3qmZfV7_Cs1sYA"
+    # 投資顧問会社。毎日の相場解説・需給/空売り比率など実践的で精度が高い
 
-  # 例: 追加したい場合はコメントを外して channel_id を埋める
+  - name: "NOBU塾"
+    channel_id: "UCOX7X_ddhi1oXurSbJsk45Q"
+    # 日経平均・デイトレ。相場のシナリオを具体的な水準で解説
+
+  - name: "松井証券"
+    channel_id: "UCS5dVIXy8SYcIMWRmEI-_3A"
+    # 松井証券公式。市場解説と操作案内が混在 → 非市場動画は自動スキップ
+
+  - name: "上岡正明"
+    channel_id: "UC0gvn7xAe2wHtFZYPqsf6bA"
+    # 株式投資・日経平均の解説（ビジネス作家・投資家）
+
+  # 更新が稀なため一旦保留（配信があれば下のコメントを外せば復活）
+  # - name: "後藤達也・経済チャンネル"
+  #   channel_id: "UCeLeyHAaZJb4tm0cAMxc60Q"
+
+  # 追加方法: channel_id を入れるか、分からなければ handle だけでもOK（自動解決）
   # - name: "お気に入りチャンネル"
   #   channel_id: "UCxxxxxxxxxxxxxxxxxxxxxx"
-  #   handle: "@example"   # channel_id が分からなければ handle だけでもOK（自動解決）
+  #   handle: "@example"

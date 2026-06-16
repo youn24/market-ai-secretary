@@ -37,6 +37,21 @@ def _load_config() -> dict:
         return {}
 
 
+# 明らかに相場・市場と無関係な動画を除外するためのキーワード
+_SKIP_KEYWORDS = [
+    "パスキー", "設定", "レクチャー", "使い方", "操作方法", "ログイン",
+    "口座開設", "キャンペーン", "プレゼント", "抽選", "登録方法",
+    "アプリの", "ツールの", "メンテナンス", "障害", "お知らせ", "求人",
+    "#shorts",
+]
+
+
+def _is_market_relevant(title: str) -> bool:
+    """タイトルから、相場と無関係そうな動画（操作案内・キャンペーン等）を除外。"""
+    t = (title or "").lower()
+    return not any(kw.lower() in t for kw in _SKIP_KEYWORDS)
+
+
 def _resolve_handle(handle: str) -> str | None:
     """@handle からチャンネルID(UC...)を解決する。"""
     h = handle.lstrip("@")
@@ -73,19 +88,22 @@ def fetch_latest_videos() -> list:
         try:
             rss = f"https://www.youtube.com/feeds/videos.xml?channel_id={cid}"
             feed = feedparser.parse(rss)
-            for entry in feed.entries[:3]:
+            for entry in feed.entries[:5]:
                 # 公開日時
                 pub = entry.get("published_parsed")
                 pub_dt = datetime(*pub[:6], tzinfo=timezone.utc) if pub else None
                 if pub_dt and pub_dt < cutoff:
-                    continue  # 古い動画は対象外
+                    break  # これ以降は古い動画なので打ち切り
+                title = entry.get("title", "")
+                if not _is_market_relevant(title):
+                    continue  # 操作案内・キャンペーン等はスキップして次の候補へ
                 found.append({
-                    "title":   entry.get("title", ""),
+                    "title":   title,
                     "url":     entry.get("link", ""),
                     "channel": name,
                     "published": pub_dt.isoformat() if pub_dt else "",
                 })
-                break  # 各チャンネル最新1本だけ
+                break  # 各チャンネル、相場関連の最新1本だけ
         except Exception as e:
             logger.warning(f"RSS取得失敗 [{name}]: {e}")
 
