@@ -1,0 +1,33 @@
+# YouTube 登録チャンネル（本格分析の対象）
+# ─────────────────────────────────────────────────────────────
+# ここに登録したチャンネルの「直近の最新動画」を毎朝1本ずつ取得し、
+# Gemini が動画の実際の中身（音声・字幕）を解析して日経平均・銘柄の
+# 要点を要約します。
+#
+# 追加方法:
+#   1) 追加したいチャンネルのページを開く（例 https://www.youtube.com/@ToshiruRsec）
+#   2) チャンネルIDを調べる（"UC" で始まる文字列。ページのソースの "channelId" 、
+#      または handle を下の resolve_handle に書けば自動解決します）
+#   3) 下の channels に - name と channel_id を1行ずつ足すだけ
+#
+# 無料枠の制限: 1日あたりYouTube動画 合計8時間まで → 解析は max_videos 本に制限
+# ─────────────────────────────────────────────────────────────
+
+settings:
+  max_videos: 3          # 1回の実行で解析する最大本数（無料枠を守るため）
+  within_hours: 30       # 「最近の動画」とみなす時間（これより古い動画は対象外）
+  model: "gemini-2.5-flash"   # YouTube解析に使うGeminiモデル（2.5+推奨）
+
+channels:
+  - name: "トウシル（楽天証券）"
+    channel_id: "UC5BiTvy2Ni2MyigJPspjhOA"
+    # 日経平均・マーケットの解説動画を高頻度で配信
+
+  - name: "後藤達也・経済チャンネル"
+    channel_id: "UCeLeyHAaZJb4tm0cAMxc60Q"
+    # 元日経記者。経済・相場のわかりやすい解説（主にライブ配信）
+
+  # 例: 追加したい場合はコメントを外して channel_id を埋める
+  # - name: "お気に入りチャンネル"
+  #   channel_id: "UCxxxxxxxxxxxxxxxxxxxxxx"
+  #   handle: "@example"   # channel_id が分からなければ handle だけでもOK（自動解決）

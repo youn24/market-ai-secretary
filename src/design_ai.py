@@ -58,6 +58,9 @@ _CSS = f"""
 .cj-btn:hover {{ border-color:var(--blue); color:var(--text); }}
 .cj-btn-on {{ background:var(--blue); color:#fff; border-color:var(--blue); }}
 
+.yt-sub {{ font-size:12px; font-weight:700; color:var(--blue); margin:10px 0 3px; }}
+.yt-body {{ font-size:13px; line-height:1.7; color:var(--text); }}
+
 html {{ scroll-behavior: smooth; }}
 
 body {{
@@ -1508,6 +1511,74 @@ def _sector_heatmap(sector_analysis: dict) -> str:
     return f'<div class="sector-grid">{"".join(cells)}</div>'
 
 
+def _youtube_section(youtube_summary: dict) -> str:
+    """YouTube動画 本格分析セクション HTML。"""
+    yt = youtube_summary or {}
+    if not yt.get("available"):
+        return ""
+    videos = yt.get("videos", []) or []
+    if not videos:
+        return ""
+
+    def _fmt_analysis(text: str) -> str:
+        # 【見出し】を装飾。本文は改行を <br> に。
+        import re as _re
+        text = (text or "").strip()
+        if not text:
+            return ""
+        text = _re.sub(
+            r"【(.+?)】",
+            r'</div><div class="yt-sub">\1</div><div class="yt-body">',
+            text,
+        )
+        return f'<div class="yt-body">{text}</div>'.replace("<br>\n", "<br>")\
+            .replace("\n", "<br>")
+
+    cards = []
+    is_video = yt.get("mode") == "video"
+    for v in videos:
+        title   = (v.get("title", "") or "").replace("<", "&lt;").replace(">", "&gt;")
+        url     = v.get("url", "#")
+        channel = v.get("channel", "")
+        analysis_html = _fmt_analysis(v.get("analysis", "")) if is_video else ""
+        cards.append(f"""
+  <div class="card fade-up" style="margin-bottom:10px">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+      <span style="font-size:18px">🎬</span>
+      <div>
+        <div style="font-size:11px;color:var(--muted)">{channel}</div>
+        <a href="{url}" target="_blank" rel="noopener"
+           style="font-size:13px;font-weight:700;color:var(--blue);text-decoration:none">{title}</a>
+      </div>
+    </div>
+    {analysis_html}
+  </div>""")
+
+    # フォールバック（タイトル推測）のときは points/impact を補足表示
+    extra = ""
+    if not is_video:
+        if yt.get("points"):
+            extra += f'<div class="yt-sub">💡 動画のポイント</div><div class="yt-body">{yt["points"]}</div>'
+        if yt.get("impact"):
+            extra += f'<div class="yt-sub">📊 市場への示唆</div><div class="yt-body">{yt["impact"]}</div>'
+        if extra:
+            extra = f'<div class="card fade-up">{extra}</div>'
+
+    tag = "AIが動画を視聴して要約" if is_video else "タイトルから推測"
+    return f"""
+<!-- ── YouTube 本格分析 ── -->
+<section>
+  <div class="section-header">
+    <span class="section-icon">📺</span>
+    <span class="section-title">YouTube相場解説 AI要約</span>
+    <span class="section-tag">{tag}</span>
+  </div>
+{"".join(cards)}
+{extra}
+</section>
+"""
+
+
 def _news_section(news: list) -> str:
     """ニュース一覧 HTML（最大12件）"""
     items = []
@@ -1720,6 +1791,7 @@ def generate(
     prediction_tracker: dict = None,
     weekly_calendar: dict = None,
     team_debate: dict = None,
+    youtube_summary: dict = None,
     **_kwargs,
 ) -> str:
     """
@@ -1759,6 +1831,7 @@ def generate(
     debate_html  = _ai_discussion(team_debate, ai_summary)
     cal_html     = _calendar_section(weekly_calendar)
     pred_html    = _prediction_section(prediction_tracker)
+    yt_html      = _youtube_section(youtube_summary)
     fg_html      = _fg_section(fear_greed)
     char_header  = _character_header(score, prices, mood, today, now)
     qs_html      = _quick_summary(prices, risk, fear_greed, technical)
@@ -2092,6 +2165,9 @@ def generate(
   </div>
 </section>
 
+<!-- ── YouTube 本格分析 ── -->
+{yt_html}
+
 <!-- ── ニュース ── -->
 <section>
   <div class="section-header">
@@ -2187,6 +2263,7 @@ def run(
     prediction_tracker: dict   = None,
     weekly_calendar: dict      = None,
     team_debate: dict          = None,
+    youtube_summary: dict      = None,
     mode: str = "morning",
     **_kwargs,
 ) -> dict:
@@ -2200,6 +2277,7 @@ def run(
             ai_summary=ai_summary,
             scenario=scenario,
             technical=technical,
+            youtube_summary=youtube_summary,
             sector_analysis=sector_analysis,
             prediction_tracker=prediction_tracker,
             weekly_calendar=weekly_calendar,

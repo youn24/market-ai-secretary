@@ -264,6 +264,17 @@ def run(mode: str):
     except Exception:
         logger.error("アノマリーカレンダーエラー"); logger.debug(traceback.format_exc())
 
+    # Step MA: マクロ要約（毎日・ファンダメンタル＋金融政策をAIが要約）
+    macro = {"available": False}
+    try:
+        logger.info("--- Step MA: マクロ要約（ファンダ＋金融政策） ---")
+        from src.macro_summary import run as run_ma
+        macro = run_ma(prices=prices, news=news, fear_greed=fear_greed, risk=risk)
+        if macro.get("available"):
+            logger.info(f"✅ マクロ要約: {'AI生成' if macro.get('ai_generated') else '簡易要約'}")
+    except Exception:
+        logger.error("マクロ要約エラー"); logger.debug(traceback.format_exc())
+
     # Step FA: 財務・決算書分析（月曜のみ）
     financial_analysis = {"available": False}
     try:
@@ -660,6 +671,7 @@ def run(mode: str):
             ai_summary=ai_summary, scenario=scenario, technical=technical,
             sector_analysis=sector_analysis, prediction_tracker=prediction_tracker,
             weekly_calendar=weekly_calendar, team_debate=team_debate,
+            youtube_summary=youtube_summary,
             mode=mode,
         )
         if design_report.get("available"):
@@ -683,7 +695,8 @@ def run(mode: str):
                           tdnet=tdnet,
                           weekly_calendar=weekly_calendar,
                           anomaly=anomaly,
-                          supply_demand=supply_demand)
+                          supply_demand=supply_demand,
+                          macro=macro)
         today = get_today_str()
         report_paths = {
             "html": str(get_dirs()["reports"] / f"{today}_{mode}.html"),
@@ -765,7 +778,8 @@ def _save_html_report(mode, prices, news, risk, analysis, fear_greed, chart_path
                       news_bias=None, fire_result=None, bargain=None,
                       tutor=None, dca=None, notif_filter=None, portfolio_alerts=None,
                       financial_analysis=None, theme_ranking=None, tdnet=None,
-                      weekly_calendar=None, anomaly=None, supply_demand=None):
+                      weekly_calendar=None, anomaly=None, supply_demand=None,
+                      macro=None):
     """初心者でもわかる見やすいダッシュボードHTMLを保存"""
     import base64
     today = get_today_str()
@@ -1071,6 +1085,10 @@ def _save_html_report(mode, prices, news, risk, analysis, fear_greed, chart_path
     # ── 需給分析ランキングHTML ─────────────────────────────────
     supply_demand = supply_demand or {}
     sd_html = supply_demand.get("html", "") if supply_demand.get("available") else ""
+
+    # ── マクロ要約HTML（ファンダ＋金融政策） ───────────────────
+    macro = macro or {}
+    macro_html = macro.get("html", "") if macro.get("available") else ""
 
     # ── 財務・決算書分析HTML ──────────────────────────────────
     financial_analysis = financial_analysis or {}

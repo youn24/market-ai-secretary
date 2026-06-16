@@ -38,7 +38,7 @@ jobs:
           pip install --upgrade pip
           pip install pandas numpy requests feedparser beautifulsoup4 \
                       lxml python-dotenv PyYAML yfinance plotly \
-                      matplotlib kaleido google-generativeai
+                      matplotlib kaleido google-generativeai google-genai
 
       - name: 完全自律AIチームシステム - 朝の分析を実行
         env:
