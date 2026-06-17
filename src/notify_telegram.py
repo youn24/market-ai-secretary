@@ -362,6 +362,7 @@ def run(risk, analysis, report_paths, mode,
         anomaly=None,
         supply_demand=None,
         macro=None,
+        earnings_brief=None,
         character_comments=None) -> bool:
     if not _is_configured():
         logger.info("Telegram 設定なし。スキップします。")
@@ -430,6 +431,10 @@ def run(risk, analysis, report_paths, mode,
         # ③.5 TDnet適時開示アラート（ウォッチリスト銘柄の決算・自社株買い等）
         if tdnet and tdnet.get("available") and tdnet.get("telegram_message"):
             send_message(_stamp("📋 適時開示アラート") + tdnet["telegram_message"])
+
+        # ③.55 決算ブリーフ（決算PDFのAI要約）
+        if earnings_brief and earnings_brief.get("available") and earnings_brief.get("telegram_message"):
+            send_message(_stamp("📑 決算ブリーフ") + earnings_brief["telegram_message"])
 
         # ③.6 今日のアノマリー（相場の経験則）
         if anomaly and anomaly.get("available") and anomaly.get("telegram_message"):

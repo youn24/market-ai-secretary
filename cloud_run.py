@@ -253,6 +253,18 @@ def run(mode: str):
     except Exception:
         logger.error("TDnetウォッチャーエラー"); logger.debug(traceback.format_exc())
 
+    # Step EB: 決算ブリーフ（決算系PDFの中身をAI要約）
+    earnings_brief = {"available": False}
+    try:
+        if tdnet.get("available"):
+            logger.info("--- Step EB: 決算ブリーフ（PDF要約） ---")
+            from src.earnings_brief import run as run_eb
+            earnings_brief = run_eb(tdnet)
+            if earnings_brief.get("available"):
+                logger.info(f"✅ 決算ブリーフ: {earnings_brief.get('count',0)}件要約")
+    except Exception:
+        logger.error("決算ブリーフエラー"); logger.debug(traceback.format_exc())
+
     # Step AN: アノマリーカレンダー（毎日・該当する経験則を全部表示）
     anomaly = {"available": False}
     try:
@@ -701,7 +713,8 @@ def run(mode: str):
                           weekly_calendar=weekly_calendar,
                           anomaly=anomaly,
                           supply_demand=supply_demand,
-                          macro=macro)
+                          macro=macro,
+                          earnings_brief=earnings_brief)
         today = get_today_str()
         report_paths = {
             "html": str(get_dirs()["reports"] / f"{today}_{mode}.html"),
@@ -766,6 +779,7 @@ def run(mode: str):
                   anomaly=anomaly,
                   supply_demand=supply_demand,
                   macro=macro,
+                  earnings_brief=earnings_brief,
                   character_comments=character_comments)
     except Exception:
         logger.error("Telegram通知エラー"); logger.debug(traceback.format_exc())
@@ -785,7 +799,7 @@ def _save_html_report(mode, prices, news, risk, analysis, fear_greed, chart_path
                       tutor=None, dca=None, notif_filter=None, portfolio_alerts=None,
                       financial_analysis=None, theme_ranking=None, tdnet=None,
                       weekly_calendar=None, anomaly=None, supply_demand=None,
-                      macro=None):
+                      macro=None, earnings_brief=None):
     """初心者でもわかる見やすいダッシュボードHTMLを保存"""
     import base64
     today = get_today_str()
@@ -1095,6 +1109,10 @@ def _save_html_report(mode, prices, news, risk, analysis, fear_greed, chart_path
     # ── マクロ要約HTML（ファンダ＋金融政策） ───────────────────
     macro = macro or {}
     macro_html = macro.get("html", "") if macro.get("available") else ""
+
+    # ── 決算ブリーフHTML（決算PDFのAI要約） ───────────────────
+    earnings_brief = earnings_brief or {}
+    eb_html = earnings_brief.get("html", "") if earnings_brief.get("available") else ""
 
     # ── 財務・決算書分析HTML ──────────────────────────────────
     financial_analysis = financial_analysis or {}
@@ -1623,6 +1641,9 @@ a:hover{{text-decoration:underline;}}
 
   <!-- TDnet適時開示アラート（ウォッチリスト銘柄のみ） -->
   {f'<div class="sec-head">📋 適時開示アラート（あなたの注目銘柄）</div>{tdnet_html}' if tdnet_html else ""}
+
+  <!-- 決算ブリーフ（決算PDFのAI要約） -->
+  {f'<div class="sec-head">📑 決算ブリーフ（AIが中身を要約）</div>{eb_html}' if eb_html else ""}
 
   <!-- 今後の決算予定 + 天体イベント（月曜のみ） -->
   {f'<div class="sec-head">🗓️ 決算予定＆イベントカレンダー</div>{calendar_extra_html}' if calendar_extra_html else ""}

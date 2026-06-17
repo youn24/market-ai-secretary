@@ -47,6 +47,19 @@ def run():
     except Exception:
         logger.error("アラートエラー"); logger.debug(traceback.format_exc())
 
+    # ザラバ中の急変銘柄ウォッチ（ウォッチリスト銘柄＋なぜ動いたか）
+    try:
+        from src.intraday_movers import run as run_movers
+        mv = run_movers()
+        if mv.get("available"):
+            from src.notify_telegram import send_message
+            send_message(mv["telegram_message"])
+            logger.info(f"✅ ザラバ急変通知: {mv.get('count',0)}銘柄")
+        else:
+            logger.info(f"ザラバ急変: {mv.get('reason','なし')}")
+    except Exception:
+        logger.error("ザラバ急変エラー"); logger.debug(traceback.format_exc())
+
     logger.info("====== 監視完了 ======")
 
 
