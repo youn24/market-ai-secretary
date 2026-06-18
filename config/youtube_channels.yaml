@@ -14,7 +14,7 @@
 # ─────────────────────────────────────────────────────────────
 
 settings:
-  max_videos: 6          # 1回の実行で解析する最大本数（無料枠を守るため）
+  max_videos: 8          # 1回の実行で解析する最大本数（登録が増えたので、その日の新しい順に8本）
   within_hours: 30       # 「最近の動画」とみなす時間（これより古い動画は対象外）
   model: "gemini-2.5-flash"   # YouTube解析に使うGeminiモデル（2.5+推奨）
 
@@ -43,6 +43,34 @@ channels:
   - name: "ばっちゃまの米国株"
     channel_id: "UCzZSnddt3xTL0V-ELJaMUFw"
     # 米国株を毎日解説（じっちゃま系）。日本株中心の他5社に米国市場の視点を補完
+
+  - name: "株リアルライブ"
+    channel_id: "UC5Qgc-tEFmm5iQX5tUy6TyA"
+    # 日次で個別株を詳細解説。「あすの朝、要注意」など寄り前情報が充実
+
+  - name: "明日上がる株を予想"
+    channel_id: "UCjpbdd7wZ2VL3RwfsK91CQg"
+    # 毎日「翌日上がる株」を予想
+
+  - name: "ひげづら株ちゃんねる"
+    channel_id: "UCfx9nY1DIwd3p0zbtdG4FOQ"
+    # 取引日ごとに国内外指数・セクター・個別株の地合いと見通しを解説
+
+  - name: "株の買い時を考えるチャンネル"
+    channel_id: "UCoADGOCHt0bH5K-S8eL_kwg"
+    # 日本株の買い時・個別株の状況を解説
+
+  - name: "株Tube（Jumping Point!!）"
+    channel_id: "UCgDa6dxD3jPElw6eCvL1T2g"
+    # 注目銘柄ランキング・「明日上がる株」シリーズ（数日おき）
+
+  - name: "もふもふ不動産"
+    channel_id: "UCsWTZ4nYODCwlE8rdv7DZzA"
+    # 株・経済・不動産・税金など（日経/日銀の解説あり。不動産寄りの回も）
+
+  - name: "日経CNBC"
+    channel_id: "UClVsQnfs-jKkjKmUKUHnT2g"
+    # 日経CNBC公式。市場・経済の専門解説（※テレ東BIZは一般ニュース中心のため代替採用）
 
   # 更新が稀なため一旦保留（配信があれば下のコメントを外せば復活）
   # - name: "後藤達也・経済チャンネル"
