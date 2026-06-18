@@ -217,13 +217,13 @@ def _ax_style(ax, title: str = "", ylabel: str = ""):
     ax.set_facecolor(BG2)
     for spine in ax.spines.values():
         spine.set_color(C_BORDER)
-    ax.tick_params(colors=C_GRAY, labelsize=7.5, length=3)
+    ax.tick_params(colors=C_GRAY, labelsize=8.5, length=3)
     ax.grid(color=GRID_C, linewidth=0.4, linestyle="--", alpha=0.6)
     if title:
-        ax.set_title(title, color=C_WHITE, fontsize=9.5, fontweight="bold",
-                     pad=5, loc="left")
+        ax.set_title(title, color=C_WHITE, fontsize=11, fontweight="bold",
+                     pad=7, loc="left")
     if ylabel:
-        ax.set_ylabel(ylabel, color=C_GRAY, fontsize=7.5)
+        ax.set_ylabel(ylabel, color=C_GRAY, fontsize=8.5)
 
 
 def _set_date_xticks(ax, df_index, n_ticks=8):
@@ -276,10 +276,19 @@ def panel_usdjpy_price(ax, data: dict):
     chg  = data[sym]["chg"]
     c_arrow = C_UP if chg >= 0 else C_DOWN
     arrow   = "▲" if chg >= 0 else "▼"
-    ax.axhline(last, color=c_arrow, lw=0.8, ls=":", alpha=0.8)
-    ax.text(len(idx) - 0.5, last,
-            f" {last:.3f}  {arrow}{abs(chg):.2f}%",
-            color=c_arrow, fontsize=10.5, fontweight="bold", va="center")
+    ax.axhline(last, color=c_arrow, lw=1.0, ls=":", alpha=0.8)
+
+    # 大きな現在値表示（右上コーナーに目立つボックスで表示）
+    direction = "円安方向" if chg >= 0 else "円高方向"
+    ax.text(0.99, 0.97,
+            f"{last:.3f} 円",
+            transform=ax.transAxes, ha="right", va="top",
+            color=c_arrow, fontsize=20, fontweight="bold",
+            bbox=dict(boxstyle="round,pad=0.4", fc=BG, ec=c_arrow, lw=1.5, alpha=0.85))
+    ax.text(0.99, 0.82,
+            f"{arrow} {abs(chg):.2f}%  {direction}",
+            transform=ax.transAxes, ha="right", va="top",
+            color=c_arrow, fontsize=11, fontweight="bold")
 
     # 日銀介入警戒ライン
     bot, top = float(close.min()), float(close.max())
@@ -413,17 +422,17 @@ def panel_currency_strength(ax, data: dict):
     }
     labels = [f"{flag_map.get(c, '')} {c}" for c in currencies]
 
-    bars = ax.barh(labels, values, color=colors, alpha=0.85, height=0.65)
+    bars = ax.barh(labels, values, color=colors, alpha=0.88, height=0.65)
 
     for bar, val in zip(bars, values):
-        offset = 0.03 if val >= 0 else -0.03
+        offset = 0.04 if val >= 0 else -0.04
         ax.text(val + offset, bar.get_y() + bar.get_height() / 2,
                 f"{val:+.2f}%", va="center",
                 ha="left" if val >= 0 else "right",
-                color=C_WHITE, fontsize=8, fontweight="bold")
+                color=C_WHITE, fontsize=9, fontweight="bold")
 
     ax.axvline(0, color=C_GRAY, lw=0.8)
-    ax.tick_params(axis="y", labelcolor=C_WHITE, labelsize=9)
+    ax.tick_params(axis="y", labelcolor=C_WHITE, labelsize=10)
     _ax_style(ax, "💪 通貨強弱（5日間）", "%")
 
 
@@ -634,13 +643,19 @@ def panel_fedwatch(ax, data: dict, premium: dict | None = None):
     ax.bar(x,     hold_prob, width=w, color=C_GRAY,   label="据え置き", alpha=0.75)
     ax.bar(x + w, cut_prob,  width=w, color=C_UP,     label="利下げ",   alpha=0.85)
 
+    # 各バーの上に確率を表示
+    for xi, cp in zip(x + w, cut_prob):
+        if cp > 5:
+            ax.text(xi, cp + 1, f"{cp:.0f}%", ha="center", va="bottom",
+                    fontsize=8, color=C_UP, fontweight="bold")
+
     ax.set_xticks(x)
-    ax.set_xticklabels([f"FOMC\n{m}" for m in meetings], fontsize=7, color=C_WHITE)
-    ax.set_ylabel("%", color=C_GRAY, fontsize=7.5)
-    ax.legend(loc="upper right", fontsize=7, fancybox=True,
+    ax.set_xticklabels([f"FOMC\n{m}" for m in meetings], fontsize=8, color=C_WHITE)
+    ax.set_ylabel("確率 (%)", color=C_GRAY, fontsize=8.5)
+    ax.legend(loc="upper right", fontsize=8, fancybox=True,
               facecolor=BG3, edgecolor=C_BORDER, labelcolor=C_WHITE)
     ax.text(0.02, 0.97, f"現在FFR: {ffr:.2f}%", transform=ax.transAxes,
-            fontsize=7.5, color=C_GOLD, fontweight="bold", va="top")
+            fontsize=9, color=C_GOLD, fontweight="bold", va="top")
     _ax_style(ax, f"🏦 FedWatch 利下げ確率 ({note})")
 
 
@@ -676,58 +691,61 @@ def panel_vix_gauge(ax, data: dict):
     ax.plot(0, 0, "o", color=C_WHITE, ms=6, zorder=6)
 
     # VIX 数値テキスト
-    vix_c = C_DOWN if vix >= 30 else C_ORANGE if vix >= 20 else C_UP
-    ax.text(0, -0.22, f"{vix:.1f}",
+    vix_c   = C_DOWN if vix >= 30 else C_ORANGE if vix >= 20 else C_UP
+    vix_str = "⚡ 極度警戒" if vix >= 30 else "⚠️ 警戒" if vix >= 20 else "✅ 安定"
+    ax.text(0, -0.18, f"{vix:.1f}",
             ha="center", va="center", color=vix_c,
-            fontsize=20, fontweight="bold")
-    ax.text(0, -0.44, "VIX 恐怖指数",
-            ha="center", va="center", color=C_GRAY, fontsize=8)
+            fontsize=26, fontweight="bold")
+    ax.text(0, -0.38, vix_str,
+            ha="center", va="center", color=vix_c, fontsize=9.5, fontweight="bold")
+    ax.text(0, -0.53, "VIX 恐怖指数",
+            ha="center", va="center", color=C_GRAY, fontsize=8.5)
 
     # ゾーンラベル
     for s, e, col, label in zones:
         mid   = (s + e) / 2 * np.pi
-        lx    = 1.32 * np.cos(mid)
-        ly    = 1.32 * np.sin(mid)
+        lx    = 1.35 * np.cos(mid)
+        ly    = 1.35 * np.sin(mid)
         ax.text(lx, ly, label, ha="center", va="center",
-                color=col, fontsize=6.5, linespacing=1.2)
+                color=col, fontsize=7.5, fontweight="bold", linespacing=1.2)
 
     ax.set_xlim(-1.6, 1.6)
-    ax.set_ylim(-0.6, 1.55)
+    ax.set_ylim(-0.65, 1.55)
     ax.set_aspect("equal")
     ax.axis("off")
     ax.set_facecolor(BG2)
     ax.set_title("⚡ VIX リスクメーター", color=C_WHITE,
-                 fontsize=9.5, fontweight="bold", pad=5, loc="left")
+                 fontsize=11, fontweight="bold", pad=7, loc="left")
 
 
 def panel_price_board(ax, data: dict):
-    """Panel L: リアルタイム価格ボード"""
+    """Panel L: リアルタイム価格ボード（日本語ラベル・見やすさ重視）"""
     ax.axis("off")
     ax.set_facecolor(BG2)
-    ax.set_title("💹 現在値ボード", color=C_WHITE,
-                 fontsize=9.5, fontweight="bold", pad=5, loc="left")
+    ax.set_title("💹 現在値ボード（東京14時）", color=C_GOLD,
+                 fontsize=11, fontweight="bold", pad=7, loc="left")
 
     board = [
-        ("USDJPY=X", "USD/JPY",    "{:.3f}円"),
-        ("EURJPY=X", "EUR/JPY",    "{:.2f}円"),
-        ("GBPJPY=X", "GBP/JPY",   "{:.2f}円"),
-        ("AUDJPY=X", "AUD/JPY",   "{:.2f}円"),
-        ("DX-Y.NYB", "DXY",       "{:.2f}"),
-        ("GC=F",     "Gold",      "${:,.0f}"),
-        ("CL=F",     "Oil",       "${:.1f}"),
-        ("^TNX",     "US10Y",     "{:.3f}%"),
-        ("^VIX",     "VIX",       "{:.2f}"),
-        ("^GSPC",    "S&P500",    "{:,.0f}"),
-        ("^N225",    "N225",      "{:,.0f}"),
+        ("USDJPY=X", "💵 ドル円",       "{:.3f}円",  True),
+        ("EURJPY=X", "🇪🇺 ユーロ円",    "{:.2f}円",  False),
+        ("GBPJPY=X", "🇬🇧 ポンド円",    "{:.2f}円",  False),
+        ("AUDJPY=X", "🇦🇺 豪ドル円",    "{:.2f}円",  False),
+        ("DX-Y.NYB", "💲 ドル指数",      "{:.2f}",   False),
+        ("GC=F",     "🥇 金",           "${:,.0f}", False),
+        ("CL=F",     "🛢 原油",          "${:.1f}",  False),
+        ("^TNX",     "🇺🇸 米10年金利",   "{:.3f}%",  False),
+        ("^VIX",     "⚡ VIX恐怖指数",   "{:.2f}",   False),
+        ("^GSPC",    "📈 S&P500",       "{:,.0f}",  False),
+        ("^N225",    "🗾 日経225",       "{:,.0f}",  False),
     ]
 
     y = 0.96
-    for sym, label, fmt in board:
+    for sym, label, fmt, is_main in board:
         if sym not in data:
             continue
-        d   = data[sym]
-        val = d["latest"]
-        chg = d["chg"]
+        d     = data[sym]
+        val   = d["latest"]
+        chg   = d["chg"]
         arrow = "▲" if chg >= 0 else "▼"
         col   = C_UP if chg >= 0 else C_DOWN
         try:
@@ -735,21 +753,26 @@ def panel_price_board(ax, data: dict):
         except Exception:
             val_s = f"{val:.2f}"
 
-        # ラベル（左）
-        ax.text(0.02, y, f"  {label}", transform=ax.transAxes,
-                fontsize=8.5, color=C_GRAY, va="top", fontfamily="monospace")
-        # 値（中央）
-        ax.text(0.52, y, val_s, transform=ax.transAxes,
-                fontsize=8.5, color=C_WHITE, va="top", ha="right",
-                fontfamily="monospace", fontweight="bold")
-        # 変化率（右）
-        ax.text(0.98, y, f"{arrow}{abs(chg):.2f}%",
-                transform=ax.transAxes, fontsize=8, color=col,
-                va="top", ha="right", fontfamily="monospace")
+        fsize_label = 10 if is_main else 8.5
+        fsize_val   = 10 if is_main else 8.5
+        label_col   = C_GOLD if is_main else C_GRAY
 
-        # 区切り線
-        ax.plot([0.01, 0.99], [y - 0.003, y - 0.003],
-                color=C_BORDER, lw=0.3, transform=ax.transAxes)
+        # ラベル（左）
+        ax.text(0.02, y, label, transform=ax.transAxes,
+                fontsize=fsize_label, color=label_col, va="top")
+        # 値（中央）
+        ax.text(0.62, y, val_s, transform=ax.transAxes,
+                fontsize=fsize_val, color=C_WHITE, va="top", ha="right",
+                fontweight="bold" if is_main else "normal")
+        # 変化率（右）
+        ax.text(0.99, y, f"{arrow}{abs(chg):.2f}%",
+                transform=ax.transAxes, fontsize=fsize_val - 0.5, color=col,
+                va="top", ha="right", fontweight="bold" if is_main else "normal")
+
+        # 区切り線（メインは太め）
+        ax.plot([0.01, 0.99], [y - 0.004, y - 0.004],
+                color=C_GOLD if is_main else C_BORDER,
+                lw=0.6 if is_main else 0.3, transform=ax.transAxes)
         y -= 0.082
 
 
@@ -758,7 +781,7 @@ def panel_fred_macro(ax, premium: dict | None = None):
     ax.axis("off")
     ax.set_facecolor(BG2)
     ax.set_title("🏛 FRED 主要経済指標（米国）", color=C_WHITE,
-                 fontsize=9.5, fontweight="bold", pad=5, loc="left")
+                 fontsize=11, fontweight="bold", pad=7, loc="left")
 
     fred = (premium or {}).get("fred", {})
     items = [
@@ -795,11 +818,11 @@ def panel_fred_macro(ax, premium: dict | None = None):
         else:
             continue
 
-        ax.text(0.02, y, name,    transform=ax.transAxes, fontsize=8.5, color=C_GRAY,  va="top")
-        ax.text(0.55, y, val_s,   transform=ax.transAxes, fontsize=8.5, color=C_WHITE, va="top",
+        ax.text(0.02, y, name,    transform=ax.transAxes, fontsize=9.5, color=C_GRAY,  va="top")
+        ax.text(0.58, y, val_s,   transform=ax.transAxes, fontsize=9.5, color=C_WHITE, va="top",
                 ha="right", fontweight="bold")
-        ax.text(0.72, y, arrow,   transform=ax.transAxes, fontsize=8.5, color=col,     va="top")
-        ax.text(0.99, y, date,    transform=ax.transAxes, fontsize=7.5, color=src_col, va="top",
+        ax.text(0.74, y, arrow,   transform=ax.transAxes, fontsize=9.5, color=col,     va="top")
+        ax.text(0.99, y, date,    transform=ax.transAxes, fontsize=8,   color=src_col, va="top",
                 ha="right", alpha=0.7)
         ax.plot([0.01, 0.99], [y - 0.004, y - 0.004], color=C_BORDER,
                 lw=0.3, transform=ax.transAxes)

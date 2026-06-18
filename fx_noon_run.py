@@ -42,6 +42,52 @@ FX_BOT_TOKEN = os.getenv("TELEGRAM_FX_BOT_TOKEN", "").strip() or None
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Gemini AI 為替コメント生成
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _gemini_fx_comment(data: dict, premium: dict) -> str:
+    """Gemini-1.5-flash で FX市場の2〜3文AI解説を生成（日本語）"""
+    api_key = os.getenv("GEMINI_API_KEY", "").strip()
+    if not api_key:
+        return ""
+    try:
+        import google.generativeai as genai
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel("gemini-1.5-flash")
+
+        usdjpy  = data.get("USDJPY=X", {})
+        vix     = data.get("^VIX",     {}).get("latest", "N/A")
+        gold_chg= data.get("GC=F",     {}).get("chg",    "N/A")
+        dxy     = data.get("DX-Y.NYB", {}).get("latest", "N/A")
+        fred    = premium.get("fred",  {})
+        fw      = premium.get("fedwatch", {})
+        ffr     = fred.get("FEDFUNDS", {}).get("value") or (fw.get("current_ffr") if fw else None)
+        cut_p   = (fw.get("cut_prob", [None])[0] if fw else None)
+
+        facts = [
+            f"ドル円: {usdjpy.get('latest','N/A'):.3f}円（前日比 {usdjpy.get('chg',0):+.2f}%）" if usdjpy.get("latest") else "ドル円: N/A",
+            f"VIX恐怖指数: {vix:.1f}" if isinstance(vix, float) else f"VIX: {vix}",
+            f"ドル指数(DXY): {dxy:.2f}" if isinstance(dxy, float) else f"DXY: {dxy}",
+            f"金の前日比: {gold_chg:+.2f}%" if isinstance(gold_chg, float) else "",
+            f"米政策金利(FFR): {ffr:.2f}%" if ffr else "",
+            f"次回FOMC利下げ確率: {cut_p:.0f}%" if cut_p is not None else "",
+        ]
+        facts_str = "\n".join(f for f in facts if f)
+
+        prompt = (
+            "あなたはFX・マクロ専門アナリストです。以下の本日の市場データをもとに、"
+            "ドル円相場の動向と今後の注目点を投資初心者にもわかるよう"
+            "2〜3文の日本語で簡潔かつ丁寧に解説してください。"
+            "断定は避け、「〜が注目されます」「〜に注意が必要です」などの表現を使ってください。\n\n"
+            f"【本日の市場データ】\n{facts_str}"
+        )
+        resp = model.generate_content(prompt)
+        return (resp.text or "").strip()[:350]
+    except Exception:
+        return ""
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # コンパクトサマリー生成（FX + マクロ + 地政学 + URL を1通に集約）
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -124,6 +170,18 @@ def _build_compact_msg(fx_result: dict, mood_emoji: str, char_info: dict) -> str
         for f in risk["factors"][:2]:          # 上位2件のみ
             lines.append(f"  • {f}")
         lines.append("━━━━━━━━━━━━━━")
+    except Exception:
+        pass
+
+    # ── Gemini AI 解説 ──
+    try:
+        ai_comment = _gemini_fx_comment(data, premium)
+        if ai_comment:
+            lines += [
+                "*🤖 AI市場解説（Gemini）*",
+                ai_comment,
+                "━━━━━━━━━━━━━━",
+            ]
     except Exception:
         pass
 
