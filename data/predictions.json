@@ -106,6 +106,20 @@
       "sp500": 7511.3501,
       "usdjpy": 160.419,
       "vix": 16.41,
+      "verified": true,
+      "correct": false,
+      "actual_move": 0.13,
+      "actual_dir": "neutral"
+    },
+    {
+      "date": "2026-06-18",
+      "direction": "bear",
+      "score": -8.31,
+      "fg": 32.7,
+      "nikkei": 69404.5,
+      "sp500": 7420.1001,
+      "usdjpy": 160.61,
+      "vix": 18.44,
       "verified": false,
       "correct": null,
       "actual_move": null
