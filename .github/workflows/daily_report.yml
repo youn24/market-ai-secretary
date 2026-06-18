@@ -66,16 +66,15 @@ jobs:
           # モバイル対応版レポート生成
           python generate_mobile_report.py || true
 
-      - name: 予測学習データをmainブランチに保存（永続化）
+      - name: レポート(docs/)と学習データをmainブランチに保存・公開
         run: |
           git config --global user.email "actions@github.com"
           git config --global user.name "GitHub Actions Bot"
-          # data/predictions.json があればコミットして永続化
-          if [ -f data/predictions.json ]; then
-            git add data/predictions.json
-            git diff --staged --quiet || git commit -m "🧠 予測学習データ更新 $(date '+%Y-%m-%d')"
-            git push origin main || true
-          fi
+          # GitHub Pages は main/docs を公開するため、生成した docs/ を必ずpushする
+          # （これをしないと公開ページが更新されず古いまま固定される）
+          git add docs data/predictions.json data/ai_memory.json 2>/dev/null || true
+          git diff --staged --quiet || git commit -m "📊 レポート更新 $(date '+%Y-%m-%d %H:%M JST')"
+          git push origin main || true
 
       - name: レポートをgh-pagesに公開
         run: |

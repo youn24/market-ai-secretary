@@ -719,7 +719,10 @@ def run(mode: str):
         report_paths = {
             "html": str(get_dirs()["reports"] / f"{today}_{mode}.html"),
             "md":   str(get_dirs()["reports"] / f"{today}_{mode}.md"),
-            "url":  f"{PAGES_URL}/{today}_{mode}.html",
+            # GitHub Pages は main/docs を公開する。docs/daily_report.html が
+            # デザインAIレポートの公開先なので、必ずこのURLを案内する
+            # （日付つき {today}_{mode}.html は reports/ にしか無く Pages では 404）
+            "url":  f"{PAGES_URL}/daily_report.html",
         }
     except Exception:
         logger.error("レポート生成エラー"); logger.debug(traceback.format_exc())

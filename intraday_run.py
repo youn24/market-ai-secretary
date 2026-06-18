@@ -124,7 +124,7 @@ def run():
         logger.debug(traceback.format_exc())
 
     # キャプション（前場まとめは複数行の分析要約、それ以外は一言）
-    pages_url = "https://youn24.github.io/market-ai-secretary"
+    pages_url = "https://youn24.github.io/market-ai-secretary/daily_report.html"
     body = _zenba_summary(prices) if "前場" in title else _one_line(prices)
     caption = (
         f"┌ *{title}* ┃ {time_label}\n"
