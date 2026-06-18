@@ -3,10 +3,9 @@ fx_noon_run.py
 FX午後レポート実行スクリプト — 毎日 14:00 JST 配信
 GitHub Actions: .github/workflows/fx_noon.yml から呼ばれる
 
-構成:
-  ① Telegram テキスト（FX サマリー + 主要レート）
-  ② Telegram 画像（matplotlib ダッシュボード PNG）
-  ③ Telegram URL（GitHub Pages レポートリンク）
+通知構成（2メッセージに圧縮）:
+  ① テキスト: FX主要レート + マクロ + 地政学 + URL を1通にまとめ
+  ② 画像: matplotlib 16パネルダッシュボード
 """
 
 import os
@@ -38,13 +37,109 @@ PAGES_URL = os.getenv(
     "https://youn24.github.io/market-ai-secretary"
 )
 
-# FX・マクロ・地政学 専用トークルームの Chat ID
-# 未設定なら通常の TELEGRAM_CHAT_ID に送られる（フォールバック）
-FX_CHAT_ID = os.getenv("TELEGRAM_FX_CHAT_ID", "").strip() or None
-
-# FX専用の別ボットトークン（未設定なら通常の TELEGRAM_BOT_TOKEN を使用）
+FX_CHAT_ID  = os.getenv("TELEGRAM_FX_CHAT_ID",  "").strip() or None
 FX_BOT_TOKEN = os.getenv("TELEGRAM_FX_BOT_TOKEN", "").strip() or None
 
+
+# ─────────────────────────────────────────────────────────────────────────────
+# コンパクトサマリー生成（FX + マクロ + 地政学 + URL を1通に集約）
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _build_compact_msg(fx_result: dict, mood_emoji: str, char_info: dict) -> str:
+    data    = fx_result.get("data",    {}) or {}
+    premium = fx_result.get("premium", {}) or {}
+
+    # ── ヘッダー ──
+    jst = get_jst_now()
+    wd  = ["月", "火", "水", "木", "金", "土", "日"][jst.weekday()]
+    lines = [
+        "💱〰〰〰〰〰〰〰〰〰〰〰💱",
+        "　　〽️ *ミセスワタナベ FX* 〽️",
+        "　 ＼ 為替マーケット速報 ／",
+        "💱〰〰〰〰〰〰〰〰〰〰〰💱",
+        f"🗓 *{jst.year}年{jst.month}月{jst.day}日（{wd}）*",
+        f"🕑 *{jst.strftime('%H:%M')} JST* ─ 東京市場",
+    ]
+
+    # キャラクター一言（あれば）
+    if char_info.get("desc"):
+        lines += ["", f"{mood_emoji} _{char_info['desc']}_"]
+
+    # ── 主要FXレート ──
+    def _rate(sym, label):
+        d   = data.get(sym, {})
+        v   = d.get("latest")
+        chg = d.get("chg") or 0
+        if v is None:
+            return f"{label}: `---`"
+        arr = "▲" if chg >= 0 else "▼"
+        return f"{label}: `{v:,.2f}円` {arr}{abs(chg):.2f}%"
+
+    lines += [
+        "",
+        "*📌 主要レート（東京14時）*",
+        _rate("USDJPY=X", "💵 ドル円  "),
+        _rate("EURJPY=X", "🇪🇺 ユーロ円"),
+        _rate("GBPJPY=X", "🇬🇧 ポンド円"),
+        _rate("AUDJPY=X", "🇦🇺 豪ドル円"),
+        "━━━━━━━━━━━━━━",
+    ]
+
+    # ── マクロ環境 ──
+    fred = premium.get("fred",     {})
+    fw   = premium.get("fedwatch", {})
+    tc   = premium.get("treasury", {})
+
+    ffr   = fred.get("FEDFUNDS", {}).get("value") or (fw.get("current_ffr") if fw else None)
+    cut_p = fw.get("cut_prob",  [None])[0] if fw else None
+    jp10y = fred.get("IRLTLT01JPM156N", {}).get("value")
+    us10y = data.get("^TNX", {}).get("latest") or (tc.get("10Y") if tc else None)
+    vix   = data.get("^VIX", {}).get("latest")
+    hy    = fred.get("BAMLH0A0HYM2", {}).get("value")
+
+    macro_lines = ["*📊 マクロ & 市場環境*"]
+    if ffr is not None:
+        cut_str = f"  （次回利下げ {cut_p:.0f}%）" if cut_p is not None else ""
+        macro_lines.append(f"🏦 政策金利: `{ffr:.2f}%`{cut_str}")
+    if us10y is not None and jp10y is not None:
+        diff = us10y - jp10y
+        dir_str = "円安圧力" if diff >= 3.0 else "やや円安" if diff >= 2.0 else "円高圧力"
+        macro_lines.append(f"📐 日米金利差: `{diff:.2f}%`（{dir_str}）")
+    if vix is not None:
+        vix_icon = "🟢" if vix < 20 else "🟡" if vix < 25 else "🔴"
+        vix_str  = "安定" if vix < 20 else "警戒" if vix < 25 else "危険"
+        macro_lines.append(f"⚡ 恐怖指数VIX: `{vix:.1f}` {vix_icon} {vix_str}")
+    if hy is not None:
+        hy_icon = "🟢" if hy < 3.5 else "🟡" if hy < 5 else "🔴"
+        macro_lines.append(f"💳 信用スプレッド: `{hy:.2f}%` {hy_icon}")
+
+    if len(macro_lines) > 1:
+        lines += macro_lines + ["━━━━━━━━━━━━━━"]
+
+    # ── 地政学リスク ──
+    try:
+        from src.macro_geopolitics import calc_geopolitical_risk
+        risk = calc_geopolitical_risk(data)
+        lines.append(f"*🌍 地政学リスク*: {risk['level']} `{risk['score']}/100`")
+        for f in risk["factors"][:2]:          # 上位2件のみ
+            lines.append(f"  • {f}")
+        lines.append("━━━━━━━━━━━━━━")
+    except Exception:
+        pass
+
+    # ── URL ──
+    lines += [
+        "*🔗 詳細チャート・全分析はこちら*",
+        PAGES_URL,
+        "📱 iPhoneのSafariで開けます",
+    ]
+
+    return "\n".join(lines)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# メイン
+# ─────────────────────────────────────────────────────────────────────────────
 
 def main():
     logger.info("=" * 55)
@@ -52,9 +147,8 @@ def main():
     logger.info(f"  実行時刻: {get_jst_now().strftime('%Y-%m-%d %H:%M:%S JST')}")
     logger.info("=" * 55)
 
-    # ── Step 0: キャラクター判定（データ取得前に仮判定 → 後で上書き） ──
     char_info  = {"mood": "analyzing", "desc": "", "path": None, "available": False}
-    mood_emoji = "🐘📊"
+    mood_emoji = "📊"
 
     # ── Step 1: FX ビジュアル分析 + チャート生成 ──────────────────
     fx_result = {"available": False, "text_msg": "", "url_msg": "", "chart_path": None}
@@ -64,7 +158,6 @@ def main():
         fx_result = fx_run()
         if fx_result.get("available"):
             logger.info("✅ FX分析 + チャート生成完了")
-            # キャラクター選択（実データで判定）
             try:
                 from src.character_selector import get_character_for_market, get_mood_emoji
                 data       = fx_result.get("data", {})
@@ -78,99 +171,55 @@ def main():
                     rsi_val = float(rsi_s.iloc[-1]) if len(rsi_s) > 0 else None
                 char_info  = get_character_for_market(usdjpy_chg, vix, rsi_val)
                 mood_emoji = get_mood_emoji(char_info["mood"])
-                logger.info(f"キャラクター: {char_info['mood']} {mood_emoji}")
             except Exception:
                 logger.debug(traceback.format_exc())
         else:
-            err = fx_result.get("error", "不明なエラー")
-            logger.warning(f"⚠️  FX分析 一部失敗: {err}")
+            logger.warning(f"⚠️  FX分析 一部失敗: {fx_result.get('error', '不明')}")
     except Exception:
         logger.error("FX分析 エラー")
         logger.debug(traceback.format_exc())
 
-    # ── Step 2: Telegram 送信（3メッセージ構成） ──────────────────
+    # ── Step 2: Telegram 送信（2メッセージに圧縮） ────────────────
     try:
-        logger.info("--- Step 2: Telegram 送信 ---")
+        logger.info("--- Step 2: Telegram 送信（2メッセージ）---")
         from src.notify_telegram import send_message, send_photo, _is_configured
 
         if not _is_configured():
-            logger.info("Telegram 未設定 → スキップ（テストモード）")
-            # テスト時はテキストだけ表示
+            logger.info("Telegram 未設定 → スキップ")
             print("\n" + "─" * 60)
-            print(fx_result.get("text_msg", "（メッセージなし）"))
+            print(_build_compact_msg(fx_result, mood_emoji, char_info))
             print("─" * 60)
             return
 
-        # ①  テキストサマリー（キャラクター一言を先頭に追加）
-        base_text = fx_result.get("text_msg") or _fallback_text()
-        char_line = f"{mood_emoji} *{char_info['desc']}*\n\n" if char_info.get("desc") else ""
-        text      = char_line + base_text
-        ok1       = send_message(text, chat_id=FX_CHAT_ID, bot_token=FX_BOT_TOKEN)
-        logger.info(f"{'✅' if ok1 else '❌'} ① テキスト送信")
+        # ① コンパクトサマリー（FX + マクロ + 地政学 + URL を1通）
+        compact = _build_compact_msg(fx_result, mood_emoji, char_info)
+        ok1 = send_message(compact, chat_id=FX_CHAT_ID, bot_token=FX_BOT_TOKEN)
+        logger.info(f"{'✅' if ok1 else '❌'} ① コンパクトサマリー送信")
 
-        # ②  チャート画像
+        # ② ダッシュボード画像
         chart_path = fx_result.get("chart_path", "")
         if chart_path and os.path.exists(chart_path):
             caption = (
-                f"💱〰〰〰 *為替FXダッシュボード* 〰〰〰💱\n"
-                f"{mood_emoji} *{char_info.get('desc', 'FXダッシュボード')}*\n"
+                "💱 *為替FX 16パネルダッシュボード*\n"
                 "━━━━━━━━━━━━━━━━━━━━\n"
-                "📈 ドル円 ＋ ボリンジャーバンド ＋ 移動平均\n"
-                "📐 RSI ／ MACD ／ ストキャスティクス\n"
-                "💵 ドル指数 ／ クロスアセット ／ 日米金利差\n"
-                "💪 通貨強弱（8通貨） ／ 投機ポジション ／ 相関\n"
-                "🏦 利下げ確率 ／ ⚡ 恐怖指数（VIX） ／ 💹 価格ボード"
+                "📈 ドル円チャート ／ テクニカル指標\n"
+                "💵 ドル指数 ／ 日米金利差 ／ 通貨強弱\n"
+                "🏦 利下げ確率 ／ 投機ポジション ／ VIX\n"
+                "🌐 米国債イールドカーブ ／ マクロ指標"
             )
-            ok2 = send_photo(chart_path, caption=caption, chat_id=FX_CHAT_ID, bot_token=FX_BOT_TOKEN)
-            logger.info(f"{'✅' if ok2 else '❌'} ② チャート画像送信")
+            ok2 = send_photo(chart_path, caption=caption,
+                             chat_id=FX_CHAT_ID, bot_token=FX_BOT_TOKEN)
+            logger.info(f"{'✅' if ok2 else '❌'} ② ダッシュボード画像送信")
         else:
-            logger.warning("チャートファイルなし → テキスト代替")
-            send_message("📊 チャート生成に問題が発生しました。次回をお待ちください。", chat_id=FX_CHAT_ID, bot_token=FX_BOT_TOKEN)
-
-        # ③  URL
-        url_msg = fx_result.get("url_msg") or (
-            f"🔗 *詳細レポート*\n{PAGES_URL}\n📱 iPhone Safari で開けます"
-        )
-        ok3 = send_message(url_msg, chat_id=FX_CHAT_ID, bot_token=FX_BOT_TOKEN)
-        logger.info(f"{'✅' if ok3 else '❌'} ③ URL 送信")
-
-        # ④⑤  マクロ経済 + 地政学リスク（FX専用トークルームの付加価値）
-        try:
-            from src.macro_geopolitics import build_macro_geo_messages
-            macro_msg, geo_msg = build_macro_geo_messages(
-                data=fx_result.get("data"),
-                premium=fx_result.get("premium"),
-            )
-            ok4 = send_message(macro_msg, chat_id=FX_CHAT_ID, bot_token=FX_BOT_TOKEN)
-            logger.info(f"{'✅' if ok4 else '❌'} ④ マクロ経済送信")
-            ok5 = send_message(geo_msg, chat_id=FX_CHAT_ID, bot_token=FX_BOT_TOKEN)
-            logger.info(f"{'✅' if ok5 else '❌'} ⑤ 地政学リスク送信")
-        except Exception:
-            logger.error("マクロ・地政学送信エラー")
-            logger.debug(traceback.format_exc())
+            logger.warning("チャートファイルなし（深夜テスト時は正常）")
 
     except Exception:
         logger.error("Telegram 送信エラー")
         logger.debug(traceback.format_exc())
 
-    # ── 完了 ─────────────────────────────────────────────────────
     logger.info("=" * 55)
     logger.info("  FX午後レポート完了")
     logger.info("=" * 55)
-
-
-def _fallback_text() -> str:
-    """データ取得失敗時のフォールバックメッセージ"""
-    from src.utils import get_jst_now
-    now = get_jst_now()
-    return (
-        f"💹 *FX 午後マーケットレポート*\n"
-        f"📅 {now.strftime('%Y/%m/%d')}  14:00 JST\n"
-        f"━━━━━━━━━━━━━━━━━━━━\n"
-        f"⚠️ データ取得中に問題が発生しました。\n"
-        f"しばらくしてから再度ご確認ください。\n"
-        f"🔗 {PAGES_URL}"
-    )
 
 
 if __name__ == "__main__":
