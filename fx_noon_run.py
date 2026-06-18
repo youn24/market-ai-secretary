@@ -22,6 +22,13 @@ if sys.platform == "win32":
 # プロジェクトルートを PYTHONPATH に追加
 sys.path.insert(0, str(Path(__file__).parent))
 
+# .env を最初に読み込む（FX_BOT_TOKEN などをモジュール変数に反映するため）
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
 from src.utils import setup_logger, get_jst_now
 
 logger = setup_logger("fx_noon")
@@ -44,13 +51,6 @@ def main():
     logger.info("  FX午後レポート開始 [14:00 JST]")
     logger.info(f"  実行時刻: {get_jst_now().strftime('%Y-%m-%d %H:%M:%S JST')}")
     logger.info("=" * 55)
-
-    # ── 環境変数読み込み（ローカル実行時） ─────────────────────────
-    try:
-        from dotenv import load_dotenv
-        load_dotenv()
-    except ImportError:
-        pass  # GitHub Actions では不要
 
     # ── Step 0: キャラクター判定（データ取得前に仮判定 → 後で上書き） ──
     char_info  = {"mood": "analyzing", "desc": "", "path": None, "available": False}
