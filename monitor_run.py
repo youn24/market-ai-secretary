@@ -36,29 +36,17 @@ def run():
     except Exception:
         logger.error("リスク計算エラー")
 
-    # 急変アラートチェック
+    # 暴落級アラートチェック（安全網）
+    # ※通常の細かい急変通知は廃止。本当に大きな暴落のときだけ通知する。
     try:
         from src.alert_monitor import run_alert_check
         alerted = run_alert_check(prices, fear_greed, risk)
         if alerted:
-            logger.info("✅ 急変アラート送信完了")
+            logger.info("✅ 暴落級アラート送信完了")
         else:
-            logger.info("急変なし")
+            logger.info("暴落級の急変なし")
     except Exception:
         logger.error("アラートエラー"); logger.debug(traceback.format_exc())
-
-    # ザラバ中の急変銘柄ウォッチ（ウォッチリスト銘柄＋なぜ動いたか）
-    try:
-        from src.intraday_movers import run as run_movers
-        mv = run_movers()
-        if mv.get("available"):
-            from src.notify_telegram import send_message
-            send_message(mv["telegram_message"])
-            logger.info(f"✅ ザラバ急変通知: {mv.get('count',0)}銘柄")
-        else:
-            logger.info(f"ザラバ急変: {mv.get('reason','なし')}")
-    except Exception:
-        logger.error("ザラバ急変エラー"); logger.debug(traceback.format_exc())
 
     logger.info("====== 監視完了 ======")
 

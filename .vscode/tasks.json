@@ -290,13 +290,6 @@
       "problemMatcher": []
     },
     {
-      "label": "⚡ ザラバ急変ウォッチ（今すぐ・force）",
-      "type": "shell",
-      "command": "python -m src.intraday_movers",
-      "presentation": { "reveal": "always", "panel": "new", "clear": true },
-      "problemMatcher": []
-    },
-    {
       "label": "🔥 空売り残高: 個別銘柄（コード入力）",
       "type": "shell",
       "command": "python -m src.short_selling ${input:stockCode}",

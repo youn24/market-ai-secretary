@@ -10,21 +10,20 @@ from src.utils import setup_logger, get_jst_now, get_dirs
 
 logger = setup_logger("alert_monitor")
 
-# アラートの閾値
+# アラートの閾値（暴落級のみ通知）
+# 細かい急変通知は廃止。本当に大きな暴落・恐怖急騰の時だけ安全網として通知する。
+#   dir="down" … その%以上の「下落」で発火
+#   dir="up"   … その%以上の「上昇」で発火（VIX＝恐怖の急騰用）
 THRESHOLDS = {
-    "^N225":    {"name": "日経平均",   "pct": 1.5},
-    "^GSPC":    {"name": "S&P500",    "pct": 1.0},
-    "^IXIC":    {"name": "NASDAQ",    "pct": 1.2},
-    "^VIX":     {"name": "VIX恐怖指数","pct": 10.0},
-    "USDJPY=X": {"name": "ドル円",    "pct": 0.8},
-    "GC=F":     {"name": "金",        "pct": 1.5},
-    "BTC-USD":  {"name": "Bitcoin",   "pct": 3.0},
-    "^TNX":     {"name": "米10年金利", "pct": 2.0},
+    "^N225": {"name": "日経平均",    "pct": 3.0,  "dir": "down"},
+    "^GSPC": {"name": "S&P500",     "pct": 2.5,  "dir": "down"},
+    "^IXIC": {"name": "NASDAQ",     "pct": 3.0,  "dir": "down"},
+    "^VIX":  {"name": "VIX恐怖指数", "pct": 25.0, "dir": "up"},
 }
 
 
 def check_alerts(prices: dict) -> list:
-    """急変アラートをチェックして通知リストを返す"""
+    """暴落級アラートをチェックして通知リストを返す"""
     alerts = []
     for sym, config in THRESHOLDS.items():
         p = prices.get(sym, {})
@@ -33,14 +32,16 @@ def check_alerts(prices: dict) -> list:
         if chg is None or val is None:
             continue
         threshold = config["pct"]
-        if abs(chg) >= threshold:
-            direction = "急騰🔺" if chg > 0 else "急落🔻"
+        direction = config.get("dir", "down")
+        hit = (chg <= -threshold) if direction == "down" else (chg >= threshold)
+        if hit:
+            arrow = "急騰🔺" if chg > 0 else "急落🔻"
             alerts.append({
                 "symbol": sym,
                 "name": config["name"],
                 "value": val,
                 "change": chg,
-                "direction": direction,
+                "direction": arrow,
                 "threshold": threshold,
             })
     return alerts
@@ -51,9 +52,10 @@ def build_alert_message(alerts: list, prices: dict, fear_greed: dict, risk: dict
     now = get_jst_now().strftime("%Y-%m-%d %H:%M JST")
     fg  = fear_greed.get("score")
     fg_r= fear_greed.get("rating_ja","---")
+    fg_disp = f"{fg:.0f}" if fg is not None else "---"
 
     lines = [
-        f"🚨 *市場急変アラート* 🚨",
+        f"🚨 *重大アラート：市場が大きく動いています* 🚨",
         f"⏰ {now}",
         f"━━━━━━━━━━━━━━━",
     ]
@@ -66,7 +68,7 @@ def build_alert_message(alerts: list, prices: dict, fear_greed: dict, risk: dict
     lines += [
         f"━━━━━━━━━━━━━━━",
         f"🌡 地合い: {risk.get('sentiment','---')}",
-        f"😱 Fear&Greed: {fg:.0f if fg else '---'} ({fg_r})",
+        f"😱 Fear&Greed: {fg_disp} ({fg_r})",
         f"📱 市場AI秘書",
     ]
     return "\n".join(lines)
