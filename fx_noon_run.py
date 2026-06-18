@@ -31,6 +31,13 @@ PAGES_URL = os.getenv(
     "https://youn24.github.io/market-ai-secretary"
 )
 
+# FX・マクロ・地政学 専用トークルームの Chat ID
+# 未設定なら通常の TELEGRAM_CHAT_ID に送られる（フォールバック）
+FX_CHAT_ID = os.getenv("TELEGRAM_FX_CHAT_ID", "").strip() or None
+
+# FX専用の別ボットトークン（未設定なら通常の TELEGRAM_BOT_TOKEN を使用）
+FX_BOT_TOKEN = os.getenv("TELEGRAM_FX_BOT_TOKEN", "").strip() or None
+
 
 def main():
     logger.info("=" * 55)
@@ -98,34 +105,49 @@ def main():
         base_text = fx_result.get("text_msg") or _fallback_text()
         char_line = f"{mood_emoji} *{char_info['desc']}*\n\n" if char_info.get("desc") else ""
         text      = char_line + base_text
-        ok1       = send_message(text)
+        ok1       = send_message(text, chat_id=FX_CHAT_ID, bot_token=FX_BOT_TOKEN)
         logger.info(f"{'✅' if ok1 else '❌'} ① テキスト送信")
 
         # ②  チャート画像
         chart_path = fx_result.get("chart_path", "")
         if chart_path and os.path.exists(chart_path):
             caption = (
-                f"💱〰〰〰 *為替FX ダッシュボード* 〰〰〰💱\n"
-                f"{mood_emoji} *{char_info.get('desc', 'FX ダッシュボード')}*\n"
+                f"💱〰〰〰 *為替FXダッシュボード* 〰〰〰💱\n"
+                f"{mood_emoji} *{char_info.get('desc', 'FXダッシュボード')}*\n"
                 "━━━━━━━━━━━━━━━━━━━━\n"
-                "📈 USD/JPY + BB + MA5/25/75\n"
-                "📐 RSI / MACD / Stochastic\n"
-                "💵 DXY / クロスアセット / 金利差\n"
-                "💪 通貨強弱（8通貨） / IMM / 相関\n"
-                "🏦 FedWatch / ⚡ VIX / 💹 価格ボード"
+                "📈 ドル円 ＋ ボリンジャーバンド ＋ 移動平均\n"
+                "📐 RSI ／ MACD ／ ストキャスティクス\n"
+                "💵 ドル指数 ／ クロスアセット ／ 日米金利差\n"
+                "💪 通貨強弱（8通貨） ／ 投機ポジション ／ 相関\n"
+                "🏦 利下げ確率 ／ ⚡ 恐怖指数（VIX） ／ 💹 価格ボード"
             )
-            ok2 = send_photo(chart_path, caption=caption)
+            ok2 = send_photo(chart_path, caption=caption, chat_id=FX_CHAT_ID, bot_token=FX_BOT_TOKEN)
             logger.info(f"{'✅' if ok2 else '❌'} ② チャート画像送信")
         else:
             logger.warning("チャートファイルなし → テキスト代替")
-            send_message("📊 チャート生成に問題が発生しました。次回をお待ちください。")
+            send_message("📊 チャート生成に問題が発生しました。次回をお待ちください。", chat_id=FX_CHAT_ID, bot_token=FX_BOT_TOKEN)
 
         # ③  URL
         url_msg = fx_result.get("url_msg") or (
             f"🔗 *詳細レポート*\n{PAGES_URL}\n📱 iPhone Safari で開けます"
         )
-        ok3 = send_message(url_msg)
+        ok3 = send_message(url_msg, chat_id=FX_CHAT_ID, bot_token=FX_BOT_TOKEN)
         logger.info(f"{'✅' if ok3 else '❌'} ③ URL 送信")
+
+        # ④⑤  マクロ経済 + 地政学リスク（FX専用トークルームの付加価値）
+        try:
+            from src.macro_geopolitics import build_macro_geo_messages
+            macro_msg, geo_msg = build_macro_geo_messages(
+                data=fx_result.get("data"),
+                premium=fx_result.get("premium"),
+            )
+            ok4 = send_message(macro_msg, chat_id=FX_CHAT_ID, bot_token=FX_BOT_TOKEN)
+            logger.info(f"{'✅' if ok4 else '❌'} ④ マクロ経済送信")
+            ok5 = send_message(geo_msg, chat_id=FX_CHAT_ID, bot_token=FX_BOT_TOKEN)
+            logger.info(f"{'✅' if ok5 else '❌'} ⑤ 地政学リスク送信")
+        except Exception:
+            logger.error("マクロ・地政学送信エラー")
+            logger.debug(traceback.format_exc())
 
     except Exception:
         logger.error("Telegram 送信エラー")

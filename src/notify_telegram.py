@@ -258,11 +258,11 @@ def build_three_messages(risk, analysis, mode,
 # 低レベル送信関数
 # ────────────────────────────────────────────────────────────────
 
-def send_message(text: str, chat_id: str = None) -> bool:
+def send_message(text: str, chat_id: str = None, bot_token: str = None) -> bool:
     if not _is_configured():
         logger.info("Telegram 未設定スキップ")
         return False
-    token   = os.getenv("TELEGRAM_BOT_TOKEN")
+    token   = bot_token or os.getenv("TELEGRAM_BOT_TOKEN")
     chat_id = chat_id or os.getenv("TELEGRAM_CHAT_ID")
     try:
         r = requests.post(
@@ -278,10 +278,10 @@ def send_message(text: str, chat_id: str = None) -> bool:
         return False
 
 
-def send_photo(image_path: str, caption: str = "", chat_id: str = None) -> bool:
+def send_photo(image_path: str, caption: str = "", chat_id: str = None, bot_token: str = None) -> bool:
     if not _is_configured():
         return False
-    token   = os.getenv("TELEGRAM_BOT_TOKEN")
+    token   = bot_token or os.getenv("TELEGRAM_BOT_TOKEN")
     chat_id = chat_id or os.getenv("TELEGRAM_CHAT_ID")
     try:
         with open(image_path, "rb") as f:
@@ -299,10 +299,10 @@ def send_photo(image_path: str, caption: str = "", chat_id: str = None) -> bool:
         return False
 
 
-def send_document(file_path: str, caption: str = "", chat_id: str = None) -> bool:
+def send_document(file_path: str, caption: str = "", chat_id: str = None, bot_token: str = None) -> bool:
     if not _is_configured():
         return False
-    token   = os.getenv("TELEGRAM_BOT_TOKEN")
+    token   = bot_token or os.getenv("TELEGRAM_BOT_TOKEN")
     chat_id = chat_id or os.getenv("TELEGRAM_CHAT_ID")
     try:
         with open(file_path, "rb") as f:

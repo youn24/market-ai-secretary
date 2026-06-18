@@ -63,12 +63,14 @@ jobs:
       # ── 6. FX午後レポート実行 ─────────────────────────────────
       - name: "💹 FX午後レポート実行"
         env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID:   ${{ secrets.TELEGRAM_CHAT_ID }}
-          GEMINI_API_KEY:     ${{ secrets.GEMINI_API_KEY }}
-          GITHUB_PAGES_URL:   "https://youn24.github.io/market-ai-secretary"
-          PYTHONIOENCODING:   "utf-8"
-          PYTHONUTF8:         "1"
+          TELEGRAM_BOT_TOKEN:    ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID:      ${{ secrets.TELEGRAM_CHAT_ID }}
+          TELEGRAM_FX_CHAT_ID:   ${{ secrets.TELEGRAM_FX_CHAT_ID }}
+          TELEGRAM_FX_BOT_TOKEN: ${{ secrets.TELEGRAM_FX_BOT_TOKEN }}
+          GEMINI_API_KEY:        ${{ secrets.GEMINI_API_KEY }}
+          GITHUB_PAGES_URL:      "https://youn24.github.io/market-ai-secretary"
+          PYTHONIOENCODING:      "utf-8"
+          PYTHONUTF8:            "1"
         run: |
           echo "🕑 実行開始: $(TZ='Asia/Tokyo' date '+%Y-%m-%d %H:%M:%S JST')"
           python fx_noon_run.py
