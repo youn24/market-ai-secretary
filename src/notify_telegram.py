@@ -24,18 +24,27 @@ def _now_label() -> str:
     return f"{n.month}/{n.day}({_WEEKDAYS_JA[n.weekday()]}) {n.strftime('%H:%M')}"
 
 
+def _hl(text: str, n: int = 26) -> str:
+    """通知タイトル用に要点を1行・指定字数に整える"""
+    text = (text or "").replace("\n", " ").replace("#", "").replace("*", "").strip()
+    text = " ".join(text.split())
+    return text[:n]
+
+
 def _stamp(title: str) -> str:
     """各通知の先頭に付ける統一ヘッダーを返し、もくじに登録する。
+    1行目をタイトルにすることで、スマホの通知バー（X風）に
+    テーマ・要点がそのまま表示される。
     例:
-      ┌ No.04 ┃ 🎭 3シナリオ分析
-      └ 🕒 6/12(金) 07:32
+      📋 適時開示 3件：フジクラ ほか
+      ┌ No.04 ・ 🕒 6/17(火) 07:32
     """
     global _seq
     _seq += 1
     _toc.append(f"{_seq:02d}. {title}")
     return (
-        f"┌ *No.{_seq:02d}* ┃ *{title}*\n"
-        f"└ 🕒 {_now_label()}\n"
+        f"*{title}*\n"
+        f"┌ No.{_seq:02d} ・ 🕒 {_now_label()}\n"
         f"━━━━━━━━━━━━━━━\n"
     )
 
@@ -426,23 +435,37 @@ def run(risk, analysis, report_paths, mode,
 
         # ③.4 マクロ要約（ファンダ＋金融政策）
         if macro and macro.get("available") and macro.get("telegram_message"):
-            send_message(_stamp("🌐 ファンダ＆金融政策") + macro["telegram_message"])
+            pol = _hl((macro.get("sections", {}) or {}).get("金融政策", ""), 24)
+            mt = f"🌐 金融政策｜{pol}" if pol else "🌐 ファンダ＆金融政策"
+            send_message(_stamp(mt) + macro["telegram_message"])
 
         # ③.5 TDnet適時開示アラート（ウォッチリスト銘柄の決算・自社株買い等）
         if tdnet and tdnet.get("available") and tdnet.get("telegram_message"):
-            send_message(_stamp("📋 適時開示アラート") + tdnet["telegram_message"])
+            ds = tdnet.get("disclosures", []); n = tdnet.get("count", 0)
+            top = ds[0].get("watch_name", "") if ds else ""
+            tt = f"📋 適時開示 {n}件：{top} ほか" if n > 1 else f"📋 適時開示：{top}"
+            send_message(_stamp(tt) + tdnet["telegram_message"])
 
         # ③.55 決算ブリーフ（決算PDFのAI要約）
         if earnings_brief and earnings_brief.get("available") and earnings_brief.get("telegram_message"):
-            send_message(_stamp("📑 決算ブリーフ") + earnings_brief["telegram_message"])
+            bs = earnings_brief.get("briefs", []); n = earnings_brief.get("count", 0)
+            top = bs[0].get("name", "") if bs else ""
+            et = f"📑 決算ブリーフ：{top}" + (f" ほか{n-1}件" if n > 1 else "")
+            send_message(_stamp(et) + earnings_brief["telegram_message"])
 
         # ③.6 今日のアノマリー（相場の経験則）
         if anomaly and anomaly.get("available") and anomaly.get("telegram_message"):
-            send_message(_stamp("📜 今日のアノマリー") + anomaly["telegram_message"])
+            ans = anomaly.get("anomalies", []); n = anomaly.get("count", 0)
+            top = ans[0].get("name", "") if ans else ""
+            at = f"📜 アノマリー {n}件：{top} ほか" if n > 1 else f"📜 アノマリー：{top}"
+            send_message(_stamp(at) + anomaly["telegram_message"])
 
         # ③.7 需給分析ランキング（月曜のみ）
         if supply_demand and supply_demand.get("available") and supply_demand.get("telegram_message"):
-            send_message(_stamp("📊 需給分析ランキング") + supply_demand["telegram_message"])
+            tp = supply_demand.get("top", [])
+            top = tp[0].get("name", "") if tp else ""
+            st = f"📊 需給1位：{top}（買いの勢い強）" if top else "📊 需給分析ランキング"
+            send_message(_stamp(st) + supply_demand["telegram_message"])
 
         # ④ Level 3: シナリオ分析テキスト
         if scenario and scenario.get("available"):
