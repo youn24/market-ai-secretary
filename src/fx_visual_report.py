@@ -213,7 +213,7 @@ def calc_currency_strength(data: dict, days: int = 5) -> dict:
 # ③ チャート共通スタイル
 # ─────────────────────────────────────────────────────────────────────────────
 
-def _ax_style(ax, title: str = "", ylabel: str = ""):
+def _ax_style(ax, title: str = "", ylabel: str = "", note: str = ""):
     ax.set_facecolor(BG2)
     for spine in ax.spines.values():
         spine.set_color(C_BORDER)
@@ -224,6 +224,12 @@ def _ax_style(ax, title: str = "", ylabel: str = ""):
                      pad=7, loc="left")
     if ylabel:
         ax.set_ylabel(ylabel, color=C_GRAY, fontsize=8.5)
+    if note:
+        # パネル右上に小さい解説テキスト（薄グレー）
+        ax.text(0.99, 0.97, note, transform=ax.transAxes,
+                fontsize=7, color=C_GRAY, va="top", ha="right",
+                style="italic", alpha=0.80,
+                bbox=dict(boxstyle="round,pad=0.25", fc=BG3, ec="none", alpha=0.7))
 
 
 def _set_date_xticks(ax, df_index, n_ticks=8):
@@ -290,114 +296,149 @@ def panel_usdjpy_price(ax, data: dict):
             transform=ax.transAxes, ha="right", va="top",
             color=c_arrow, fontsize=11, fontweight="bold")
 
-    # 日銀介入警戒ライン
+    # 日銀介入警戒ライン（主要水準）
     bot, top = float(close.min()), float(close.max())
-    for lvl in [152.0, 155.0, 158.0, 160.0, 162.0, 165.0]:
+    intervention_levels = [
+        (145.0, "⚠145円（2022年介入水準）"),
+        (150.0, "⚠150円（節目）"),
+        (152.0, "🚨152円（2022年最大介入）"),
+        (155.0, "⚠155円（警戒圏）"),
+        (158.0, "🚨158円（高警戒）"),
+        (160.0, "🚨160円（2024年介入）"),
+        (162.0, "🚨162円（超危険）"),
+    ]
+    for lvl, lbl in intervention_levels:
         if bot * 0.98 < lvl < top * 1.03:
-            ax.axhline(lvl, color="#ff6b6b", lw=0.7, ls="-.", alpha=0.45)
-            ax.text(2, lvl + 0.05, f"日銀警戒 {lvl:.0f}", color="#ff6b6b", fontsize=6.5, alpha=0.7)
+            ax.axhline(lvl, color="#ff6b6b", lw=0.9, ls="-.", alpha=0.55)
+            ax.text(2, lvl + 0.08, lbl, color="#ff6b6b", fontsize=7, alpha=0.85,
+                    fontweight="bold")
 
     _set_date_xticks(ax, df.index)
-    ax.legend(loc="upper left", fontsize=7, fancybox=True,
+    ax.legend(loc="upper left", fontsize=8, fancybox=True,
               facecolor=BG3, edgecolor=C_BORDER, labelcolor=C_WHITE, ncol=5)
-    _ax_style(ax, "📈 USD/JPY — 90日プライスチャート（ボリンジャーバンド + 移動平均）", "円")
+    _ax_style(ax, "📈 ドル円（USD/JPY）90日チャート ─ ボリンジャーバンド + 移動平均", "円",
+              note="MA5=5日/MA25=1ヶ月/MA75=3ヶ月平均  赤破線=日銀介入警戒ライン")
 
 
 def panel_rsi(ax, data: dict):
     """Panel B: RSI(14)"""
     sym = "USDJPY=X"
     if sym not in data:
-        _ax_style(ax, "RSI(14)"); return
+        _ax_style(ax, "📊 RSI(14) — 買われすぎ・売られすぎ"); return
 
     close = data[sym]["df"]["Close"].tail(90)
     r     = calc_rsi(close)
     idx   = np.arange(len(r))
 
-    ax.fill_between(idx, r.values, 70, where=r.values >= 70, alpha=0.3, color=C_DOWN,  interpolate=True)
-    ax.fill_between(idx, r.values, 30, where=r.values <= 30, alpha=0.3, color=C_UP,    interpolate=True)
-    ax.fill_between(idx, r.values, 50, where=r.values >= 50, alpha=0.12, color=C_UP,   interpolate=True)
-    ax.fill_between(idx, r.values, 50, where=r.values < 50,  alpha=0.12, color=C_DOWN, interpolate=True)
-    ax.plot(idx, r.values, color=C_CYAN, lw=1.5)
+    # ゾーン塗りつぶし
+    ax.fill_between(idx, r.values, 70, where=r.values >= 70, alpha=0.35, color=C_DOWN,  interpolate=True)
+    ax.fill_between(idx, r.values, 30, where=r.values <= 30, alpha=0.35, color=C_UP,    interpolate=True)
+    ax.fill_between(idx, r.values, 50, where=r.values >= 50, alpha=0.10, color=C_UP,    interpolate=True)
+    ax.fill_between(idx, r.values, 50, where=r.values < 50,  alpha=0.10, color=C_DOWN,  interpolate=True)
+    ax.plot(idx, r.values, color=C_CYAN, lw=1.8)
 
-    for level, col, ls in [(70, C_DOWN, "--"), (50, C_GRAY, "-"), (30, C_UP, "--")]:
-        ax.axhline(level, color=col, lw=0.7, ls=ls, alpha=0.7)
+    # 基準ライン
+    for level, col, ls, lbl in [(70, C_DOWN, "--", "過熱ゾーン(70)"),
+                                  (50, C_GRAY, "-",  "中立(50)"),
+                                  (30, C_UP,   "--", "売られすぎ(30)")]:
+        ax.axhline(level, color=col, lw=0.9, ls=ls, alpha=0.8)
+        ax.text(1, level, f" {lbl}", va="center", ha="left",
+                color=col, fontsize=7, transform=ax.get_yaxis_transform(), alpha=0.9)
 
-    last_r = float(r.iloc[-1])
-    r_color = C_DOWN if last_r > 70 else C_UP if last_r < 30 else C_GRAY
-    r_label = "🔴過熱" if last_r > 70 else "🟢売られすぎ" if last_r < 30 else "中立"
-    ax.text(0.98, 0.90, f"RSI={last_r:.1f}\n{r_label}",
-            transform=ax.transAxes, ha="right", va="top",
-            color=r_color, fontsize=9, fontweight="bold")
+    # 現在値ボックス（左上）
+    last_r  = float(r.iloc[-1])
+    r_color = C_DOWN if last_r > 70 else C_UP if last_r < 30 else C_GOLD
+    r_label = "🔴 買われすぎ！反落注意" if last_r > 70 else "🟢 売られすぎ！反発期待" if last_r < 30 else "⚪ 中立ゾーン"
+    ax.text(0.02, 0.96, f"RSI = {last_r:.1f}",
+            transform=ax.transAxes, ha="left", va="top",
+            color=r_color, fontsize=13, fontweight="bold",
+            bbox=dict(boxstyle="round,pad=0.35", fc=BG, ec=r_color, lw=1.5, alpha=0.9))
+    ax.text(0.02, 0.78, r_label,
+            transform=ax.transAxes, ha="left", va="top",
+            color=r_color, fontsize=8.5, fontweight="bold")
 
-    ax.set_ylim(10, 90)
+    ax.set_ylim(10, 92)
     ax.set_yticks([30, 50, 70])
-    _ax_style(ax, "RSI(14)")
+    _ax_style(ax, "📊 RSI(14) — 買われすぎ・売られすぎ指標",
+              note="70超→過熱・反落注意  30未満→売られすぎ・反発期待")
 
 
 def panel_macd(ax, data: dict):
     """Panel C: MACD(12,26,9)"""
     sym = "USDJPY=X"
     if sym not in data:
-        _ax_style(ax, "MACD"); return
+        _ax_style(ax, "📊 MACD — トレンドの勢い"); return
 
     close = data[sym]["df"]["Close"].tail(90)
     line, sig, hist = calc_macd(close)
     idx = np.arange(len(hist))
 
     colors = [C_UP if v >= 0 else C_DOWN for v in hist.values]
-    ax.bar(idx, hist.values, color=colors, alpha=0.75, width=1.0, zorder=2)
-    ax.plot(idx, line.values, color=C_CYAN,   lw=1.3, label="MACD")
-    ax.plot(idx, sig.values,  color=C_ORANGE, lw=1.0, label="Signal", alpha=0.85)
-    ax.axhline(0, color=C_GRAY, lw=0.5)
+    ax.bar(idx, hist.values, color=colors, alpha=0.78, width=1.0, zorder=2)
+    ax.plot(idx, line.values, color=C_CYAN,   lw=1.5, label="MACD線")
+    ax.plot(idx, sig.values,  color=C_ORANGE, lw=1.2, label="シグナル線", alpha=0.9)
+    ax.axhline(0, color=C_GRAY, lw=0.8, alpha=0.6)
 
     last_h = float(hist.iloc[-1])
     prev_h = float(hist.iloc[-2]) if len(hist) > 1 else last_h
     if prev_h < 0 < last_h:
-        cross_txt, cross_col = "▲ ゴールデンクロス", C_UP
+        cross_txt, cross_col, cross_icon = "ゴールデンクロス発生", C_UP,   "▲"
     elif prev_h > 0 > last_h:
-        cross_txt, cross_col = "▼ デッドクロス",     C_DOWN
+        cross_txt, cross_col, cross_icon = "デッドクロス発生",     C_DOWN, "▼"
     elif last_h > 0:
-        cross_txt, cross_col = "↑ 上昇モメンタム",   C_UP
+        cross_txt, cross_col, cross_icon = "上昇モメンタム継続",   C_UP,   "↑"
     else:
-        cross_txt, cross_col = "↓ 下落モメンタム",   C_DOWN
+        cross_txt, cross_col, cross_icon = "下落モメンタム継続",   C_DOWN, "↓"
 
-    ax.text(0.98, 0.90, cross_txt, transform=ax.transAxes, ha="right", va="top",
-            color=cross_col, fontsize=9, fontweight="bold")
-    ax.legend(loc="upper left", fontsize=7, fancybox=True,
+    ax.text(0.02, 0.96, f"{cross_icon} {cross_txt}",
+            transform=ax.transAxes, ha="left", va="top",
+            color=cross_col, fontsize=10, fontweight="bold",
+            bbox=dict(boxstyle="round,pad=0.35", fc=BG, ec=cross_col, lw=1.5, alpha=0.9))
+
+    ax.legend(loc="lower left", fontsize=8, fancybox=True,
               facecolor=BG3, edgecolor=C_BORDER, labelcolor=C_WHITE)
-    _ax_style(ax, "MACD(12,26,9)")
+    _ax_style(ax, "📊 MACD(12,26,9) — トレンドの方向と勢い",
+              note="緑棒→上昇勢い強い  赤棒→下落勢い強い  クロスに注目")
 
 
 def panel_stochastic(ax, data: dict):
     """Panel D: Stochastic(14,3)"""
     sym = "USDJPY=X"
     if sym not in data:
-        _ax_style(ax, "Stochastic"); return
+        _ax_style(ax, "📊 Stochastic — 過熱感チェック"); return
 
     df = data[sym]["df"].tail(90)
     k, d = calc_stoch(df)
     idx  = np.arange(len(k))
 
-    ax.fill_between(idx, k.values, 80, where=k.values >= 80, alpha=0.25, color=C_DOWN, interpolate=True)
-    ax.fill_between(idx, k.values, 20, where=k.values <= 20, alpha=0.25, color=C_UP,   interpolate=True)
-    ax.plot(idx, k.values, color=C_CYAN,   lw=1.3, label="%K")
-    ax.plot(idx, d.values, color=C_ORANGE, lw=1.0, label="%D", alpha=0.85)
+    ax.fill_between(idx, k.values, 80, where=k.values >= 80, alpha=0.30, color=C_DOWN, interpolate=True)
+    ax.fill_between(idx, k.values, 20, where=k.values <= 20, alpha=0.30, color=C_UP,   interpolate=True)
+    ax.plot(idx, k.values, color=C_CYAN,   lw=1.5, label="%K（メイン）")
+    ax.plot(idx, d.values, color=C_ORANGE, lw=1.2, label="%D（シグナル）", alpha=0.9)
 
-    for level, col in [(80, C_DOWN), (20, C_UP)]:
-        ax.axhline(level, color=col, lw=0.7, ls="--", alpha=0.7)
+    for level, col, lbl in [(80, C_DOWN, "買われすぎ(80)"), (20, C_UP, "売られすぎ(20)")]:
+        ax.axhline(level, color=col, lw=0.9, ls="--", alpha=0.8)
+        ax.text(1, level, f" {lbl}", va="center", ha="left",
+                color=col, fontsize=7, transform=ax.get_yaxis_transform())
 
     last_k = float(k.iloc[-1])
     last_d = float(d.iloc[-1])
-    sig    = "🔴過熱" if last_k > 80 else "🟢売られすぎ" if last_k < 20 else "中立"
-    sig_c  = C_DOWN if last_k > 80 else C_UP if last_k < 20 else C_GRAY
-    ax.text(0.98, 0.90, f"K={last_k:.0f} D={last_d:.0f}\n{sig}",
-            transform=ax.transAxes, ha="right", va="top",
-            color=sig_c, fontsize=9, fontweight="bold")
+    sig    = "🔴 買われすぎ！反落注意" if last_k > 80 else "🟢 売られすぎ！反発期待" if last_k < 20 else "⚪ 中立ゾーン"
+    sig_c  = C_DOWN if last_k > 80 else C_UP if last_k < 20 else C_GOLD
 
-    ax.set_ylim(0, 100)
-    ax.legend(loc="upper left", fontsize=7, fancybox=True,
+    ax.text(0.02, 0.96, f"%K={last_k:.0f}  %D={last_d:.0f}",
+            transform=ax.transAxes, ha="left", va="top",
+            color=sig_c, fontsize=10, fontweight="bold",
+            bbox=dict(boxstyle="round,pad=0.35", fc=BG, ec=sig_c, lw=1.5, alpha=0.9))
+    ax.text(0.02, 0.77, sig,
+            transform=ax.transAxes, ha="left", va="top",
+            color=sig_c, fontsize=8.5, fontweight="bold")
+
+    ax.set_ylim(0, 108)
+    ax.legend(loc="lower left", fontsize=8, fancybox=True,
               facecolor=BG3, edgecolor=C_BORDER, labelcolor=C_WHITE)
-    _ax_style(ax, "Stochastic(14,3)")
+    _ax_style(ax, "📊 Stochastic(14,3) — 短期過熱感チェック",
+              note="%Kが%Dを上抜け→買いサイン  %Kが%Dを下抜け→売りサイン")
 
 
 def panel_currency_strength(ax, data: dict):
@@ -433,17 +474,18 @@ def panel_currency_strength(ax, data: dict):
 
     ax.axvline(0, color=C_GRAY, lw=0.8)
     ax.tick_params(axis="y", labelcolor=C_WHITE, labelsize=10)
-    _ax_style(ax, "💪 通貨強弱（5日間）", "%")
+    _ax_style(ax, "💪 主要8通貨 強弱ランキング（5日間）", "%",
+              note="右に長い=強い通貨  左に長い=弱い通貨  JPYが左=円安")
 
 
 def panel_cross_assets(ax, data: dict):
     """Panel F: クロスアセット騰落率（DXY・Gold・Oil 60日）"""
     targets = [
-        ("DX-Y.NYB", "DXY",  C_CYAN),
-        ("GC=F",     "Gold", C_GOLD),
-        ("CL=F",     "Oil",  C_ORANGE),
-        ("^GSPC",    "S&P",  C_UP),
-        ("^VIX",     "VIX",  C_DOWN),
+        ("DX-Y.NYB", "💲ドル指数(DXY)", C_CYAN),
+        ("GC=F",     "🥇金(ゴールド)",   C_GOLD),
+        ("CL=F",     "🛢原油(WTI)",      C_ORANGE),
+        ("^GSPC",    "📈米国株(S&P)",    C_UP),
+        ("^VIX",     "⚡恐怖指数(VIX)",  C_DOWN),
     ]
     for sym, label, color in targets:
         if sym not in data:
@@ -454,14 +496,15 @@ def panel_cross_assets(ax, data: dict):
         base = float(close.iloc[0])
         norm = [(float(v) / base - 1) * 100 for v in close]
         idx  = np.arange(len(norm))
-        ax.plot(idx, norm, color=color, lw=1.6, label=label)
-        ax.text(idx[-1], norm[-1], f" {norm[-1]:+.1f}%",
-                color=color, fontsize=7.5, va="center")
+        ax.plot(idx, norm, color=color, lw=1.8, label=label)
+        ax.text(idx[-1] + 0.5, norm[-1], f" {norm[-1]:+.1f}%",
+                color=color, fontsize=8, va="center", fontweight="bold")
 
-    ax.axhline(0, color=C_GRAY, lw=0.5, ls="--")
+    ax.axhline(0, color=C_GRAY, lw=0.8, ls="--", alpha=0.7)
     ax.legend(loc="upper left", fontsize=7.5, fancybox=True,
               facecolor=BG3, edgecolor=C_BORDER, labelcolor=C_WHITE)
-    _ax_style(ax, "🌐 クロスアセット（60日騰落率）", "%")
+    _ax_style(ax, "🌐 クロスアセット比較（60日間の騰落率）", "%",
+              note="60日前=0% 基準  右端の数値=60日間の変化率")
 
 
 def panel_interest_rates(ax, data: dict, premium: dict | None = None):
@@ -511,9 +554,10 @@ def panel_interest_rates(ax, data: dict, premium: dict | None = None):
 
     ax.set_xticks(x)
     ax.set_xticklabels(maturities, fontsize=8, color=C_WHITE)
-    ax.legend(loc="upper right", fontsize=7, fancybox=True,
+    ax.legend(loc="upper right", fontsize=7.5, fancybox=True,
               facecolor=BG3, edgecolor=C_BORDER, labelcolor=C_WHITE)
-    _ax_style(ax, "📐 イールドカーブ 米🇺🇸 vs 日🇯🇵（実データ）", "利回り %")
+    _ax_style(ax, "📐 日米イールドカーブ比較（実データ）", "利回り %",
+              note="差が大きい→円安圧力  差が小さい→円高圧力  金利差がドル円を動かす")
 
 
 def panel_imm_positions(ax, data: dict, premium: dict | None = None):
@@ -562,24 +606,33 @@ def panel_imm_positions(ax, data: dict, premium: dict | None = None):
             f"{latest_net:+.0f}K\n({latest_date[-5:]})",
             ha="center", color=col_latest, fontsize=8, fontweight="bold")
 
+    # 現在ポジション方向ラベル
+    direction_lbl = "🔴 大幅円売り越し" if latest_net < -70 else \
+                    "🟡 円売り越し" if latest_net < 0 else "🟢 円買い越し"
+    ax.text(0.02, 0.96, f"{latest_net:+.0f}千枚  {direction_lbl}",
+            transform=ax.transAxes, ha="left", va="top",
+            color=col_latest, fontsize=9.5, fontweight="bold",
+            bbox=dict(boxstyle="round,pad=0.3", fc=BG, ec=col_latest, lw=1.2, alpha=0.9))
+
     ax.set_xticks(range(len(labels)))
     ax.set_xticklabels(labels, rotation=45, fontsize=6.5, color=C_GRAY, ha="right")
-    ax.legend(loc="lower left", fontsize=7, fancybox=True,
+    ax.legend(loc="lower right", fontsize=7.5, fancybox=True,
               facecolor=BG3, edgecolor=C_BORDER, labelcolor=C_WHITE)
-    _ax_style(ax, f"📊 JPY IMM 投機ポジション（千枚）{src_note}", "千枚")
+    _ax_style(ax, f"📊 投機筋 円ポジション（CFTC）", "千枚",
+              note="マイナス大＝円売り積み上がり → 急反転で円高リスク")
 
 
 def panel_correlation_heatmap(ax, data: dict):
     """Panel I: FX・資産間相関ヒートマップ（60日）"""
     targets = [
-        ("USDJPY=X", "USD/JPY"),
-        ("EURJPY=X", "EUR/JPY"),
-        ("GBPJPY=X", "GBP/JPY"),
-        ("DX-Y.NYB", "DXY"),
-        ("GC=F",     "Gold"),
-        ("^TNX",     "US10Y"),
+        ("USDJPY=X", "ドル円"),
+        ("EURJPY=X", "ユーロ円"),
+        ("GBPJPY=X", "ポンド円"),
+        ("DX-Y.NYB", "ドル指数"),
+        ("GC=F",     "金"),
+        ("^TNX",     "米10年金利"),
         ("^VIX",     "VIX"),
-        ("^GSPC",    "S&P500"),
+        ("^GSPC",    "米国株"),
     ]
     closes = {}
     for sym, label in targets:
@@ -615,7 +668,8 @@ def panel_correlation_heatmap(ax, data: dict):
 
     plt.colorbar(im, ax=ax, shrink=0.85, pad=0.03,
                  label="相関係数").ax.tick_params(colors=C_GRAY, labelsize=7)
-    _ax_style(ax, "🔗 資産間相関（60日日次リターン）")
+    _ax_style(ax, "🔗 資産間 相関マップ（60日）",
+              note="赤=反対方向に動く  青=同じ方向に動く  1.0=完全連動")
 
 
 def panel_fedwatch(ax, data: dict, premium: dict | None = None):
@@ -654,9 +708,10 @@ def panel_fedwatch(ax, data: dict, premium: dict | None = None):
     ax.set_ylabel("確率 (%)", color=C_GRAY, fontsize=8.5)
     ax.legend(loc="upper right", fontsize=8, fancybox=True,
               facecolor=BG3, edgecolor=C_BORDER, labelcolor=C_WHITE)
-    ax.text(0.02, 0.97, f"現在FFR: {ffr:.2f}%", transform=ax.transAxes,
-            fontsize=9, color=C_GOLD, fontweight="bold", va="top")
-    _ax_style(ax, f"🏦 FedWatch 利下げ確率 ({note})")
+    ax.text(0.02, 0.97, f"現在の政策金利(FFR): {ffr:.2f}%", transform=ax.transAxes,
+            fontsize=9.5, color=C_GOLD, fontweight="bold", va="top")
+    _ax_style(ax, f"🏦 FedWatch 利下げ確率（次回FOMC別）",
+              note="緑=利下げ確率  利下げ→ドル安=円高圧力")
 
 
 def panel_vix_gauge(ax, data: dict):
@@ -714,8 +769,11 @@ def panel_vix_gauge(ax, data: dict):
     ax.set_aspect("equal")
     ax.axis("off")
     ax.set_facecolor(BG2)
-    ax.set_title("⚡ VIX リスクメーター", color=C_WHITE,
+    ax.set_title("⚡ VIX リスクメーター（恐怖指数）", color=C_WHITE,
                  fontsize=11, fontweight="bold", pad=7, loc="left")
+    ax.text(0.99, 0.04, "20未満=落ち着き  20-30=警戒  30超=危険",
+            transform=ax.transAxes, fontsize=7, color=C_GRAY,
+            va="bottom", ha="right", style="italic", alpha=0.8)
 
 
 def panel_price_board(ax, data: dict):
@@ -780,8 +838,11 @@ def panel_fred_macro(ax, premium: dict | None = None):
     """Panel N: FRED 主要経済指標ダッシュボード（実データ）"""
     ax.axis("off")
     ax.set_facecolor(BG2)
-    ax.set_title("🏛 FRED 主要経済指標（米国）", color=C_WHITE,
+    ax.set_title("🏛 FRED 主要経済指標（米国・実データ）", color=C_WHITE,
                  fontsize=11, fontweight="bold", pad=7, loc="left")
+    ax.text(0.99, 0.995, "▲=前月比UP  ▼=前月比DOWN",
+            transform=ax.transAxes, fontsize=7, color=C_GRAY,
+            va="top", ha="right", alpha=0.8, style="italic")
 
     fred = (premium or {}).get("fred", {})
     items = [
@@ -852,16 +913,19 @@ def panel_vix_term_structure(ax, premium: dict | None = None, data: dict | None 
     ax.axhline(30, color=C_DOWN,   lw=0.9, ls=":",  alpha=0.8, label="危険30")
 
     spread = vix3m - vix
-    ax.text(0.98, 0.97, f"VVIX: {vvix:.0f}\nターム構造: {struct}",
-            transform=ax.transAxes, ha="right", va="top",
-            color=C_CYAN, fontsize=8.5, fontweight="bold")
+    struct_note = "順イールド(VIX3M>VIX)=通常" if spread >= 0 else "逆イールド(VIX3M<VIX)=パニック!"
+    struct_col  = C_GRAY if spread >= 0 else C_DOWN
+    ax.text(0.02, 0.97, f"VVIX: {vvix:.0f}  ({struct_note})",
+            transform=ax.transAxes, ha="left", va="top",
+            color=struct_col, fontsize=8, fontweight="bold")
 
     ax.set_xticks(idx)
-    ax.set_xticklabels(labels, fontsize=8.5, color=C_WHITE)
+    ax.set_xticklabels(labels, fontsize=9, color=C_WHITE)
     ax.set_ylim(0, max(40, vix3m * 1.3))
-    ax.legend(loc="upper left", fontsize=7, fancybox=True,
+    ax.legend(loc="upper right", fontsize=7.5, fancybox=True,
               facecolor=BG3, edgecolor=C_BORDER, labelcolor=C_WHITE)
-    _ax_style(ax, "⚡ VIX ターム構造（実データ）")
+    _ax_style(ax, "⚡ VIX先物ターム構造（恐怖の持続性）",
+              note="3ヶ月先VIX＞現在VIX=通常  逆転=パニック的な恐怖")
 
 
 def panel_treasury_curve(ax, premium: dict | None = None, data: dict | None = None):
@@ -908,10 +972,11 @@ def panel_treasury_curve(ax, premium: dict | None = None, data: dict | None = No
                 bbox=dict(boxstyle="round,pad=0.3", fc=BG3, ec=C_DOWN, alpha=0.8))
 
     ax.set_xticks(idx)
-    ax.set_xticklabels(mats, fontsize=7.5, color=C_WHITE)
+    ax.set_xticklabels(mats, fontsize=8, color=C_WHITE)
     ax.text(0.99, 0.97, f"Data: {date}", transform=ax.transAxes,
             ha="right", va="top", color=C_GRAY, fontsize=7, alpha=0.7)
-    _ax_style(ax, "📈 米国イールドカーブ（Treasury 実データ）", "利回り %")
+    _ax_style(ax, "📈 米国イールドカーブ（Treasury実データ）", "利回り %",
+              note="右上がり=正常  右下がり(逆イールド)=景気後退の警告サイン")
 
 
 def panel_dxy_trend(ax, data: dict):
@@ -941,9 +1006,10 @@ def panel_dxy_trend(ax, data: dict):
             transform=ax.transAxes, ha="right", va="top",
             color=C_CYAN, fontsize=9, fontweight="bold")
 
-    ax.legend(loc="upper left", fontsize=7, fancybox=True,
+    ax.legend(loc="upper left", fontsize=7.5, fancybox=True,
               facecolor=BG3, edgecolor=C_BORDER, labelcolor=C_WHITE)
-    _ax_style(ax, "💵 DXY Dollar Index（60日）")
+    _ax_style(ax, "💲 ドル指数(DXY)トレンド（60日）",
+              note="DXY↑=ドル高=円安圧力  DXY↓=ドル安=円高圧力  100=均衡")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -955,17 +1021,17 @@ def build_dashboard(data: dict, out_path: str, premium: dict | None = None) -> s
     全パネルを組み合わせた大型ダッシュボードを生成して PNG 保存
     サイズ: 22×30 インチ @ 100dpi = 2200×3000px
     """
-    fig = plt.figure(figsize=(22, 30), facecolor=BG)
+    fig = plt.figure(figsize=(24, 32), facecolor=BG)
     fig.patch.set_facecolor(BG)
 
     # GridSpec: 6行 × 3列
     gs = gridspec.GridSpec(
         6, 3,
         figure=fig,
-        height_ratios=[3.5, 1.4, 1.4, 2.2, 2.2, 2.2],
+        height_ratios=[3.5, 1.5, 1.5, 2.4, 2.4, 2.4],
         width_ratios=[1, 1, 1],
-        hspace=0.48,
-        wspace=0.35,
+        hspace=0.55,
+        wspace=0.38,
     )
 
     # ── Row 0: USD/JPY プライスチャート（3列フル）──
@@ -1001,20 +1067,25 @@ def build_dashboard(data: dict, out_path: str, premium: dict | None = None) -> s
     _WD     = ["月", "火", "水", "木", "金", "土", "日"]
     _wd     = _WD[jst_now.weekday()]
     title = (
-        f"💱 ミセスワタナベ  FX 為替マーケット速報 💱\n"
+        f"💱  ミセスワタナベ  FX 為替マーケット速報  💱\n"
         f"{jst_now.year}年{jst_now.month}月{jst_now.day}日（{_wd}）"
-        f"  {jst_now.strftime('%H:%M')} JST  ─  東京市場 午後2時レポート"
+        f"  {jst_now.strftime('%H:%M')} JST  —  東京市場 午後2時レポート"
     )
-    fig.suptitle(title, color=C_GOLD, fontsize=16,
-                 fontweight="bold", y=0.994, linespacing=1.6)
+    fig.suptitle(title, color=C_GOLD, fontsize=18,
+                 fontweight="bold", y=0.995, linespacing=1.7)
 
-    # ─── 為替専用バッジ（他ダッシュボードと一目で区別）───
-    fig.text(0.013, 0.9955, "  💱 FX 為替 専用レポート  ",
-             ha="left", va="top", color=BG, fontsize=11, fontweight="bold",
-             bbox=dict(boxstyle="round,pad=0.45", fc=C_GOLD, ec="none"))
+    # ─── 為替専用バッジ ───
+    fig.text(0.013, 0.9958, "  💱 FX専用  ",
+             ha="left", va="top", color=BG, fontsize=12, fontweight="bold",
+             bbox=dict(boxstyle="round,pad=0.5", fc=C_GOLD, ec="none"))
 
-    # ─── ゴールド二重ボーダー（為替ブランドカラー）───
-    for yb, aa, lw in [(0.987, 0.85, 1.6), (0.9845, 0.4, 0.8)]:
+    # ─── パネル凡例ガイド（右上）───
+    fig.text(0.987, 0.9958,
+             "🟢 上昇・強気  🔴 下落・弱気  🟡 警戒  ─ 変化なし",
+             ha="right", va="top", color=C_GRAY, fontsize=8.5, alpha=0.85)
+
+    # ─── ゴールド二重ボーダー ───
+    for yb, aa, lw in [(0.988, 0.9, 2.0), (0.9855, 0.4, 0.8)]:
         fig.add_artist(
             plt.Line2D([0.01, 0.99], [yb, yb],
                        transform=fig.transFigure,
