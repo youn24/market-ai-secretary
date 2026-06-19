@@ -91,21 +91,21 @@ def _extract_direction(ai_summary: dict, scenario: dict, risk: dict) -> str:
     score = risk.get("score", 0)
 
     # スコアベースの判定
-    if score >= 1.5:   base = "bull"
-    elif score <= -1.5: base = "bear"
+    # 閾値を1.5→3.0に引き上げ（実績データでスコア2〜8が中立に偏っていたため）
+    if score >= 3.0:    base = "bull"
+    elif score <= -3.0: base = "bear"
     else:               base = "neutral"
 
-    # シナリオ確率で補正
+    # シナリオ確率で補正（確率60%以上の場合のみ方向を決定）
     if scenario and scenario.get("available"):
         bull_p = scenario.get("bull", {}).get("prob", 0) or 0
         bear_p = scenario.get("bear", {}).get("prob", 0) or 0
-        base_p = scenario.get("base", {}).get("prob", 0) or 0
         try:
             bull_p = int(bull_p); bear_p = int(bear_p)
         except Exception:
             pass
-        if bull_p >= 45:   base = "bull"
-        elif bear_p >= 45: base = "bear"
+        if bull_p >= 60:   base = "bull"
+        elif bear_p >= 60: base = "bear"
         else:               base = "neutral"
 
     return base
