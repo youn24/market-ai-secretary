@@ -1,65 +1,84 @@
 """
 市場指標の計算：リスクオン/オフ判定、地合い評価
+
+リスクスコアの重みは config/signal_weights.json（calibrate_weights.py が生成）を
+読み込んで使う。これは「各指標の前営業日リターンが、実際に翌日の日経をどれだけ
+当てたか（相関）」で決めた“実績ベース”の重み。較正ファイルが無ければ従来の既定値で動く。
 """
+import json
+from pathlib import Path
 from src.utils import setup_logger
 
 logger = setup_logger("indicators")
 
-# リスクオン/オフ判定に使う指標
-RISK_ON_SIGNALS = {
-    "^GSPC": "S&P500",
-    "^IXIC": "NASDAQ",
-    "^N225": "日経平均",
+_WEIGHTS_PATH = Path(__file__).parent.parent / "config" / "signal_weights.json"
+
+# 既定重み（較正ファイルが無い場合のフォールバック＝従来の手打ち値）
+_DEFAULT_WEIGHTS = {
+    "^GSPC": 1.0, "^IXIC": 1.0, "^N225": 1.0,
+    "^VIX": -0.5, "GC=F": -0.3, "USDJPY=X": 0.5,
 }
-RISK_OFF_SIGNALS = {
-    "^VIX": "VIX",
-    "GC=F": "金",
+_NAMES = {
+    "^GSPC": "S&P500", "^IXIC": "NASDAQ", "^N225": "日経平均", "^SOX": "半導体SOX",
+    "^VIX": "VIX", "GC=F": "金", "USDJPY=X": "ドル円",
 }
+
+# 後方互換のため従来の定数も残す
+RISK_ON_SIGNALS = {"^GSPC": "S&P500", "^IXIC": "NASDAQ", "^N225": "日経平均"}
+RISK_OFF_SIGNALS = {"^VIX": "VIX", "GC=F": "金"}
 USDJPY_SYMBOL = "USDJPY=X"
+
+
+def _load_weights() -> tuple:
+    """(weights dict, meta or None) を返す。較正ファイルがあればそれを使う。"""
+    try:
+        data = json.loads(_WEIGHTS_PATH.read_text(encoding="utf-8"))
+        w = {s: v.get("weight") for s, v in data.get("weights", {}).items()
+             if v.get("weight") is not None}
+        if w:
+            return w, data
+    except Exception:
+        pass
+    return dict(_DEFAULT_WEIGHTS), None
 
 
 def calc_risk_score(prices: dict) -> dict:
     """
     リスクオン/オフスコアを計算する。
-    スコア > 0: リスクオン傾向
-    スコア < 0: リスクオフ傾向
+    スコア > 0: 翌日の日経に上昇圧力 / スコア < 0: 下落圧力
+    重みは実績較正（config/signal_weights.json）を優先使用。
     """
+    weights, meta = _load_weights()
+    calibrated = meta is not None
+
     score = 0.0
     signals = []
+    for sym, w in weights.items():
+        if w is None:
+            continue
+        chg = (prices.get(sym) or {}).get("change_pct")
+        if chg is None:
+            continue
+        contrib = chg * w
+        score += contrib
+        name = _NAMES.get(sym, sym)
+        if abs(contrib) < 0.02:
+            direction = "中立"
+        elif contrib > 0:
+            direction = "上昇圧力"
+        else:
+            direction = "下落圧力"
+        signals.append({
+            "indicator": name,
+            "change": round(chg, 2),
+            "weight": round(w, 2),
+            "contribution": round(contrib, 2),
+            "direction": direction,
+            "type": "risk_on" if w >= 0 else "risk_off",
+        })
 
-    # リスクオン指標：上昇→プラス
-    for sym, name in RISK_ON_SIGNALS.items():
-        p = prices.get(sym, {})
-        chg = p.get("change_pct")
-        if chg is not None:
-            weight = 1.0
-            score += chg * weight
-            direction = "上昇" if chg > 0 else "下落"
-            signals.append({"indicator": name, "change": chg, "direction": direction, "type": "risk_on"})
-
-    # VIX：上昇→リスクオフ（マイナス）
-    vix = prices.get("^VIX", {})
-    vix_chg = vix.get("change_pct")
-    if vix_chg is not None:
-        score -= vix_chg * 0.5
-        direction = "上昇(不安増大)" if vix_chg > 0 else "低下(不安後退)"
-        signals.append({"indicator": "VIX", "change": vix_chg, "direction": direction, "type": "risk_off"})
-
-    # 金：上昇→リスクオフ（マイナス）
-    gold = prices.get("GC=F", {})
-    gold_chg = gold.get("change_pct")
-    if gold_chg is not None:
-        score -= gold_chg * 0.3
-        direction = "上昇(安全資産買い)" if gold_chg > 0 else "低下"
-        signals.append({"indicator": "金", "change": gold_chg, "direction": direction, "type": "risk_off"})
-
-    # ドル円：上昇→リスクオン
-    usdjpy = prices.get(USDJPY_SYMBOL, {})
-    usdjpy_chg = usdjpy.get("change_pct")
-    if usdjpy_chg is not None:
-        score += usdjpy_chg * 0.5
-        direction = "円安(リスクオン方向)" if usdjpy_chg > 0 else "円高(リスクオフ方向)"
-        signals.append({"indicator": "ドル円", "change": usdjpy_chg, "direction": direction, "type": "forex"})
+    # 影響の大きい順（寄与の絶対値）に並べる
+    signals.sort(key=lambda s: abs(s["contribution"]), reverse=True)
 
     # 判定
     if score >= 1.5:
@@ -77,8 +96,18 @@ def calc_risk_score(prices: dict) -> dict:
         "sentiment": sentiment,
         "meter": meter,
         "signals": signals,
+        "calibrated": calibrated,
     }
-    logger.info(f"リスク判定: {sentiment} (スコア={score:.2f})")
+    if calibrated:
+        # 最も効いている指標トップ3（相関）を添える
+        ws = meta.get("weights", {})
+        top = sorted(ws.items(), key=lambda kv: abs(kv[1].get("corr", 0)), reverse=True)
+        result["top_predictors"] = [
+            {"name": v.get("name"), "corr": v.get("corr")} for _, v in top[:3]
+        ]
+        result["calibrated_at"] = (meta.get("generated_at") or "")[:10]
+    tag = "実績較正" if calibrated else "既定重み"
+    logger.info(f"リスク判定: {sentiment} (スコア={score:.2f}) [{tag}]")
     return result
 
 

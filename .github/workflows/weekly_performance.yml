@@ -5,6 +5,9 @@ on:
     - cron: "45 22 * * 0"  # UTC日曜22:45 = JST月曜7:45
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   weekly-performance:
     runs-on: ubuntu-latest
@@ -15,6 +18,17 @@ jobs:
         with:
           python-version: "3.11"
       - run: pip install pandas numpy requests python-dotenv PyYAML yfinance google-generativeai
+
+      - name: シグナル重みを実績で再較正してコミット
+        run: |
+          # 「どの指標が実際に翌日の日経を当てたか」で重みを更新
+          python -m src.calibrate_weights || true
+          git config --global user.email "actions@github.com"
+          git config --global user.name "GitHub Actions Bot"
+          git add config/signal_weights.json 2>/dev/null || true
+          git diff --staged --quiet || git commit -m "🎯 シグナル重み再較正 $(date '+%Y-%m-%d')"
+          git push origin main || true
+
       - name: 週次パフォーマンス報告送信
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
