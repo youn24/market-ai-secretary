@@ -1,0 +1,18 @@
+{
+  "history": [
+    {
+      "date": "2026-06-19",
+      "sentiment": "強気 (リスクオン)",
+      "score": 10.49,
+      "fg_score": 37.5,
+      "fg_rating": "恐怖 😟",
+      "nikkei": 69902.25,
+      "sp500": 7500.5801,
+      "usdjpy": 161.226,
+      "vix": 16.4,
+      "ai_judgment": ""
+    }
+  ],
+  "patterns": {},
+  "lessons": []
+}
