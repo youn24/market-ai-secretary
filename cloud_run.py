@@ -497,6 +497,32 @@ def run(mode: str):
     except Exception:
         logger.error("レポート生成エラー"); logger.debug(traceback.format_exc())
 
+    # Step 7b: note記事生成
+    note_article = {"available": False}
+    try:
+        logger.info("--- Step 7b: note記事生成 ---")
+        from src.note_article import run as run_note
+        note_article = run_note(
+            prices=prices, news=news, risk=risk, fear_greed=fear_greed,
+            ai_summary=ai_summary, scenario=scenario, technical=technical,
+            prediction_tracker=prediction_tracker, report_paths=report_paths,
+        )
+        if note_article.get("available"):
+            logger.info(f"✅ note記事生成完了: {note_article.get('path','')}")
+    except Exception:
+        logger.error("note記事生成エラー"); logger.debug(traceback.format_exc())
+
+    # Step 7c: note カバー画像生成
+    note_cover = {"available": False}
+    try:
+        logger.info("--- Step 7c: note カバー画像生成 ---")
+        from src.note_cover import run as run_cover
+        note_cover = run_cover(prices=prices, risk=risk, fear_greed=fear_greed)
+        if note_cover.get("available"):
+            logger.info(f"✅ note カバー画像: {note_cover.get('path','')}")
+    except Exception:
+        logger.error("note カバー画像エラー"); logger.debug(traceback.format_exc())
+
     # Step 8: Telegram通知
     try:
         logger.info("--- Step 8: Telegram通知 ---")
@@ -546,6 +572,33 @@ def run(mode: str):
     print(f"\n✅ 完了 | 地合い: {risk.get('sentiment')} | "
           f"F&G: {fear_greed.get('score')} ({fear_greed.get('rating_ja')}) | "
           f"ニュース: {len(news)}件 | チャート: {len(chart_paths)}件")
+
+
+def _make_gauge_svg(value, lo, hi, gid, grad):
+    """半円SVGニードルゲージを返す。grad は [("0%","#color"), ...] のリスト。"""
+    import math
+    v     = max(lo, min(hi, float(value if value is not None else lo)))
+    ratio = (v - lo) / (hi - lo) if hi != lo else 0
+    angle = math.radians(-180 + ratio * 180)
+    nx    = 70 + 50 * math.cos(angle)
+    ny    = 68 + 50 * math.sin(angle)
+    stops = "".join(f'<stop offset="{p}" stop-color="{c}"/>' for p, c in grad)
+    return (
+        f'<svg viewBox="0 0 140 78" xmlns="http://www.w3.org/2000/svg"'
+        f' width="130" height="72" style="display:block;margin:0 auto;">'
+        f'<defs><linearGradient id="gg{gid}" x1="0%" y1="0%" x2="100%" y2="0%">'
+        f'{stops}</linearGradient></defs>'
+        f'<path d="M12,68 A58,58 0 0,1 128,68" fill="none" stroke="#1e2d42"'
+        f' stroke-width="14" stroke-linecap="round"/>'
+        f'<path d="M12,68 A58,58 0 0,1 128,68" fill="none" stroke="url(#gg{gid})"'
+        f' stroke-width="14" stroke-linecap="round" opacity="0.88"/>'
+        f'<line x1="70" y1="68" x2="{nx:.1f}" y2="{ny:.1f}"'
+        f' stroke="#ffffff" stroke-width="3.5" stroke-linecap="round"/>'
+        f'<circle cx="70" cy="68" r="5.5" fill="#ffffff"/>'
+        f'<text x="70" y="54" text-anchor="middle" font-size="17" font-weight="900"'
+        f' fill="#ffffff" font-family="sans-serif">{v:.0f}</text>'
+        f'</svg>'
+    )
 
 
 def _save_html_report(mode, prices, news, risk, analysis, fear_greed, chart_paths,
@@ -611,6 +664,15 @@ def _save_html_report(mode, prices, news, risk, analysis, fear_greed, chart_path
     elif fg_int >= 45: fg_color = "#ffd740"; fg_emoji = "😐"; fg_desc = "中立（拮抗状態）"
     elif fg_int >= 25: fg_color = "#40c4ff"; fg_emoji = "😰"; fg_desc = "恐怖（弱気が多い）"
     else:              fg_color = "#7c4dff"; fg_emoji = "😭"; fg_desc = "超恐怖（チャンスかも）"
+
+    # SVG ニードルゲージ（Fear&Greed と VIX）
+    _vix_now   = prices.get("^VIX", {}).get("latest") or 15
+    _fg_svg    = _make_gauge_svg(fg_int, 0, 100, "FG",
+                   [("0%","#7c3aed"),("25%","#ef4444"),("50%","#f59e0b"),("100%","#22c55e")])
+    _vix_svg   = _make_gauge_svg(_vix_now, 0, 50, "VX",
+                   [("0%","#22c55e"),("50%","#f59e0b"),("80%","#ef4444"),("100%","#7c3aed")])
+    _vix_lbl   = "⚠ 危険！" if _vix_now > 30 else "高め" if _vix_now > 20 else "普通" if _vix_now > 15 else "✓ 安定"
+    _vix_color = "#ff4444" if _vix_now > 30 else "#ffd740" if _vix_now > 20 else "#69f0ae" if _vix_now > 15 else "#00e676"
 
     def p_val(sym):
         v = prices.get(sym, {}).get("latest")
@@ -1132,19 +1194,17 @@ a:hover{{text-decoration:underline;}}
   <!-- キャラクターコメント（ガネーシャ & カワウソ） -->
   {char_html_section}
 
-  <!-- クイックステータス3つ -->
+  <!-- SVGゲージ: Fear&Greed / VIX / ドル円 -->
   <div class="quick-row">
-    <div class="qcard">
-      <div class="qcard-icon">😱</div>
-      <div class="qcard-label">恐怖＆強欲</div>
-      <div class="qcard-val" style="color:{fg_color};">{fg_int}</div>
-      <div class="qcard-sub">{fg_emoji} {fg_rating}</div>
+    <div class="qcard" style="padding:12px 6px;text-align:center;">
+      {_fg_svg}
+      <div style="font-weight:700;color:{fg_color};font-size:0.82em;margin-top:3px;">{fg_emoji} {fg_desc}</div>
+      <div style="color:var(--text2);font-size:0.68em;margin-top:1px;">Fear &amp; Greed Index（0〜100）</div>
     </div>
-    <div class="qcard">
-      <div class="qcard-icon">🌡</div>
-      <div class="qcard-label">VIX 恐怖指数</div>
-      <div class="qcard-val" style="color:{'#ff4444' if (prices.get('^VIX',{{}}).get('latest') or 0)>20 else '#ffd740' if (prices.get('^VIX',{{}}).get('latest') or 0)>15 else '#00e676'};">{p_val('^VIX')}</div>
-      <div class="qcard-sub">{'高い=危険' if (prices.get('^VIX',{{}}).get('latest') or 0)>20 else '普通' if (prices.get('^VIX',{{}}).get('latest') or 0)>15 else '低い=安定'}</div>
+    <div class="qcard" style="padding:12px 6px;text-align:center;">
+      {_vix_svg}
+      <div style="font-weight:700;color:{_vix_color};font-size:0.82em;margin-top:3px;">{_vix_lbl}</div>
+      <div style="color:var(--text2);font-size:0.68em;margin-top:1px;">VIX 恐怖指数（0〜50）</div>
     </div>
     <div class="qcard">
       <div class="qcard-icon">💵</div>
