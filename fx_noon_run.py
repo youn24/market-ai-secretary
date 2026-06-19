@@ -196,6 +196,51 @@ def _build_compact_msg(fx_result: dict, mood_emoji: str, char_info: dict) -> str
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# IMM 投機筋ポジション + 中央銀行・介入監視 メッセージ生成
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _build_imm_cb_msg(fx_result: dict) -> str:
+    """
+    ② IMM 投機筋ポジション + 中央銀行・介入監視 の1通
+    FX速報テキスト（①）とは別メッセージで送信する
+    """
+    data    = fx_result.get("data",    {}) or {}
+    premium = fx_result.get("premium", {}) or {}
+
+    jst = get_jst_now()
+    wd  = ["月", "火", "水", "木", "金", "土", "日"][jst.weekday()]
+
+    lines = [
+        "📡〰〰〰〰〰〰〰〰〰〰〰📡",
+        "　 *投機筋ポジション & 介入監視*",
+        "📡〰〰〰〰〰〰〰〰〰〰〰📡",
+        f"🗓 {jst.year}年{jst.month}月{jst.day}日（{wd}） {jst.strftime('%H:%M')} JST",
+        "",
+    ]
+
+    # ── IMM 投機筋ポジション ──
+    try:
+        from src.cb_monitor import build_imm_summary_text
+        imm = build_imm_summary_text(premium)
+        if imm:
+            lines += [imm, "━━━━━━━━━━━━━━", ""]
+    except Exception:
+        pass
+
+    # ── 中央銀行・為替介入監視 ──
+    try:
+        from src.cb_monitor import build_cb_monitor_text
+        cb = build_cb_monitor_text(data)
+        if cb:
+            lines += [cb, "━━━━━━━━━━━━━━", ""]
+    except Exception:
+        pass
+
+    lines.append("📱 詳細は下の画像ダッシュボードをご確認ください")
+    return "\n".join(lines)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # メイン
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -237,9 +282,9 @@ def main():
         logger.error("FX分析 エラー")
         logger.debug(traceback.format_exc())
 
-    # ── Step 2: Telegram 送信（2メッセージに圧縮） ────────────────
+    # ── Step 2: Telegram 送信（3メッセージ構成） ────────────────────
     try:
-        logger.info("--- Step 2: Telegram 送信（2メッセージ）---")
+        logger.info("--- Step 2: Telegram 送信（3メッセージ）---")
         from src.notify_telegram import send_message, send_photo, _is_configured
 
         if not _is_configured():
@@ -247,14 +292,21 @@ def main():
             print("\n" + "─" * 60)
             print(_build_compact_msg(fx_result, mood_emoji, char_info))
             print("─" * 60)
+            print(_build_imm_cb_msg(fx_result))
+            print("─" * 60)
             return
 
-        # ① コンパクトサマリー（FX + マクロ + 地政学 + URL を1通）
+        # ① コンパクトサマリー（FX + マクロ + 地政学 + AI解説 + URL）
         compact = _build_compact_msg(fx_result, mood_emoji, char_info)
         ok1 = send_message(compact, chat_id=FX_CHAT_ID, bot_token=FX_BOT_TOKEN)
-        logger.info(f"{'✅' if ok1 else '❌'} ① コンパクトサマリー送信")
+        logger.info(f"{'✅' if ok1 else '❌'} ① FXサマリー送信")
 
-        # ② ダッシュボード画像
+        # ② IMM 投機筋ポジション + 中央銀行・介入監視
+        imm_cb = _build_imm_cb_msg(fx_result)
+        ok2 = send_message(imm_cb, chat_id=FX_CHAT_ID, bot_token=FX_BOT_TOKEN)
+        logger.info(f"{'✅' if ok2 else '❌'} ② 投機筋ポジション・介入監視送信")
+
+        # ③ ダッシュボード画像
         chart_path = fx_result.get("chart_path", "")
         if chart_path and os.path.exists(chart_path):
             caption = (
@@ -265,9 +317,9 @@ def main():
                 "🏦 利下げ確率 ／ 投機ポジション ／ VIX\n"
                 "🌐 米国債イールドカーブ ／ マクロ指標"
             )
-            ok2 = send_photo(chart_path, caption=caption,
+            ok3 = send_photo(chart_path, caption=caption,
                              chat_id=FX_CHAT_ID, bot_token=FX_BOT_TOKEN)
-            logger.info(f"{'✅' if ok2 else '❌'} ② ダッシュボード画像送信")
+            logger.info(f"{'✅' if ok3 else '❌'} ③ ダッシュボード画像送信")
         else:
             logger.warning("チャートファイルなし（深夜テスト時は正常）")
 

@@ -46,6 +46,7 @@ jobs:
             matplotlib \
             japanize-matplotlib \
             requests \
+            feedparser \
             python-dotenv \
             pandas \
             numpy \
