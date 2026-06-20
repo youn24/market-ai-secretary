@@ -584,6 +584,144 @@ section {{ margin-bottom: 20px; }}
 # ヘルパー関数
 # ────────────────────────────────────────────────────────────────
 
+def _today_summary(score: float, prices: dict, fear_greed: dict, risk: dict) -> str:
+    """
+    ページ最上部に表示する「今日のポイント3行まとめ」カード。
+    投資初心者が30秒で状況を把握できるよう設計。
+    """
+    # ── 全体シグナル判定 ──
+    if score >= 1.0:
+        sig_emoji, sig_label, sig_color, sig_bg = "🟢", "安心・強気相場", GREEN, "rgba(0,230,118,.08)"
+        sig_desc = "今日の市場は比較的落ち着いています。あわてる必要はありません。"
+    elif score >= 0.0:
+        sig_emoji, sig_label, sig_color, sig_bg = "🟡", "やや強気・様子見", YELLOW, "rgba(210,153,34,.08)"
+        sig_desc = "全体的にはプラス寄りですが、急な変動には注意しましょう。"
+    elif score >= -1.0:
+        sig_emoji, sig_label, sig_color, sig_bg = "🟠", "注意・不安定", ORANGE, "rgba(219,109,40,.08)"
+        sig_desc = "少し荒れた動きになりやすい状況です。大きな取引は慎重に。"
+    else:
+        sig_emoji, sig_label, sig_color, sig_bg = "🔴", "警戒・弱気相場", RED, "rgba(255,92,108,.08)"
+        sig_desc = "市場が不安定な状態です。無理なポジションは避けましょう。"
+
+    # ── ポイント3行 ──
+    usdjpy_val = (prices.get("USDJPY=X") or {}).get("price", 0) or 0
+    usdjpy_chg = (prices.get("USDJPY=X") or {}).get("change_pct", 0) or 0
+    nikkei_val = (prices.get("^N225") or {}).get("price", 0) or 0
+    nikkei_chg = (prices.get("^N225") or {}).get("change_pct", 0) or 0
+    vix_val    = (prices.get("^VIX")   or {}).get("price", 18) or 18
+    fg_score   = (fear_greed or {}).get("score", 50) or 50
+
+    # ① 日本株
+    if nikkei_chg >= 1.0:
+        pt1_icon, pt1_color = "📈", GREEN
+        pt1_text = f"日経平均は{nikkei_val:,.0f}円（前日比 +{nikkei_chg:.1f}%）で<b>上昇中</b>です。"
+    elif nikkei_chg <= -1.0:
+        pt1_icon, pt1_color = "📉", RED
+        pt1_text = f"日経平均は{nikkei_val:,.0f}円（前日比 {nikkei_chg:.1f}%）で<b>下落中</b>です。"
+    else:
+        pt1_icon, pt1_color = "📊", YELLOW
+        pt1_text = f"日経平均は{nikkei_val:,.0f}円（前日比 {nikkei_chg:+.1f}%）で<b>ほぼ横ばい</b>です。"
+
+    # ② ドル円
+    if usdjpy_val > 155:
+        pt2_icon, pt2_color = "⚠️", RED
+        pt2_text = f"ドル円は<b>{usdjpy_val:.2f}円</b>と円安水準。輸入物価の上昇や為替介入リスクに注意。"
+    elif usdjpy_val > 150:
+        pt2_icon, pt2_color = "💴", ORANGE
+        pt2_text = f"ドル円は<b>{usdjpy_val:.2f}円</b>。円安傾向が続いています（前日比 {usdjpy_chg:+.2f}%）。"
+    elif usdjpy_val > 0:
+        pt2_icon, pt2_color = "💴", YELLOW
+        pt2_text = f"ドル円は<b>{usdjpy_val:.2f}円</b>（前日比 {usdjpy_chg:+.2f}%）。比較的安定した水準です。"
+    else:
+        pt2_icon, pt2_color = "💴", MUTED
+        pt2_text = "ドル円データを取得中です。"
+
+    # ③ 市場ムード（VIX + F&G）
+    if vix_val >= 25:
+        pt3_icon, pt3_color = "😨", RED
+        pt3_text = f"恐怖指数VIXが<b>{vix_val:.1f}</b>と高水準。市場参加者の不安が高まっています。"
+    elif vix_val >= 18:
+        pt3_icon, pt3_color = "😐", YELLOW
+        pt3_text = f"恐怖指数VIXは<b>{vix_val:.1f}</b>。やや警戒感があります。"
+    else:
+        pt3_icon, pt3_color = "😊", GREEN
+        pt3_text = f"恐怖指数VIXは<b>{vix_val:.1f}</b>と低く、市場は落ち着いています。"
+
+    pts = [(pt1_icon, pt1_color, pt1_text), (pt2_icon, pt2_color, pt2_text), (pt3_icon, pt3_color, pt3_text)]
+    pts_html = "".join(f"""
+    <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06)">
+      <span style="font-size:20px;flex-shrink:0;margin-top:2px">{ic}</span>
+      <div style="font-size:13px;line-height:1.7;color:{cl}">{tx}</div>
+    </div>""" for ic, cl, tx in pts)
+
+    return f"""
+<div style="background:{sig_bg};border:2px solid {sig_color};border-radius:14px;padding:18px 20px;margin-bottom:16px">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+    <span style="font-size:28px">{sig_emoji}</span>
+    <div>
+      <div style="font-size:11px;font-weight:700;letter-spacing:1px;color:{sig_color}">今日のポイント — 30秒でわかる相場まとめ</div>
+      <div style="font-size:16px;font-weight:900;color:{sig_color};margin-top:2px">{sig_label}</div>
+    </div>
+  </div>
+  <div style="font-size:12px;color:var(--muted);margin-bottom:10px;padding:8px 12px;background:rgba(0,0,0,.2);border-radius:8px">
+    💬 {sig_desc}
+  </div>
+  {pts_html}
+  <div style="margin-top:10px;font-size:10px;color:var(--muted);text-align:right">
+    ※ AIによる自動分析です。スコア: {score:+.2f} / Fear&Greed: {fg_score:.0f}
+  </div>
+</div>"""
+
+
+def _beginner_guide() -> str:
+    """
+    初心者向け用語ガイド（折りたたみ式）
+    各指標の意味を中学生でもわかる言葉で説明する。
+    """
+    terms = [
+        ("📊", "AIスコア（−3〜＋3）",
+         "このページの「頭脳」となる総合判断値です。",
+         "＋2以上=強気、±0付近=中立、−2以下=弱気"),
+        ("😨", "VIX（恐怖指数）",
+         "市場参加者が「これから市場が荒れそう」と思っているかの度合いです。",
+         "30以上=パニック的、20前後=やや警戒、15以下=落ち着いている"),
+        ("📈", "RSI（相対力指数）",
+         "株や為替が「買われすぎ」か「売られすぎ」かを0〜100で示します。",
+         "70以上=買われすぎ（下がりやすい）、30以下=売られすぎ（上がりやすい）"),
+        ("🎭", "Fear & Greed（恐怖と欲望）",
+         "市場全体のムードを0〜100で数値化したものです。",
+         "0〜25=極度の恐怖、25〜45=恐怖、55〜75=欲望、75〜100=極度の欲望"),
+        ("💴", "ドル円（USD/JPY）",
+         "1ドルが何円かを示します。数字が大きいほど円安（ドル高）です。",
+         "円安→輸入品が高くなる。円高→輸入品が安くなる"),
+        ("📉", "CME先物",
+         "夜間・時間外に米国の取引所で売買される「明日の日本株の予約価格」です。",
+         "現物より高い→翌朝は高く始まりやすい、低い→安く始まりやすい"),
+    ]
+    rows = "".join(f"""
+    <div style="display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.05)">
+      <span style="font-size:18px;flex-shrink:0">{ic}</span>
+      <div>
+        <div style="font-size:12px;font-weight:800;color:var(--text);margin-bottom:2px">{title}</div>
+        <div style="font-size:12px;line-height:1.6;color:var(--muted)">{desc}</div>
+        <div style="font-size:11px;color:{CYAN};margin-top:4px;background:rgba(0,212,255,.05);padding:3px 8px;border-radius:4px;display:inline-block">{guide}</div>
+      </div>
+    </div>""" for ic, title, desc, guide in terms)
+
+    return f"""
+<details style="margin-bottom:16px">
+  <summary style="cursor:pointer;background:rgba(0,212,255,.04);border:1px solid rgba(0,212,255,.15);border-radius:10px;
+    padding:10px 16px;font-size:13px;font-weight:700;color:var(--text);list-style:none;display:flex;align-items:center;gap:8px;user-select:none">
+    <span style="font-size:16px">📖</span>
+    <span>はじめての方へ — 用語ガイド</span>
+    <span style="margin-left:auto;font-size:11px;color:var(--muted)">タップして開く ▼</span>
+  </summary>
+  <div style="background:rgba(0,0,0,.2);border:1px solid rgba(0,212,255,.08);border-top:none;border-radius:0 0 10px 10px;padding:0 16px 8px">
+    {rows}
+  </div>
+</details>"""
+
+
 def _gane_svg(mood: str) -> str:
     """ガネ先生のインラインSVGキャラクター（相場ムードに応じた表情）"""
     # 体の色 / 表情パラメータ
@@ -715,63 +853,113 @@ def _kawauso_svg(mood: str) -> str:
 </svg>"""
 
 
-def _copy_char_to_docs(root: Path) -> tuple:
-    """キャラクター画像をdocs/assets/にコピーして相対パスを返す。なければNone"""
+# ──────────────────────────────────────────────────────────────
+# ムード別キャラクター画像マッピング
+# data/fx_charts/ の切り出し済み画像を使用
+# ──────────────────────────────────────────────────────────────
+_CHAR_POOL = {
+    # ガネ先生（ガネーシャ象くん）
+    "gane_bullish":   "data/fx_charts/character_bullish_5_2.png",    # 上昇喜び・指差し
+    "gane_analyzing": "data/fx_charts/character_analyzing_2_3.png",  # チャート確認
+    "gane_bearish":   "data/fx_charts/character_bearish_7_1.png",    # 下落チャートを持つ
+    "gane_crash":     "data/fx_charts/character_crash_4_2.png",      # 急落パニック
+    # カワウソくん
+    "kawa_bullish":   "data/fx_charts/character_uncertain_0_2.png",  # 楽観・ポジティブ
+    "kawa_analyzing": "data/fx_charts/character_analyzing_1_3.png",  # デスクで分析中
+    "kawa_uncertain": "data/fx_charts/character_uncertain_1_2.png",  # ❓疑問・迷い
+    "kawa_bearish":   "data/fx_charts/character_analyzing_7_2.png",  # ノートで冷静確認
+}
+
+def _copy_char_to_docs(root: Path) -> dict:
+    """ムード別キャラクター画像をdocs/assets/にコピーし、key→相対パスのdictを返す"""
     import shutil
     docs_assets = root / "docs" / "assets"
     docs_assets.mkdir(parents=True, exist_ok=True)
 
-    def find_and_copy(names, dest_name):
-        search_dirs = [
-            root / "assets",
-            root / "docs" / "assets",
-            root / "src" / "assets",
-        ]
-        for d in search_dirs:
-            for name in names:
-                p = d / name
-                if p.exists() and p.stat().st_size > 10000:  # 10KB以上のみ
-                    dest = docs_assets / dest_name
-                    if p != dest:
-                        shutil.copy2(str(p), str(dest))
-                    return f"assets/{dest_name}"
-        return None
-
-    gane_path = find_and_copy(["gane_sensei.png"], "gane_sensei.png")
-    kawa_path = find_and_copy(["kawauso.png"],     "kawauso.png")
-    return gane_path, kawa_path
+    paths = {}
+    for key, src_rel in _CHAR_POOL.items():
+        src = root / src_rel
+        if src.exists() and src.stat().st_size > 10000:
+            dest_name = f"char_{key}.png"
+            dest = docs_assets / dest_name
+            try:
+                if str(src) != str(dest):
+                    shutil.copy2(str(src), str(dest))
+                paths[key] = f"assets/char_{key}.png"
+            except Exception:
+                pass
+    return paths
 
 
 def _character_header(score: float, prices: dict, mood: str, today: str, now: str) -> str:
-    """キャラクター入りヘッダーHTML — PNG画像があれば相対パスで使い、なければSVG"""
+    """キャラクター入りヘッダーHTML — ムード別PNG画像を使用し、なければSVGフォールバック"""
     signal_text = _signal_text(score)
+    vix_val = float((prices.get("^VIX") or {}).get("price", 15) or 15)
 
-    if score >= 0.5:
-        sig_style    = f"color:{GREEN};border-color:{GREEN};background:rgba(63,185,80,.15)"
-        gane_mood    = "bullish"
-        kawauso_mood = "bullish"
-        gane_say     = "相場が良さそう\nですね！"
-        kawa_say     = "チャンスかも！\n積極的に！"
-    elif score >= -0.5:
-        sig_style    = f"color:{YELLOW};border-color:{YELLOW};background:rgba(210,153,34,.15)"
-        gane_mood    = "analyzing"
-        kawauso_mood = "uncertain"
-        gane_say     = "様子を見ながら\n慎重に判断を"
-        kawa_say     = "うーん...\n迷うところ"
+    # ── ムード判定（VIXスパイクを最優先） ──────────────────────────────────────
+    if vix_val >= 30 or score <= -2.0:
+        # 急落・クラッシュモード
+        gane_key   = "gane_crash"
+        kawa_key   = "kawa_uncertain"
+        gane_mood  = "crash"
+        kawa_mood  = "uncertain"
+        gane_say   = "危険！VIX急騰\nリスク回避優先！"
+        kawa_say   = "えっ、大丈夫？\nこれは怖い..."
+        sig_style  = f"color:{RED};border-color:{RED};background:rgba(255,92,108,.12)"
+    elif score >= 1.5:
+        # 強気（高確信）
+        gane_key   = "gane_bullish"
+        kawa_key   = "kawa_bullish"
+        gane_mood  = "bullish"
+        kawa_mood  = "bullish"
+        gane_say   = "上昇の予感！\nチャンスですよ！"
+        kawa_say   = "やったー！\n行くぞー！"
+        sig_style  = f"color:{GREEN};border-color:{GREEN};background:rgba(0,230,118,.12)"
+    elif score >= 0.3:
+        # やや強気
+        gane_key   = "gane_bullish"
+        kawa_key   = "kawa_analyzing"
+        gane_mood  = "bullish"
+        kawa_mood  = "analyzing"
+        gane_say   = "相場が良さそう\nですね！"
+        kawa_say   = "データを確認\nしてます📝"
+        sig_style  = f"color:{GREEN};border-color:{GREEN};background:rgba(0,230,118,.12)"
+    elif score >= -0.3:
+        # 中立・様子見
+        gane_key   = "gane_analyzing"
+        kawa_key   = "kawa_uncertain"
+        gane_mood  = "analyzing"
+        kawa_mood  = "uncertain"
+        gane_say   = "データを\n分析中です..."
+        kawa_say   = "う〜ん\nどっちかな？"
+        sig_style  = f"color:{YELLOW};border-color:{YELLOW};background:rgba(210,153,34,.12)"
+    elif score >= -1.5:
+        # やや弱気
+        gane_key   = "gane_bearish"
+        kawa_key   = "kawa_bearish"
+        gane_mood  = "bearish"
+        kawa_mood  = "bearish"
+        gane_say   = "注意が必要\nですね..."
+        kawa_say   = "難しい局面\n冷静に見よう"
+        sig_style  = f"color:{RED};border-color:{RED};background:rgba(255,92,108,.12)"
     else:
-        sig_style    = f"color:{RED};border-color:{RED};background:rgba(248,81,73,.15)"
-        gane_mood    = "bearish"
-        kawauso_mood = "bearish"
-        gane_say     = "リスク管理を\n徹底しましょう"
-        kawa_say     = "気をつけて！\n守りが大事"
+        # 弱気
+        gane_key   = "gane_crash"
+        kawa_key   = "kawa_bearish"
+        gane_mood  = "crash"
+        kawa_mood  = "bearish"
+        gane_say   = "リスク管理を\n徹底しましょう"
+        kawa_say   = "気をつけて！\n守りが大事"
+        sig_style  = f"color:{RED};border-color:{RED};background:rgba(255,92,108,.12)"
 
     root = Path(__file__).parent.parent
-    gane_path, kawa_path = _copy_char_to_docs(root)
+    char_paths = _copy_char_to_docs(root)
 
-    gane_html    = (f'<img src="{gane_path}" style="width:110px;height:110px;object-fit:contain;filter:drop-shadow(0 4px 12px rgba(0,0,0,.6))">'
-                    if gane_path else _gane_svg(gane_mood))
-    kawauso_html = (f'<img src="{kawa_path}" style="width:110px;height:110px;object-fit:contain;filter:drop-shadow(0 4px 12px rgba(0,0,0,.6))">'
-                    if kawa_path else _kawauso_svg(kawauso_mood))
+    _img_style = "width:120px;height:120px;object-fit:contain;filter:drop-shadow(0 4px 16px rgba(0,0,0,.5))"
+    gane_html    = (f'<img src="{char_paths[gane_key]}" style="{_img_style}">'
+                    if gane_key in char_paths else _gane_svg(gane_mood))
+    kawauso_html = (f'<img src="{char_paths[kawa_key]}" style="{_img_style}">'
+                    if kawa_key in char_paths else _kawauso_svg(kawa_mood))
 
     nikkei  = prices.get("^N225",   {})
     sp500   = prices.get("^GSPC",   {})
@@ -806,16 +994,16 @@ def _character_header(score: float, prices: dict, mood: str, today: str, now: st
       <div class="char-date-badge">📅 {today} {now.split()[1] if ' ' in now else ''}</div><br>
       <span class="char-signal-badge" style="{sig_style}">{signal_text}</span>
       <div style="margin-top:10px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
-        <span style="font-size:12px;color:#f0c040">
-          🇯🇵 日経 <b style="color:{'#3fb950' if nk_chg>=0 else '#f85149'}">{nk_val:,.0f}</b>
+        <span style="font-size:12px;color:{TEXT}">
+          🇯🇵 日経 <b style="color:{GREEN if nk_chg>=0 else RED}">{nk_val:,.0f}</b>
           <span class="{nk_cls}">({nk_sign}{nk_chg:.2f}%)</span>
         </span>
-        <span style="font-size:12px;color:#f0c040">
-          🇺🇸 S&P <b style="color:{'#3fb950' if sp_chg>=0 else '#f85149'}">{sp_val:,.0f}</b>
+        <span style="font-size:12px;color:{TEXT}">
+          🇺🇸 S&P <b style="color:{GREEN if sp_chg>=0 else RED}">{sp_val:,.0f}</b>
           <span class="{sp_cls}">({sp_sign}{sp_chg:.2f}%)</span>
         </span>
-        <span style="font-size:12px;color:#f0c040">
-          💴 USD/JPY <b>{fx_val:.2f}</b>
+        <span style="font-size:12px;color:{MUTED}">
+          💴 USD/JPY <b style="color:{TEXT}">{fx_val:.2f}</b>
         </span>
       </div>
     </div>
@@ -1508,59 +1696,35 @@ def _stock_cards(prices: dict, technical: dict) -> str:
 
 
 def _sector_heatmap(sector_analysis: dict) -> str:
-    """セクターヒートマップ HTML"""
-    sa = sector_analysis or {}
-    if not sa.get("available"):
-        return '<p style="color:var(--muted);font-size:13px">セクターデータなし（平日のみ）</p>'
-
-    sectors_raw = sa.get("sectors", [])
-
-    # list形式: [{name, chg_1d, ...}, ...] → dict形式に正規化
-    if isinstance(sectors_raw, list):
-        sectors = {}
-        for item in sectors_raw:
-            if isinstance(item, dict):
-                n = item.get("name") or item.get("symbol", "")
-                c = item.get("chg_1d") or item.get("change_pct") or item.get("chg") or 0
-                sectors[n] = {"change_pct": c}
-    elif isinstance(sectors_raw, dict):
-        sectors = sectors_raw
-    else:
-        sectors = {}
-
-    if not sectors:
-        top3    = sa.get("top3",    [])
-        bottom3 = sa.get("bottom3", [])
-        items   = [(s, 1.5) for s in top3] + [(s, -1.5) for s in bottom3]
-        sectors = {s: {"change_pct": c} for s, c in items}
-
-    cells = []
-    for name, data in sectors.items():
-        if isinstance(data, dict):
-            chg = data.get("change_pct") or data.get("chg") or 0
-        else:
-            chg = float(data)
-
-        if chg >= 2:
-            bg, fg = "rgba(63,185,80,.25)",  GREEN
-        elif chg >= 0.5:
-            bg, fg = "rgba(63,185,80,.12)",  TEAL
-        elif chg >= -0.5:
-            bg, fg = "rgba(139,148,158,.1)", MUTED
-        elif chg >= -2:
-            bg, fg = "rgba(219,109,40,.2)",  ORANGE
-        else:
-            bg, fg = "rgba(248,81,73,.25)",  RED
-
-        cells.append(f"""
-<div class="sector-cell" style="background:{bg};color:{fg}">
-  <div style="font-size:15px">{chg:+.1f}%</div>
-  <div class="sector-name">{name}</div>
-</div>""")
-
-    return f'<div class="sector-grid">{"".join(cells)}</div>'
-
-
+    """TradingView 日本株ヒートマップウィジェット"""
+    return """
+<div style="border-radius:10px;overflow:hidden;">
+  <div class="tradingview-widget-container" style="height:520px;">
+    <div class="tradingview-widget-container__widget" style="height:100%;width:100%;"></div>
+    <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-stock-heatmap.js" async>
+    {
+      "exchanges": [],
+      "dataSource": "JAPAN",
+      "grouping": "sector",
+      "blockSize": "market_cap_basic",
+      "blockColor": "change",
+      "locale": "ja",
+      "symbolUrl": "",
+      "colorTheme": "dark",
+      "hasTopBar": false,
+      "isDataSetEnabled": false,
+      "isZoomEnabled": true,
+      "hasSymbolTooltip": true,
+      "isMonoSize": false,
+      "width": "100%",
+      "height": 520
+    }
+    </script>
+  </div>
+</div>
+<p style="font-size:11px;color:var(--muted);margin-top:6px;text-align:right;">
+  powered by <a href="https://jp.tradingview.com/" target="_blank" rel="noopener" style="color:var(--muted);">TradingView</a>
+</p>"""
 def _youtube_section(youtube_summary: dict) -> str:
     """YouTube動画 本格分析セクション HTML。"""
     yt = youtube_summary or {}
@@ -1968,6 +2132,8 @@ def generate(
     status_bar   = _market_status_bar(prices)
     sc_html      = _scenarios_html(scenario)
     pro_html     = _pro_insights(prices)
+    today_summary_html = _today_summary(score, prices, fear_greed, risk)
+    beginner_guide_html = _beginner_guide()
 
     # B案：Chart.js 用ヒストリー（取得失敗してもレポートは継続）
     try:
@@ -2033,6 +2199,12 @@ def generate(
   <span style="color:#00d4ff">📊</span><span>下の数値はレポート生成時刻（{now}）のデータです。リアルタイムチャートはTradingViewウィジェットをご覧ください。</span>
 </div>
 
+<!-- ── 今日のポイント（初心者向け30秒まとめ）── -->
+{today_summary_html}
+
+<!-- ── 用語ガイド（折りたたみ）── -->
+{beginner_guide_html}
+
 <!-- ── クイックサマリー ── -->
 {qs_html}
 
@@ -2050,22 +2222,30 @@ def generate(
   <div class="grid-2">
     <!-- リスクゲージ -->
     <div class="card fade-up">
-      <div class="card-title">AIリスクゲージ</div>
+      <div class="card-title">🎯 AIリスクゲージ</div>
       <div class="gauge-wrap">
         {gauge_svg}
-        <div class="gauge-score-label">リスクスコア（−3〜＋3）</div>
+        <div class="gauge-score-label">スコア（−3〜＋3）</div>
       </div>
-      <div style="margin-top:12px;font-size:12px;color:var(--muted)">
+      <div style="margin-top:10px;padding:8px 10px;background:rgba(0,0,0,.2);border-radius:8px;font-size:11px;line-height:1.7;color:var(--muted)">
+        📖 <b>読み方</b>: ＋2以上=強気、±0=中立、−2以下=弱気<br>
+        針が右(緑)に向くほど今日の市場は安定しています。
+      </div>
+      <div style="margin-top:8px;font-size:11px;color:var(--muted)">
         シグナル: {", ".join(s.get("indicator","") + s.get("direction","") for s in risk.get("signals", [])[:3]) or "なし"}
       </div>
     </div>
 
     <!-- Fear & Greed -->
     <div class="card fade-up">
-      <div class="card-title">Fear &amp; Greed 指数</div>
+      <div class="card-title">🎭 Fear &amp; Greed 指数（恐怖と欲望）</div>
       {fg_html}
-      <div style="margin-top:14px">
-        <div class="card-title">今日の判断</div>
+      <div style="margin-top:8px;padding:7px 10px;background:rgba(0,0,0,.2);border-radius:8px;font-size:11px;line-height:1.6;color:var(--muted)">
+        📖 0〜25=極度の恐怖 / 75〜100=極度の欲望<br>
+        高すぎも低すぎも反転のサイン。50前後が中立。
+      </div>
+      <div style="margin-top:10px">
+        <div class="card-title">今日のAI総合判断</div>
         <div style="font-size:24px;margin:4px 0">{signal_text}</div>
         <div style="font-size:12px;color:var(--muted)">
           地合い: <span style="color:{risk_color};font-weight:700">{risk.get("sentiment","---")}</span>
@@ -2195,6 +2375,9 @@ def generate(
     <span class="section-title">マーケット詳細データ</span>
     <span class="section-tag">{today}</span>
   </div>
+  <div style="font-size:11px;color:var(--muted);margin-bottom:10px;padding:6px 12px;background:rgba(0,0,0,.2);border-radius:7px">
+    📖 <b>RSIの見方</b>: 70以上=買われすぎ(赤)・反落注意 / 30以下=売られすぎ(緑)・反発期待 / 30〜70=中立(黄)
+  </div>
   {stocks_html}
 </section>
 
@@ -2204,6 +2387,9 @@ def generate(
     <span class="section-icon">👀</span>
     <span class="section-title">今日のウォッチリスト</span>
     <span class="section-tag">注目銘柄・資産</span>
+  </div>
+  <div style="font-size:11px;color:var(--muted);margin-bottom:8px;padding:6px 12px;background:rgba(0,0,0,.2);border-radius:7px">
+    📖 各資産の前日比と「過熱・売られすぎ・保持」シグナルをまとめています。右の色付きバッジが売買の目安。
   </div>
   <div class="card fade-up">
     {watch_html}
@@ -2219,6 +2405,9 @@ def generate(
     <span class="section-icon">🏭</span>
     <span class="section-title">セクター別ヒートマップ</span>
     <span class="section-tag">前日比</span>
+  </div>
+  <div style="font-size:11px;color:var(--muted);margin-bottom:8px;padding:6px 12px;background:rgba(0,0,0,.2);border-radius:7px">
+    📖 業種（セクター）ごとの前日比を色で表示。<b style="color:#3fb950">緑=上昇</b> / <b style="color:#f85149">赤=下落</b>。広く緑なら市場全体が好調です。
   </div>
   <div class="card fade-up">
     {sector_html}
@@ -2295,6 +2484,9 @@ def generate(
     <span class="section-title">AIチーム分析・議論</span>
     <span class="section-tag">ガネ先生チーム</span>
   </div>
+  <div style="font-size:11px;color:var(--muted);margin-bottom:8px;padding:6px 12px;background:rgba(0,0,0,.2);border-radius:7px">
+    📖 3つの視点（強気🐂・弱気🐻・中立😐）でAIが議論した結果をまとめています。最後の「チームの判断」が総合結論です。
+  </div>
   <div class="card fade-up">
     {debate_html}
   </div>
@@ -2310,6 +2502,9 @@ def generate(
     <span class="section-title">注目ニュース</span>
     <span class="section-tag">重要度別</span>
   </div>
+  <div style="font-size:11px;color:var(--muted);margin-bottom:8px;padding:6px 12px;background:rgba(0,0,0,.2);border-radius:7px">
+    📖 <b style="color:#f85149">高</b>=市場に大きな影響の可能性 / <b style="color:#d29922">中</b>=要チェック / <b style="color:#8b949e">低</b>=参考情報。赤いバッジのニュースから読むと効率的です。
+  </div>
   <div class="card fade-up">
     {news_html}
   </div>
@@ -2321,7 +2516,10 @@ def generate(
     <div>
       <div class="section-header">
         <span class="section-icon">📅</span>
-        <span class="section-title">今週のイベント</span>
+        <span class="section-title">今週の重要イベント</span>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:8px;padding:5px 10px;background:rgba(0,0,0,.2);border-radius:7px">
+        📖 <b style="color:#f85149">赤=要注意</b>: 発表で相場が大きく動く可能性あり
       </div>
       <div class="card fade-up">
         {cal_html}
@@ -2330,7 +2528,10 @@ def generate(
     <div>
       <div class="section-header">
         <span class="section-icon">🎯</span>
-        <span class="section-title">AI予測精度</span>
+        <span class="section-title">AIの予測精度</span>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:8px;padding:5px 10px;background:rgba(0,0,0,.2);border-radius:7px">
+        📖 AIが毎日の相場を予測し、翌日に答え合わせをした累積成績です
       </div>
       <div class="card fade-up">
         {pred_html}
