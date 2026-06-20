@@ -66,6 +66,18 @@ jobs:
           # モバイル対応版レポート生成
           python generate_mobile_report.py || true
 
+      - name: モバイル版レポートを docs/mobile.html に公開用コピー
+        run: |
+          mkdir -p docs
+          # メインの daily_report.html は cloud_run の Step 7a2（design_ai）が
+          # docs/ に直接出力する。モバイル簡素版は別URL docs/mobile.html で公開する
+          if [ -f reports/today_report.html ]; then
+            cp reports/today_report.html docs/mobile.html
+            echo "✅ docs/mobile.html を更新"
+          else
+            echo "⚠️ reports/today_report.html が無いためモバイル版はスキップ"
+          fi
+
       - name: レポート(docs/)と学習データをmainブランチに保存・公開
         run: |
           git config --global user.email "actions@github.com"

@@ -1778,6 +1778,43 @@ def _fg_section(fear_greed: dict) -> str:
 # メイン生成関数
 # ────────────────────────────────────────────────────────────────
 
+def _integrity_section(di: dict) -> str:
+    """データ健全性バッジ（精度②）。異常があれば目立たせる。"""
+    di = di or {}
+    if not di.get("available"):
+        return ""
+    sev     = di.get("max_severity", "ok")
+    checked = di.get("checked", 0)
+    ok      = di.get("ok", 0)
+    summary = di.get("summary", "")
+    if sev == "ok":
+        color, icon, label = "#3fb950", "✅", "データ健全性 良好"
+    elif sev == "warn":
+        color, icon, label = "#d29922", "⚠️", "データに軽微な要確認"
+    else:
+        color, icon, label = "#f85149", "🚨", "データに重大な異常"
+    items = ""
+    for i in (di.get("issues") or [])[:6]:
+        items += (f'<div style="font-size:12px;color:var(--muted);padding:2px 0">'
+                  f'• {i.get("name","")}: {i.get("msg","")}</div>')
+    badge = (f'<span style="background:{color}22;color:{color};border:1px solid {color}55;'
+             f'border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700">'
+             f'{ok}/{checked} 正常</span>')
+    return f"""
+<section>
+  <div class="card fade-up" style="border-left:3px solid {color}">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap">
+      <span style="font-size:16px">{icon}</span>
+      <span style="font-weight:700;font-size:13px;color:{color}">{label}</span>
+      {badge}
+    </div>
+    <div style="font-size:12px;color:var(--muted)">{summary}（取得した全データを毎朝自動検査）</div>
+    {items}
+  </div>
+</section>
+"""
+
+
 def generate(
     mode: str = "morning",
     prices: dict = None,
@@ -1792,6 +1829,7 @@ def generate(
     weekly_calendar: dict = None,
     team_debate: dict = None,
     youtube_summary: dict = None,
+    data_integrity: dict = None,
     **_kwargs,
 ) -> str:
     """
@@ -1832,6 +1870,7 @@ def generate(
     cal_html     = _calendar_section(weekly_calendar)
     pred_html    = _prediction_section(prediction_tracker)
     yt_html      = _youtube_section(youtube_summary)
+    di_html      = _integrity_section(data_integrity)
     fg_html      = _fg_section(fear_greed)
     char_header  = _character_header(score, prices, mood, today, now)
     qs_html      = _quick_summary(prices, risk, fear_greed, technical)
@@ -1906,6 +1945,9 @@ def generate(
 
 <!-- ── 市場ステータスバー ── -->
 {status_bar}
+
+<!-- ── データ健全性バッジ ── -->
+{di_html}
 
 <!-- ── プロの目: クロス指標分析 ── -->
 {pro_html}
@@ -2264,6 +2306,7 @@ def run(
     weekly_calendar: dict      = None,
     team_debate: dict          = None,
     youtube_summary: dict      = None,
+    data_integrity: dict       = None,
     mode: str = "morning",
     **_kwargs,
 ) -> dict:
@@ -2278,6 +2321,7 @@ def run(
             scenario=scenario,
             technical=technical,
             youtube_summary=youtube_summary,
+            data_integrity=data_integrity,
             sector_analysis=sector_analysis,
             prediction_tracker=prediction_tracker,
             weekly_calendar=weekly_calendar,
