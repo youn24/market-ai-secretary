@@ -592,6 +592,17 @@ def run(mode: str):
     except Exception:
         logger.error("株予報エラー"); logger.debug(traceback.format_exc())
 
+    # Step SH: 業種ヒートマップ（毎日）
+    sector_heatmap = {"available": False}
+    try:
+        logger.info("--- Step SH: 業種ヒートマップ ---")
+        from src.sector_heatmap import run as run_sh
+        sector_heatmap = run_sh(prices, risk, fear_greed)
+        if sector_heatmap.get("available"):
+            logger.info(f"✅ 業種ヒートマップ: {sector_heatmap.get('count',0)}業種")
+    except Exception:
+        logger.error("業種ヒートマップエラー"); logger.debug(traceback.format_exc())
+
     # Step 7: HTMLレポート生成
     report_paths = {}
     try:
@@ -604,6 +615,7 @@ def run(mode: str):
                           anomaly=anomaly, theme_ranking=theme_ranking,
                           financial_analysis=financial_analysis,
                           supply_demand=supply_demand, kabuyoho=kabuyoho,
+                          sector_heatmap=sector_heatmap,
                           weekly_calendar=weekly_calendar)
         today = get_today_str()
         report_paths = {
@@ -704,7 +716,8 @@ def run(mode: str):
                   macro=macro, tdnet=tdnet, earnings_brief=earnings_brief,
                   anomaly=anomaly, theme_ranking=theme_ranking,
                   financial_analysis=financial_analysis,
-                  supply_demand=supply_demand, kabuyoho=kabuyoho)
+                  supply_demand=supply_demand, kabuyoho=kabuyoho,
+                  sector_heatmap=sector_heatmap)
     except Exception:
         logger.error("Telegram通知エラー"); logger.debug(traceback.format_exc())
 
@@ -748,7 +761,8 @@ def _save_html_report(mode, prices, news, risk, analysis, fear_greed, chart_path
                       character_comments=None,
                       macro=None, tdnet=None, earnings_brief=None, anomaly=None,
                       theme_ranking=None, financial_analysis=None,
-                      supply_demand=None, kabuyoho=None, weekly_calendar=None):
+                      supply_demand=None, kabuyoho=None, sector_heatmap=None,
+                      weekly_calendar=None):
     """初心者でもわかる見やすいダッシュボードHTMLを保存"""
     import base64
     today  = get_today_str()
@@ -767,6 +781,7 @@ def _save_html_report(mode, prices, news, risk, analysis, fear_greed, chart_path
     theme_ranking = theme_ranking or {}; theme_html = theme_ranking.get("html", "") if theme_ranking.get("available") else ""
     supply_demand = supply_demand or {}; sd_html = supply_demand.get("html", "") if supply_demand.get("available") else ""
     kabuyoho = kabuyoho or {};        ky_html = kabuyoho.get("html", "") if kabuyoho.get("available") else ""
+    sector_heatmap = sector_heatmap or {}; sh_html = sector_heatmap.get("html", "") if sector_heatmap.get("available") else ""
     financial_analysis = financial_analysis or {}
     fa_html = ""
     if financial_analysis.get("available"):
@@ -1512,6 +1527,7 @@ a:hover{{text-decoration:underline;}}
   {f'<div class="sec-head">📑 決算ブリーフ（AIが中身を要約）</div>{eb_html}' if eb_html else ""}
   {f'<div class="sec-head">🎯 アナリスト目標株価（株予報）</div>{ky_html}' if ky_html else ""}
   {f'<div class="sec-head">📊 需給分析ランキング（買いの勢いが強い順）</div>{sd_html}' if sd_html else ""}
+  {f'<div class="sec-head">🗺 業種ヒートマップ（東証17業種・どこに買いが集まるか）</div>{sh_html}' if sh_html else ""}
   {f'<div class="sec-head">📊 財務・決算書分析</div>{fa_html}' if fa_html else ""}
   {f'<div class="sec-head">🔥 テーマ株人気ランキング</div>{theme_html}' if theme_html else ""}
   {f'<div class="sec-head">📜 今日のアノマリー</div>{anomaly_html}' if anomaly_html else ""}
