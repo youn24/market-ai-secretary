@@ -385,9 +385,19 @@ def run(mode: str):
                                   technical=technical, fred_data=fred_data)
         if multi_consensus.get("available"):
             v = multi_consensus.get("verdict", {})
-            logger.info(f"✅ 合議: {v.get('direction','---')} {v.get('consensus_level','')}")
+            logger.info(f"✅ 合議: {v.get('direction','---')} {v.get('consensus_level','')} 確信度{v.get('consensus_confidence','?')}")
     except Exception:
         logger.error("マルチエージェント合議エラー"); logger.debug(traceback.format_exc())
+
+    # Step L5a.5: 合議の確信度を予測レコードへ書き戻す（Brierスコア計算のため）
+    try:
+        conf = multi_consensus.get("verdict", {}).get("consensus_confidence")
+        if conf is not None and prediction_tracker.get("available"):
+            from src.prediction_tracker import update_confidence
+            update_confidence(get_today_str(), conf)
+            logger.info(f"確信度記録: {conf:.3f}")
+    except Exception:
+        logger.debug(traceback.format_exc())
 
     # Step L5b: 完全自律エージェント（今日のミッション決定）
     autonomous_plan = {"available": False}

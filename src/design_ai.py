@@ -1759,42 +1759,82 @@ def _calendar_section(weekly_calendar: dict) -> str:
 
 
 def _prediction_section(prediction_tracker: dict) -> str:
-    """AI予測精度セクション HTML"""
+    """AI予測精度セクション HTML（確信度 + Brierスコア付き）"""
     pt    = prediction_tracker or {}
     stats = pt.get("stats", {})
-    preds = pt.get("recent_predictions", pt.get("recent", []))
+    preds = pt.get("recent_predictions", pt.get("recent",
+                   stats.get("recent5", [])))
 
-    acc   = stats.get("accuracy", stats.get("overall_accuracy", 0))
-    total = stats.get("total",   0)
-    hits  = stats.get("correct", int(total * acc) if total else 0)
+    # ── 正解率 ──
+    d10  = stats.get("10d", {})
+    rate = d10.get("rate")        # None or float (%)
+    tot  = d10.get("total",  0)
+    hits = d10.get("correct", 0)
+    if rate is None:
+        rate_txt  = "---"
+        bar_col   = YELLOW
+        acc_pct   = 50
+    else:
+        acc_pct   = int(rate)
+        bar_col   = GREEN if acc_pct >= 60 else (YELLOW if acc_pct >= 40 else RED)
+        rate_txt  = f"{acc_pct}%"
 
-    acc_pct  = int(acc * 100) if acc <= 1 else int(acc)
-    bar_col  = GREEN if acc_pct >= 60 else (YELLOW if acc_pct >= 40 else RED)
+    # ── Brierスコア ──
+    brier = stats.get("brier_30d")
+    if brier is not None:
+        if brier <= 0.12:
+            brier_label = "優秀"
+            brier_col   = GREEN
+        elif brier <= 0.20:
+            brier_label = "良好"
+            brier_col   = TEAL
+        elif brier <= 0.25:
+            brier_label = "普通"
+            brier_col   = YELLOW
+        else:
+            brier_label = "過信"
+            brier_col   = ORANGE
+        brier_html = (
+            f'<div style="display:flex;align-items:center;gap:8px;margin-top:6px">'
+            f'<span style="font-size:11px;color:var(--muted)">Brierスコア(30日):</span>'
+            f'<span style="font-weight:700;color:{brier_col}">{brier:.3f}</span>'
+            f'<span style="font-size:10px;color:{brier_col};background:rgba(0,0,0,.15);'
+            f'padding:1px 5px;border-radius:4px">{brier_label}</span>'
+            f'<span style="font-size:9px;color:var(--muted)">0=完璧/0.25=ランダム</span>'
+            f'</div>'
+        )
+    else:
+        brier_html = '<div style="font-size:10px;color:var(--muted);margin-top:4px">Brierスコア: 確信度データ蓄積中</div>'
 
+    # ── 直近5日の予測履歴 ──
+    dir_icons = {"bull": "📈", "bear": "📉", "neutral": "➡️"}
     rows_html = ""
     for p in (preds or [])[:5]:
         if not isinstance(p, dict):
             continue
-        dt  = p.get("date", "")[:10]
-        sig = p.get("signal",    p.get("prediction", ""))
-        res = p.get("result",    p.get("actual", ""))
-        ok  = p.get("correct",   None)
+        dt   = p.get("date", "")[:10]
+        sig  = p.get("signal", p.get("prediction",
+               dir_icons.get(p.get("direction",""), "") + " " + p.get("direction", "")))
+        ok   = p.get("correct", None)
+        conf = p.get("confidence")
+        conf_txt = f' <span style="font-size:9px;color:var(--muted)">{conf:.0%}</span>' if conf else ""
         if ok is True:
             res_html = f'<span class="pred-hit">✓ 正解</span>'
         elif ok is False:
             res_html = f'<span class="pred-miss">✗ 不正解</span>'
         else:
             res_html = f'<span style="color:var(--muted)">検証中</span>'
-        rows_html += f'<div class="pred-row"><span>{dt} {sig}</span>{res_html}</div>'
+        rows_html += f'<div class="pred-row"><span>{dt} {sig}{conf_txt}</span>{res_html}</div>'
 
     return f"""
 <div class="stat-row">
-  <span class="stat-value" style="color:{bar_col}">{acc_pct}%</span>
-  <span class="stat-unit">正解率 ({hits}/{total}件)</span>
+  <span class="stat-value" style="color:{bar_col}">{rate_txt}</span>
+  <span class="stat-unit">正解率・直近10日 ({hits}/{tot}件)</span>
 </div>
 <div class="acc-bar-wrap">
   <div class="acc-bar" style="width:{acc_pct}%;background:{bar_col}"></div>
 </div>
+{brier_html}
 {rows_html}"""
 
 

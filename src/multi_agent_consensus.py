@@ -19,6 +19,7 @@ AGENTS = [
             "あなたは楽観的な強気の投資家AIです。"
             "以下の市場データから「なぜ市場が上昇する可能性があるか」を分析してください。"
             "ポジティブなシグナルを見つけ、強気の根拠を3つ挙げてください。"
+            "【必須】日経平均・VIX・S&P500など実際の数値を必ず引用して根拠を示してください。"
             "最後に必ず「予測: 上昇/中立/下落」と「確信度: 1〜5」を明記してください。"
         ),
     },
@@ -30,6 +31,7 @@ AGENTS = [
             "あなたは慎重なリスク管理者AIです。"
             "以下の市場データから「なぜ市場が下落するリスクがあるか」を分析してください。"
             "ネガティブなシグナルを見つけ、弱気の根拠を3つ挙げてください。"
+            "【必須】VIX・ドル円・金利など実際の数値を必ず引用して根拠を示してください。"
             "最後に必ず「予測: 上昇/中立/下落」と「確信度: 1〜5」を明記してください。"
         ),
     },
@@ -41,6 +43,7 @@ AGENTS = [
             "あなたはマクロ経済の専門家AIです。"
             "金利・為替・地政学リスク・経済指標の観点から市場環境を分析してください。"
             "短期・中期のマクロトレンドを評価し、今後の市場方向性を示してください。"
+            "【必須】ドル円レート・米10年金利・Fear&Greed指数など実数値を引用してください。"
             "最後に必ず「予測: 上昇/中立/下落」と「確信度: 1〜5」を明記してください。"
         ),
     },
@@ -52,6 +55,7 @@ AGENTS = [
             "あなたはリスク・リワード比の専門家AIです。"
             "現在の市場のリスク水準を評価し、リスク・リワード比を計算してください。"
             "投資家が取るべきポジションサイズとリスク管理の観点から予測を行ってください。"
+            "【必須】VIX水準・リスクスコアなど実数値を根拠に使ってください。"
             "最後に必ず「予測: 上昇/中立/下落」と「確信度: 1〜5」を明記してください。"
         ),
     },
@@ -199,6 +203,10 @@ def run(prices, risk, fear_greed, news, technical=None, fred_data=None) -> dict:
         directions_set = set(ar["direction"] for ar in agents_results)
         unanimous = len(directions_set) == 1
 
+        # 確信度（0.5〜1.0）: vote_ratioを0.5〜1.0にマッピング
+        # vote_ratio=1.0(全員一致)→1.0, vote_ratio=0.5(拮抗)→0.75
+        consensus_confidence = round(0.5 + vote_ratio * 0.5, 3)
+
         result = {
             "available": True,
             "agents": agents_results,
@@ -209,6 +217,7 @@ def run(prices, risk, fear_greed, news, technical=None, fred_data=None) -> dict:
                 "consensus_emoji": consensus_emoji,
                 "unanimous": unanimous,
                 "vote_ratio": round(vote_ratio, 2),
+                "consensus_confidence": consensus_confidence,
             },
             "brief": brief[:200],
         }

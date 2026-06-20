@@ -139,6 +139,8 @@ Fear&Greed: {fear_greed.get('score','---')} ({fear_greed.get('rating_ja','---')}
 【過去比較】{history_comment}
 【ニュース】{news_text}
 
+【必須ルール】分析には必ず上記の具体的な数値（日経の値、変化率、VIX水準など）を引用してください。
+「上昇している」ではなく「日経○○円（+○%）と上昇しており」のように数値を根拠にしてください。
 強気の根拠を簡潔に述べてください。"""
 
         bull_response = model.generate_content(prompt_bull)
@@ -152,6 +154,8 @@ Fear&Greed: {fear_greed.get('score','---')} ({fear_greed.get('rating_ja','---')}
 【過去比較】{history_comment}
 【ニュース】{news_text}
 
+【必須ルール】分析には必ず上記の具体的な数値（日経の値、変化率、VIX水準など）を引用してください。
+「リスクが高い」ではなく「VIX=○○で恐怖が高まっており」のように数値を根拠にしてください。
 弱気・リスクの根拠を簡潔に述べてください。"""
 
         bear_response = model.generate_content(prompt_bear)
@@ -161,8 +165,10 @@ Fear&Greed: {fear_greed.get('score','---')} ({fear_greed.get('rating_ja','---')}
         prompt_neutral = f"""あなたは中立的な市場アナリストです。
 強気派の意見：{bull_view}
 弱気派の意見：{bear_view}
+【市場実数値】{market_data}
 
 両者の意見を踏まえて、バランスの取れた総合判断を200文字以内で述べてください。
+数値（日経・ドル円・VIX・S&P500の実際の値）を必ず1〜2個引用してください。
 事実と推測を分けて、断定表現は使わないでください。"""
 
         neutral_response = model.generate_content(prompt_neutral)

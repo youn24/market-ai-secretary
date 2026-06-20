@@ -43,11 +43,12 @@ def _save(data: dict):
 # ──────────────────────────────────────────────────────────────
 
 def save_prediction(prices: dict, risk: dict, ai_summary: dict, scenario: dict,
-                    fear_greed: dict = None):
+                    fear_greed: dict = None, confidence: float = None):
     """
     今日の「予測」を記録する。
     - AIが「強気」「弱気」「中立」どれを言ったか
     - 現在の市場データ（検証用）
+    - confidence: マルチエージェント合議の確信度(0.5〜1.0)。後で update_confidence() でも更新可
     """
     today = get_today_str()
     data  = _load()
@@ -67,6 +68,7 @@ def save_prediction(prices: dict, risk: dict, ai_summary: dict, scenario: dict,
         "sp500":        p("^GSPC"),
         "usdjpy":       p("USDJPY=X"),
         "vix":          p("^VIX"),
+        "confidence":   confidence,     # マルチエージェント確信度(0.5〜1.0)。Brierスコア計算用
         "verified":     False,          # 翌日に検証済みになる
         "correct":      None,           # True/False/None
         "actual_move":  None,           # 翌日の実際の騰落率
@@ -114,6 +116,21 @@ def _extract_direction(ai_summary: dict, scenario: dict, risk: dict) -> str:
 # ──────────────────────────────────────────────────────────────
 # 昨日の予測を検証
 # ──────────────────────────────────────────────────────────────
+
+def update_confidence(date: str, confidence: float):
+    """
+    マルチエージェント合議の確信度を既存の予測レコードに書き戻す。
+    save_prediction() の後、multi_agent_consensus が終わってから呼ぶ。
+    """
+    data = _load()
+    for pred in data["predictions"]:
+        if pred["date"] == date:
+            pred["confidence"] = round(confidence, 3)
+            _save(data)
+            logger.info(f"確信度更新: {date} → {confidence:.3f}")
+            return
+    logger.warning(f"update_confidence: {date} のレコードが見つからない")
+
 
 def verify_yesterday(prices: dict):
     """
@@ -192,21 +209,43 @@ def calc_accuracy() -> dict:
             "bear_acc":     round(bear_correct/bear_total*100, 1) if bear_total > 0 else None,
         }
 
+    # Brierスコア計算（確信度が記録されているレコードのみ）
+    # Brier = mean((confidence - outcome)²)  0=完璧 0.25=ランダム 1=完全外れ
+    brier_candidates = [
+        p for p in verified
+        if p.get("confidence") is not None and p.get("correct") is not None
+    ]
+    brier_30 = None
+    brier_all = None
+    if brier_candidates:
+        cutoff30 = (get_jst_now() - timedelta(days=30)).strftime("%Y-%m-%d")
+        cands30 = [p for p in brier_candidates if p["date"] >= cutoff30]
+        def _brier(preds):
+            scores = [(p["confidence"] - (1.0 if p["correct"] else 0.0)) ** 2 for p in preds]
+            return round(sum(scores) / len(scores), 4)
+        if cands30:
+            brier_30 = _brier(cands30)
+        brier_all = _brier(brier_candidates)
+
     result = {
         "10d":  acc(10),
         "30d":  acc(30),
         "90d":  acc(90),
         "total_verified": len(verified),
+        "brier_30d":  brier_30,   # 直近30日Brierスコア（低いほど良い）
+        "brier_all":  brier_all,  # 全期間Brierスコア
+        "brier_count": len(brier_candidates),
     }
 
     # 最近のパターン（直近5日）
     recent5 = sorted(verified, key=lambda x: x["date"])[-5:]
     result["recent5"] = [
         {
-            "date":      p["date"],
-            "direction": p["direction"],
-            "correct":   p.get("correct"),
-            "move":      p.get("actual_move"),
+            "date":       p["date"],
+            "direction":  p["direction"],
+            "correct":    p.get("correct"),
+            "move":       p.get("actual_move"),
+            "confidence": p.get("confidence"),
         }
         for p in recent5
     ]
@@ -214,7 +253,7 @@ def calc_accuracy() -> dict:
     logger.info(
         f"正解率: 10日={result['10d']['rate']}% / "
         f"30日={result['30d']['rate']}% / "
-        f"検証済={result['total_verified']}件"
+        f"Brier30日={brier_30} / 検証済={result['total_verified']}件"
     )
     return result
 
