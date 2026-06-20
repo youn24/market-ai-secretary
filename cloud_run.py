@@ -42,6 +42,19 @@ def run(mode: str):
     except Exception:
         logger.error("価格取得エラー"); logger.debug(traceback.format_exc())
 
+    # Step 1.5: データ健全性チェック（誤データの汚染を防ぐ）
+    data_integrity = {"available": False}
+    try:
+        logger.info("--- Step 1.5: データ健全性チェック ---")
+        from src.data_integrity import check as check_integrity
+        data_integrity = check_integrity(prices)
+        if data_integrity.get("max_severity") == "high":
+            logger.warning(f"⚠️ データ異常: {data_integrity.get('summary')}")
+        else:
+            logger.info(f"✅ {data_integrity.get('summary')}")
+    except Exception:
+        logger.error("データ健全性チェックエラー"); logger.debug(traceback.format_exc())
+
     # Step 2: ニュース取得
     try:
         logger.info("--- Step 2: ニュース取得 ---")
@@ -480,6 +493,105 @@ def run(mode: str):
     except Exception:
         logger.error("LINE通知エラー"); logger.debug(traceback.format_exc())
 
+    # ══════════ 追加分析モジュール群（再統合） ══════════
+    _wd = get_jst_now().weekday()          # 0=月曜
+    _is_monday = (_wd == 0 or mode == "test")
+
+    # Step MA: マクロ要約（ファンダ＋金融政策・毎日）
+    macro = {"available": False}
+    try:
+        logger.info("--- Step MA: マクロ要約（ファンダ＋金融政策） ---")
+        from src.macro_summary import run as run_ma
+        macro = run_ma(prices=prices, news=news, fear_greed=fear_greed, risk=risk,
+                       fred_data=fred_data, fomc_sentiment=fomc_sentiment,
+                       econ_analysis=econ_analysis, sector_analysis=sector_analysis,
+                       congress_trades=congress_trades)
+        if macro.get("available"):
+            logger.info(f"✅ マクロ要約: {'AI生成' if macro.get('ai_generated') else '簡易'}")
+    except Exception:
+        logger.error("マクロ要約エラー"); logger.debug(traceback.format_exc())
+
+    # Step TD: TDnet適時開示ウォッチャー（毎日・ウォッチリスト銘柄のみ）
+    tdnet = {"available": False}
+    try:
+        logger.info("--- Step TD: TDnet適時開示ウォッチャー ---")
+        from src.tdnet_watcher import run as run_td
+        tdnet = run_td(prices, risk, fear_greed)
+        if tdnet.get("available"):
+            logger.info(f"✅ 適時開示: {tdnet.get('count',0)}件")
+    except Exception:
+        logger.error("TDnetウォッチャーエラー"); logger.debug(traceback.format_exc())
+
+    # Step EB: 決算ブリーフ（決算PDFのAI要約・毎日・tdnet依存）
+    earnings_brief = {"available": False}
+    try:
+        if tdnet.get("available"):
+            logger.info("--- Step EB: 決算ブリーフ ---")
+            from src.earnings_brief import run as run_eb
+            earnings_brief = run_eb(tdnet)
+            if earnings_brief.get("available"):
+                logger.info(f"✅ 決算ブリーフ: {earnings_brief.get('count',0)}件")
+    except Exception:
+        logger.error("決算ブリーフエラー"); logger.debug(traceback.format_exc())
+
+    # Step AN: アノマリーカレンダー（毎日・該当する経験則）
+    anomaly = {"available": False}
+    try:
+        logger.info("--- Step AN: アノマリーカレンダー ---")
+        from src.anomaly_calendar import run as run_an
+        anomaly = run_an(prices, risk, fear_greed)
+        if anomaly.get("available"):
+            logger.info(f"✅ アノマリー: {anomaly.get('count',0)}件")
+    except Exception:
+        logger.error("アノマリーカレンダーエラー"); logger.debug(traceback.format_exc())
+
+    # Step TR: テーマ株人気ランキング（毎日）
+    theme_ranking = {"available": False}
+    try:
+        logger.info("--- Step TR: テーマ株人気ランキング ---")
+        from src.theme_ranker import run as run_tr
+        theme_ranking = run_tr(prices=prices, risk=risk, fear_greed=fear_greed, news=news)
+        if theme_ranking.get("available"):
+            logger.info("✅ テーマランキング完了")
+    except Exception:
+        logger.error("テーマランキングエラー"); logger.debug(traceback.format_exc())
+
+    # Step FA: 財務・決算書分析（月曜のみ）
+    financial_analysis = {"available": False}
+    try:
+        if _is_monday:
+            logger.info("--- Step FA: 財務・決算書分析 ---")
+            from src.financial_analyzer import run as run_fa
+            financial_analysis = run_fa(prices, risk, fear_greed)
+            if financial_analysis.get("available"):
+                logger.info(f"✅ 財務分析: {financial_analysis.get('count',0)}社")
+    except Exception:
+        logger.error("財務分析エラー"); logger.debug(traceback.format_exc())
+
+    # Step SD: 需給分析ランキング（月曜のみ・出来高/資金フロー/空売り残高）
+    supply_demand = {"available": False}
+    try:
+        if _is_monday:
+            logger.info("--- Step SD: 需給分析ランキング ---")
+            from src.supply_demand import run as run_sd
+            supply_demand = run_sd(prices, risk, fear_greed)
+            if supply_demand.get("available"):
+                logger.info(f"✅ 需給分析: {supply_demand.get('count',0)}銘柄")
+    except Exception:
+        logger.error("需給分析エラー"); logger.debug(traceback.format_exc())
+
+    # Step KY: 株予報（アナリスト目標株価・月曜のみ）
+    kabuyoho = {"available": False}
+    try:
+        if _is_monday:
+            logger.info("--- Step KY: 株予報（アナリスト目標株価） ---")
+            from src.kabuyoho import run as run_ky
+            kabuyoho = run_ky(prices, risk, fear_greed)
+            if kabuyoho.get("available"):
+                logger.info(f"✅ 株予報: {kabuyoho.get('count',0)}銘柄")
+    except Exception:
+        logger.error("株予報エラー"); logger.debug(traceback.format_exc())
+
     # Step 7: HTMLレポート生成
     report_paths = {}
     try:
@@ -487,12 +599,19 @@ def run(mode: str):
         _save_html_report(mode, prices, news, risk, analysis, fear_greed, chart_paths,
                           ai_summary, econ_analysis, youtube_summary, memory_analysis,
                           agent_report, technical, portfolio, scenario, prediction_tracker,
-                          character_comments=character_comments)
+                          character_comments=character_comments,
+                          macro=macro, tdnet=tdnet, earnings_brief=earnings_brief,
+                          anomaly=anomaly, theme_ranking=theme_ranking,
+                          financial_analysis=financial_analysis,
+                          supply_demand=supply_demand, kabuyoho=kabuyoho,
+                          weekly_calendar=weekly_calendar)
         today = get_today_str()
         report_paths = {
             "html": str(get_dirs()["reports"] / f"{today}_{mode}.html"),
             "md":   str(get_dirs()["reports"] / f"{today}_{mode}.md"),
-            "url":  f"{PAGES_URL}/{today}_{mode}.html",
+            # GitHub Pages は main/docs を公開する。日付つきHTMLは reports/ にしか
+            # 無く Pages では 404 になるため、必ず公開済みの daily_report.html を案内する
+            "url":  f"{PAGES_URL}/daily_report.html",
         }
     except Exception:
         logger.error("レポート生成エラー"); logger.debug(traceback.format_exc())
@@ -605,12 +724,32 @@ def _save_html_report(mode, prices, news, risk, analysis, fear_greed, chart_path
                       ai_summary=None, econ_analysis=None, youtube_summary=None,
                       memory_analysis="", agent_report=None, technical=None,
                       portfolio=None, scenario=None, prediction_tracker=None,
-                      character_comments=None):
+                      character_comments=None,
+                      macro=None, tdnet=None, earnings_brief=None, anomaly=None,
+                      theme_ranking=None, financial_analysis=None,
+                      supply_demand=None, kabuyoho=None, weekly_calendar=None):
     """初心者でもわかる見やすいダッシュボードHTMLを保存"""
     import base64
     today = get_today_str()
     dirs  = get_dirs()
     now   = get_jst_now().strftime("%Y-%m-%d %H:%M JST")
+
+    # ── 追加モジュールのHTML生成（再統合） ──
+    macro = macro or {};              macro_html = macro.get("html", "") if macro.get("available") else ""
+    tdnet = tdnet or {};              tdnet_html = tdnet.get("html", "") if tdnet.get("available") else ""
+    earnings_brief = earnings_brief or {}; eb_html = earnings_brief.get("html", "") if earnings_brief.get("available") else ""
+    anomaly = anomaly or {};          anomaly_html = anomaly.get("html", "") if anomaly.get("available") else ""
+    theme_ranking = theme_ranking or {}; theme_html = theme_ranking.get("html", "") if theme_ranking.get("available") else ""
+    supply_demand = supply_demand or {}; sd_html = supply_demand.get("html", "") if supply_demand.get("available") else ""
+    kabuyoho = kabuyoho or {};        ky_html = kabuyoho.get("html", "") if kabuyoho.get("available") else ""
+    financial_analysis = financial_analysis or {}
+    fa_html = ""
+    if financial_analysis.get("available"):
+        try:
+            from src.financial_analyzer import get_html as _fa_html
+            fa_html = _fa_html(financial_analysis)
+        except Exception:
+            fa_html = ""
 
     sentiment  = risk.get("sentiment", "不明")
     score      = risk.get("score", 0)
@@ -1310,6 +1449,16 @@ a:hover{{text-decoration:underline;}}
 
   <!-- 経済指標分析 -->
   {f'<div class="sec-head">📊 経済指標の分析</div><div class="econ-wrap">{econ_html}</div>' if econ_html else ""}
+
+  <!-- ══ 再統合モジュール群 ══ -->
+  {f'<div class="sec-head">🌐 ファンダ＆金融政策の要約</div>{macro_html}' if macro_html else ""}
+  {f'<div class="sec-head">📋 適時開示アラート（あなたの注目銘柄）</div>{tdnet_html}' if tdnet_html else ""}
+  {f'<div class="sec-head">📑 決算ブリーフ（AIが中身を要約）</div>{eb_html}' if eb_html else ""}
+  {f'<div class="sec-head">🎯 アナリスト目標株価（株予報）</div>{ky_html}' if ky_html else ""}
+  {f'<div class="sec-head">📊 需給分析ランキング（買いの勢いが強い順）</div>{sd_html}' if sd_html else ""}
+  {f'<div class="sec-head">📊 財務・決算書分析</div>{fa_html}' if fa_html else ""}
+  {f'<div class="sec-head">🔥 テーマ株人気ランキング</div>{theme_html}' if theme_html else ""}
+  {f'<div class="sec-head">📜 今日のアノマリー</div>{anomaly_html}' if anomaly_html else ""}
 
   <!-- AI記憶分析 -->
   {f'<div class="sec-head">🧠 AI記憶：過去との比較</div><div class="memory-box"><div class="memory-text">{memory_analysis}</div></div>' if memory_analysis else ""}
