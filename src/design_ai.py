@@ -1,6 +1,6 @@
 """
-src/design_ai.py — ミセスワタナベ 市場ダッシュボード v4
-完全新設計 2026-06 / グラスモーフィズム・ネオングロー・超視覚的
+src/design_ai.py — ミセスワタナベ 市場ダッシュボード v5
+ガネーシャ🐘＆カワウソ🦦キャラクター完全統合版
 """
 
 import traceback
@@ -76,6 +76,66 @@ def _fg_info(s):
 
 
 # ──────────────────────────────────────────
+# キャラクターSVG（ガネーシャ & カワウソ）
+# ──────────────────────────────────────────
+
+_GANESHA_SVG = """<svg width="72" height="88" viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg">
+  <ellipse cx="18" cy="52" rx="17" ry="23" fill="#FFBF00" stroke="#E6A800" stroke-width="1.5"/>
+  <ellipse cx="82" cy="52" rx="17" ry="23" fill="#FFBF00" stroke="#E6A800" stroke-width="1.5"/>
+  <ellipse cx="18" cy="52" rx="11" ry="16" fill="#FFD6DC" opacity="0.75"/>
+  <ellipse cx="82" cy="52" rx="11" ry="16" fill="#FFD6DC" opacity="0.75"/>
+  <ellipse cx="50" cy="90" rx="33" ry="28" fill="#FFD700" stroke="#E6A800" stroke-width="2"/>
+  <circle cx="50" cy="50" r="29" fill="#FFD700" stroke="#E6A800" stroke-width="2"/>
+  <polygon points="28,28 34,12 43,24 50,10 57,24 66,12 72,28" fill="#FFC200" stroke="#E6A800" stroke-width="1.5"/>
+  <circle cx="50" cy="17" r="5.5" fill="#E91E63"/>
+  <circle cx="34" cy="25" r="3.5" fill="#9C27B0"/>
+  <circle cx="66" cy="25" r="3.5" fill="#9C27B0"/>
+  <path d="M 43 68 Q 28 82 33 98 Q 38 110 50 106" stroke="#E6A800" stroke-width="9" fill="none" stroke-linecap="round"/>
+  <path d="M 43 68 Q 28 82 33 98 Q 38 110 50 106" stroke="#FFD700" stroke-width="5" fill="none" stroke-linecap="round"/>
+  <circle cx="40" cy="46" r="5.5" fill="#2C1810"/>
+  <circle cx="60" cy="46" r="5.5" fill="#2C1810"/>
+  <circle cx="41.5" cy="44" r="2.2" fill="white"/>
+  <circle cx="61.5" cy="44" r="2.2" fill="white"/>
+  <path d="M 42 62 Q 50 69 58 62" stroke="#C07A00" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <path d="M50 83 C50 83 44 77 40 79.5 C36 82 36 87 40 90 L50 98 L60 90 C64 87 64 82 60 79.5 C56 77 50 83 50 83Z" fill="#E91E63"/>
+  <circle cx="34" cy="92" r="4" fill="#FFA500" stroke="#E6A800" stroke-width="1"/>
+  <circle cx="66" cy="92" r="4" fill="#FFA500" stroke="#E6A800" stroke-width="1"/>
+  <rect x="36" y="102" width="28" height="5" rx="2.5" fill="#FFA500" stroke="#E6A800" stroke-width="1"/>
+  <ellipse cx="22" cy="92" rx="11" ry="9" fill="#FFD700" stroke="#E6A800" stroke-width="1.5"/>
+  <ellipse cx="78" cy="92" rx="11" ry="9" fill="#FFD700" stroke="#E6A800" stroke-width="1.5"/>
+</svg>"""
+
+_OTTER_SVG = """<svg width="72" height="88" viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg">
+  <path d="M72 105 Q90 98 88 112 Q85 120 75 116" stroke="#7A5230" stroke-width="9" fill="none" stroke-linecap="round"/>
+  <path d="M72 105 Q90 98 88 112 Q85 120 75 116" stroke="#8B6340" stroke-width="5" fill="none" stroke-linecap="round"/>
+  <ellipse cx="50" cy="88" rx="31" ry="29" fill="#8B6340"/>
+  <ellipse cx="50" cy="92" rx="21" ry="21" fill="#F5E6D3"/>
+  <circle cx="50" cy="50" r="27" fill="#8B6340"/>
+  <circle cx="25" cy="29" r="11" fill="#8B6340"/>
+  <circle cx="75" cy="29" r="11" fill="#8B6340"/>
+  <circle cx="25" cy="29" r="7" fill="#C4956A"/>
+  <circle cx="75" cy="29" r="7" fill="#C4956A"/>
+  <ellipse cx="50" cy="56" rx="19" ry="16" fill="#F5E6D3"/>
+  <circle cx="41" cy="47" r="6.5" fill="#2C1810"/>
+  <circle cx="59" cy="47" r="6.5" fill="#2C1810"/>
+  <circle cx="39" cy="44.5" r="2.8" fill="white"/>
+  <circle cx="57" cy="44.5" r="2.8" fill="white"/>
+  <ellipse cx="50" cy="58" rx="5.5" ry="4.5" fill="#3D2010"/>
+  <path d="M 44 64 Q 50 70 56 64" stroke="#2C1810" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <line x1="53" y1="59" x2="71" y2="54" stroke="#6B4A2A" stroke-width="1.2" opacity="0.55"/>
+  <line x1="53" y1="61.5" x2="73" y2="61.5" stroke="#6B4A2A" stroke-width="1.2" opacity="0.55"/>
+  <line x1="47" y1="59" x2="29" y2="54" stroke="#6B4A2A" stroke-width="1.2" opacity="0.55"/>
+  <line x1="47" y1="61.5" x2="27" y2="61.5" stroke="#6B4A2A" stroke-width="1.2" opacity="0.55"/>
+  <ellipse cx="28" cy="93" rx="13" ry="10" fill="#7A5230"/>
+  <ellipse cx="72" cy="93" rx="13" ry="10" fill="#7A5230"/>
+  <ellipse cx="28" cy="102" rx="10" ry="7" fill="#6B4423"/>
+  <ellipse cx="72" cy="102" rx="10" ry="7" fill="#6B4423"/>
+  <circle cx="33" cy="55" r="7" fill="#FFB6C1" opacity="0.4"/>
+  <circle cx="67" cy="55" r="7" fill="#FFB6C1" opacity="0.4"/>
+</svg>"""
+
+
+# ──────────────────────────────────────────
 # CSS（完全新設計）
 # ──────────────────────────────────────────
 
@@ -147,6 +207,44 @@ body{{
 /* デバイスの幅に合わせてmax-width */
 @media(min-width:540px){{
   .wrap{{max-width:520px;margin:0 auto}}
+}}
+
+/* ── キャラクターカード ── */
+.char-card{{
+  display:flex;align-items:flex-start;gap:0;
+  border-radius:14px;overflow:hidden;margin-bottom:8px;
+}}
+.char-ganesha{{
+  background:linear-gradient(135deg,#1c1600,#271e00);
+  border:1px solid rgba(255,215,0,.22);
+}}
+.char-otter{{
+  background:linear-gradient(135deg,#160e09,#1f130c);
+  border:1px solid rgba(196,149,106,.22);
+}}
+.char-avatar{{
+  width:80px;flex-shrink:0;text-align:center;
+  padding:10px 4px 8px;
+}}
+.char-name-g{{font-size:9px;font-weight:800;color:#FFD700;margin-top:3px;white-space:nowrap}}
+.char-name-o{{font-size:9px;font-weight:800;color:#C4956A;margin-top:3px;white-space:nowrap}}
+.char-bubble{{flex:1;padding:11px 13px 11px 10px;min-width:0}}
+.char-bubble-r{{flex:1;padding:11px 10px 11px 13px;min-width:0}}
+.char-badge-g{{
+  font-size:9px;font-weight:800;color:#FFD700;letter-spacing:.6px;
+  background:rgba(255,215,0,.12);border:1px solid rgba(255,215,0,.28);
+  border-radius:10px;padding:2px 9px;display:inline-block;margin-bottom:6px;
+}}
+.char-badge-o{{
+  font-size:9px;font-weight:800;color:#C4956A;letter-spacing:.6px;
+  background:rgba(196,149,106,.12);border:1px solid rgba(196,149,106,.28);
+  border-radius:10px;padding:2px 9px;display:inline-block;margin-bottom:6px;
+}}
+.char-text{{font-size:11.5px;line-height:1.8;word-break:break-word}}
+@media(max-width:400px){{
+  .char-card{{flex-direction:column;padding:10px}}
+  .char-avatar{{width:100%;padding:4px 0}}
+  .char-bubble,.char-bubble-r{{padding:8px 0 0}}
 }}
 """
 
@@ -338,9 +436,10 @@ def _charts():
 # セクション 5：AI分析（チャット吹き出し風）
 # ──────────────────────────────────────────
 
-def _ai_section(ai_summary, team_debate, score):
+def _ai_section(ai_summary, team_debate, score, character_comments=None):
     color, label, _, emoji, mode = _score_info(score)
 
+    # メイン分析テキスト（ai_summary または team_debate から取得）
     txt = ""
     if ai_summary:
         for k in ["summary", "text", "analysis", "comment", "conclusion"]:
@@ -357,13 +456,62 @@ def _ai_section(ai_summary, team_debate, score):
 
     main_txt = (txt or verdict or f"現在のAIシグナルは「{label}」（スコア {score:+.2f}）です。")[:280]
 
-    # 3視点
+    # ── ガネーシャ & カワウソ キャラクターカード ──
+    char_html = ""
+    cc = character_comments or {}
+    g_txt = cc.get("ganesha", "")
+    o_txt = cc.get("otter", "")
+    # フォールバック: ai_summary から抽出
+    if not g_txt and ai_summary:
+        g_txt = str(ai_summary.get("neutral_view") or ai_summary.get("analysis") or "")[:200]
+    if not o_txt and ai_summary:
+        raw = str(ai_summary.get("summary") or ai_summary.get("text") or "")[:120]
+        o_txt = raw
+
+    if g_txt or o_txt:
+        g_display = g_txt or "市場データを分析中ですぞ…"
+        o_display = o_txt or "データ取得中だよ〜♪"
+        char_html = f"""
+<div style="margin-top:10px">
+  <!-- 🐘 ガネーシャ -->
+  <div class="char-card char-ganesha">
+    <div class="char-avatar">
+      {_GANESHA_SVG}
+      <div class="char-name-g">🐘 AIガネーシャ</div>
+    </div>
+    <div class="char-bubble">
+      <div class="char-badge-g">📜 プロの相場解説</div>
+      <div class="char-text" style="color:{TEXT}">{g_display}</div>
+    </div>
+  </div>
+  <!-- 🦦 カワウソ -->
+  <div class="char-card char-otter">
+    <div class="char-bubble-r">
+      <div class="char-badge-o">✨ カンタンまとめ</div>
+      <div class="char-text" style="color:{TEXT}">{o_display}</div>
+    </div>
+    <div class="char-avatar">
+      {_OTTER_SVG}
+      <div class="char-name-o">🦦 AIカワウソ</div>
+    </div>
+  </div>
+</div>"""
+
+    # ── 3視点バブル（bull / neutral / bear）──
     bubbles = []
-    for key, ic, lbl, c in [("bull","🐂","強気派",GREEN),("neutral","😐","中立派",YELLOW),("bear","🐻","弱気派",RED)]:
-        if not isinstance(team_debate, dict): break
-        s = team_debate.get(key, {})
-        if not isinstance(s, dict): continue
-        pt = str(s.get("point") or s.get("text") or s.get("summary") or "")[:90]
+    src = team_debate if isinstance(team_debate, dict) and team_debate else (ai_summary or {})
+    view_cfg = [
+        ("bull_view",    "🐂", "強気派",  GREEN),
+        ("neutral_view", "😐", "中立派",  YELLOW),
+        ("bear_view",    "🐻", "弱気派",  RED),
+    ]
+    for key, ic, lbl, c in view_cfg:
+        raw = src.get(key, "")
+        if isinstance(raw, dict):
+            pt = str(raw.get("point") or raw.get("text") or raw.get("summary") or "")
+        else:
+            pt = str(raw or "")
+        pt = pt[:100]
         if not pt: continue
         bubbles.append(f"""<div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:7px">
   <div style="width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.06);border:1.5px solid {c};display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0">{ic}</div>
@@ -374,6 +522,7 @@ def _ai_section(ai_summary, team_debate, score):
 </div>""")
 
     bubbles_html = "".join(bubbles)
+    has_below = bool(char_html or bubbles_html)
 
     return f"""
 <div style="margin-bottom:12px">
@@ -381,21 +530,24 @@ def _ai_section(ai_summary, team_debate, score):
   <div class="glass" style="border-color:{color}33;padding:14px;position:relative;overflow:hidden">
     <div style="position:absolute;top:-30px;left:-30px;width:100px;height:100px;border-radius:50%;background:radial-gradient(circle,{color}15,transparent 70%);pointer-events:none"></div>
 
-    <!-- AIヘッダー -->
+    <!-- スコアヘッダー -->
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid {BORDER}">
       <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,{PURPLE},{BLUE});display:flex;align-items:center;justify-content:center;font-size:18px">{emoji}</div>
       <div>
-        <div style="font-size:10px;color:{MUTED}">ガネ先生の総合判断</div>
+        <div style="font-size:10px;color:{MUTED}">AIチームの総合判断</div>
         <div style="font-size:15px;font-weight:900;color:{color}">{label}</div>
       </div>
       <div style="margin-left:auto;font-size:22px;font-weight:900;color:{color};text-shadow:0 0 15px {color}55">{score:+.2f}</div>
     </div>
 
     <!-- メインコメント -->
-    <div style="background:rgba(255,255,255,.03);border-left:3px solid {color};border-radius:0 8px 8px 0;padding:10px 12px;font-size:12px;line-height:1.8;color:{TEXT};margin-bottom:{'10px' if bubbles_html else '0'}">{main_txt}</div>
+    <div style="background:rgba(255,255,255,.03);border-left:3px solid {color};border-radius:0 8px 8px 0;padding:10px 12px;font-size:12px;line-height:1.8;color:{TEXT};margin-bottom:{'10px' if has_below else '0'}">{main_txt}</div>
+
+    <!-- ガネーシャ & カワウソ -->
+    {char_html}
 
     <!-- 3視点バブル -->
-    {bubbles_html}
+    {f'<div style="margin-top:10px">{bubbles_html}</div>' if bubbles_html else ""}
   </div>
 </div>"""
 
@@ -765,6 +917,7 @@ def generate(
     team_debate: dict = None,
     youtube_summary: dict = None,
     data_integrity: dict = None,
+    character_comments: dict = None,
     **_kwargs,
 ) -> str:
     prices      = prices      or {}
@@ -784,7 +937,7 @@ def generate(
     q4_html      = _quick4(prices, fear_greed)
     strip_html   = _price_strip(prices)
     charts_html  = _charts()
-    ai_html      = _ai_section(ai_summary, team_debate, score)
+    ai_html      = _ai_section(ai_summary, team_debate, score, character_comments)
     sc_html      = _scenarios(scenario)
     mkt_html     = _market_grid(prices, technical)
     tv_html      = _tv_overview()
@@ -921,6 +1074,7 @@ def run(
     team_debate: dict        = None,
     youtube_summary: dict    = None,
     data_integrity: dict     = None,
+    character_comments: dict = None,
     mode: str = "morning",
     **_kwargs,
 ) -> dict:
@@ -931,7 +1085,7 @@ def run(
             technical=technical, youtube_summary=youtube_summary,
             data_integrity=data_integrity, sector_analysis=sector_analysis,
             prediction_tracker=prediction_tracker, weekly_calendar=weekly_calendar,
-            team_debate=team_debate,
+            team_debate=team_debate, character_comments=character_comments,
         )
         logger.info(f"✅ デザインAIレポート生成: {path}")
         return {"available": True, "path": path}

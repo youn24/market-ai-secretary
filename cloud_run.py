@@ -649,6 +649,7 @@ def run(mode: str):
             weekly_calendar=weekly_calendar,
             youtube_summary=youtube_summary,
             data_integrity=data_integrity,
+            character_comments=character_comments,
             mode=mode,
         )
         logger.info("✅ デザインAIレポート（docs/daily_report.html）生成")
