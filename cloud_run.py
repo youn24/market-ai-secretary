@@ -608,9 +608,13 @@ def _save_html_report(mode, prices, news, risk, analysis, fear_greed, chart_path
                       character_comments=None):
     """初心者でもわかる見やすいダッシュボードHTMLを保存"""
     import base64
-    today = get_today_str()
-    dirs  = get_dirs()
-    now   = get_jst_now().strftime("%Y-%m-%d %H:%M JST")
+    today  = get_today_str()
+    dirs   = get_dirs()
+    _now_dt = get_jst_now()
+    now    = _now_dt.strftime("%Y-%m-%d %H:%M JST")
+    wd_jp  = ["月", "火", "水", "木", "金", "土", "日"][_now_dt.weekday()]
+    wd_en  = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"][_now_dt.weekday()]
+    date_dot = _now_dt.strftime("%Y.%m.%d")
 
     sentiment  = risk.get("sentiment", "不明")
     score      = risk.get("score", 0)
@@ -922,16 +926,29 @@ a:hover{{text-decoration:underline;}}
    ヘッダー
 ══════════════════════════════════════ */
 .header{{
-  background:linear-gradient(90deg,#0a0f1c,#111830);
+  background:rgba(9,13,20,.82);
   border-bottom:1px solid var(--border);
-  padding:14px 20px;
+  padding:13px 18px;
   display:flex;align-items:center;justify-content:space-between;
-  position:sticky;top:0;z-index:100;backdrop-filter:blur(10px);
+  position:sticky;top:0;z-index:100;backdrop-filter:blur(14px);
 }}
-.header-logo{{font-size:1.2em;font-weight:800;
-  background:linear-gradient(90deg,var(--accent),var(--accent2));
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;}}
-.header-date{{color:var(--text2);font-size:0.8em;}}
+.header::before{{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,var(--accent),var(--accent2) 70%,transparent);
+}}
+.header-brand{{display:flex;align-items:center;gap:9px;}}
+.header-mark{{
+  width:28px;height:28px;border-radius:8px;display:grid;place-items:center;
+  font-size:15px;font-weight:900;color:#070a10;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+}}
+.header-logo{{font-size:1.05em;font-weight:800;color:var(--text);letter-spacing:.02em;}}
+.header-tag{{
+  font-size:0.62em;font-weight:700;color:var(--accent);letter-spacing:.2em;
+  border-left:1px solid var(--border);padding-left:9px;margin-left:2px;
+}}
+.header-date{{color:var(--text2);font-size:0.78em;letter-spacing:.04em;font-weight:600;}}
+.header-date b{{color:var(--text);font-weight:700;}}
 
 /* ══════════════════════════════════════
    ヒーローカード（今日の相場）
@@ -940,24 +957,35 @@ a:hover{{text-decoration:underline;}}
   {hero_bg};
   border:1px solid {hero_color}44;
   border-radius:var(--radius);
-  padding:28px 20px;
-  text-align:center;
-  margin:16px 0;
+  padding:30px 26px;
+  margin:18px 0;
   position:relative;overflow:hidden;
 }}
+.hero::before{{
+  content:'';position:absolute;inset:0;opacity:.5;pointer-events:none;
+  background-image:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);
+  background-size:38px 38px;
+}}
 .hero::after{{
-  content:'';position:absolute;top:-40px;right:-40px;
-  width:160px;height:160px;border-radius:50%;
-  background:{hero_color}15;
+  content:'';position:absolute;top:-60px;right:-50px;
+  width:220px;height:220px;border-radius:50%;
+  background:radial-gradient({hero_color}33,transparent 70%);
 }}
-.hero-emoji{{font-size:3.5em;display:block;margin-bottom:8px;}}
-.hero-label{{font-size:1.9em;font-weight:900;color:{hero_color};margin-bottom:6px;}}
-.hero-msg{{color:#aac;font-size:1em;margin-bottom:12px;}}
+.hero-eyebrow{{
+  position:relative;font-size:0.72em;font-weight:700;color:{hero_color};
+  letter-spacing:.22em;margin-bottom:12px;
+}}
+.hero-headline{{position:relative;display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;}}
+.hero-emoji{{font-size:2.6em;line-height:1;}}
+.hero-label{{font-size:2.5em;font-weight:900;color:{hero_color};letter-spacing:-.01em;line-height:1;}}
+.hero-msg{{position:relative;color:var(--text);opacity:.82;font-size:1.05em;margin-top:16px;line-height:1.6;}}
 .hero-score{{
-  display:inline-block;background:{hero_color}22;
-  border:1px solid {hero_color}55;border-radius:30px;
-  padding:4px 18px;color:{hero_color};font-size:0.9em;font-weight:700;
+  position:relative;display:inline-flex;align-items:center;gap:10px;margin-top:20px;
+  background:{hero_color}1f;border:1px solid {hero_color}5e;border-radius:999px;
+  padding:8px 20px;
 }}
+.hero-score .lbl{{color:var(--text2);font-size:0.78em;font-weight:600;letter-spacing:.04em;}}
+.hero-score .num{{color:{hero_color};font-size:1.3em;font-weight:900;}}
 
 /* ══════════════════════════════════════
    クイック3ステータス
@@ -1155,8 +1183,12 @@ a:hover{{text-decoration:underline;}}
 
 <!-- ヘッダー -->
 <div class="header">
-  <div class="header-logo">📊 市場AI秘書</div>
-  <div class="header-date">📅 {today} {now}</div>
+  <div class="header-brand">
+    <span class="header-mark">M</span>
+    <span class="header-logo">市場AI秘書</span>
+    <span class="header-tag">DAILY REPORT</span>
+  </div>
+  <div class="header-date">{date_dot} <b>{wd_en}</b> ・ {now}</div>
 </div>
 
 <!-- ティッカー（リアルタイム） -->
@@ -1185,10 +1217,13 @@ a:hover{{text-decoration:underline;}}
 
   <!-- ヒーロー：今日の相場一言 -->
   <div class="hero">
-    <span class="hero-emoji">{hero_emoji}</span>
-    <div class="hero-label">{tl} 今日の相場：{hero_label}</div>
+    <div class="hero-eyebrow">本日の判定 ／ {wd_jp}曜日</div>
+    <div class="hero-headline">
+      <span class="hero-label">{hero_label}</span>
+      <span class="hero-emoji">{hero_emoji}</span>
+    </div>
     <div class="hero-msg">{hero_msg}</div>
-    <div class="hero-score">リスクスコア {score:+.2f}</div>
+    <div class="hero-score"><span class="lbl">リスクスコア</span><span class="num">{score:+.1f}</span></div>
   </div>
 
   <!-- キャラクターコメント（ガネーシャ & カワウソ） -->
