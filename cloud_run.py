@@ -616,6 +616,23 @@ def run(mode: str):
     except Exception:
         logger.error("レポート生成エラー"); logger.debug(traceback.format_exc())
 
+    # Step 7a2: デザインAIレポート（docs/daily_report.html・公開メインのリッチ版）
+    try:
+        logger.info("--- Step 7a2: デザインAIレポート（リッチ公開版） ---")
+        from src.design_ai import run as run_design
+        run_design(
+            prices=prices, news=news, risk=risk, fear_greed=fear_greed,
+            ai_summary=ai_summary, scenario=scenario, technical=technical,
+            sector_analysis=sector_analysis, prediction_tracker=prediction_tracker,
+            weekly_calendar=weekly_calendar,
+            youtube_summary=youtube_summary,
+            data_integrity=data_integrity,
+            mode=mode,
+        )
+        logger.info("✅ デザインAIレポート（docs/daily_report.html）生成")
+    except Exception:
+        logger.error("デザインAIレポートエラー"); logger.debug(traceback.format_exc())
+
     # Step 7b: note記事生成
     note_article = {"available": False}
     try:
@@ -683,7 +700,11 @@ def run(mode: str):
                   earnings_preview=earnings_preview,
                   market_chain=market_chain,
                   jquants=jquants,
-                  character_comments=character_comments)
+                  character_comments=character_comments,
+                  macro=macro, tdnet=tdnet, earnings_brief=earnings_brief,
+                  anomaly=anomaly, theme_ranking=theme_ranking,
+                  financial_analysis=financial_analysis,
+                  supply_demand=supply_demand, kabuyoho=kabuyoho)
     except Exception:
         logger.error("Telegram通知エラー"); logger.debug(traceback.format_exc())
 
