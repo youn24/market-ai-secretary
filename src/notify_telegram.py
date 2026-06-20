@@ -66,7 +66,9 @@ def _fmtv(prices: dict, sym: str, unit: str = "") -> str:
 def build_three_messages(risk, analysis, mode,
                          prices=None, news=None,
                          fear_greed=None, ai_summary=None,
-                         report_paths=None) -> list:
+                         report_paths=None,
+                         note_article_url: str = "",
+                         note_magazine_url: str = "") -> list:
     from datetime import date as _date
     today      = get_today_str()
     prices     = prices or {}
@@ -106,10 +108,13 @@ def build_three_messages(risk, analysis, mode,
 
     # ━━━━━ 通知① 相場まとめ（プロ仕様） ━━━━━
     msg1 = (
-        f"📊 *市場AI秘書* | {today}（{weekday}）\n"
+        f"🤖 *市場AI秘書* | {today}（{weekday}）\n"
         f"━━━━━━━━━━━━━━━━━━━━\n"
         f"\n"
-        f"{tl} *今日の相場: {mood}*  `[{score_s}]`\n"
+        f"┌─────────────────────┐\n"
+        f"│  {tl} *今日の判断: {mood}*\n"
+        f"│  AIスコア `{score_s}` / ±3\n"
+        f"└─────────────────────┘\n"
         f"\n"
         f"*📈 株価*\n"
         f"🇯🇵 日経  {_fmtv(prices,'^N225','円')}\n"
@@ -148,8 +153,29 @@ def build_three_messages(risk, analysis, mode,
         + "\n\n".join(ai_lines)
     )
 
-    # ━━━━━ 通知③ 詳細レポートURL ━━━━━
-    report_url = report_paths.get("url", "")
+    # ━━━━━ 通知③ 詳細レポート + note誘導 ━━━━━
+    report_url   = report_paths.get("url", "")
+    mag_url      = note_magazine_url or os.getenv("NOTE_MAGAZINE_URL", "").strip()
+    article_url  = note_article_url  or ""
+
+    # note誘導ブロック（マガジンURLがある場合のみ表示）
+    note_block = ""
+    if mag_url:
+        note_block = (
+            f"\n"
+            f"━━━━━━━━━━━━━━━━━━━━\n"
+            f"📝 *今日のnote記事（AI深掘り分析）*\n"
+        )
+        if article_url:
+            note_block += f"🔗 {article_url}\n"
+        note_block += (
+            f"✅ 無料：相場まとめ・価格表\n"
+            f"🔐 有料：AI3視点・シナリオ・テクニカル\n"
+            f"\n"
+            f"📰 *月額マガジン登録*（毎朝届く深掘り分析）\n"
+            f"💳 {mag_url}\n"
+        )
+
     msg3 = (
         f"📱 *詳細レポート*\n"
         f"━━━━━━━━━━━━━━━━━━━━\n"
@@ -157,9 +183,8 @@ def build_three_messages(risk, analysis, mode,
         f"{report_url if report_url else '（準備中）'}\n"
         f"\n"
         f"📊チャート  🤖AI議論  📰ニュース\n"
-        f"📐テクニカル  🎭シナリオ  📅カレンダー\n"
-        f"\n"
-        f"💡 ブックマーク登録がおすすめです"
+        f"📐テクニカル  🎭シナリオ  📅カレンダー"
+        + note_block
     )
 
     return [msg1, msg2_caption, msg3]
@@ -292,6 +317,7 @@ def run(risk, analysis, report_paths, mode,
             prices=prices, news=news,
             fear_greed=fear_greed, ai_summary=ai_summary,
             report_paths=report_paths,
+            note_magazine_url=os.getenv("NOTE_MAGAZINE_URL", "").strip(),
         )
 
         # ① 数字・ニュース速報

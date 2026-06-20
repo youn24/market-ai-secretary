@@ -62,6 +62,7 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GITHUB_PAGES_URL: "https://youn24.github.io/market-ai-secretary"
+          NOTE_MAGAZINE_URL: ${{ secrets.NOTE_MAGAZINE_URL }}
         run: |
           echo "📋 従来型レポート生成中..."
           python cloud_run.py --mode morning || true
