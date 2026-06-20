@@ -8,3 +8,6 @@ lxml>=4.9.0
 python-dotenv>=1.0.0
 PyYAML>=6.0
 yfinance>=0.2.40
+matplotlib>=3.7.0
+google-generativeai>=0.5.0
+playwright>=1.40.0   # noteカバー画像のHTML→PNG描画用（要: playwright install chromium）

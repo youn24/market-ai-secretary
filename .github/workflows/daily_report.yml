@@ -28,9 +28,9 @@ jobs:
           python-version: "3.11"
           cache: "pip"
 
-      - name: 日本語フォントインストール
+      - name: 日本語・絵文字フォントインストール
         run: |
-          sudo apt-get install -y fonts-noto-cjk
+          sudo apt-get install -y fonts-noto-cjk fonts-noto-color-emoji
           fc-cache -fv
 
       - name: ライブラリインストール
@@ -38,7 +38,11 @@ jobs:
           pip install --upgrade pip
           pip install pandas numpy requests feedparser beautifulsoup4 \
                       lxml python-dotenv PyYAML yfinance plotly \
-                      matplotlib kaleido google-generativeai
+                      matplotlib kaleido google-generativeai playwright
+
+      - name: Playwright Chromium インストール（noteカバー画像のHTML→PNG描画用）
+        run: |
+          python -m playwright install --with-deps chromium
 
       - name: 市場データ取得・レポート生成・Telegram通知
         env:
