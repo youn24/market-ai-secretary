@@ -14,19 +14,21 @@ logger = setup_logger("design_ai")
 # ────────────────────────────────────────────────────────────────
 # 定数
 # ────────────────────────────────────────────────────────────────
-BG      = "#0d1117"
-CARD    = "#161b22"
-CARD2   = "#1c2128"
-BORDER  = "#30363d"
-TEXT    = "#c9d1d9"
-MUTED   = "#8b949e"
-GREEN   = "#3fb950"
-RED     = "#f85149"
+BG      = "#090d14"
+CARD    = "#111827"
+CARD2   = "#141d2b"
+BORDER  = "#1e2d3d"
+TEXT    = "#eaf6ff"
+MUTED   = "#8194a8"
+GREEN   = "#00e676"
+RED     = "#ff5c6c"
 YELLOW  = "#d29922"
 ORANGE  = "#db6d28"
-BLUE    = "#58a6ff"
-PURPLE  = "#bc8cff"
+BLUE    = "#00d4ff"
+PURPLE  = "#7b61ff"
 TEAL    = "#39d353"
+CYAN    = "#00d4ff"
+VIOLET  = "#7b61ff"
 
 # ────────────────────────────────────────────────────────────────
 # CSS
@@ -47,6 +49,8 @@ _CSS = f"""
   --orange:  {ORANGE};
   --blue:    {BLUE};
   --purple:  {PURPLE};
+  --cyan:    {CYAN};
+  --violet:  {VIOLET};
 }}
 
 *, *::before, *::after {{ box-sizing: border-box; margin: 0; padding: 0; }}
@@ -89,6 +93,11 @@ body {{
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 16px;
+  transition: border-color .2s, box-shadow .2s;
+}}
+.card:hover {{
+  border-color: rgba(0,212,255,.2);
+  box-shadow: 0 0 24px rgba(0,212,255,.05);
 }}
 .card-title {{
   font-size: 11px;
@@ -359,23 +368,27 @@ section {{ margin-bottom: 20px; }}
   gap: 8px;
   margin-bottom: 14px;
   padding-bottom: 8px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid rgba(0,212,255,.12);
 }}
 .section-icon {{ font-size: 18px; }}
-.section-title {{ font-size: 16px; font-weight: 700; }}
+.section-title {{ font-size: 16px; font-weight: 700; color: {TEXT}; }}
 .section-tag {{
   margin-left: auto;
   font-size: 10px;
   padding: 2px 8px;
   border-radius: 4px;
-  background: var(--card2);
-  color: var(--muted);
+  background: rgba(0,212,255,.06);
+  color: {CYAN};
+  border: 1px solid rgba(0,212,255,.15);
 }}
 
 /* ── キャラクターヘッダー ── */
 .char-header {{
-  background: linear-gradient(160deg, #1a0f00 0%, #2d1f00 40%, #1a1200 100%);
-  border-bottom: 3px solid #c8992a;
+  background:
+    radial-gradient(110% 90% at 85% 0%, rgba(0,212,255,.14), transparent 52%),
+    radial-gradient(100% 90% at 5% 110%, rgba(123,97,255,.12), transparent 55%),
+    linear-gradient(160deg, #0b1018 0%, #090d14 50%, #070a10 100%);
+  border-bottom: 1px solid rgba(0,212,255,.2);
   padding: 0;
   overflow: hidden;
   position: relative;
@@ -385,7 +398,7 @@ section {{ margin-bottom: 20px; }}
   max-width: 960px;
   margin: 0 auto;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
 }}
 .char-title-block {{
@@ -393,27 +406,60 @@ section {{ margin-bottom: 20px; }}
   flex: 1;
   padding: 20px 10px 16px;
 }}
+.char-brand-badge {{
+  display: inline-block;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: {CYAN};
+  background: rgba(0,212,255,.08);
+  border: 1px solid rgba(0,212,255,.25);
+  border-radius: 4px;
+  padding: 2px 10px;
+  margin-bottom: 8px;
+}}
+.char-title-row {{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 4px;
+}}
+.char-M-chip {{
+  width: 28px; height: 28px;
+  border-radius: 7px;
+  background: linear-gradient(135deg, {VIOLET}, {CYAN});
+  color: #060a0f;
+  font-size: 14px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}}
 .char-main-title {{
   font-size: 20px;
   font-weight: 900;
-  color: #f0c040;
-  text-shadow: 0 2px 12px rgba(0,0,0,.9);
-  line-height: 1.4;
+  background: linear-gradient(90deg, {VIOLET}, {CYAN}, {GREEN});
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1.2;
 }}
 .char-sub-title {{
   font-size: 11px;
-  color: #c8992a;
+  color: #6b7d90;
   margin-top: 4px;
   letter-spacing: 1.5px;
 }}
 .char-date-badge {{
   display: inline-block;
-  background: rgba(200,153,42,.2);
-  border: 1px solid #c8992a;
+  background: rgba(0,212,255,.08);
+  border: 1px solid rgba(0,212,255,.2);
   border-radius: 20px;
   padding: 3px 14px;
   font-size: 11px;
-  color: #f0c040;
+  color: #aebccb;
   margin-top: 8px;
 }}
 .char-signal-badge {{
@@ -423,7 +469,7 @@ section {{ margin-bottom: 20px; }}
   font-size: 14px;
   font-weight: 900;
   margin-top: 8px;
-  border: 2px solid;
+  border: 1.5px solid;
 }}
 .char-figure {{
   width: 130px;
@@ -431,23 +477,23 @@ section {{ margin-bottom: 20px; }}
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-bottom: 4px;
+  padding: 16px 0;
 }}
 .char-figure-label {{
   font-size: 10px;
-  color: #c8992a;
+  color: #6b7d90;
   font-weight: 700;
   text-align: center;
   margin-top: 4px;
 }}
 .char-svg {{ width: 100px; height: 100px; }}
 .char-balloon {{
-  background: rgba(255,255,255,.08);
-  border: 1px solid rgba(200,153,42,.4);
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(0,212,255,.15);
   border-radius: 8px;
   padding: 4px 8px;
   font-size: 10px;
-  color: #f0c040;
+  color: #8194a8;
   text-align: center;
   max-width: 110px;
   margin-top: 4px;
@@ -751,8 +797,12 @@ def _character_header(score: float, prices: dict, mood: str, today: str, now: st
 
     <!-- タイトル (中央) -->
     <div class="char-title-block">
-      <div class="char-main-title">ガネ先生とカワウソくんの<br>今日の相場ダイジェスト</div>
-      <div class="char-sub-title">AIチーム自動分析レポート</div>
+      <div class="char-brand-badge">DAILY REPORT</div>
+      <div class="char-title-row">
+        <div class="char-M-chip">M</div>
+        <div class="char-main-title">市場AI秘書</div>
+      </div>
+      <div class="char-sub-title">AI MARKET BRIEFING · GEMINI POWERED</div>
       <div class="char-date-badge">📅 {today} {now.split()[1] if ' ' in now else ''}</div><br>
       <span class="char-signal-badge" style="{sig_style}">{signal_text}</span>
       <div style="margin-top:10px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
@@ -1900,8 +1950,11 @@ def generate(
 </head>
 <body>
 
+<!-- ── アクセントライン ── -->
+<div style="height:2px;background:linear-gradient(90deg,#7b61ff,#00d4ff,#00e676)"></div>
+
 <!-- ── リアルタイムティッカーテープ（TradingView）── -->
-<div style="position:sticky;top:0;z-index:100;background:#0d1117;border-bottom:1px solid #30363d">
+<div style="position:sticky;top:0;z-index:100;background:#090d14;border-bottom:1px solid rgba(0,212,255,.1)">
   <div class="tradingview-widget-container">
     <div class="tradingview-widget-container__widget"></div>
     <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js" async>
@@ -1936,8 +1989,8 @@ def generate(
 <main class="container">
 
 <!-- ── データ生成時刻の注記 ── -->
-<div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:8px 14px;margin-bottom:12px;font-size:11px;color:#8b949e;display:flex;align-items:center;gap:8px">
-  <span>📊 下の数値はレポート生成時刻（{now}）のデータです。リアルタイムチャートはTradingViewウィジェットをご覧ください。</span>
+<div style="background:rgba(0,212,255,.04);border:1px solid rgba(0,212,255,.12);border-radius:8px;padding:8px 14px;margin-bottom:12px;font-size:11px;color:#6b7d90;display:flex;align-items:center;gap:8px">
+  <span style="color:#00d4ff">📊</span><span>下の数値はレポート生成時刻（{now}）のデータです。リアルタイムチャートはTradingViewウィジェットをご覧ください。</span>
 </div>
 
 <!-- ── クイックサマリー ── -->
@@ -2249,10 +2302,10 @@ def generate(
 </main>
 
 <!-- ── フッター ── -->
-<footer style="text-align:center;padding:24px 16px;color:var(--muted);font-size:11px;border-top:1px solid var(--border);margin-top:20px;background:linear-gradient(0deg,#1a0f00,transparent)">
+<footer style="text-align:center;padding:24px 16px;color:var(--muted);font-size:11px;border-top:1px solid rgba(0,212,255,.1);margin-top:20px;background:linear-gradient(0deg,rgba(0,0,0,.3),transparent)">
   <div style="font-size:16px;margin-bottom:6px">🐘 ガネ先生 &amp; 🦦 カワウソくん</div>
   <div>AIチーム自動生成レポート · {now}</div>
-  <div style="margin-top:4px">このレポートはAIによる自動分析です。投資は自己判断でお願いします。</div>
+  <div style="margin-top:6px;color:#00d4ff;font-weight:700">Powered by Gemini AI × 市場AI秘書</div>
 </footer>
 
 <script>
