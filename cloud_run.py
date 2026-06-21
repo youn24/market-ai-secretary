@@ -399,6 +399,18 @@ def run(mode: str):
     except Exception:
         logger.debug(traceback.format_exc())
 
+    # Step L5a.6: 情報源クロスチェック（複数手法の方向一致度＝信頼度）
+    cross_check = {"available": False}
+    try:
+        logger.info("--- Step L5a.6: 情報源クロスチェック ---")
+        from src.cross_check import run as run_cross
+        cross_check = run_cross(risk, multi_consensus=multi_consensus,
+                                scenario=scenario, technical=technical)
+        if cross_check.get("available"):
+            logger.info(f"✅ {cross_check.get('summary')}")
+    except Exception:
+        logger.error("クロスチェックエラー"); logger.debug(traceback.format_exc())
+
     # Step L5b: 完全自律エージェント（今日のミッション決定）
     autonomous_plan = {"available": False}
     try:
@@ -650,6 +662,7 @@ def run(mode: str):
             youtube_summary=youtube_summary,
             data_integrity=data_integrity,
             character_comments=character_comments,
+            cross_check=cross_check,
             mode=mode,
         )
         logger.info("✅ デザインAIレポート（docs/daily_report.html）生成")

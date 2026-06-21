@@ -826,19 +826,38 @@ def _calendar(weekly_calendar):
 def _pred(prediction_tracker):
     pt = prediction_tracker or {}
     if not pt.get("available"): return ""
-    acc  = float(pt.get("accuracy", 0) or 0)
-    n    = int(pt.get("total", 0) or 0)
-    hits = int(pt.get("hits", 0) or 0)
+    # prediction_tracker.run() の戻り値は stats 構造（stats["10d"]["rate"] 等）
+    stats = pt.get("stats", {})
+    d10   = stats.get("10d", {})
+    n     = int(d10.get("total", 0) or 0)
+    hits  = int(d10.get("correct", 0) or 0)
     if not n: return ""
 
+    acc   = float(d10.get("rate") or 0)
     miss  = n - hits
     bar_c = GREEN if acc >= 60 else (YELLOW if acc >= 45 else RED)
     grade = "A" if acc>=70 else ("B" if acc>=60 else ("C" if acc>=50 else "D"))
     grade_c = GREEN if grade=="A" else (BLUE if grade=="B" else (YELLOW if grade=="C" else RED))
 
+    # Brierスコア（確信度の信頼性）— 0=完璧 / 0.25=勘 / 高いほど過信
+    brier = stats.get("brier_30d")
+    brier_html = ""
+    if brier is not None:
+        if   brier <= 0.12: bl, bc = "優秀",     GREEN
+        elif brier <= 0.20: bl, bc = "良好",     BLUE
+        elif brier <= 0.25: bl, bc = "普通",     YELLOW
+        else:               bl, bc = "過信ぎみ", ORANGE
+        brier_html = f"""
+    <div style="display:flex;align-items:center;gap:8px;margin-top:9px;padding-top:9px;border-top:1px solid {BORDER}">
+      <span style="font-size:10px;color:{MUTED}">確信度の信頼性（Brier）</span>
+      <span style="font-size:13px;font-weight:800;color:{bc}">{brier:.3f}</span>
+      <span style="font-size:9px;color:{bc};background:{bc}1a;padding:1px 6px;border-radius:4px">{bl}</span>
+      <span style="font-size:9px;color:{MUTED};margin-left:auto">0=完璧 / 0.25=勘 / 大=過信</span>
+    </div>"""
+
     return f"""
 <div style="margin-bottom:12px">
-  <div class="label" style="padding:0 2px;margin-bottom:6px">🎯 AIの予測精度（累積）</div>
+  <div class="label" style="padding:0 2px;margin-bottom:6px">🎯 AIの予測精度（直近10日）</div>
   <div class="glass" style="padding:14px">
     <div style="display:flex;align-items:center;gap:14px;margin-bottom:10px">
       <div style="text-align:center;min-width:70px">
@@ -853,11 +872,60 @@ def _pred(prediction_tracker):
           <span style="color:{GREEN}">✅ 正解 {hits}回</span>
           <span style="color:{RED}">❌ 不正解 {miss}回</span>
         </div>
-        <div style="font-size:10px;color:{MUTED};margin-top:3px">累計 {n}回の予測</div>
+        <div style="font-size:10px;color:{MUTED};margin-top:3px">直近10日 {n}回の予測</div>
       </div>
       <div style="width:38px;height:38px;border-radius:50%;border:2px solid {grade_c};display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;color:{grade_c}">{grade}</div>
+    </div>{brier_html}
+    <div style="font-size:10px;color:{MUTED};margin-top:9px">📖 毎日翌日の相場を予測し、翌朝に答え合わせした成績です。Brierは「自信の正確さ」を測る指標です</div>
+  </div>
+</div>"""
+
+
+def _crosscheck(cross_check):
+    """情報源クロスチェック：複数手法の方向一致度＝信頼度"""
+    cc = cross_check or {}
+    if not cc.get("available"): return ""
+    sources   = cc.get("sources", [])
+    agreement = cc.get("agreement", 0) or 0
+    pct       = int(agreement * 100)
+    conflict  = cc.get("conflict")
+    verdict_ja = cc.get("verdict_ja", "")
+    level     = cc.get("level", "")
+    emoji     = cc.get("emoji", "")
+    bar_c = GREEN if agreement >= 0.66 else (YELLOW if agreement >= 0.5 else RED)
+
+    dir_icon = {"上昇": "📈", "下落": "📉", "中立": "➡️"}
+    dir_col  = {"上昇": GREEN, "下落": RED, "中立": YELLOW}
+    chips = "".join(
+        f"""<div style="display:flex;align-items:center;gap:5px;background:rgba(255,255,255,.04);border:1px solid {BORDER};border-radius:8px;padding:6px 9px">
+      <span style="font-size:10px;color:{MUTED}">{s.get('name','')}</span>
+      <span style="font-size:11px;font-weight:700;color:{dir_col.get(s.get('dir_ja'),MUTED)}">{dir_icon.get(s.get('dir_ja'),'')}{s.get('dir_ja','')}</span>
+    </div>"""
+        for s in sources
+    )
+    note = ("複数の分析が同じ方向を示しています → 信頼度が高い相場です"
+            if not conflict else
+            "分析手法によって見解が割れています → いつもより慎重に判断しましょう")
+    note_c = GREEN if not conflict else ORANGE
+
+    return f"""
+<div style="margin-bottom:12px">
+  <div class="label" style="padding:0 2px;margin-bottom:6px">🔎 情報源クロスチェック（信頼度）</div>
+  <div class="glass" style="padding:14px">
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:10px">
+      <div style="text-align:center;min-width:70px">
+        <div style="font-size:34px;font-weight:900;color:{bar_c};line-height:1;text-shadow:0 0 20px {bar_c}55">{pct}%</div>
+        <div style="font-size:9px;color:{MUTED};margin-top:2px">一致度</div>
+      </div>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:800;color:{bar_c};margin-bottom:4px">{emoji} {level}・総合「{verdict_ja}」</div>
+        <div style="background:rgba(255,255,255,.06);border-radius:4px;height:7px;overflow:hidden">
+          <div style="width:{pct}%;height:100%;background:{bar_c};border-radius:4px;box-shadow:0 0 10px {bar_c}66"></div>
+        </div>
+      </div>
     </div>
-    <div style="font-size:10px;color:{MUTED}">📖 毎日翌日の相場を予測し、翌朝に答え合わせした累積成績です</div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:9px">{chips}</div>
+    <div style="font-size:10px;color:{note_c};background:{note_c}14;padding:6px 9px;border-radius:6px">💡 {note}</div>
   </div>
 </div>"""
 
@@ -918,6 +986,7 @@ def generate(
     youtube_summary: dict = None,
     data_integrity: dict = None,
     character_comments: dict = None,
+    cross_check: dict = None,
     **_kwargs,
 ) -> str:
     prices      = prices      or {}
@@ -945,6 +1014,7 @@ def generate(
     news_html    = _news(news)
     cal_html     = _calendar(weekly_calendar)
     pred_html    = _pred(prediction_tracker)
+    cc_html      = _crosscheck(cross_check)
     guide_html   = _guide()
 
     html = f"""<!DOCTYPE html>
@@ -991,6 +1061,7 @@ def generate(
   {strip_html}
   {charts_html}
   {ai_html}
+  {cc_html}
   {sc_html}
   {mkt_html}
   {tv_html}
@@ -1075,6 +1146,7 @@ def run(
     youtube_summary: dict    = None,
     data_integrity: dict     = None,
     character_comments: dict = None,
+    cross_check: dict        = None,
     mode: str = "morning",
     **_kwargs,
 ) -> dict:
@@ -1086,6 +1158,7 @@ def run(
             data_integrity=data_integrity, sector_analysis=sector_analysis,
             prediction_tracker=prediction_tracker, weekly_calendar=weekly_calendar,
             team_debate=team_debate, character_comments=character_comments,
+            cross_check=cross_check,
         )
         logger.info(f"✅ デザインAIレポート生成: {path}")
         return {"available": True, "path": path}
