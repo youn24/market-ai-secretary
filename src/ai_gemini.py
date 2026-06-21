@@ -19,7 +19,7 @@ def run_gemini_analysis(prices: dict, news: list, risk: dict, fear_greed: dict) 
     try:
         import google.generativeai as genai
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel(os.getenv("GEMINI_MODEL", "gemini-2.5-flash"))
 
         sentiment = risk.get("sentiment", "不明")
         score     = risk.get("score", 0)
@@ -104,7 +104,7 @@ Bitcoin: {fmt('BTC-USD','$')}
         logger.info("Gemini AI分析完了")
         return {
             "available": True,
-            "model": "gemini-1.5-flash",
+            "model": os.getenv("GEMINI_MODEL", "gemini-2.5-flash"),
             "overall_summary": sections.get("overall", result_text[:300]),
             "points": sections.get("points", ""),
             "risks": sections.get("risks", ""),

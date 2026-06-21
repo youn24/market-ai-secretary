@@ -36,7 +36,7 @@ def _get_gemini_model():
     try:
         import google.generativeai as genai
         genai.configure(api_key=api_key)
-        return genai.GenerativeModel("gemini-1.5-flash")
+        return genai.GenerativeModel(os.getenv("GEMINI_MODEL", "gemini-2.5-flash"))
     except Exception:
         return None
 

@@ -163,7 +163,7 @@ def _summarize_titles_fallback(videos: list) -> dict:
     try:
         import google.generativeai as genai
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel(os.getenv("GEMINI_MODEL", "gemini-2.5-flash"))
         vlist = "\n".join(f"・{v['title']}（{v['channel']}）" for v in videos)
         prompt = (
             "以下の市場解説動画のタイトルから、本日の注目テーマと相場への示唆を"

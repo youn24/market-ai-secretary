@@ -101,7 +101,9 @@ cloud_run.py（メインスクリプト）
 ## 🔑 必須環境変数（GitHub Secrets）
 
 ```
-GEMINI_API_KEY      → Google AI Studio で発行（無料 gemini-1.5-flash）
+GEMINI_API_KEY      → Google AI Studio で発行（無料枠あり）
+GEMINI_MODEL        → 使用モデルを一元管理（任意・未設定なら gemini-2.5-flash）
+                      ※全モジュール共通。レート制限時は gemini-2.0-flash に変更すれば一括切替
 TELEGRAM_BOT_TOKEN  → @BotFather で発行
 TELEGRAM_CHAT_ID    → 8958569711
 GITHUB_PAGES_URL    → https://youn24.github.io/market-ai-secretary
@@ -154,7 +156,8 @@ if not api_key:
     return {"available": False}
 import google.generativeai as genai
 genai.configure(api_key=api_key)
-model = genai.GenerativeModel("gemini-1.5-flash")  # 無料枠：1500回/日
+# モデルは環境変数 GEMINI_MODEL で一元管理（既定 gemini-2.5-flash）。直接 "gemini-1.5-flash" 等とハードコードしない
+model = genai.GenerativeModel(os.getenv("GEMINI_MODEL", "gemini-2.5-flash"))
 response = model.generate_content(prompt)
 ```
 

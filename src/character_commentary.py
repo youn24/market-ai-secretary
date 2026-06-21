@@ -333,7 +333,7 @@ def generate_comments(prices: dict, risk: dict, fear_greed: dict, ai_summary: di
     try:
         import google.generativeai as genai
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel(os.getenv("GEMINI_MODEL", "gemini-2.5-flash"))
 
         # 言い回しを毎回変えるためのスパイス（プロンプトに混ぜる）
         ganesha_flavor = random.choice([

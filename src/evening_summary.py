@@ -80,7 +80,7 @@ def generate_evening_message(prices: dict, fear_greed: dict, risk: dict) -> str:
         try:
             import google.generativeai as genai
             genai.configure(api_key=api_key)
-            model = genai.GenerativeModel("gemini-1.5-flash")
+            model = genai.GenerativeModel(os.getenv("GEMINI_MODEL", "gemini-2.5-flash"))
 
             prompt = f"""今日({date_str})の市場を振り返り、投資初心者に向けて超わかりやすくまとめてください。
 

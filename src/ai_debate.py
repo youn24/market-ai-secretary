@@ -20,7 +20,7 @@ def _get_gemini_model():
         return None
     import google.generativeai as genai
     genai.configure(api_key=api_key)
-    return genai.GenerativeModel("gemini-1.5-flash")
+    return genai.GenerativeModel(os.getenv("GEMINI_MODEL", "gemini-2.5-flash"))
 
 
 def _load_history() -> dict:

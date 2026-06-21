@@ -284,7 +284,7 @@ def run_agent(prices: dict, news: list, risk: dict, fear_greed: dict) -> dict:
         ]
 
         model = genai.GenerativeModel(
-            "gemini-1.5-flash",
+            os.getenv("GEMINI_MODEL", "gemini-2.5-flash"),
             tools=tools_def,
         )
 

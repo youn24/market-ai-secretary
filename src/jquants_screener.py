@@ -241,7 +241,7 @@ def run() -> dict:
         try:
             import google.generativeai as genai
             genai.configure(api_key=api_key)
-            model = genai.GenerativeModel("gemini-1.5-flash")
+            model = genai.GenerativeModel(os.getenv("GEMINI_MODEL", "gemini-2.5-flash"))
             ai_picks = _generate_picks(screened, model)
         except Exception as e:
             logger.warning(f"  Gemini呼び出し失敗: {e}")

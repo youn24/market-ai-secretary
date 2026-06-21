@@ -181,7 +181,7 @@ def run() -> dict:
         try:
             import google.generativeai as genai
             genai.configure(api_key=api_key)
-            model = genai.GenerativeModel("gemini-1.5-flash")
+            model = genai.GenerativeModel(os.getenv("GEMINI_MODEL", "gemini-2.5-flash"))
             previews = _generate_preview(upcoming, model)
             logger.info(f"  プレビュー生成: {len(previews)}件")
         except Exception as e:

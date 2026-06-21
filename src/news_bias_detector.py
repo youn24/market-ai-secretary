@@ -63,7 +63,7 @@ def _analyze_with_gemini(titles: list) -> list:
     try:
         import google.generativeai as genai
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel(os.getenv("GEMINI_MODEL", "gemini-2.5-flash"))
 
         numbered = "\n".join(f"{i+1}. {t}" for i, t in enumerate(titles))
         prompt = f"""以下のニュース見出しそれぞれの「煽り・誇張度」を0〜10でスコアリングしてください。

@@ -64,7 +64,7 @@ def fetch_calendar_via_gemini(week_dates: list) -> list:
     try:
         import google.generativeai as genai
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel(os.getenv("GEMINI_MODEL", "gemini-2.5-flash"))
 
         mon_str = week_dates[0].strftime("%Y年%m月%d日")
         fri_str = week_dates[4].strftime("%Y年%m月%d日")

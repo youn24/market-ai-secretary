@@ -42,7 +42,7 @@ def _generate_summary(prices, risk, fear_greed, ai_summary) -> str:
     try:
         import google.generativeai as genai
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel(os.getenv("GEMINI_MODEL", "gemini-2.5-flash"))
 
         score     = risk.get("score", 0)
         sentiment = risk.get("sentiment", "不明")

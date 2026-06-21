@@ -18,7 +18,7 @@ def run(prices: dict, risk: dict, fear_greed: dict, news: list) -> dict:
     try:
         import google.generativeai as genai
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel(os.getenv("GEMINI_MODEL", "gemini-2.5-flash"))
 
         score    = risk.get("score", 0)
         fg       = fear_greed.get("score") or 50

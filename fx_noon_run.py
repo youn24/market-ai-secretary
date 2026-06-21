@@ -53,7 +53,7 @@ def _gemini_fx_comment(data: dict, premium: dict) -> str:
     try:
         import google.generativeai as genai
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel(os.getenv("GEMINI_MODEL", "gemini-2.5-flash"))
 
         usdjpy  = data.get("USDJPY=X", {})
         vix     = data.get("^VIX",     {}).get("latest", "N/A")

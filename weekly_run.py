@@ -152,7 +152,7 @@ def _generate_weekly_analysis(prices, news, risk, fear_greed) -> dict:
     try:
         import google.generativeai as genai
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel(os.getenv("GEMINI_MODEL", "gemini-2.5-flash"))
 
         # 過去1週間のニュース
         news_text = "\n".join(f"・{n.get('title','')}" for n in

@@ -118,7 +118,7 @@ def analyze_with_gemini(sectors: list, rotation: dict) -> str:
     try:
         import google.generativeai as genai
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel(os.getenv("GEMINI_MODEL", "gemini-2.5-flash"))
 
         sector_text = "\n".join(
             f"・{s['name']}({s['symbol']}): 日次{s['chg_1d']:+.1f}% ／ 週次{s['chg_1w']:+.1f}% ／ 月次{s['chg_1m']:+.1f}%"

@@ -134,7 +134,7 @@ def gemini_analyze(text: str) -> str:
     try:
         import google.generativeai as genai
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel(os.getenv("GEMINI_MODEL", "gemini-2.5-flash"))
         prompt = f"""以下はFOMC（米連邦公開市場委員会）の最新声明文の抜粋です：
 
 {text[:1500]}

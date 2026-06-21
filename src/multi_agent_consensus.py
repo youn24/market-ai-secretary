@@ -164,7 +164,7 @@ def run(prices, risk, fear_greed, news, technical=None, fred_data=None) -> dict:
     try:
         import google.generativeai as genai
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel(os.getenv("GEMINI_MODEL", "gemini-2.5-flash"))
 
         brief = _build_market_brief(prices, risk, fear_greed, news, technical, fred_data)
 

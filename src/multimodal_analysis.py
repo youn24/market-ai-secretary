@@ -142,7 +142,7 @@ def run(chart_paths: dict, prices: dict, technical=None) -> dict:
         import google.generativeai as genai
         genai.configure(api_key=api_key)
         # Vision対応のモデルを使用
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel(os.getenv("GEMINI_MODEL", "gemini-2.5-flash"))
 
         vision_text = _analyze_with_gemini(image_bytes, model)
         if not vision_text:

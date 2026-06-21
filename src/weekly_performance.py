@@ -90,7 +90,7 @@ def _gemini_analyze(wrong_records: list) -> list:
     try:
         import google.generativeai as genai
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel(os.getenv("GEMINI_MODEL", "gemini-2.5-flash"))
 
         records_text = json.dumps(wrong_records, ensure_ascii=False, indent=2)
         prompt = (

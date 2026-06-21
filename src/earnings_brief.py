@@ -43,7 +43,7 @@ def _summarize_pdf(pdf_url: str, name: str, title: str) -> str:
 
         import google.generativeai as genai
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel(os.getenv("GEMINI_MODEL", "gemini-2.5-flash"))
 
         prompt = f"""これは「{name}」の開示資料「{title}」のPDFです。
 投資初心者にもわかるように、次の3点を各1行・合計3行で日本語要約してください。

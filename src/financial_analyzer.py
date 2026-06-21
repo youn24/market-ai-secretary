@@ -204,7 +204,7 @@ def analyze_company(symbol: str, name: str = "") -> dict:
         try:
             import google.generativeai as genai
             genai.configure(api_key=api_key)
-            model  = genai.GenerativeModel("gemini-1.5-flash")
+            model  = genai.GenerativeModel(os.getenv("GEMINI_MODEL", "gemini-2.5-flash"))
             prompt = _build_prompt(d, display_name)
             resp   = model.generate_content(prompt)
             result["ai_analysis"] = resp.text.strip()

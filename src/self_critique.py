@@ -118,7 +118,7 @@ def run(prices: dict = None, risk: dict = None) -> dict:
         try:
             import google.generativeai as genai
             genai.configure(api_key=api_key)
-            model = genai.GenerativeModel("gemini-1.5-flash")
+            model = genai.GenerativeModel(os.getenv("GEMINI_MODEL", "gemini-2.5-flash"))
             prompt = _build_critique_prompt(verified, memory_summary)
             resp = model.generate_content(prompt)
             ai_critique = resp.text.strip()

@@ -106,7 +106,7 @@ def generate_daily_lesson(prices: dict, risk: dict, fear_greed: dict) -> dict:
     try:
         import google.generativeai as genai
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel(os.getenv("GEMINI_MODEL", "gemini-2.5-flash"))
 
         prompt = f"""今日({today_str})の相場データ:
 - 日経225: {nikkei_chg:+.2f}%
