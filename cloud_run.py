@@ -732,6 +732,22 @@ def run(mode: str):
     except Exception:
         logger.error("Telegram通知エラー"); logger.debug(traceback.format_exc())
 
+    # Step 8b: X（Twitter）自動投稿
+    try:
+        logger.info("--- Step 8b: X自動投稿 ---")
+        from src.notify_x import run as notify_x
+        x_result = notify_x(risk, prices, fear_greed,
+                            report_paths=report_paths,
+                            note_magazine_url=os.getenv("NOTE_MAGAZINE_URL", ""))
+        if x_result.get("posted"):
+            logger.info("✅ X投稿完了")
+        elif x_result.get("available"):
+            logger.warning("X投稿失敗（API設定確認）")
+        else:
+            logger.info("X API未設定のためスキップ")
+    except Exception:
+        logger.error("X投稿エラー"); logger.debug(traceback.format_exc())
+
     logger.info(f"====== クラウド実行完了 ======")
     print(f"\n✅ 完了 | 地合い: {risk.get('sentiment')} | "
           f"F&G: {fear_greed.get('score')} ({fear_greed.get('rating_ja')}) | "

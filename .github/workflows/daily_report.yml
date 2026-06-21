@@ -38,7 +38,8 @@ jobs:
           pip install --upgrade pip
           pip install pandas numpy requests feedparser beautifulsoup4 \
                       lxml python-dotenv PyYAML yfinance plotly \
-                      matplotlib kaleido google-generativeai google-genai playwright
+                      matplotlib kaleido google-generativeai google-genai playwright \
+                      tweepy
 
       - name: Playwright Chromium インストール（noteカバー画像のHTML→PNG描画用）
         run: |
@@ -63,6 +64,11 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GITHUB_PAGES_URL: "https://youn24.github.io/market-ai-secretary"
           NOTE_MAGAZINE_URL: ${{ secrets.NOTE_MAGAZINE_URL }}
+          FX_AFFILIATE_URL: ${{ secrets.FX_AFFILIATE_URL }}
+          X_API_KEY: ${{ secrets.X_API_KEY }}
+          X_API_SECRET: ${{ secrets.X_API_SECRET }}
+          X_ACCESS_TOKEN: ${{ secrets.X_ACCESS_TOKEN }}
+          X_ACCESS_TOKEN_SECRET: ${{ secrets.X_ACCESS_TOKEN_SECRET }}
         run: |
           echo "📋 従来型レポート生成中..."
           python cloud_run.py --mode morning || true

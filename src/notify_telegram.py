@@ -176,6 +176,19 @@ def build_three_messages(risk, analysis, mode,
             f"💳 {mag_url}\n"
         )
 
+    # FXアフィリエイトブロック（FX_AFFILIATE_URL設定時のみ表示）
+    aff_url = os.getenv("FX_AFFILIATE_URL", "").strip()
+    aff_block = ""
+    if aff_url:
+        aff_block = (
+            f"\n"
+            f"━━━━━━━━━━━━━━━━━━━━\n"
+            f"💹 *FX口座をお持ちでない方へ*\n"
+            f"スプレッド最狭水準・ツール充実のFX口座\n"
+            f"👇 無料開設はこちら\n"
+            f"{aff_url}\n"
+        )
+
     msg3 = (
         f"📱 *詳細レポート*\n"
         f"━━━━━━━━━━━━━━━━━━━━\n"
@@ -185,6 +198,7 @@ def build_three_messages(risk, analysis, mode,
         f"📊チャート  🤖AI議論  📰ニュース\n"
         f"📐テクニカル  🎭シナリオ  📅カレンダー"
         + note_block
+        + aff_block
     )
 
     return [msg1, msg2_caption, msg3]
