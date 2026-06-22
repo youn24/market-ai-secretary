@@ -679,6 +679,45 @@ def _tv_overview():
 
 
 # ──────────────────────────────────────────
+# セクション 8.5：業種別ヒートマップ（リアルタイム）
+# ──────────────────────────────────────────
+
+def _sector_heatmap_live():
+    """TradingView Stock Heatmap（業種別）。日本株/米国セクターをタブ切替・リアルタイム描画。"""
+    def widget(ds):
+        return f'''<div class="tradingview-widget-container" style="height:420px">
+      <div class="tradingview-widget-container__widget" style="height:100%"></div>
+      <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-stock-heatmap.js" async>
+      {{"dataSource":"{ds}","blockSize":"market_cap_basic","blockColor":"change","grouping":"sector","locale":"ja","colorTheme":"dark","hasTopBar":false,"isDataSetEnabled":false,"isZoomEnabled":true,"hasSymbolTooltip":true,"isMonoSize":false,"width":"100%","height":"100%"}}
+      </script>
+    </div>'''
+    return f"""
+<div style="margin-bottom:12px">
+  <div class="label" style="padding:0 2px;margin-bottom:6px">🔥 業種別ヒートマップ（リアルタイム）</div>
+  <div style="display:flex;gap:6px;margin-bottom:8px">
+    <button type="button" onclick="shmTab(this,'jp')" class="shm-btn shm-on">🇯🇵 日本株（東証）</button>
+    <button type="button" onclick="shmTab(this,'us')" class="shm-btn">🇺🇸 米国セクター</button>
+  </div>
+  <div id="shm-jp" style="border-radius:14px;overflow:hidden;border:1px solid {BORDER}">{widget("NIKKEI225")}</div>
+  <div id="shm-us" style="display:none;border-radius:14px;overflow:hidden;border:1px solid {BORDER}">{widget("SPX500")}</div>
+  <div style="font-size:10px;color:{MUTED};margin-top:6px">💡 タイルの色＝今の上がり下がり（緑=上昇・赤=下落）／ 大きさ＝会社の規模。緑が多い業種に今お金が集まっています</div>
+</div>
+<style>
+.shm-btn{{flex:1;background:rgba(255,255,255,.04);border:1px solid {BORDER};color:{MUTED};border-radius:9px;padding:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s}}
+.shm-btn.shm-on{{background:rgba(0,180,255,.12);border-color:{BLUE};color:{BLUE}}}
+</style>
+<script>
+function shmTab(btn, which){{
+  document.getElementById('shm-jp').style.display = (which==='jp')?'block':'none';
+  document.getElementById('shm-us').style.display = (which==='us')?'block':'none';
+  document.querySelectorAll('.shm-btn').forEach(function(b){{b.classList.remove('shm-on');}});
+  btn.classList.add('shm-on');
+  window.dispatchEvent(new Event('resize'));
+}}
+</script>"""
+
+
+# ──────────────────────────────────────────
 # セクション 9：プロ向けクロス分析
 # ──────────────────────────────────────────
 
@@ -1010,6 +1049,7 @@ def generate(
     sc_html      = _scenarios(scenario)
     mkt_html     = _market_grid(prices, technical)
     tv_html      = _tv_overview()
+    shm_html     = _sector_heatmap_live()
     pro_html     = _pro_cross(prices)
     news_html    = _news(news)
     cal_html     = _calendar(weekly_calendar)
@@ -1065,6 +1105,7 @@ def generate(
   {sc_html}
   {mkt_html}
   {tv_html}
+  {shm_html}
   {pro_html}
   {news_html}
   {cal_html}
