@@ -755,7 +755,22 @@ def run(mode: str):
     except Exception:
         logger.error("Telegram通知エラー"); logger.debug(traceback.format_exc())
 
-    # Step 8b: X（Twitter）自動投稿
+    # Step 8b: note記事テキスト自動生成
+    note_article = {"available": False}
+    try:
+        logger.info("--- Step 8b: note記事生成 ---")
+        from src.note_article_generator import run as gen_note
+        note_article = gen_note(prices, risk, fear_greed,
+                                ai_summary=ai_summary,
+                                scenario=scenario,
+                                news=news,
+                                note_magazine_url=os.getenv("NOTE_MAGAZINE_URL", ""))
+        if note_article.get("available"):
+            logger.info(f"✅ note記事生成完了: {note_article.get('path')}")
+    except Exception:
+        logger.error("note記事生成エラー"); logger.debug(traceback.format_exc())
+
+    # Step 8d: X（Twitter）自動投稿
     try:
         logger.info("--- Step 8b: X自動投稿 ---")
         from src.notify_x import run as notify_x
