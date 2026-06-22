@@ -760,6 +760,8 @@ def run(mode: str):
         logger.info("--- Step 8b: X自動投稿 ---")
         from src.notify_x import run as notify_x
         x_result = notify_x(risk, prices, fear_greed,
+                            ai_summary=ai_summary,
+                            news=news,
                             report_paths=report_paths,
                             note_magazine_url=os.getenv("NOTE_MAGAZINE_URL", ""))
         if x_result.get("posted"):
