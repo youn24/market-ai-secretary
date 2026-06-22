@@ -334,6 +334,22 @@ def run(risk, analysis, report_paths, mode,
             note_magazine_url=os.getenv("NOTE_MAGAZINE_URL", "").strip(),
         )
 
+        # ①.0 サマリーカード画像（最初に送る・一目でわかるビジュアル）
+        try:
+            from src.summary_card import make_summary_card
+            card_path = make_summary_card(
+                prices=prices,
+                fear_greed=fear_greed,
+                risk=risk,
+                ai_summary=ai_summary,
+                news=list(news) if news else [],
+            )
+            if card_path and os.path.exists(card_path):
+                send_photo(card_path)
+                logger.info("✅ サマリーカード送信")
+        except Exception:
+            logger.debug(traceback.format_exc())
+
         # ① 数字・ニュース速報
         send_message(msgs[0])
 
