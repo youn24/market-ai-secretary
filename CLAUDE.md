@@ -104,6 +104,8 @@ cloud_run.py（メインスクリプト）
 GEMINI_API_KEY      → Google AI Studio で発行（無料枠あり）
 GEMINI_MODEL        → 使用モデルを一元管理（任意・未設定なら gemini-2.5-flash）
                       ※全モジュール共通。レート制限時は gemini-2.0-flash に変更すれば一括切替
+CF_PROXY_URL        → 業種別ランキングのザラ場リアルタイム更新用CORSプロキシ（任意）
+                      ※Cloudflare WorkerのURL。未設定なら朝の値を表示。SETUP_CLOUDFLARE.md参照
 TELEGRAM_BOT_TOKEN  → @BotFather で発行
 TELEGRAM_CHAT_ID    → 8958569711
 GITHUB_PAGES_URL    → https://youn24.github.io/market-ai-secretary

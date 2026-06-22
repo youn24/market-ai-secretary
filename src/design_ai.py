@@ -3,11 +3,16 @@ src/design_ai.py — ミセスワタナベ 市場ダッシュボード v5
 ガネーシャ🐘＆カワウソ🦦キャラクター完全統合版
 """
 
+import os
 import traceback
 from pathlib import Path
 from src.utils import setup_logger, get_jst_now, get_today_str, get_dirs
 
 logger = setup_logger("design_ai")
+
+# Cloudflare Worker等のCORSプロキシURL（業種別ランキングのザラ場リアルタイム取得用）
+# 未設定なら従来どおりサーバー生成JSONのポーリングのみ（朝の値）
+CF_PROXY_URL = os.getenv("CF_PROXY_URL", "").strip().rstrip("/")
 
 # ──────────────────────────────────────────
 # カラーパレット（ネオン系ダーク）
@@ -746,6 +751,9 @@ def _sector_ranking(ranking: dict):
                 f'</tr>')
 
     body = "".join(row_html(r) for r in rows)
+    cf_proxy = CF_PROXY_URL  # JSに埋め込むCORSプロキシURL（空ならポーリングのみ）
+    live_note = ("ザラ場中（9:00〜15:30）は約30秒ごとにリアルタイム更新されます"
+                 if cf_proxy else "約1分ごとに自動更新されます")
 
     return f"""
 <div style="margin-bottom:12px">
@@ -767,7 +775,7 @@ def _sector_ranking(ranking: dict):
       </thead>
       <tbody id="srk-body">{body}</tbody>
     </table>
-    <div style="font-size:10px;color:{MUTED};margin-top:8px">💡 緑▲＝上昇／赤▼＝下落。上位の業種に今お金が集まっています。約1分ごとに自動更新されます</div>
+    <div style="font-size:10px;color:{MUTED};margin-top:8px">💡 緑▲＝上昇／赤▼＝下落。上位の業種に今お金が集まっています。{live_note}</div>
   </div>
 </div>
 <style>
@@ -804,7 +812,34 @@ def _sector_ranking(ranking: dict):
   function poll(){{
     fetch('./sector_ranking.json?cb='+Date.now()).then(function(r){{return r.json();}}).then(render).catch(function(){{}});
   }}
-  setInterval(poll, 60000);
+  // ── ザラ場リアルタイム（Cloudflare Worker経由でYahooを直接取得）──
+  var PROXY="{cf_proxy}";
+  var SYMS=["1617.T","1618.T","1619.T","1620.T","1621.T","1622.T","1623.T","1624.T","1625.T","1626.T","1627.T","1628.T","1629.T","1630.T","1631.T","1632.T","1633.T"];
+  var NAMES={{"1617.T":"食品","1618.T":"エネルギー資源","1619.T":"建設・資材","1620.T":"素材・化学","1621.T":"医薬品","1622.T":"自動車・輸送機","1623.T":"鉄鋼・非鉄","1624.T":"機械","1625.T":"電機・精密","1626.T":"情報通信・サービス他","1627.T":"電力・ガス","1628.T":"運輸・物流","1629.T":"商社・卸売","1630.T":"小売","1631.T":"銀行","1632.T":"金融(除く銀行)","1633.T":"不動産"}};
+  function jstNow(){{var n=new Date();return new Date(n.getTime()+(n.getTimezoneOffset()+540)*60000);}}
+  function isZaraba(){{var j=jstNow(),dy=j.getDay();if(dy===0||dy===6)return false;var hm=j.getHours()*100+j.getMinutes();return (hm>=900&&hm<=1130)||(hm>=1230&&hm<=1530);}}
+  function tstr(){{var j=jstNow();function z(x){{return(x<10?'0':'')+x;}}return j.getFullYear()+'-'+z(j.getMonth()+1)+'-'+z(j.getDate())+' '+z(j.getHours())+':'+z(j.getMinutes())+' JST';}}
+  function live(){{
+    var spark='https://query1.finance.yahoo.com/v8/finance/spark?symbols='+SYMS.join(',')+'&range=1d&interval=1d';
+    fetch(PROXY+'?url='+encodeURIComponent(spark)).then(function(r){{return r.json();}}).then(function(j){{
+      var rows=[];
+      SYMS.forEach(function(s){{
+        var d=j[s]; if(!d) return;
+        var c=(d.close&&d.close.length)?d.close[d.close.length-1]:null;
+        var p=d.chartPreviousClose;
+        if(c==null||!p) return;
+        var pct=(c-p)/p*100; if(Math.abs(pct)>18) return;
+        rows.push({{name:NAMES[s],price:c,chg:c-p,pct:pct}});
+      }});
+      if(!rows.length) return;
+      rows.sort(function(a,b){{return b.pct-a.pct;}});
+      rows.forEach(function(r,i){{r.rank=i+1;}});
+      render({{ranking:rows,market_state:'🔴 ザラ場・リアルタイム',generated_at:tstr()}});
+    }}).catch(function(){{}});
+  }}
+  function tick(){{ if(PROXY && isZaraba()) live(); else poll(); }}
+  tick();
+  setInterval(tick, 30000);
 }})();
 </script>"""
 
