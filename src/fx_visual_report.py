@@ -217,19 +217,19 @@ def _ax_style(ax, title: str = "", ylabel: str = "", note: str = ""):
     ax.set_facecolor(BG2)
     for spine in ax.spines.values():
         spine.set_color(C_BORDER)
-    ax.tick_params(colors=C_GRAY, labelsize=8.5, length=3)
-    ax.grid(color=GRID_C, linewidth=0.4, linestyle="--", alpha=0.6)
+    ax.tick_params(colors=C_WHITE, labelsize=10.5, length=4)
+    ax.grid(color=GRID_C, linewidth=0.5, linestyle="--", alpha=0.65)
     if title:
-        ax.set_title(title, color=C_WHITE, fontsize=11, fontweight="bold",
-                     pad=7, loc="left")
+        ax.set_title(title, color=C_GOLD, fontsize=14, fontweight="bold",
+                     pad=9, loc="left",
+                     bbox=dict(boxstyle="round,pad=0.3", fc=BG3, ec=C_GOLD, alpha=0.6, lw=0.8))
     if ylabel:
-        ax.set_ylabel(ylabel, color=C_GRAY, fontsize=8.5)
+        ax.set_ylabel(ylabel, color=C_WHITE, fontsize=10.5)
     if note:
-        # パネル右上に小さい解説テキスト（薄グレー）
         ax.text(0.99, 0.97, note, transform=ax.transAxes,
-                fontsize=7, color=C_GRAY, va="top", ha="right",
-                style="italic", alpha=0.80,
-                bbox=dict(boxstyle="round,pad=0.25", fc=BG3, ec="none", alpha=0.7))
+                fontsize=8.5, color=C_CYAN, va="top", ha="right",
+                style="italic", alpha=0.88,
+                bbox=dict(boxstyle="round,pad=0.28", fc=BG3, ec=C_BORDER, alpha=0.75))
 
 
 def _set_date_xticks(ax, df_index, n_ticks=8):
@@ -239,7 +239,7 @@ def _set_date_xticks(ax, df_index, n_ticks=8):
     ax.set_xticks(ticks)
     ax.set_xticklabels(
         [df_index[i].strftime("%m/%d") if i < n else "" for i in ticks],
-        fontsize=7, color=C_GRAY
+        fontsize=9.5, color=C_WHITE
     )
 
 
@@ -501,7 +501,7 @@ def panel_cross_assets(ax, data: dict):
                 color=color, fontsize=8, va="center", fontweight="bold")
 
     ax.axhline(0, color=C_GRAY, lw=0.8, ls="--", alpha=0.7)
-    ax.legend(loc="upper left", fontsize=7.5, fancybox=True,
+    ax.legend(loc="upper left", fontsize=10, fancybox=True,
               facecolor=BG3, edgecolor=C_BORDER, labelcolor=C_WHITE)
     _ax_style(ax, "🌐 クロスアセット比較（60日間の騰落率）", "%",
               note="60日前=0% 基準  右端の数値=60日間の変化率")
@@ -548,13 +548,13 @@ def panel_interest_rates(ax, data: dict, premium: dict | None = None):
         diff = u - j
         ypos = (u + j) / 2
         ax.annotate(f"差{diff:.2f}%", xy=(xi, ypos),
-                    ha="center", va="center", fontsize=7.5,
+                    ha="center", va="center", fontsize=9.5,
                     color=C_GOLD, fontweight="bold",
                     bbox=dict(boxstyle="round,pad=0.2", fc=BG3, ec=C_BORDER, alpha=0.8))
 
     ax.set_xticks(x)
     ax.set_xticklabels(maturities, fontsize=8, color=C_WHITE)
-    ax.legend(loc="upper right", fontsize=7.5, fancybox=True,
+    ax.legend(loc="upper right", fontsize=10, fancybox=True,
               facecolor=BG3, edgecolor=C_BORDER, labelcolor=C_WHITE)
     _ax_style(ax, "📐 日米イールドカーブ比較（実データ）", "利回り %",
               note="差が大きい→円安圧力  差が小さい→円高圧力  金利差がドル円を動かす")
@@ -616,7 +616,7 @@ def panel_imm_positions(ax, data: dict, premium: dict | None = None):
 
     ax.set_xticks(range(len(labels)))
     ax.set_xticklabels(labels, rotation=45, fontsize=6.5, color=C_GRAY, ha="right")
-    ax.legend(loc="lower right", fontsize=7.5, fancybox=True,
+    ax.legend(loc="lower right", fontsize=10, fancybox=True,
               facecolor=BG3, edgecolor=C_BORDER, labelcolor=C_WHITE)
     _ax_style(ax, f"📊 投機筋 円ポジション（CFTC）", "千枚",
               note="マイナス大＝円売り積み上がり → 急反転で円高リスク")
@@ -752,9 +752,9 @@ def panel_vix_gauge(ax, data: dict):
             ha="center", va="center", color=vix_c,
             fontsize=26, fontweight="bold")
     ax.text(0, -0.38, vix_str,
-            ha="center", va="center", color=vix_c, fontsize=9.5, fontweight="bold")
+            ha="center", va="center", color=vix_c, fontsize=12, fontweight="bold")
     ax.text(0, -0.53, "VIX 恐怖指数",
-            ha="center", va="center", color=C_GRAY, fontsize=8.5)
+            ha="center", va="center", color=C_WHITE, fontsize=11)
 
     # ゾーンラベル
     for s, e, col, label in zones:
@@ -762,18 +762,19 @@ def panel_vix_gauge(ax, data: dict):
         lx    = 1.35 * np.cos(mid)
         ly    = 1.35 * np.sin(mid)
         ax.text(lx, ly, label, ha="center", va="center",
-                color=col, fontsize=7.5, fontweight="bold", linespacing=1.2)
+                color=col, fontsize=10.5, fontweight="bold", linespacing=1.2)
 
     ax.set_xlim(-1.6, 1.6)
     ax.set_ylim(-0.65, 1.55)
     ax.set_aspect("equal")
     ax.axis("off")
     ax.set_facecolor(BG2)
-    ax.set_title("⚡ VIX リスクメーター（恐怖指数）", color=C_WHITE,
-                 fontsize=11, fontweight="bold", pad=7, loc="left")
+    ax.set_title("⚡ VIX リスクメーター（恐怖指数）", color=C_GOLD,
+                 fontsize=14, fontweight="bold", pad=9, loc="left",
+                 bbox=dict(boxstyle="round,pad=0.3", fc=BG3, ec=C_GOLD, alpha=0.6, lw=0.8))
     ax.text(0.99, 0.04, "20未満=落ち着き  20-30=警戒  30超=危険",
-            transform=ax.transAxes, fontsize=7, color=C_GRAY,
-            va="bottom", ha="right", style="italic", alpha=0.8)
+            transform=ax.transAxes, fontsize=9.5, color=C_CYAN,
+            va="bottom", ha="right", style="italic", alpha=0.88)
 
 
 def panel_price_board(ax, data: dict):
@@ -781,7 +782,8 @@ def panel_price_board(ax, data: dict):
     ax.axis("off")
     ax.set_facecolor(BG2)
     ax.set_title("💹 現在値ボード（東京14時）", color=C_GOLD,
-                 fontsize=11, fontweight="bold", pad=7, loc="left")
+                 fontsize=14, fontweight="bold", pad=9, loc="left",
+                 bbox=dict(boxstyle="round,pad=0.3", fc=BG3, ec=C_GOLD, alpha=0.6, lw=0.8))
 
     board = [
         ("USDJPY=X", "💵 ドル円",       "{:.3f}円",  True),
@@ -811,38 +813,40 @@ def panel_price_board(ax, data: dict):
         except Exception:
             val_s = f"{val:.2f}"
 
-        fsize_label = 10 if is_main else 8.5
-        fsize_val   = 10 if is_main else 8.5
-        label_col   = C_GOLD if is_main else C_GRAY
+        fsize_label = 12.5 if is_main else 11
+        fsize_val   = 12.5 if is_main else 11
+        label_col   = C_GOLD if is_main else C_WHITE
 
         # ラベル（左）
         ax.text(0.02, y, label, transform=ax.transAxes,
-                fontsize=fsize_label, color=label_col, va="top")
+                fontsize=fsize_label, color=label_col, va="top",
+                fontweight="bold" if is_main else "normal")
         # 値（中央）
         ax.text(0.62, y, val_s, transform=ax.transAxes,
                 fontsize=fsize_val, color=C_WHITE, va="top", ha="right",
-                fontweight="bold" if is_main else "normal")
+                fontweight="bold")
         # 変化率（右）
         ax.text(0.99, y, f"{arrow}{abs(chg):.2f}%",
-                transform=ax.transAxes, fontsize=fsize_val - 0.5, color=col,
-                va="top", ha="right", fontweight="bold" if is_main else "normal")
+                transform=ax.transAxes, fontsize=fsize_val, color=col,
+                va="top", ha="right", fontweight="bold")
 
         # 区切り線（メインは太め）
-        ax.plot([0.01, 0.99], [y - 0.004, y - 0.004],
+        ax.plot([0.01, 0.99], [y - 0.005, y - 0.005],
                 color=C_GOLD if is_main else C_BORDER,
-                lw=0.6 if is_main else 0.3, transform=ax.transAxes)
-        y -= 0.082
+                lw=0.8 if is_main else 0.4, transform=ax.transAxes)
+        y -= 0.087
 
 
 def panel_fred_macro(ax, premium: dict | None = None):
     """Panel N: FRED 主要経済指標ダッシュボード（実データ）"""
     ax.axis("off")
     ax.set_facecolor(BG2)
-    ax.set_title("🏛 FRED 主要経済指標（米国・実データ）", color=C_WHITE,
-                 fontsize=11, fontweight="bold", pad=7, loc="left")
+    ax.set_title("🏛 FRED 主要経済指標（米国・実データ）", color=C_GOLD,
+                 fontsize=14, fontweight="bold", pad=9, loc="left",
+                 bbox=dict(boxstyle="round,pad=0.3", fc=BG3, ec=C_GOLD, alpha=0.6, lw=0.8))
     ax.text(0.99, 0.995, "▲=前月比UP  ▼=前月比DOWN",
-            transform=ax.transAxes, fontsize=7, color=C_GRAY,
-            va="top", ha="right", alpha=0.8, style="italic")
+            transform=ax.transAxes, fontsize=9.5, color=C_CYAN,
+            va="top", ha="right", alpha=0.88, style="italic")
 
     fred = (premium or {}).get("fred", {})
     items = [
@@ -879,12 +883,13 @@ def panel_fred_macro(ax, premium: dict | None = None):
         else:
             continue
 
-        ax.text(0.02, y, name,    transform=ax.transAxes, fontsize=9.5, color=C_GRAY,  va="top")
-        ax.text(0.58, y, val_s,   transform=ax.transAxes, fontsize=9.5, color=C_WHITE, va="top",
+        ax.text(0.02, y, name,    transform=ax.transAxes, fontsize=11, color=C_WHITE, va="top")
+        ax.text(0.58, y, val_s,   transform=ax.transAxes, fontsize=11, color=C_GOLD,  va="top",
                 ha="right", fontweight="bold")
-        ax.text(0.74, y, arrow,   transform=ax.transAxes, fontsize=9.5, color=col,     va="top")
-        ax.text(0.99, y, date,    transform=ax.transAxes, fontsize=8,   color=src_col, va="top",
-                ha="right", alpha=0.7)
+        ax.text(0.74, y, arrow,   transform=ax.transAxes, fontsize=11, color=col,     va="top",
+                fontweight="bold")
+        ax.text(0.99, y, date,    transform=ax.transAxes, fontsize=9.5, color=src_col, va="top",
+                ha="right", alpha=0.75)
         ax.plot([0.01, 0.99], [y - 0.004, y - 0.004], color=C_BORDER,
                 lw=0.3, transform=ax.transAxes)
         y -= 0.106
@@ -922,7 +927,7 @@ def panel_vix_term_structure(ax, premium: dict | None = None, data: dict | None 
     ax.set_xticks(idx)
     ax.set_xticklabels(labels, fontsize=9, color=C_WHITE)
     ax.set_ylim(0, max(40, vix3m * 1.3))
-    ax.legend(loc="upper right", fontsize=7.5, fancybox=True,
+    ax.legend(loc="upper right", fontsize=10, fancybox=True,
               facecolor=BG3, edgecolor=C_BORDER, labelcolor=C_WHITE)
     _ax_style(ax, "⚡ VIX先物ターム構造（恐怖の持続性）",
               note="3ヶ月先VIX＞現在VIX=通常  逆転=パニック的な恐怖")
@@ -958,7 +963,7 @@ def panel_treasury_curve(ax, premium: dict | None = None, data: dict | None = No
 
     # 各点に値ラベル
     for i, (m, r) in enumerate(zip(mats, rates)):
-        ax.text(i, r + 0.03, f"{r:.2f}", ha="center", color=C_WHITE, fontsize=7.5, fontweight="bold")
+        ax.text(i, r + 0.03, f"{r:.2f}", ha="center", color=C_WHITE, fontsize=10, fontweight="bold")
 
     # 逆イールドチェック
     r3m  = tc.get("3M",  rates[0])
@@ -1006,7 +1011,7 @@ def panel_dxy_trend(ax, data: dict):
             transform=ax.transAxes, ha="right", va="top",
             color=C_CYAN, fontsize=9, fontweight="bold")
 
-    ax.legend(loc="upper left", fontsize=7.5, fancybox=True,
+    ax.legend(loc="upper left", fontsize=10, fancybox=True,
               facecolor=BG3, edgecolor=C_BORDER, labelcolor=C_WHITE)
     _ax_style(ax, "💲 ドル指数(DXY)トレンド（60日）",
               note="DXY↑=ドル高=円安圧力  DXY↓=ドル安=円高圧力  100=均衡")
@@ -1021,17 +1026,17 @@ def build_dashboard(data: dict, out_path: str, premium: dict | None = None) -> s
     全パネルを組み合わせた大型ダッシュボードを生成して PNG 保存
     サイズ: 22×30 インチ @ 100dpi = 2200×3000px
     """
-    fig = plt.figure(figsize=(24, 32), facecolor=BG)
+    fig = plt.figure(figsize=(26, 36), facecolor=BG)
     fig.patch.set_facecolor(BG)
 
     # GridSpec: 6行 × 3列
     gs = gridspec.GridSpec(
         6, 3,
         figure=fig,
-        height_ratios=[3.5, 1.5, 1.5, 2.4, 2.4, 2.4],
+        height_ratios=[3.5, 1.8, 1.8, 2.6, 2.6, 2.6],
         width_ratios=[1, 1, 1],
-        hspace=0.55,
-        wspace=0.38,
+        hspace=0.68,
+        wspace=0.42,
     )
 
     # ── Row 0: USD/JPY プライスチャート（3列フル）──
@@ -1071,18 +1076,18 @@ def build_dashboard(data: dict, out_path: str, premium: dict | None = None) -> s
         f"{jst_now.year}年{jst_now.month}月{jst_now.day}日（{_wd}）"
         f"  {jst_now.strftime('%H:%M')} JST  —  東京市場 午後2時レポート"
     )
-    fig.suptitle(title, color=C_GOLD, fontsize=18,
+    fig.suptitle(title, color=C_GOLD, fontsize=24,
                  fontweight="bold", y=0.995, linespacing=1.7)
 
     # ─── 為替専用バッジ ───
     fig.text(0.013, 0.9958, "  💱 FX専用  ",
-             ha="left", va="top", color=BG, fontsize=12, fontweight="bold",
+             ha="left", va="top", color=BG, fontsize=15, fontweight="bold",
              bbox=dict(boxstyle="round,pad=0.5", fc=C_GOLD, ec="none"))
 
     # ─── パネル凡例ガイド（右上）───
     fig.text(0.987, 0.9958,
              "🟢 上昇・強気  🔴 下落・弱気  🟡 警戒  ─ 変化なし",
-             ha="right", va="top", color=C_GRAY, fontsize=8.5, alpha=0.85)
+             ha="right", va="top", color=C_WHITE, fontsize=11, alpha=0.9)
 
     # ─── ゴールド二重ボーダー ───
     for yb, aa, lw in [(0.988, 0.9, 2.0), (0.9855, 0.4, 0.8)]:
@@ -1150,7 +1155,7 @@ def build_dashboard(data: dict, out_path: str, premium: dict | None = None) -> s
         f"Generated: {jst_now.strftime('%Y-%m-%d %H:%M JST')}"
     )
     fig.text(0.5, 0.002, footer, ha="center", va="bottom",
-             color=C_GRAY, fontsize=7.5, alpha=0.7)
+             color=C_GRAY, fontsize=10, alpha=0.75)
 
     plt.savefig(out_path, dpi=100, bbox_inches="tight",
                 facecolor=BG, edgecolor="none")
