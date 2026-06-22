@@ -11,6 +11,18 @@
       "usdjpy": 161.226,
       "vix": 16.4,
       "ai_judgment": ""
+    },
+    {
+      "date": "2026-06-22",
+      "sentiment": "強気 (リスクオン)",
+      "score": 17.19,
+      "fg_score": 37.3,
+      "fg_rating": "恐怖 😟",
+      "nikkei": 72407.7266,
+      "sp500": 7500.5801,
+      "usdjpy": 161.651,
+      "vix": 16.4,
+      "ai_judgment": ""
     }
   ],
   "patterns": {},
