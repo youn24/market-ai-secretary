@@ -718,6 +718,98 @@ function shmTab(btn, which){{
 
 
 # ──────────────────────────────────────────
+# セクション 8.6：業種別ランキング表（準リアルタイム・自動更新）
+# ──────────────────────────────────────────
+
+def _sector_ranking(ranking: dict):
+    """日本の業種別ランキング表。初期はサーバー生成、JSで60秒ごとに自動更新。"""
+    rk = ranking or {}
+    if not rk.get("available"):
+        return ""
+    rows = rk.get("ranking", [])
+    gen  = rk.get("generated_at", "")
+    state = rk.get("market_state", "")
+
+    def row_html(r):
+        pct = r.get("pct", 0) or 0
+        up  = pct > 0
+        flat = pct == 0
+        col = GREEN if up else (RED if not flat else MUTED)
+        arrow = "▲" if up else ("▼" if not flat else "－")
+        chg = r.get("chg", 0) or 0
+        return (f'<tr>'
+                f'<td style="text-align:center;color:{MUTED};font-weight:700">{r.get("rank","")}</td>'
+                f'<td style="font-weight:700;color:{TEXT}">{r.get("name","")}</td>'
+                f'<td style="text-align:right;color:{TEXT};font-variant-numeric:tabular-nums">{r.get("price",0):,.1f}</td>'
+                f'<td style="text-align:right;color:{col};font-weight:700;font-variant-numeric:tabular-nums">{arrow}{abs(chg):,.1f}</td>'
+                f'<td style="text-align:right;color:{col};font-weight:800;font-variant-numeric:tabular-nums">{pct:+.2f}%</td>'
+                f'</tr>')
+
+    body = "".join(row_html(r) for r in rows)
+
+    return f"""
+<div style="margin-bottom:12px">
+  <div class="label" style="padding:0 2px;margin-bottom:6px">📊 業種別ランキング（自動更新）</div>
+  <div class="glass" style="padding:12px 12px 14px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <span id="srk-state" style="font-size:10px;color:{BLUE};font-weight:700">{state}</span>
+      <span id="srk-time" style="font-size:9px;color:{MUTED}">{gen} 時点</span>
+    </div>
+    <table style="width:100%;border-collapse:collapse;font-size:11px">
+      <thead>
+        <tr style="color:{MUTED};font-size:9px;border-bottom:1px solid {BORDER}">
+          <th style="text-align:center;padding:4px 2px;font-weight:700">順位</th>
+          <th style="text-align:left;padding:4px 2px;font-weight:700">業種</th>
+          <th style="text-align:right;padding:4px 2px;font-weight:700">現在値</th>
+          <th style="text-align:right;padding:4px 2px;font-weight:700">前日比</th>
+          <th style="text-align:right;padding:4px 2px;font-weight:700">前日比%</th>
+        </tr>
+      </thead>
+      <tbody id="srk-body">{body}</tbody>
+    </table>
+    <div style="font-size:10px;color:{MUTED};margin-top:8px">💡 緑▲＝上昇／赤▼＝下落。上位の業種に今お金が集まっています。約1分ごとに自動更新されます</div>
+  </div>
+</div>
+<style>
+#srk-body tr{{border-bottom:1px solid rgba(255,255,255,.04)}}
+#srk-body td{{padding:6px 2px}}
+@keyframes srkFlash{{0%{{background:rgba(0,180,255,.18)}}100%{{background:transparent}}}}
+.srk-upd{{animation:srkFlash 1s ease}}
+</style>
+<script>
+(function(){{
+  var GREEN="{GREEN}", RED="{RED}", MUTED="{MUTED}", TEXT="{TEXT}";
+  function render(d){{
+    if(!d || !d.ranking) return;
+    var body=document.getElementById('srk-body');
+    if(!body) return;
+    body.innerHTML = d.ranking.map(function(r){{
+      var pct=r.pct||0, up=pct>0, flat=pct===0;
+      var col= up?GREEN:(flat?MUTED:RED);
+      var arrow= up?'▲':(flat?'－':'▼');
+      var chg=Math.abs(r.chg||0);
+      return '<tr>'
+        +'<td style="text-align:center;color:'+MUTED+';font-weight:700">'+r.rank+'</td>'
+        +'<td style="font-weight:700;color:'+TEXT+'">'+r.name+'</td>'
+        +'<td style="text-align:right;color:'+TEXT+';font-variant-numeric:tabular-nums">'+r.price.toLocaleString(undefined,{{minimumFractionDigits:1,maximumFractionDigits:1}})+'</td>'
+        +'<td style="text-align:right;color:'+col+';font-weight:700;font-variant-numeric:tabular-nums">'+arrow+chg.toLocaleString(undefined,{{minimumFractionDigits:1,maximumFractionDigits:1}})+'</td>'
+        +'<td style="text-align:right;color:'+col+';font-weight:800;font-variant-numeric:tabular-nums">'+(pct>=0?'+':'')+pct.toFixed(2)+'%</td>'
+        +'</tr>';
+    }}).join('');
+    body.classList.remove('srk-upd'); void body.offsetWidth; body.classList.add('srk-upd');
+    var st=document.getElementById('srk-state'), tm=document.getElementById('srk-time');
+    if(st && d.market_state) st.textContent=d.market_state;
+    if(tm && d.generated_at) tm.textContent=d.generated_at+' 時点';
+  }}
+  function poll(){{
+    fetch('./sector_ranking.json?cb='+Date.now()).then(function(r){{return r.json();}}).then(render).catch(function(){{}});
+  }}
+  setInterval(poll, 60000);
+}})();
+</script>"""
+
+
+# ──────────────────────────────────────────
 # セクション 9：プロ向けクロス分析
 # ──────────────────────────────────────────
 
@@ -1026,6 +1118,7 @@ def generate(
     data_integrity: dict = None,
     character_comments: dict = None,
     cross_check: dict = None,
+    sector_ranking: dict = None,
     **_kwargs,
 ) -> str:
     prices      = prices      or {}
@@ -1050,6 +1143,7 @@ def generate(
     mkt_html     = _market_grid(prices, technical)
     tv_html      = _tv_overview()
     shm_html     = _sector_heatmap_live()
+    srk_html     = _sector_ranking(sector_ranking)
     pro_html     = _pro_cross(prices)
     news_html    = _news(news)
     cal_html     = _calendar(weekly_calendar)
@@ -1105,6 +1199,7 @@ def generate(
   {sc_html}
   {mkt_html}
   {tv_html}
+  {srk_html}
   {shm_html}
   {pro_html}
   {news_html}
@@ -1188,6 +1283,7 @@ def run(
     data_integrity: dict     = None,
     character_comments: dict = None,
     cross_check: dict        = None,
+    sector_ranking: dict     = None,
     mode: str = "morning",
     **_kwargs,
 ) -> dict:
@@ -1199,7 +1295,7 @@ def run(
             data_integrity=data_integrity, sector_analysis=sector_analysis,
             prediction_tracker=prediction_tracker, weekly_calendar=weekly_calendar,
             team_debate=team_debate, character_comments=character_comments,
-            cross_check=cross_check,
+            cross_check=cross_check, sector_ranking=sector_ranking,
         )
         logger.info(f"✅ デザインAIレポート生成: {path}")
         return {"available": True, "path": path}

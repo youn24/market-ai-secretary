@@ -195,6 +195,15 @@ def run(mode: str):
     except Exception:
         logger.error("セクター分析エラー"); logger.debug(traceback.format_exc())
 
+    # Step L4a2: 日本 業種別ランキング（TOPIX-17 ETF・自動更新JSON）
+    sector_ranking = {"available": False}
+    try:
+        logger.info("--- Step L4a2: 日本業種別ランキング ---")
+        from src.sector_ranking_jp import run as run_srk
+        sector_ranking = run_srk()
+    except Exception:
+        logger.error("業種別ランキングエラー"); logger.debug(traceback.format_exc())
+
     # セクターチャート生成
     sector_chart_path = None
     try:
@@ -663,6 +672,7 @@ def run(mode: str):
             data_integrity=data_integrity,
             character_comments=character_comments,
             cross_check=cross_check,
+            sector_ranking=sector_ranking,
             mode=mode,
         )
         logger.info("✅ デザインAIレポート（docs/daily_report.html）生成")
