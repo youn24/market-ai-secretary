@@ -3,8 +3,8 @@ name: 市場監視アラート
 
 on:
   schedule:
-    - cron: "*/15 22-7 * * 1-5"   # 日本時間の平日朝7時〜夜23時（UTC）
-    - cron: "*/15 0-14 * * 2-6"   # 続き
+    - cron: "*/15 22-23 * * 0-4"  # UTC 22-23時（JST 7-8時）平日
+    - cron: "*/15 0-13 * * 1-5"   # UTC 0-13時（JST 9-22時）平日
   workflow_dispatch:
 
 jobs:
