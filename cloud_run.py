@@ -565,6 +565,17 @@ def run(mode: str):
     except Exception:
         logger.error("決算ブリーフエラー"); logger.debug(traceback.format_exc())
 
+    # Step CA: 材料分析AI（5軸評価＋デイトレ仮説・毎日・tdnet/earnings_brief依存）
+    catalyst = {"available": False}
+    try:
+        logger.info("--- Step CA: 材料分析AI ---")
+        from src.catalyst_analyzer import run as run_ca
+        catalyst = run_ca(prices, risk, fear_greed, tdnet=tdnet, earnings_brief=earnings_brief)
+        if catalyst.get("available"):
+            logger.info(f"✅ 材料分析: {catalyst.get('count',0)}件（妙味高 {catalyst.get('high_count',0)}件）")
+    except Exception:
+        logger.error("材料分析エラー"); logger.debug(traceback.format_exc())
+
     # Step AN: アノマリーカレンダー（毎日・該当する経験則）
     anomaly = {"available": False}
     try:
@@ -665,6 +676,7 @@ def run(mode: str):
                           agent_report, technical, portfolio, scenario, prediction_tracker,
                           character_comments=character_comments,
                           macro=macro, tdnet=tdnet, earnings_brief=earnings_brief,
+                          catalyst=catalyst,
                           anomaly=anomaly, theme_ranking=theme_ranking,
                           financial_analysis=financial_analysis,
                           supply_demand=supply_demand, kabuyoho=kabuyoho,
@@ -771,6 +783,7 @@ def run(mode: str):
                   jquants=jquants,
                   character_comments=character_comments,
                   macro=macro, tdnet=tdnet, earnings_brief=earnings_brief,
+                  catalyst=catalyst,
                   anomaly=anomaly, theme_ranking=theme_ranking,
                   financial_analysis=financial_analysis,
                   supply_demand=supply_demand, kabuyoho=kabuyoho,
@@ -851,6 +864,7 @@ def _save_html_report(mode, prices, news, risk, analysis, fear_greed, chart_path
                       portfolio=None, scenario=None, prediction_tracker=None,
                       character_comments=None,
                       macro=None, tdnet=None, earnings_brief=None, anomaly=None,
+                      catalyst=None,
                       theme_ranking=None, financial_analysis=None,
                       supply_demand=None, kabuyoho=None, sector_heatmap=None,
                       nikkei_internals=None, adr=None, weekly_calendar=None):
@@ -868,6 +882,7 @@ def _save_html_report(mode, prices, news, risk, analysis, fear_greed, chart_path
     macro = macro or {};              macro_html = macro.get("html", "") if macro.get("available") else ""
     tdnet = tdnet or {};              tdnet_html = tdnet.get("html", "") if tdnet.get("available") else ""
     earnings_brief = earnings_brief or {}; eb_html = earnings_brief.get("html", "") if earnings_brief.get("available") else ""
+    catalyst = catalyst or {};        catalyst_html = catalyst.get("html", "") if catalyst.get("available") else ""
     anomaly = anomaly or {};          anomaly_html = anomaly.get("html", "") if anomaly.get("available") else ""
     theme_ranking = theme_ranking or {}; theme_html = theme_ranking.get("html", "") if theme_ranking.get("available") else ""
     supply_demand = supply_demand or {}; sd_html = supply_demand.get("html", "") if supply_demand.get("available") else ""
@@ -1618,6 +1633,7 @@ a:hover{{text-decoration:underline;}}
   {f'<div class="sec-head">🌐 ファンダ＆金融政策の要約</div>{macro_html}' if macro_html else ""}
   {f'<div class="sec-head">📋 適時開示アラート（あなたの注目銘柄）</div>{tdnet_html}' if tdnet_html else ""}
   {f'<div class="sec-head">📑 決算ブリーフ（AIが中身を要約）</div>{eb_html}' if eb_html else ""}
+  {f'<div class="sec-head">🎯 材料分析AI（プロ目線の5軸評価＋デイトレ仮説）</div>{catalyst_html}' if catalyst_html else ""}
   {f'<div class="sec-head">🎯 アナリスト目標株価（株予報）</div>{ky_html}' if ky_html else ""}
   {f'<div class="sec-head">📊 需給分析ランキング（買いの勢いが強い順）</div>{sd_html}' if sd_html else ""}
   {f'<div class="sec-head">🌡 東証プライムの中身（騰落レシオ・空売り比率・新高安）</div>{nd_html}' if nd_html else ""}

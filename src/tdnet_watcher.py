@@ -211,6 +211,44 @@ def fetch_watchlist_disclosures(date_str: str = None,
     }
 
 
+# ── 市場全体の主要材料（watchlist以外も含む）────────────────────
+# デイトレ資金が入りやすい「材料株」の典型カテゴリ。決算短信は件数が膨大なので除外し、
+# 方向と妙味が明確な上方修正・増配/自社株買い/M&Aに絞る。
+_CATALYST_CATEGORIES = {"上方修正・増配", "自社株買い", "M&A・買収", "資本業務提携"}
+
+
+def fetch_market_catalysts(date_str: str = None, limit: int = 6) -> list[dict]:
+    """前営業日のTDnet全開示から、市場全体の主要材料（材料株候補）を抽出する。
+    watchlistに無い銘柄も対象。同一銘柄は1件に集約し、重要材料を優先して上位limit件返す。"""
+    now = get_jst_now()
+    ds = date_str or _prev_business_day(now).strftime("%Y%m%d")
+    try:
+        items = _fetch_date(ds)
+    except Exception as e:
+        logger.warning(f"市場材料の取得失敗: {e}")
+        return []
+
+    cat_priority = {"上方修正・増配": 0, "自社株買い": 1, "M&A・買収": 2, "資本業務提携": 3}
+    hits = []
+    seen_codes = set()
+    for it in items:
+        emoji, label, importance = _classify(it["title"])
+        if label not in _CATALYST_CATEGORIES:
+            continue
+        code4 = it["code"][:4].upper()
+        if code4 in seen_codes:
+            continue
+        seen_codes.add(code4)
+        it["emoji"] = emoji
+        it["category"] = label
+        it["importance"] = importance
+        it["watch_name"] = it.get("name", "")
+        hits.append(it)
+
+    hits.sort(key=lambda x: (cat_priority.get(x["category"], 9), x["time"]))
+    return hits[:limit]
+
+
 # ── Telegram メッセージ生成 ─────────────────────────────────────
 def build_telegram_message(result: dict) -> str:
     if not result.get("available"):

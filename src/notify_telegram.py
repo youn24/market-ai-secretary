@@ -319,6 +319,7 @@ def run(risk, analysis, report_paths, mode,
         jquants=None,
         character_comments=None,
         macro=None, tdnet=None, earnings_brief=None, anomaly=None,
+        catalyst=None,
         theme_ranking=None, financial_analysis=None,
         supply_demand=None, kabuyoho=None, sector_heatmap=None,
         nikkei_internals=None, adr=None) -> bool:
@@ -373,8 +374,8 @@ def run(risk, analysis, report_paths, mode,
         send_message(msgs[2])
 
         # ③.x 再統合モジュールの通知（各メッセージの1行目がそのまま通知バーのタイトルになる）
-        #     順序: マクロ → 適時開示 → 決算ブリーフ → 株予報 → 需給 → 東証内部 → ADR → 業種 → 財務 → テーマ → アノマリー
-        for _mod in (macro, tdnet, earnings_brief, kabuyoho, supply_demand,
+        #     順序: マクロ → 適時開示 → 決算ブリーフ → 材料分析 → 株予報 → 需給 → 東証内部 → ADR → 業種 → 財務 → テーマ → アノマリー
+        for _mod in (macro, tdnet, earnings_brief, catalyst, kabuyoho, supply_demand,
                      nikkei_internals, adr, sector_heatmap, financial_analysis,
                      theme_ranking, anomaly):
             try:
