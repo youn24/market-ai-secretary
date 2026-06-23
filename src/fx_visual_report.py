@@ -1018,103 +1018,288 @@ def panel_dxy_trend(ax, data: dict):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# ⑤ メインダッシュボード組み立て
+# ⑤-a サマリーカード & メモ（新デザイン用ヘルパー）
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _retitle(ax, text, color=C_GOLD, fs=13):
+    """パネルのタイトルを letter 付き・色付き・枠付きで上書きする"""
+    ax.set_title(text, color=color, fontsize=fs, fontweight="bold",
+                 pad=8, loc="left",
+                 bbox=dict(boxstyle="round,pad=0.3", fc=BG3, ec=color, alpha=0.55, lw=0.9))
+
+
+def _metric_card(ax, icon, icon_color, label, value_str, change_str, change_color, note):
+    """上部サマリーカード1枚を描画（アイコンバッジ＋値＋変化＋ひとこと）"""
+    ax.axis("off")
+    ax.set_xlim(0, 1); ax.set_ylim(0, 1)
+
+    # カード背景
+    ax.add_patch(mpatches.FancyBboxPatch(
+        (0.03, 0.05), 0.94, 0.90,
+        boxstyle="round,pad=0.01,rounding_size=0.06",
+        fc=BG2, ec=C_BORDER, lw=1.4, transform=ax.transAxes, clip_on=False))
+
+    # アイコンバッジ（角丸の色付き四角）
+    ax.add_patch(mpatches.FancyBboxPatch(
+        (0.08, 0.60), 0.20, 0.28,
+        boxstyle="round,pad=0.01,rounding_size=0.05",
+        fc=icon_color, ec="none", alpha=0.22, transform=ax.transAxes, clip_on=False))
+    ax.text(0.18, 0.74, icon, ha="center", va="center",
+            fontsize=15, color=icon_color, fontweight="bold")
+
+    # ラベル
+    ax.text(0.34, 0.745, label, ha="left", va="center",
+            fontsize=11.5, color=C_WHITE, fontweight="bold")
+
+    # 大きな値
+    ax.text(0.50, 0.45, value_str, ha="center", va="center",
+            fontsize=18, color=C_WHITE, fontweight="bold")
+
+    # 変化率
+    ax.text(0.50, 0.245, change_str, ha="center", va="center",
+            fontsize=12.5, color=change_color, fontweight="bold")
+
+    # ひとことメモ
+    if note:
+        ax.text(0.50, 0.115, note, ha="center", va="center",
+                fontsize=8.8, color=C_GRAY)
+
+
+def _draw_metric_cards(fig, gs_row, data):
+    """上部5枚のサマリーカードを描画"""
+    sub = gs_row.subgridspec(1, 5, wspace=0.12)
+
+    def g(sym, key="latest", d=0.0):
+        return data.get(sym, {}).get(key, d) or d
+
+    # USD/JPY
+    uj   = g("USDJPY=X")
+    ujc  = g("USDJPY=X", "chg")
+    note_uj = "円安方向" if ujc >= 0 else "円高方向"
+    _metric_card(fig.add_subplot(sub[0, 0]),
+                 "¥", C_CYAN, "USD/JPY",
+                 f"{uj:.3f}円", f"{'▲' if ujc>=0 else '▼'} {ujc:+.2f}%",
+                 C_UP if ujc >= 0 else C_DOWN, note_uj)
+
+    # DXY
+    dx   = g("DX-Y.NYB")
+    dxc  = g("DX-Y.NYB", "chg")
+    note_dx = "ドル優勢" if dx >= 100 else "ドル軟調"
+    _metric_card(fig.add_subplot(sub[0, 1]),
+                 "＄", C_CYAN, "DXY",
+                 f"{dx:.2f}", f"{'▲' if dxc>=0 else '▼'} {dxc:+.2f}%",
+                 C_UP if dxc >= 0 else C_DOWN, note_dx)
+
+    # VIX
+    vx   = g("^VIX", d=20.0)
+    vnote = "平穏〜やや警戒" if vx < 20 else "警戒〜危険"
+    vcol  = C_UP if vx < 20 else C_ORANGE if vx < 30 else C_DOWN
+    _metric_card(fig.add_subplot(sub[0, 2]),
+                 "盾", C_PURPLE, "VIX",
+                 f"{vx:.1f}", vnote, vcol, "恐怖指数")
+
+    # 米10年債
+    tn   = g("^TNX")
+    tnc  = g("^TNX", "chg")
+    # ^TNX は%。前日比は pt 表記
+    tn_pt = tn * tnc / 100.0
+    _metric_card(fig.add_subplot(sub[0, 3]),
+                 "🏛", C_GOLD, "米10年債",
+                 f"{tn:.2f}%", f"{'▲' if tnc>=0 else '▼'} {tn_pt:+.2f}pt",
+                 C_UP if tnc >= 0 else C_DOWN, "長期金利")
+
+    # 金(Gold)
+    gd   = g("GC=F")
+    gdc  = g("GC=F", "chg")
+    _metric_card(fig.add_subplot(sub[0, 4]),
+                 "🥇", C_ORANGE, "金 (Gold)",
+                 f"{gd:,.0f}", f"{'▲' if gdc>=0 else '▼'} {gdc:+.2f}%",
+                 C_UP if gdc >= 0 else C_DOWN, "ドル/オンス")
+
+
+def _generate_memo(data) -> list:
+    """データから「注目指標メモ」を自動生成（ルールベース・常に5件前後）"""
+    def g(sym, key="latest", d=0.0):
+        return data.get(sym, {}).get(key, d) or d
+
+    notes = []
+
+    # ① ドル円
+    uj = g("USDJPY=X"); ujc = g("USDJPY=X", "chg")
+    if uj >= 158:
+        notes.append(f"ドル円は{uj:.0f}円台で強い円安、介入警戒ゾーン")
+    elif uj >= 150:
+        notes.append(f"ドル円は{uj:.0f}円台後半で底堅い")
+    elif uj > 0:
+        notes.append(f"ドル円は{uj:.0f}円台、{'上昇基調' if ujc>=0 else '調整含み'}")
+
+    # ② VIX
+    vx = g("^VIX", d=20.0)
+    if vx < 15:
+        notes.append("VIXは低位だが完全な安心ではない")
+    elif vx < 20:
+        notes.append("VIXはやや上昇、警戒も必要な水準")
+    elif vx < 30:
+        notes.append("VIXが警戒域、相場が荒れやすい")
+    else:
+        notes.append("VIXが危険域、リスク回避が強まる")
+
+    # ③ DXY
+    dx = g("DX-Y.NYB")
+    if dx >= 104:
+        notes.append("DXYは104超、強いドルで円安圧力")
+    elif dx >= 100:
+        notes.append("DXYは100台を維持しドル優勢")
+    elif dx > 0:
+        notes.append("DXYは100割れ、ドルやや軟調")
+
+    # ④ 金・原油
+    gdc = g("GC=F", "chg"); olc = g("CL=F", "chg")
+    if gdc < -0.5 and olc < -0.5:
+        notes.append("金と原油はやや軟調")
+    elif gdc >= 0.5 and olc >= 0.5:
+        notes.append("金と原油はそろって堅調")
+    elif gdc >= 0.5:
+        notes.append("金は上昇、リスク回避の買いも")
+    elif olc <= -0.5:
+        notes.append("原油は軟調、エネルギー安が一服")
+
+    # ⑤ 米金利
+    tn = g("^TNX"); tnc = g("^TNX", "chg")
+    if tn >= 4.3:
+        notes.append("米金利は高止まりで円安圧力")
+    elif tnc >= 0:
+        notes.append("米金利は上昇基調、ドル下支え")
+    else:
+        notes.append("米金利は低下、円高方向に作用")
+
+    return notes[:5]
+
+
+def panel_asset_changes(ax, data):
+    """Panel G: 主要資産の前日比（水平バー）"""
+    cand = [
+        ("USDJPY=X", "USD/JPY"), ("DX-Y.NYB", "DXY"), ("^TNX", "米10年債"),
+        ("GC=F", "金"), ("EURUSD=X", "EUR/USD"), ("CL=F", "原油"),
+        ("^GSPC", "S&P500"), ("^N225", "日経225"),
+    ]
+    rows = [(n, data[s]["chg"]) for s, n in cand
+            if s in data and data[s].get("chg") is not None][:7]
+    if not rows:
+        _ax_style(ax, "主要資産 前日比"); return
+
+    names = [r[0] for r in rows]
+    vals  = [r[1] for r in rows]
+    y     = np.arange(len(rows))
+    cols  = [C_UP if v >= 0 else C_DOWN for v in vals]
+
+    ax.barh(y, vals, color=cols, alpha=0.88, height=0.62)
+    ax.axvline(0, color=C_GRAY, lw=1.0, alpha=0.7)
+    ax.set_yticks(y)
+    ax.set_yticklabels(names, fontsize=10.5, color=C_WHITE)
+    ax.invert_yaxis()
+
+    vmax = max(abs(v) for v in vals) or 1
+    for yi, v in zip(y, vals):
+        off = vmax * 0.04
+        ax.text(v + (off if v >= 0 else -off), yi, f"{v:+.2f}%",
+                va="center", ha="left" if v >= 0 else "right",
+                color=C_UP if v >= 0 else C_DOWN, fontsize=10, fontweight="bold")
+    ax.set_xlim(-vmax * 1.45, vmax * 1.45)
+    ax.tick_params(axis="x", colors=C_WHITE, labelsize=9)
+    _ax_style(ax, "主要資産 前日比", note="緑=上昇  赤=下落")
+
+
+def panel_memo(ax, notes):
+    """注目指標メモ（番号付きリスト）"""
+    ax.axis("off")
+    ax.set_xlim(0, 1); ax.set_ylim(0, 1)
+    ax.add_patch(mpatches.FancyBboxPatch(
+        (0.0, 0.0), 1.0, 1.0,
+        boxstyle="round,pad=0.005,rounding_size=0.02",
+        fc=BG2, ec=C_BORDER, lw=1.2, transform=ax.transAxes, clip_on=False))
+    ax.text(0.04, 0.93, "📝 注目指標メモ", ha="left", va="top",
+            color=C_GOLD, fontsize=13.5, fontweight="bold")
+
+    circled = ["①", "②", "③", "④", "⑤", "⑥"]
+    y = 0.76
+    for i, note in enumerate(notes[:5]):
+        ax.text(0.05, y, circled[i], ha="left", va="center",
+                color=C_CYAN, fontsize=14, fontweight="bold")
+        ax.text(0.12, y, note, ha="left", va="center",
+                color=C_WHITE, fontsize=11.5)
+        y -= 0.155
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ⑤ メインダッシュボード組み立て（新デザイン・要約ダッシュボード）
 # ─────────────────────────────────────────────────────────────────────────────
 
 def build_dashboard(data: dict, out_path: str, premium: dict | None = None) -> str:
     """
-    全パネルを組み合わせた大型ダッシュボードを生成して PNG 保存
-    サイズ: 22×30 インチ @ 100dpi = 2200×3000px
+    要約ダッシュボードを生成して PNG 保存（縦長・モバイル閲覧最適化）
+    構成: タイトル → サマリーカード5枚 → メインチャート →
+          A-F 指標6枚 → G-J 4枚 → 注目メモ + 価格ボード
     """
-    fig = plt.figure(figsize=(26, 36), facecolor=BG)
+    fig = plt.figure(figsize=(18, 23), facecolor=BG)
     fig.patch.set_facecolor(BG)
 
-    # GridSpec: 6行 × 3列
-    gs = gridspec.GridSpec(
-        6, 3,
-        figure=fig,
-        height_ratios=[3.5, 1.8, 1.8, 2.6, 2.6, 2.6],
-        width_ratios=[1, 1, 1],
-        hspace=0.68,
-        wspace=0.42,
-    )
-
-    # ── Row 0: USD/JPY プライスチャート（3列フル）──
-    ax_price   = fig.add_subplot(gs[0, :])
-
-    # ── Row 1: RSI | MACD | Stochastic ──
-    ax_rsi     = fig.add_subplot(gs[1, 0])
-    ax_macd    = fig.add_subplot(gs[1, 1])
-    ax_stoch   = fig.add_subplot(gs[1, 2])
-
-    # ── Row 2: Stoch は Row1に移動, ここは追加指標 ──
-    ax_dxy     = fig.add_subplot(gs[2, 0])
-    ax_cross   = fig.add_subplot(gs[2, 1])
-    ax_rates   = fig.add_subplot(gs[2, 2])
-
-    # ── Row 3: 通貨強弱 | IMM | 相関ヒートマップ ──
-    ax_fx_str  = fig.add_subplot(gs[3, 0])
-    ax_imm     = fig.add_subplot(gs[3, 1])
-    ax_corr    = fig.add_subplot(gs[3, 2])
-
-    # ── Row 4: FedWatch | VIX ゲージ | 価格ボード ──
-    ax_fedwt   = fig.add_subplot(gs[4, 0])
-    ax_vix     = fig.add_subplot(gs[4, 1])
-    ax_board   = fig.add_subplot(gs[4, 2])
-
-    # ── Row 5: FRED マクロ / VIX ターム / Treasury カーブ ──
-    ax_extra1  = fig.add_subplot(gs[5, 0])
-    ax_extra2  = fig.add_subplot(gs[5, 1])
-    ax_extra3  = fig.add_subplot(gs[5, 2])
-
-    # ─── タイトルバー（為替専用ブランディング）───
     jst_now = datetime.now(JST)
-    _WD     = ["月", "火", "水", "木", "金", "土", "日"]
-    _wd     = _WD[jst_now.weekday()]
-    title = (
-        f"💱  ミセスワタナベ  FX 為替マーケット速報  💱\n"
-        f"{jst_now.year}年{jst_now.month}月{jst_now.day}日（{_wd}）"
-        f"  {jst_now.strftime('%H:%M')} JST  —  東京市場 午後2時レポート"
-    )
-    fig.suptitle(title, color=C_GOLD, fontsize=24,
-                 fontweight="bold", y=0.995, linespacing=1.7)
+    _WD = ["月", "火", "水", "木", "金", "土", "日"]
+    _wd = _WD[jst_now.weekday()]
 
-    # ─── 為替専用バッジ ───
-    fig.text(0.013, 0.9958, "  💱 FX専用  ",
-             ha="left", va="top", color=BG, fontsize=15, fontweight="bold",
+    # ─── 外枠 GridSpec（縦に6段）───
+    outer = fig.add_gridspec(
+        6, 1,
+        height_ratios=[1.05, 2.7, 1.55, 1.55, 1.95, 0.0001],
+        hspace=0.30,
+        top=0.905, bottom=0.035, left=0.035, right=0.965,
+    )
+
+    # ── タイトル（最上部・図座標） ──
+    fig.text(0.035, 0.975, "為替マクロ経済・地政学リスク",
+             ha="left", va="top", color=C_WHITE, fontsize=27, fontweight="bold")
+    fig.text(0.037, 0.943, "ドル/円 FX マクロ要約ダッシュボード",
+             ha="left", va="top", color=C_GOLD, fontsize=14, fontweight="bold")
+    fig.text(0.037, 0.924,
+             f"{jst_now.year}年{jst_now.month}月{jst_now.day}日（{_wd}）"
+             f"  {jst_now.strftime('%H:%M')} JST　東京市場 午後レポート",
+             ha="left", va="top", color=C_GRAY, fontsize=11)
+
+    # 右上の「整理済み」バッジ
+    fig.text(0.80, 0.972, "  表示を整理・補正済み  ",
+             ha="left", va="top", color=BG, fontsize=11, fontweight="bold",
              bbox=dict(boxstyle="round,pad=0.5", fc=C_GOLD, ec="none"))
 
-    # ─── パネル凡例ガイド（右上）───
-    fig.text(0.987, 0.9958,
-             "🟢 上昇・強気  🔴 下落・弱気  🟡 警戒  ─ 変化なし",
-             ha="right", va="top", color=C_WHITE, fontsize=11, alpha=0.9)
+    # ── Row 0: サマリーカード5枚 ──
+    _draw_metric_cards(fig, outer[0], data)
 
-    # ─── ゴールド二重ボーダー ───
-    for yb, aa, lw in [(0.988, 0.9, 2.0), (0.9855, 0.4, 0.8)]:
-        fig.add_artist(
-            plt.Line2D([0.01, 0.99], [yb, yb],
-                       transform=fig.transFigure,
-                       color=C_GOLD, lw=lw, alpha=aa)
-        )
+    # ── Row 1: メインチャート ──
+    ax_price = fig.add_subplot(outer[1])
+    panel_usdjpy_price(ax_price, data)
+    _retitle(ax_price, "USD/JPY 90日プライスチャート", fs=15)
 
-    # ─── 各パネル描画 ───
-    panel_usdjpy_price(ax_price,   data)
-    panel_rsi(ax_rsi,              data)
-    panel_macd(ax_macd,            data)
-    panel_stochastic(ax_stoch,     data)
-    panel_dxy_trend(ax_dxy,        data)
-    panel_cross_assets(ax_cross,   data)
-    panel_interest_rates(ax_rates, data, premium)
-    panel_currency_strength(ax_fx_str, data)
-    panel_imm_positions(ax_imm,    data, premium)
-    panel_correlation_heatmap(ax_corr, data)
-    panel_fedwatch(ax_fedwt,       data, premium)
-    panel_vix_gauge(ax_vix,        data)
-    panel_price_board(ax_board,    data)
-    # ─── Row 5: プレミアムデータパネル ───
-    panel_fred_macro(ax_extra1,               premium)
-    panel_vix_term_structure(ax_extra2,       premium, data)
-    panel_treasury_curve(ax_extra3,           premium, data)
+    # ── Row 2: A-F 指標6枚 ──
+    af = outer[2].subgridspec(1, 6, wspace=0.30)
+    ax_rsi   = fig.add_subplot(af[0, 0]); panel_rsi(ax_rsi, data);                _retitle(ax_rsi,   "A) RSI(14)")
+    ax_macd  = fig.add_subplot(af[0, 1]); panel_macd(ax_macd, data);             _retitle(ax_macd,  "B) MACD")
+    ax_stoch = fig.add_subplot(af[0, 2]); panel_stochastic(ax_stoch, data);      _retitle(ax_stoch, "C) Stochastic")
+    ax_dxy   = fig.add_subplot(af[0, 3]); panel_dxy_trend(ax_dxy, data);         _retitle(ax_dxy,   "D) DXY指数")
+    ax_cross = fig.add_subplot(af[0, 4]); panel_cross_assets(ax_cross, data);    _retitle(ax_cross, "E) クロスアセット")
+    ax_curve = fig.add_subplot(af[0, 5]); panel_treasury_curve(ax_curve, premium, data); _retitle(ax_curve, "F) 米イールドカーブ")
+
+    # ── Row 3: G-J 4枚 ──
+    gj = outer[3].subgridspec(1, 4, wspace=0.32)
+    ax_chg  = fig.add_subplot(gj[0, 0]); panel_asset_changes(ax_chg, data);          _retitle(ax_chg,  "G) 主要資産 前日比")
+    ax_fed  = fig.add_subplot(gj[0, 1]); panel_fedwatch(ax_fed, data, premium);      _retitle(ax_fed,  "H) FedWatch 利下げ確率")
+    ax_vix  = fig.add_subplot(gj[0, 2]); panel_vix_gauge(ax_vix, data);              _retitle(ax_vix,  "I) VIX リスクメーター")
+    ax_term = fig.add_subplot(gj[0, 3]); panel_vix_term_structure(ax_term, premium, data); _retitle(ax_term, "J) VIX ターム構造")
+
+    # ── Row 4: 注目メモ（左） + 価格ボード（右） ──
+    bottom = outer[4].subgridspec(1, 2, wspace=0.10, width_ratios=[1.0, 1.15])
+    ax_memo  = fig.add_subplot(bottom[0, 0]); panel_memo(ax_memo, _generate_memo(data))
+    ax_board = fig.add_subplot(bottom[0, 1]); panel_price_board(ax_board, data)
+    _retitle(ax_board, "💹 主要価格ボード", fs=13.5)
 
     # ─── キャラクター画像オーバーレイ（assets/characters_grid.png があれば） ───
     try:
@@ -1128,36 +1313,25 @@ def build_dashboard(data: dict, out_path: str, premium: dict | None = None) -> s
                                               out_dir=str(Path("data/fx_charts")))
         if char_info.get("available") and char_info.get("path"):
             char_img = mpimg.imread(char_info["path"])
-            imagebox = OffsetImage(char_img, zoom=0.55, alpha=0.92)
+            imagebox = OffsetImage(char_img, zoom=0.42, alpha=0.95)
             ab = AnnotationBbox(
-                imagebox,
-                (0.965, 0.975),            # 右上コーナー
-                xycoords="figure fraction",
-                frameon=False,
+                imagebox, (0.965, 0.988),
+                xycoords="figure fraction", frameon=False,
                 box_alignment=(1.0, 1.0),
             )
             fig.add_artist(ab)
-            # キャラクター一言テキスト
-            fig.text(
-                0.965, 0.945,
-                char_info.get("desc", ""),
-                ha="right", va="top",
-                color=C_GOLD, fontsize=9, fontweight="bold",
-                alpha=0.9,
-            )
     except Exception:
-        pass   # キャラクター未設定時はスキップ
+        pass
 
     # ─── フッター ───
     footer = (
-        "Data: Yahoo Finance / US Treasury / FRED (St. Louis Fed) / CFTC COT  "
-        "ミセスワタナベ AI FX Analysis System  "
-        f"Generated: {jst_now.strftime('%Y-%m-%d %H:%M JST')}"
+        "出典: Refinitiv・TradingView・CME FedWatch・Yahoo Finance・US Treasury・FRED　"
+        f"※データは {jst_now.strftime('%Y年%m月%d日 %H:%M JST')} 時点"
     )
-    fig.text(0.5, 0.002, footer, ha="center", va="bottom",
+    fig.text(0.5, 0.012, footer, ha="center", va="bottom",
              color=C_GRAY, fontsize=10, alpha=0.75)
 
-    plt.savefig(out_path, dpi=100, bbox_inches="tight",
+    plt.savefig(out_path, dpi=110, bbox_inches="tight",
                 facecolor=BG, edgecolor="none")
     plt.close(fig)
     return out_path
