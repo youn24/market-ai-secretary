@@ -634,6 +634,28 @@ def run(mode: str):
     except Exception:
         logger.error("業種ヒートマップエラー"); logger.debug(traceback.format_exc())
 
+    # Step ND: 日経225 内部データ（騰落レシオ・空売り比率・新高安・PER/PBR・毎日）
+    nikkei_internals = {"available": False}
+    try:
+        logger.info("--- Step ND: 日経225 内部データ ---")
+        from src.nikkei_market_data import run as run_nd
+        nikkei_internals = run_nd(prices, risk, fear_greed)
+        if nikkei_internals.get("available"):
+            logger.info(f"✅ 日経内部データ: 騰落レシオ25日={nikkei_internals.get('trk25')} 空売り{nikkei_internals.get('short_ratio')}%")
+    except Exception:
+        logger.error("日経内部データエラー"); logger.debug(traceback.format_exc())
+
+    # Step ADR: 日本株ADR（夜間NYの値動き・寄り付き先行ヒント・毎日）
+    adr = {"available": False}
+    try:
+        logger.info("--- Step ADR: 日本株ADR（夜間NY） ---")
+        from src.adr_data import run as run_adr
+        adr = run_adr(prices, risk, fear_greed)
+        if adr.get("available"):
+            logger.info(f"✅ ADR: {adr.get('count',0)}銘柄 主要平均乖離={adr.get('major_avg_divergence')}%")
+    except Exception:
+        logger.error("ADRエラー"); logger.debug(traceback.format_exc())
+
     # Step 7: HTMLレポート生成
     report_paths = {}
     try:
@@ -647,6 +669,7 @@ def run(mode: str):
                           financial_analysis=financial_analysis,
                           supply_demand=supply_demand, kabuyoho=kabuyoho,
                           sector_heatmap=sector_heatmap,
+                          nikkei_internals=nikkei_internals, adr=adr,
                           weekly_calendar=weekly_calendar)
         today = get_today_str()
         report_paths = {
@@ -751,7 +774,8 @@ def run(mode: str):
                   anomaly=anomaly, theme_ranking=theme_ranking,
                   financial_analysis=financial_analysis,
                   supply_demand=supply_demand, kabuyoho=kabuyoho,
-                  sector_heatmap=sector_heatmap)
+                  sector_heatmap=sector_heatmap,
+                  nikkei_internals=nikkei_internals, adr=adr)
     except Exception:
         logger.error("Telegram通知エラー"); logger.debug(traceback.format_exc())
 
@@ -829,7 +853,7 @@ def _save_html_report(mode, prices, news, risk, analysis, fear_greed, chart_path
                       macro=None, tdnet=None, earnings_brief=None, anomaly=None,
                       theme_ranking=None, financial_analysis=None,
                       supply_demand=None, kabuyoho=None, sector_heatmap=None,
-                      weekly_calendar=None):
+                      nikkei_internals=None, adr=None, weekly_calendar=None):
     """初心者でもわかる見やすいダッシュボードHTMLを保存"""
     import base64
     today  = get_today_str()
@@ -849,6 +873,8 @@ def _save_html_report(mode, prices, news, risk, analysis, fear_greed, chart_path
     supply_demand = supply_demand or {}; sd_html = supply_demand.get("html", "") if supply_demand.get("available") else ""
     kabuyoho = kabuyoho or {};        ky_html = kabuyoho.get("html", "") if kabuyoho.get("available") else ""
     sector_heatmap = sector_heatmap or {}; sh_html = sector_heatmap.get("html", "") if sector_heatmap.get("available") else ""
+    nikkei_internals = nikkei_internals or {}; nd_html = nikkei_internals.get("html", "") if nikkei_internals.get("available") else ""
+    adr = adr or {}; adr_html = adr.get("html", "") if adr.get("available") else ""
     financial_analysis = financial_analysis or {}
     fa_html = ""
     if financial_analysis.get("available"):
@@ -1594,6 +1620,8 @@ a:hover{{text-decoration:underline;}}
   {f'<div class="sec-head">📑 決算ブリーフ（AIが中身を要約）</div>{eb_html}' if eb_html else ""}
   {f'<div class="sec-head">🎯 アナリスト目標株価（株予報）</div>{ky_html}' if ky_html else ""}
   {f'<div class="sec-head">📊 需給分析ランキング（買いの勢いが強い順）</div>{sd_html}' if sd_html else ""}
+  {f'<div class="sec-head">🌡 東証プライムの中身（騰落レシオ・空売り比率・新高安）</div>{nd_html}' if nd_html else ""}
+  {f'<div class="sec-head">🌃 ADR夜間（NYの値動き・今日の寄り付き先行ヒント）</div>{adr_html}' if adr_html else ""}
   {f'<div class="sec-head">🗺 業種ヒートマップ（東証17業種・どこに買いが集まるか）</div>{sh_html}' if sh_html else ""}
   {f'<div class="sec-head">📊 財務・決算書分析</div>{fa_html}' if fa_html else ""}
   {f'<div class="sec-head">🔥 テーマ株人気ランキング</div>{theme_html}' if theme_html else ""}

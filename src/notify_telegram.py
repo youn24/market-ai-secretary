@@ -320,7 +320,8 @@ def run(risk, analysis, report_paths, mode,
         character_comments=None,
         macro=None, tdnet=None, earnings_brief=None, anomaly=None,
         theme_ranking=None, financial_analysis=None,
-        supply_demand=None, kabuyoho=None, sector_heatmap=None) -> bool:
+        supply_demand=None, kabuyoho=None, sector_heatmap=None,
+        nikkei_internals=None, adr=None) -> bool:
     if not _is_configured():
         logger.info("Telegram 設定なし。スキップします。")
         return False
@@ -372,9 +373,10 @@ def run(risk, analysis, report_paths, mode,
         send_message(msgs[2])
 
         # ③.x 再統合モジュールの通知（各メッセージの1行目がそのまま通知バーのタイトルになる）
-        #     順序: マクロ → 適時開示 → 決算ブリーフ → 株予報 → 需給 → 業種 → 財務 → テーマ → アノマリー
+        #     順序: マクロ → 適時開示 → 決算ブリーフ → 株予報 → 需給 → 東証内部 → ADR → 業種 → 財務 → テーマ → アノマリー
         for _mod in (macro, tdnet, earnings_brief, kabuyoho, supply_demand,
-                     sector_heatmap, financial_analysis, theme_ranking, anomaly):
+                     nikkei_internals, adr, sector_heatmap, financial_analysis,
+                     theme_ranking, anomaly):
             try:
                 if _mod and _mod.get("available") and _mod.get("telegram_message"):
                     send_message(_mod["telegram_message"])
