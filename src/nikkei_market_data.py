@@ -170,6 +170,66 @@ def _nvi_comment(nvi) -> str:
     return "落ち着いている"
 
 
+def _plain_summary(d: dict) -> dict:
+    """専門用語ゼロで「今日の東証はこういう状態」を中学生にもわかる言葉でまとめる"""
+    per = d.get("per"); spread = d.get("spread"); trk = d.get("trk25")
+    nvi = d.get("nvi"); short = d.get("short_ratio"); breadth = d.get("breadth_pct")
+
+    lines = []
+    if per is not None:
+        if per >= 18:
+            lines.append(f"📐 今の株価は会社の利益に対して<b>やや高め（割高ぎみ）</b>。PERは{per}倍で、ふだんの13〜16倍より上です。")
+        elif per <= 13:
+            lines.append(f"📐 今の株価は<b>お買い得ゾーン（割安）</b>。PERは{per}倍と低めです。")
+        else:
+            lines.append(f"📐 今の株価は<b>ふつうの範囲</b>。PERは{per}倍で行き過ぎ感はありません。")
+    if spread is not None:
+        if spread >= 3.5:
+            lines.append("⚖️ ただし<b>銀行預金や国債より株のほうがお得</b>な水準。長い目で見れば株に分があります。")
+        elif spread >= 2:
+            lines.append("⚖️ 株と債券（国債）の魅力は<b>ほぼ互角</b>。どちらが得とも言いにくい状態です。")
+        else:
+            lines.append("⚖️ 国債の利回りが上がり、<b>株のお得感はやや薄れ気味</b>です。")
+    if trk is not None:
+        if trk >= 120:
+            lines.append("🌡 短期的には<b>買われすぎ（過熱ぎみ）</b>。一服・反落に注意したい場面です。")
+        elif trk <= 70:
+            lines.append("🌡 短期的には<b>売られすぎ</b>。そろそろ反発（リバウンド）が出やすい水準です。")
+        else:
+            lines.append("🌡 短期の過熱感は<b>なくほどほど</b>。行き過ぎたサインは出ていません。")
+    if nvi is not None:
+        if nvi >= 30:
+            lines.append("😨 投資家の不安は<b>やや高め（警戒モード）</b>。値動きが荒くなりやすいので慎重に。")
+        elif nvi >= 22:
+            lines.append("😨 投資家の心理は<b>やや神経質</b>。大きなニュースに振られやすい状態です。")
+        else:
+            lines.append("😌 投資家の心理は<b>落ち着いて</b>います。")
+    extra = []
+    if breadth is not None:
+        if breadth >= 55:
+            extra.append("この日は値上がりした銘柄のほうが多め")
+        elif breadth <= 45:
+            extra.append("この日は値下がりした銘柄のほうが多め")
+    if short is not None and short >= 40:
+        extra.append("売り方（空売り）もそこそこ活発")
+    if extra:
+        lines.append("📊 " + "、".join(extra) + "でした。")
+
+    warn = 0
+    if per is not None and per >= 18: warn += 1
+    if nvi is not None and nvi >= 30: warn += 1
+    if trk is not None and (trk >= 120 or trk <= 70): warn += 1
+    if breadth is not None and breadth <= 45: warn += 1
+    if warn >= 3:
+        head, emo, hc = "様子見・守りも意識したい一日", "🟡", "#d29922"
+    elif warn <= 1 and (spread is None or spread >= 3.5):
+        head, emo, hc = "落ち着いて買い場を探せる地合い", "🟢", "#3fb950"
+    else:
+        head, emo, hc = "良い点・注意点が混在。欲張らず慎重に", "🟡", "#d29922"
+
+    return {"head": head, "emoji": emo, "color": hc, "lines": lines}
+
+
 def run(prices: dict = None, risk: dict = None, fear_greed: dict = None) -> dict:
     """日経225の内部データを取得して指標化する"""
     try:
@@ -215,6 +275,15 @@ def run(prices: dict = None, risk: dict = None, fear_greed: dict = None) -> dict
 
     # ── チャート用の推移（直近120営業日）──
     seg = rows[-120:]
+
+    def _short_of(r):
+        a = _f(r[C_SHORT_REG]); b = _f(r[C_SHORT_NOREG])
+        return round((a or 0) + (b or 0), 1) if (a or b) else None
+
+    def _breadth_of(r):
+        u = _f(r[C_UP]); dn = _f(r[C_DOWN])
+        return round(u / (u + dn) * 100, 0) if (u and dn and (u + dn) > 0) else None
+
     series = {
         "dates":  [_date_str(r[C_DATE])[5:] for r in seg],             # MM-DD
         "close":  [_f(r[C_CLOSE]) for r in seg],
@@ -223,6 +292,12 @@ def run(prices: dict = None, risk: dict = None, fear_greed: dict = None) -> dict
         "eyield": [round(100 / _f(r[C_PER]), 2) if _f(r[C_PER]) else None for r in seg],
         "dyield": [_f(r[C_YIELD]) for r in seg],
         "jgb10":  [_f(r[C_JGB10]) for r in seg],
+        "trk25":  [_f(r[C_TRK25_STORED]) for r in seg],
+        "nvi":    [_f(r[C_NVI]) for r in seg],
+        "short":  [_short_of(r) for r in seg],
+        "breadth":[_breadth_of(r) for r in seg],
+        "newhigh":[_f(r[C_NEWHIGH]) for r in seg],
+        "newlow": [_f(r[C_NEWLOW]) for r in seg],
     }
 
     result = {
@@ -280,6 +355,13 @@ def build_telegram_message(d: dict) -> str:
         head = f"🌡 東証の中身：値上り{up}／値下り{down}"
 
     lines = [head, ""]
+    # やさしい総括を先頭に
+    ps = _plain_summary(d)
+    lines.append(f"🔰 *ひとことで言うと*：{ps['emoji']} {ps['head']}")
+    for ln in ps["lines"]:
+        lines.append("　" + ln.replace("<b>", "").replace("</b>", ""))
+    lines.append("")
+    lines.append("―― くわしい数字 ――")
     if breadth is not None:
         mood = "買い優勢" if breadth >= 55 else ("売り優勢" if breadth <= 45 else "拮抗")
         lines.append(f"📈 値上がり比率：{breadth:.0f}%（{mood}）")
@@ -369,58 +451,88 @@ def get_html(d: dict) -> str:
   </div>
 </div>'''
 
-    # ── Chart.js バリュエーション推移チャート ──
+    # ── Chart.js 個別推移チャート（指標ごとに1枚ずつ）──
     import json as _json
     s = d.get("series", {})
-    cid = f"nmdChart{abs(hash(d.get('date',''))) % 100000}"
+    cid = f"nmd{abs(hash(d.get('date',''))) % 100000}"
     chart_html = ""
     if s.get("dates"):
         labels = _json.dumps(s["dates"], ensure_ascii=False)
-        per_d  = _json.dumps([round(x, 2) if x else None for x in s.get("per", [])])
-        pbr_d  = _json.dumps([round(x, 2) if x else None for x in s.get("pbr", [])])
-        ey_d   = _json.dumps([x for x in s.get("eyield", [])])
-        dy_d   = _json.dumps([x for x in s.get("dyield", [])])
-        jg_d   = _json.dumps([x for x in s.get("jgb10", [])])
+
+        def _arr(key, dp=2):
+            return _json.dumps([round(x, dp) if isinstance(x, (int, float)) else None for x in s.get(key, [])])
+
+        # 各チャートの定義（canvasサフィックス, 見出し, JS datasets, y軸オプション）
+        # 単線チャートのカードを作るヘルパ（参照ラインband付き）
+        def _card(suffix, title, sub):
+            return (f'<div style="background:#0f1623;border:1px solid #1e2d42;border-radius:10px;padding:11px 12px;">'
+                    f'<div style="font-size:0.8em;color:#cdd9ec;font-weight:700;">{title}</div>'
+                    f'<div style="font-size:0.66em;color:#7a8fa8;margin-bottom:5px;">{sub}</div>'
+                    f'<div style="position:relative;height:150px;"><canvas id="{cid}_{suffix}"></canvas></div></div>')
+
+        cards = "".join([
+            _card("close", "📈 日経225 株価", "市場全体の方向"),
+            _card("per",   "📐 PER（株価収益率）", "標準13〜16倍／高いほど割高"),
+            _card("pbr",   "📕 PBR（株価純資産倍率）", "1倍が解散価値の目安"),
+            _card("yield", "⚖️ 益回り・配当利回り・10年金利", "益回り＞金利なら株は割安"),
+            _card("trk",   "🌡 騰落レシオ(25日)", "70=売られすぎ／120=過熱"),
+            _card("nvi",   "😨 日経VI（恐怖指数）", "20=平穏／30超=警戒"),
+            _card("short", "🩳 空売り比率", "40%超＝売り圧力強め"),
+            _card("nh",    "🆕 新高値・新安値 銘柄数", "高値超え＝強い相場"),
+        ])
+
         chart_html = f'''
-<div style="background:#0f1623;border:1px solid #1e2d42;border-radius:10px;padding:12px;margin:4px 0 14px;">
-  <div style="font-size:0.78em;color:#cdd9ec;font-weight:700;margin-bottom:6px;">📈 日経225 PER・PBR の推移（直近120営業日）</div>
-  <div style="position:relative;height:200px;"><canvas id="{cid}_v"></canvas></div>
-  <div style="font-size:0.78em;color:#cdd9ec;font-weight:700;margin:14px 0 6px;">⚖️ 株式益回り vs 配当利回り vs 10年金利（％）</div>
-  <div style="position:relative;height:170px;"><canvas id="{cid}_y"></canvas></div>
-</div>
+<div style="font-size:0.78em;color:#9fb4d4;font-weight:700;margin:2px 0 8px;">📊 各指標の推移（直近120営業日）</div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin-bottom:14px;">{cards}</div>
 <script>
 (function(){{
+  function line(id,sets,pct,refs){{
+    var el=document.getElementById(id); if(!el||el._d)return; el._d=1;
+    var ann=(refs||[]).map(function(r){{return r;}});
+    new Chart(el,{{type:'line',data:{{labels:{labels},datasets:sets}},options:{{
+      responsive:true,maintainAspectRatio:false,interaction:{{mode:'index',intersect:false}},
+      plugins:{{legend:{{display:sets.length>1,labels:{{color:'#cdd9ec',font:{{size:9}},boxWidth:10}}}}}},
+      scales:{{x:{{ticks:{{color:'#7a8fa8',maxTicksLimit:6,font:{{size:8}}}},grid:{{color:'rgba(255,255,255,.04)'}}}},
+        y:{{ticks:{{color:'#7a8fa8',font:{{size:9}},callback:function(v){{return pct?v+'%':v;}}}},grid:{{color:'rgba(255,255,255,.05)'}}}}}}}}}});
+  }}
   function draw(){{
-    if(typeof Chart==='undefined'){{return setTimeout(draw,200);}}
-    var gx=document.getElementById("{cid}_v"); if(!gx||gx._done)return; gx._done=1;
-    var L={labels};
-    new Chart(gx,{{type:'line',data:{{labels:L,datasets:[
-      {{label:'PER(倍)',data:{per_d},borderColor:'#58a6ff',backgroundColor:'rgba(88,166,255,.08)',yAxisID:'y',tension:.25,pointRadius:0,borderWidth:2,fill:true}},
-      {{label:'PBR(倍)',data:{pbr_d},borderColor:'#d29922',yAxisID:'y1',tension:.25,pointRadius:0,borderWidth:2}}
-    ]}},options:{{responsive:true,maintainAspectRatio:false,interaction:{{mode:'index',intersect:false}},
-      plugins:{{legend:{{labels:{{color:'#cdd9ec',font:{{size:10}}}}}}}},
-      scales:{{x:{{ticks:{{color:'#7a8fa8',maxTicksLimit:7,font:{{size:9}}}},grid:{{color:'rgba(255,255,255,.04)'}}}},
-        y:{{position:'left',ticks:{{color:'#58a6ff',font:{{size:9}}}},grid:{{color:'rgba(255,255,255,.05)'}},title:{{display:true,text:'PER',color:'#58a6ff',font:{{size:9}}}}}},
-        y1:{{position:'right',ticks:{{color:'#d29922',font:{{size:9}}}},grid:{{drawOnChartArea:false}},title:{{display:true,text:'PBR',color:'#d29922',font:{{size:9}}}}}}}}}}}});
-    var gy=document.getElementById("{cid}_y");
-    new Chart(gy,{{type:'line',data:{{labels:L,datasets:[
-      {{label:'株式益回り',data:{ey_d},borderColor:'#3fb950',tension:.25,pointRadius:0,borderWidth:2}},
-      {{label:'配当利回り',data:{dy_d},borderColor:'#e8a0c0',tension:.25,pointRadius:0,borderWidth:2}},
-      {{label:'10年金利',data:{jg_d},borderColor:'#8aa0c0',borderDash:[4,3],tension:.25,pointRadius:0,borderWidth:2}}
-    ]}},options:{{responsive:true,maintainAspectRatio:false,interaction:{{mode:'index',intersect:false}},
-      plugins:{{legend:{{labels:{{color:'#cdd9ec',font:{{size:10}}}}}}}},
-      scales:{{x:{{ticks:{{color:'#7a8fa8',maxTicksLimit:7,font:{{size:9}}}},grid:{{color:'rgba(255,255,255,.04)'}}}},
-        y:{{ticks:{{color:'#7a8fa8',font:{{size:9}},callback:function(v){{return v+'%';}}}},grid:{{color:'rgba(255,255,255,.05)'}}}}}}}}}});
+    if(typeof Chart==='undefined')return setTimeout(draw,200);
+    line("{cid}_close",[{{label:'日経225',data:{_arr('close',0)},borderColor:'#e6b800',backgroundColor:'rgba(230,184,0,.08)',fill:true,tension:.25,pointRadius:0,borderWidth:2}}]);
+    line("{cid}_per",[{{label:'PER',data:{_arr('per')},borderColor:'#58a6ff',backgroundColor:'rgba(88,166,255,.08)',fill:true,tension:.25,pointRadius:0,borderWidth:2}}]);
+    line("{cid}_pbr",[{{label:'PBR',data:{_arr('pbr')},borderColor:'#d29922',backgroundColor:'rgba(210,153,34,.08)',fill:true,tension:.25,pointRadius:0,borderWidth:2}}]);
+    line("{cid}_yield",[
+      {{label:'益回り',data:{_arr('eyield')},borderColor:'#3fb950',tension:.25,pointRadius:0,borderWidth:2}},
+      {{label:'配当',data:{_arr('dyield')},borderColor:'#e8a0c0',tension:.25,pointRadius:0,borderWidth:2}},
+      {{label:'10年金利',data:{_arr('jgb10')},borderColor:'#8aa0c0',borderDash:[4,3],tension:.25,pointRadius:0,borderWidth:2}}
+    ],true);
+    line("{cid}_trk",[{{label:'騰落レシオ',data:{_arr('trk25',1)},borderColor:'#7ee787',backgroundColor:'rgba(126,231,135,.07)',fill:true,tension:.25,pointRadius:0,borderWidth:2}}]);
+    line("{cid}_nvi",[{{label:'日経VI',data:{_arr('nvi',1)},borderColor:'#f85149',backgroundColor:'rgba(248,81,73,.08)',fill:true,tension:.25,pointRadius:0,borderWidth:2}}]);
+    line("{cid}_short",[{{label:'空売り比率',data:{_arr('short',1)},borderColor:'#a371f7',backgroundColor:'rgba(163,113,247,.08)',fill:true,tension:.25,pointRadius:0,borderWidth:2}}],true);
+    line("{cid}_nh",[
+      {{label:'新高値',data:{_arr('newhigh',0)},borderColor:'#3fb950',tension:.25,pointRadius:0,borderWidth:2}},
+      {{label:'新安値',data:{_arr('newlow',0)},borderColor:'#f85149',tension:.25,pointRadius:0,borderWidth:2}}
+    ]);
   }}
   if(!window.Chart){{var sc=document.createElement('script');sc.src='https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js';sc.onload=draw;document.head.appendChild(sc);}}else{{draw();}}
 }})();
 </script>'''
+
+    # ── やさしい総括（専門用語ゼロの解説）──
+    ps = _plain_summary(d)
+    ps_lines = "".join(f'<div style="font-size:0.82em;color:#dde8ff;line-height:1.7;margin-top:3px;">{ln}</div>' for ln in ps["lines"])
+    plain_box = f'''
+<div style="background:#11203a;border:1px solid {ps['color']}66;border-left:4px solid {ps['color']};border-radius:0 12px 12px 0;padding:13px 15px;margin-bottom:14px;">
+  <div style="font-size:0.72em;color:#9fb4d4;font-weight:700;">🔰 ひとことで言うと（やさしい解説）</div>
+  <div style="font-size:1.05em;font-weight:800;color:{ps['color']};margin:3px 0 6px;">{ps['emoji']} {ps['head']}</div>
+  {ps_lines}
+</div>'''
 
     return f'''
 <div style="background:#0d1117;border:1px solid #1e2d42;border-radius:14px;padding:16px;">
   <div style="font-size:0.75em;color:#7a8fa8;margin-bottom:10px;">
     東証プライムの「中身」。値上がり銘柄数・騰落レシオ・空売り・PER/PBR・益回りで市場全体の過熱／悲観・割安／割高を見る（{d.get("date","")} 時点）
   </div>
+  {plain_box}
   {bar}
   <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;">{chips}</div>
   {chart_html}
