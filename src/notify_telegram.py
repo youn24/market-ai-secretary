@@ -234,25 +234,25 @@ def verify_bot() -> bool:
         return False
 
 
-def send_message(text: str) -> bool:
-    if not _is_configured():
+def send_message(text: str, chat_id: str = None, bot_token: str = None) -> bool:
+    _tok = bot_token or os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
+    _cid = str(chat_id) if chat_id is not None else os.getenv("TELEGRAM_CHAT_ID", "").strip()
+    if not _tok or not _cid or _tok in {"ここにBotFatherのトークン", ""} or _cid in {"ここにあなたのChat ID", ""}:
         logger.info("Telegram 未設定スキップ")
         return False
-    token   = os.getenv("TELEGRAM_BOT_TOKEN")
-    chat_id = os.getenv("TELEGRAM_CHAT_ID")
-    url     = f"https://api.telegram.org/bot{token}/sendMessage"
+    url = f"https://api.telegram.org/bot{_tok}/sendMessage"
 
     # ① まず Markdown で送信
     try:
         r = requests.post(
             url,
-            json={"chat_id": chat_id, "text": text, "parse_mode": "Markdown"},
+            json={"chat_id": _cid, "text": text, "parse_mode": "Markdown"},
             timeout=15,
         )
         if r.status_code == 200:
             logger.info("Telegram テキスト送信 ✅")
             return True
-        # Markdown構文エラー(400)等 → プレーンで再送して“1通消える”のを防ぐ
+        # Markdown構文エラー(400)等 → プレーンで再送して"1通消える"のを防ぐ
         logger.warning(f"Markdown送信失敗(status={r.status_code}): "
                        f"{r.text[:160]} → プレーンで再送")
     except Exception as e:
@@ -260,7 +260,7 @@ def send_message(text: str) -> bool:
 
     # ② プレーンテキストで再送（parse_mode なし）
     try:
-        r = requests.post(url, json={"chat_id": chat_id, "text": text}, timeout=15)
+        r = requests.post(url, json={"chat_id": _cid, "text": text}, timeout=15)
         r.raise_for_status()
         logger.info("Telegram テキスト送信 ✅（プレーン）")
         return True
@@ -269,20 +269,21 @@ def send_message(text: str) -> bool:
         return False
 
 
-def send_photo(image_path: str, caption: str = "") -> bool:
-    if not _is_configured():
+def send_photo(image_path: str, caption: str = "",
+               chat_id: str = None, bot_token: str = None) -> bool:
+    _tok = bot_token or os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
+    _cid = str(chat_id) if chat_id is not None else os.getenv("TELEGRAM_CHAT_ID", "").strip()
+    if not _tok or not _cid:
         return False
-    token   = os.getenv("TELEGRAM_BOT_TOKEN")
-    chat_id = os.getenv("TELEGRAM_CHAT_ID")
-    url     = f"https://api.telegram.org/bot{token}/sendPhoto"
-    cap     = caption[:1024]
+    url = f"https://api.telegram.org/bot{_tok}/sendPhoto"
+    cap = caption[:1024]
 
     # ① Markdown キャプションで送信
     try:
         with open(image_path, "rb") as f:
             r = requests.post(
                 url,
-                data={"chat_id": chat_id, "caption": cap, "parse_mode": "Markdown"},
+                data={"chat_id": _cid, "caption": cap, "parse_mode": "Markdown"},
                 files={"photo": f},
                 timeout=30,
             )
@@ -299,7 +300,7 @@ def send_photo(image_path: str, caption: str = "") -> bool:
         with open(image_path, "rb") as f:
             r = requests.post(
                 url,
-                data={"chat_id": chat_id, "caption": cap},
+                data={"chat_id": _cid, "caption": cap},
                 files={"photo": f},
                 timeout=30,
             )
