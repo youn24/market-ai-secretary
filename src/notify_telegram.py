@@ -384,7 +384,7 @@ def run(risk, analysis, report_paths, mode,
         catalyst=None,
         theme_ranking=None, financial_analysis=None,
         supply_demand=None, kabuyoho=None, sector_heatmap=None,
-        nikkei_internals=None, adr=None) -> bool:
+        nikkei_internals=None, adr=None, setups=None) -> bool:
     if not _is_configured():
         logger.info("Telegram 設定なし。スキップします。")
         return False
@@ -462,6 +462,14 @@ def run(risk, analysis, report_paths, mode,
             if scenario.get("top_risk"):
                 sc_msg += f"\n\n⚡ *最注目リスク*\n{scenario['top_risk'][:100]}"
             send_message(sc_msg)
+
+        # ④.5 手法シグナル・スキャナー（押し目買い/ブレイク/売られすぎ等）
+        try:
+            if setups and setups.get("available") and setups.get("telegram_message"):
+                send_message(setups["telegram_message"])
+                logger.info("✅ 手法シグナル送信")
+        except Exception:
+            logger.debug(traceback.format_exc())
 
         # ⑤ Level 3: テクニカル分析チャート
         if technical and technical.get("chart_path") and os.path.exists(str(technical["chart_path"])):

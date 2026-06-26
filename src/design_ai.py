@@ -1097,6 +1097,130 @@ def _crosscheck(cross_check):
 
 
 # ──────────────────────────────────────────
+# セクション 12b：手法シグナル・スキャナー
+# ──────────────────────────────────────────
+
+def _setups(setups):
+    sc = setups or {}
+    if not sc.get("available"):
+        return ""
+    items = sc.get("setups", [])
+    if not items:
+        return ""
+
+    dir_badge = {
+        "buy":     (GREEN,  "買い目線"),
+        "sell":    (RED,    "売り目線"),
+        "caution": (RED,    "警戒"),
+        "neutral": (YELLOW, "中立"),
+    }
+    cards = []
+    for s in items:
+        c = s.get("color", YELLOW)
+        bc, btxt = dir_badge.get(s.get("direction", "neutral"), (YELLOW, "中立"))
+        cards.append(f"""<div class="glass-sm fade" style="padding:12px;border-left:3px solid {c}">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+    <span style="font-size:13px;font-weight:900;color:{TEXT}">{s.get('name','')}</span>
+    <span class="badge" style="background:{bc}1a;color:{bc};border:1px solid {bc}55">{btxt}</span>
+    <span style="margin-left:auto;font-size:13px;font-weight:800;color:{c}">{s.get('label','')}</span>
+  </div>
+  <div style="font-size:11.5px;line-height:1.7;color:{TEXT};margin-bottom:5px">{s.get('desc','')}</div>
+  <div style="font-size:11px;line-height:1.65;color:{BLUE};background:rgba(0,180,255,.07);padding:6px 9px;border-radius:7px">💡 {s.get('tip','')}</div>
+</div>""")
+
+    return f"""
+<div style="margin-bottom:12px">
+  <div class="label" style="padding:0 2px;margin-bottom:6px">📐 手法シグナル・スキャナー（AI自動判定）</div>
+  <div style="display:flex;flex-direction:column;gap:8px">{"".join(cards)}</div>
+  <div style="font-size:9px;color:{MUTED};margin-top:5px;padding:0 2px">押し目買い・ブレイク・売られすぎ等を機械的に判定。教科書的なシグナルの有無を示すものです。</div>
+</div>"""
+
+
+# ──────────────────────────────────────────
+# セクション 12c：TradingView 高度ウィジェット
+# （通貨強弱ヒートマップ＋経済指標カレンダー）
+# ──────────────────────────────────────────
+
+def _tv_advanced():
+    return f"""
+<div style="margin-bottom:12px">
+  <div class="label" style="padding:0 2px;margin-bottom:6px">🔥 通貨の強弱ヒートマップ（リアルタイム）</div>
+  <div class="glass" style="overflow:hidden;border-radius:14px;border:1px solid {BORDER}">
+    <div class="tradingview-widget-container">
+      <div class="tradingview-widget-container__widget"></div>
+      <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-forex-heat-map.js" async>
+      {{"width":"100%","height":340,"currencies":["EUR","USD","JPY","GBP","AUD","CAD","CHF","CNY"],"isTransparent":true,"colorTheme":"dark","locale":"ja"}}
+      </script>
+    </div>
+  </div>
+  <div style="font-size:9px;color:{MUTED};margin:4px 2px 12px">緑＝その通貨が強い／赤＝弱い。<b style="color:{TEXT}">JPY（円）の行が赤いほど円安</b>、緑なら円高です。</div>
+
+  <div class="label" style="padding:0 2px;margin-bottom:6px">📅 経済指標カレンダー（重要イベント）</div>
+  <div class="glass" style="overflow:hidden;border-radius:14px;border:1px solid {BORDER}">
+    <div class="tradingview-widget-container">
+      <div class="tradingview-widget-container__widget"></div>
+      <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-events.js" async>
+      {{"width":"100%","height":380,"colorTheme":"dark","isTransparent":true,"locale":"ja","importanceFilter":"0,1","countryFilter":"us,jp,eu,gb"}}
+      </script>
+    </div>
+  </div>
+  <div style="font-size:9px;color:{MUTED};margin:4px 2px 0">★が多い指標ほど相場が動きやすい。<b style="color:{TEXT}">発表の前後はトレードを控えめに</b>するのがプロの基本です。</div>
+</div>"""
+
+
+# ──────────────────────────────────────────
+# セクション 12d：ドル円の見方（常設・初心者ガイド）
+# ──────────────────────────────────────────
+
+def _usdjpy_guide(prices):
+    usd = _p("USDJPY=X", prices)
+    # 現在地のひとこと
+    if   usd > 158: loc = (RED,    f"今は {usd:.1f}円 — かなりの円安。介入リスクに警戒する水準。")
+    elif usd > 152: loc = (ORANGE, f"今は {usd:.1f}円 — 円安ぎみ。輸入品が高くなりやすい。")
+    elif usd > 0:   loc = (GREEN,  f"今は {usd:.1f}円 — 比較的おだやかな水準。")
+    else:           loc = (MUTED,  "現在値を取得中…")
+
+    movers = [
+        ("📊", "日米の金利差", BLUE,
+         "アメリカの金利が日本より高いほど、利息の高いドルが買われて<b>円安</b>に。"
+         "「米金利↑＝ドル円↑（円安）」が基本。"),
+        ("🌊", "リスクオン・オフ", PURPLE,
+         "世界が強気（リスクオン）だと円が売られ<b>円安</b>、"
+         "不安（リスクオフ）だと安全資産の円が買われ<b>円高</b>になりやすい。"),
+        ("🏛", "為替介入", RED,
+         "急激な円安が進むと、日本の財務省・日銀が<b>円買い介入</b>することがある。"
+         "155〜160円超は要警戒ゾーン。"),
+    ]
+    mv_html = "".join(f"""<div style="display:flex;align-items:flex-start;gap:9px;padding:9px 0;border-bottom:1px solid {BORDER}">
+  <span style="font-size:18px;flex-shrink:0">{ic}</span>
+  <div>
+    <div style="font-size:12px;font-weight:800;color:{c};margin-bottom:2px">{title}</div>
+    <div style="font-size:11px;line-height:1.7;color:{TEXT}">{desc}</div>
+  </div>
+</div>""" for ic, title, c, desc in movers)
+
+    return f"""
+<div style="margin-bottom:12px">
+  <div class="label" style="padding:0 2px;margin-bottom:6px">💴 ドル円の見方（はじめての方へ）</div>
+  <div class="glass" style="padding:13px 14px">
+    <div style="font-size:12px;line-height:1.7;color:{TEXT};margin-bottom:10px">
+      <b style="color:{loc[0]}">ドル円</b>は「1ドル＝何円か」。
+      <b>数字が大きい＝円安</b>（円の価値が下がる）、<b>小さい＝円高</b>です。
+    </div>
+    <div style="background:{loc[0]}14;border:1px solid {loc[0]}44;border-radius:9px;padding:8px 11px;font-size:12px;font-weight:700;color:{loc[0]};margin-bottom:11px">📍 {loc[1]}</div>
+
+    <div style="font-size:11px;font-weight:800;color:{MUTED};margin-bottom:2px">何で動く？（3つの力）</div>
+    {mv_html}
+
+    <div style="margin-top:10px;font-size:11px;line-height:1.7;color:{BLUE};background:rgba(0,180,255,.07);padding:8px 11px;border-radius:8px">
+      🧭 <b>プロのコツ</b>：まず週足で大きな方向を見て、日足で「節目（過去に何度も止まった価格）」を確認。
+      指標発表の直前直後は動きが荒れるので、無理に飛び込まないこと。
+    </div>
+  </div>
+</div>"""
+
+
+# ──────────────────────────────────────────
 # セクション 13：用語ガイド（折りたたみ）
 # ──────────────────────────────────────────
 
@@ -1154,6 +1278,7 @@ def generate(
     character_comments: dict = None,
     cross_check: dict = None,
     sector_ranking: dict = None,
+    setups: dict = None,
     **_kwargs,
 ) -> str:
     prices      = prices      or {}
@@ -1174,9 +1299,12 @@ def generate(
     strip_html   = _price_strip(prices)
     charts_html  = _charts()
     ai_html      = _ai_section(ai_summary, team_debate, score, character_comments)
+    setups_html  = _setups(setups)
     sc_html      = _scenarios(scenario)
     mkt_html     = _market_grid(prices, technical)
     tv_html      = _tv_overview()
+    tvadv_html   = _tv_advanced()
+    ujguide_html = _usdjpy_guide(prices)
     shm_html     = _sector_heatmap_live()
     srk_html     = _sector_ranking(sector_ranking)
     pro_html     = _pro_cross(prices)
@@ -1230,10 +1358,13 @@ def generate(
   {strip_html}
   {charts_html}
   {ai_html}
+  {setups_html}
   {cc_html}
   {sc_html}
   {mkt_html}
+  {ujguide_html}
   {tv_html}
+  {tvadv_html}
   {srk_html}
   {shm_html}
   {pro_html}
@@ -1319,6 +1450,7 @@ def run(
     character_comments: dict = None,
     cross_check: dict        = None,
     sector_ranking: dict     = None,
+    setups: dict             = None,
     mode: str = "morning",
     **_kwargs,
 ) -> dict:
@@ -1330,7 +1462,7 @@ def run(
             data_integrity=data_integrity, sector_analysis=sector_analysis,
             prediction_tracker=prediction_tracker, weekly_calendar=weekly_calendar,
             team_debate=team_debate, character_comments=character_comments,
-            cross_check=cross_check, sector_ranking=sector_ranking,
+            cross_check=cross_check, sector_ranking=sector_ranking, setups=setups,
         )
         logger.info(f"✅ デザインAIレポート生成: {path}")
         return {"available": True, "path": path}

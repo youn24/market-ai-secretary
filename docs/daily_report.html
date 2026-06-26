@@ -2,1337 +2,495 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>ガネ先生とカワウソくんの相場ダイジェスト — 2026-06-20</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5">
+<meta name="theme-color" content="#06080f">
+<title>市場AI秘書 — 2026-06-26</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
 <style>
 
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&family=Inter:wght@400;600;700;900&display=swap');
 
-:root {
-  --bg:      #0d1117;
-  --card:    #161b22;
-  --card2:   #1c2128;
-  --border:  #30363d;
-  --text:    #c9d1d9;
-  --muted:   #8b949e;
-  --green:   #3fb950;
-  --red:     #f85149;
-  --yellow:  #d29922;
-  --orange:  #db6d28;
-  --blue:    #58a6ff;
-  --purple:  #bc8cff;
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Noto Sans JP','Inter',sans-serif;
+  background:#06080f;
+  color:#f0f4ff;
+  font-size:14px;
+  line-height:1.6;
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
 }
 
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-.cj-toggle { display:flex; gap:4px; }
-.cj-btn { background:transparent; color:var(--muted); border:1px solid var(--border);
-  border-radius:7px; padding:4px 10px; font-size:11px; font-weight:700;
-  cursor:pointer; transition:all .15s; }
-.cj-btn:hover { border-color:var(--blue); color:var(--text); }
-.cj-btn-on { background:var(--blue); color:#fff; border-color:var(--blue); }
-
-.yt-sub { font-size:12px; font-weight:700; color:var(--blue); margin:10px 0 3px; }
-.yt-body { font-size:13px; line-height:1.7; color:var(--text); }
-
-html { scroll-behavior: smooth; }
-
-body {
-  font-family: 'Noto Sans JP', sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  font-size: 14px;
-  line-height: 1.6;
-  min-height: 100vh;
+/* グラスカード */
+.glass{
+  background:rgba(255,255,255,0.04);
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  border:1px solid rgba(255,255,255,0.09);
+  border-radius:16px;
+}
+.glass-sm{
+  background:rgba(255,255,255,0.04);
+  border:1px solid rgba(255,255,255,0.08);
+  border-radius:12px;
 }
 
-/* ── Layout ── */
-.container { max-width: 960px; margin: 0 auto; padding: 16px; }
-.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-.grid-auto { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
+/* ネオングロー */
+.glow-green { box-shadow:0 0 20px rgba(0,255,135,.20), 0 0 60px rgba(0,255,135,.08); }
+.glow-red   { box-shadow:0 0 20px rgba(255,61,90,.20),  0 0 60px rgba(255,61,90,.08); }
+.glow-yellow{ box-shadow:0 0 20px rgba(255,200,55,.20), 0 0 60px rgba(255,200,55,.08); }
 
-@media (max-width: 600px) {
-  .grid-2, .grid-3 { grid-template-columns: 1fr; }
-  .grid-auto { grid-template-columns: repeat(2, 1fr); }
-}
+/* ラベル共通 */
+.label{font-size:10px;font-weight:700;letter-spacing:1.2px;color:#5a6a85;text-transform:uppercase;margin-bottom:5px}
 
-/* ── Card ── */
-.card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 16px;
+/* フェードイン */
+@keyframes fadeUp{
+  from{opacity:0;transform:translateY(16px)}
+  to  {opacity:1;transform:translateY(0)}
 }
-.card-title {
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 1.2px;
-  color: var(--muted);
-  margin-bottom: 12px;
-}
+.fade{animation:fadeUp .5s ease forwards;opacity:0}
 
-/* ── Header ── */
-.header {
-  background: linear-gradient(135deg, #0d1117 0%, #161b22 100%);
-  border-bottom: 1px solid var(--border);
-  padding: 20px 0 16px;
-  margin-bottom: 20px;
-}
-.header-inner {
-  max-width: 960px;
-  margin: 0 auto;
-  padding: 0 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-.header-title {
-  font-size: 20px;
-  font-weight: 900;
-  background: linear-gradient(90deg, #3fb950, #58a6ff);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-.header-sub {
-  font-size: 12px;
-  color: var(--muted);
-  margin-top: 2px;
-}
-.signal-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  border-radius: 999px;
-  font-size: 13px;
-  font-weight: 700;
-  border: 1.5px solid;
-}
-.signal-bull   { color: #3fb950;  border-color: #3fb950;  background: rgba(63,185,80,.1); }
-.signal-bear   { color: #f85149;    border-color: #f85149;    background: rgba(248,81,73,.1); }
-.signal-neutral { color: #d29922; border-color: #d29922; background: rgba(210,153,34,.1); }
+/* ティッカー */
+.ticker-wrap{position:sticky;top:0;z-index:100;background:#06080f;border-bottom:1px solid rgba(255,255,255,0.09)}
 
-/* ── Gauge (SVG) ── */
-.gauge-wrap {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-}
-.gauge-svg { width: 200px; height: 130px; overflow: visible; }
-.gauge-score-label {
-  font-size: 11px;
-  color: var(--muted);
-  text-align: center;
+/* スクロールバー非表示 */
+.scroll-x{overflow-x:auto;scrollbar-width:none}
+.scroll-x::-webkit-scrollbar{display:none}
+
+/* バッジ */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;white-space:nowrap}
+
+/* シグナルバー */
+.sig-bar{height:3px;border-radius:2px;margin-top:4px}
+
+/* ニュースアイテム */
+.news-item{padding:9px 0;border-bottom:1px solid rgba(255,255,255,0.09);display:flex;align-items:flex-start;gap:8px}
+.news-item:last-child{border-bottom:none}
+
+/* カレンダー */
+.cal-row{padding:7px 0;border-bottom:1px solid rgba(255,255,255,0.09);display:flex;align-items:flex-start;gap:8px}
+.cal-row:last-child{border-bottom:none}
+
+/* デバイスの幅に合わせてmax-width */
+@media(min-width:540px){
+  .wrap{max-width:520px;margin:0 auto}
 }
 
-/* ── Stat row ── */
-.stat-row {
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-  margin-bottom: 4px;
+/* ── キャラクターカード ── */
+.char-card{
+  display:flex;align-items:flex-start;gap:0;
+  border-radius:14px;overflow:hidden;margin-bottom:8px;
 }
-.stat-value { font-size: 22px; font-weight: 700; }
-.stat-unit  { font-size: 11px; color: var(--muted); }
-
-/* ── Price cards ── */
-.price-card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 12px;
+.char-ganesha{
+  background:linear-gradient(135deg,#1c1600,#271e00);
+  border:1px solid rgba(255,215,0,.22);
 }
-.price-name  { font-size: 11px; color: var(--muted); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.price-value { font-size: 18px; font-weight: 700; }
-.price-chg   { font-size: 12px; margin-top: 3px; }
-.chg-up   { color: #3fb950; }
-.chg-down { color: #f85149; }
-.chg-flat { color: #8b949e; }
-.rsi-bar-wrap {
-  margin-top: 6px;
-  height: 4px;
-  background: var(--border);
-  border-radius: 2px;
-  overflow: hidden;
+.char-otter{
+  background:linear-gradient(135deg,#160e09,#1f130c);
+  border:1px solid rgba(196,149,106,.22);
 }
-.rsi-bar { height: 100%; border-radius: 2px; transition: width .3s; }
-.rsi-label { font-size: 10px; color: var(--muted); margin-top: 3px; }
-
-/* ── Sector heatmap ── */
-.sector-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-  gap: 8px;
+.char-avatar{
+  width:80px;flex-shrink:0;text-align:center;
+  padding:10px 4px 8px;
 }
-.sector-cell {
-  border-radius: 8px;
-  padding: 10px 8px;
-  text-align: center;
-  font-size: 11px;
-  font-weight: 700;
-  border: 1px solid transparent;
+.char-name-g{font-size:9px;font-weight:800;color:#FFD700;margin-top:3px;white-space:nowrap}
+.char-name-o{font-size:9px;font-weight:800;color:#C4956A;margin-top:3px;white-space:nowrap}
+.char-bubble{flex:1;padding:11px 13px 11px 10px;min-width:0}
+.char-bubble-r{flex:1;padding:11px 10px 11px 13px;min-width:0}
+.char-badge-g{
+  font-size:9px;font-weight:800;color:#FFD700;letter-spacing:.6px;
+  background:rgba(255,215,0,.12);border:1px solid rgba(255,215,0,.28);
+  border-radius:10px;padding:2px 9px;display:inline-block;margin-bottom:6px;
 }
-.sector-name { font-size: 10px; opacity: .75; margin-top: 2px; }
-
-/* ── News ── */
-.news-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 10px 0;
-  border-bottom: 1px solid var(--border);
+.char-badge-o{
+  font-size:9px;font-weight:800;color:#C4956A;letter-spacing:.6px;
+  background:rgba(196,149,106,.12);border:1px solid rgba(196,149,106,.28);
+  border-radius:10px;padding:2px 9px;display:inline-block;margin-bottom:6px;
 }
-.news-item:last-child { border-bottom: none; }
-.news-badge {
-  flex-shrink: 0;
-  font-size: 10px;
-  font-weight: 700;
-  padding: 2px 7px;
-  border-radius: 4px;
-  margin-top: 2px;
+.char-text{font-size:11.5px;line-height:1.8;word-break:break-word}
+@media(max-width:400px){
+  .char-card{flex-direction:column;padding:10px}
+  .char-avatar{width:100%;padding:4px 0}
+  .char-bubble,.char-bubble-r{padding:8px 0 0}
 }
-.badge-high   { background: rgba(248,81,73,.2);   color: #f85149; }
-.badge-mid    { background: rgba(210,153,34,.2);  color: #d29922; }
-.badge-low    { background: rgba(139,148,158,.15); color: #8b949e; }
-.news-title   { font-size: 13px; line-height: 1.5; color: var(--text); text-decoration: none; }
-.news-title:hover { color: #58a6ff; }
-.news-source  { font-size: 11px; color: var(--muted); margin-top: 2px; }
-
-/* ── AI discussion ── */
-.debate-member {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 14px;
-}
-.debate-avatar {
-  flex-shrink: 0;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-  border: 2px solid;
-}
-.av-bull   { border-color: #3fb950; background: rgba(63,185,80,.12); }
-.av-bear   { border-color: #f85149;   background: rgba(248,81,73,.12); }
-.av-neutral { border-color: #d29922; background: rgba(210,153,34,.12); }
-.debate-bubble {
-  background: var(--card2);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 10px 12px;
-  font-size: 13px;
-  line-height: 1.6;
-  flex: 1;
-}
-.debate-name { font-size: 11px; font-weight: 700; margin-bottom: 4px; }
-.debate-verdict {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 12px;
-  padding: 10px 12px;
-  background: var(--card2);
-  border-radius: 8px;
-  border: 1px solid var(--border);
-}
-.verdict-icon { font-size: 22px; }
-.verdict-text { font-size: 14px; font-weight: 700; }
-.verdict-conf { font-size: 12px; color: var(--muted); margin-top: 1px; }
-
-/* ── Calendar ── */
-.cal-item {
-  display: flex;
-  gap: 10px;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--border);
-  align-items: flex-start;
-}
-.cal-item:last-child { border-bottom: none; }
-.cal-date {
-  flex-shrink: 0;
-  background: var(--card2);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 4px 8px;
-  font-size: 11px;
-  font-weight: 700;
-  min-width: 60px;
-  text-align: center;
-}
-.cal-event { font-size: 13px; line-height: 1.5; }
-.cal-impact-high   { color: #f85149; font-weight: 700; }
-.cal-impact-mid    { color: #d29922; }
-
-/* ── Prediction tracker ── */
-.acc-bar-wrap {
-  height: 8px;
-  background: var(--border);
-  border-radius: 4px;
-  overflow: hidden;
-  margin: 8px 0;
-}
-.acc-bar {
-  height: 100%;
-  background: linear-gradient(90deg, #58a6ff, #3fb950);
-  border-radius: 4px;
-  transition: width .5s;
-}
-.pred-row {
-  display: flex;
-  justify-content: space-between;
-  font-size: 12px;
-  padding: 4px 0;
-  border-bottom: 1px solid var(--border);
-}
-.pred-row:last-child { border-bottom: none; }
-.pred-hit  { color: #3fb950; font-weight: 700; }
-.pred-miss { color: #f85149;   font-weight: 700; }
-
-/* ── Fear & Greed meter ── */
-.fg-meter {
-  position: relative;
-  height: 10px;
-  background: linear-gradient(90deg, #f85149, #d29922, #3fb950);
-  border-radius: 5px;
-  margin: 8px 0 4px;
-}
-.fg-pointer {
-  position: absolute;
-  top: -4px;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: white;
-  border: 2px solid var(--bg);
-  transform: translateX(-50%);
-  box-shadow: 0 0 6px rgba(0,0,0,.5);
-}
-
-/* ── Scroll anim ── */
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(12px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-.fade-up {
-  animation: fadeUp .5s ease forwards;
-  opacity: 0;
-}
-section { margin-bottom: 20px; }
-.section-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 14px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--border);
-}
-.section-icon { font-size: 18px; }
-.section-title { font-size: 16px; font-weight: 700; }
-.section-tag {
-  margin-left: auto;
-  font-size: 10px;
-  padding: 2px 8px;
-  border-radius: 4px;
-  background: var(--card2);
-  color: var(--muted);
-}
-
-/* ── キャラクターヘッダー ── */
-.char-header {
-  background: linear-gradient(160deg, #1a0f00 0%, #2d1f00 40%, #1a1200 100%);
-  border-bottom: 3px solid #c8992a;
-  padding: 0;
-  overflow: hidden;
-  position: relative;
-  margin-bottom: 20px;
-}
-.char-header-inner {
-  max-width: 960px;
-  margin: 0 auto;
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-}
-.char-title-block {
-  text-align: center;
-  flex: 1;
-  padding: 20px 10px 16px;
-}
-.char-main-title {
-  font-size: 20px;
-  font-weight: 900;
-  color: #f0c040;
-  text-shadow: 0 2px 12px rgba(0,0,0,.9);
-  line-height: 1.4;
-}
-.char-sub-title {
-  font-size: 11px;
-  color: #c8992a;
-  margin-top: 4px;
-  letter-spacing: 1.5px;
-}
-.char-date-badge {
-  display: inline-block;
-  background: rgba(200,153,42,.2);
-  border: 1px solid #c8992a;
-  border-radius: 20px;
-  padding: 3px 14px;
-  font-size: 11px;
-  color: #f0c040;
-  margin-top: 8px;
-}
-.char-signal-badge {
-  display: inline-block;
-  padding: 5px 18px;
-  border-radius: 20px;
-  font-size: 14px;
-  font-weight: 900;
-  margin-top: 8px;
-  border: 2px solid;
-}
-.char-figure {
-  width: 130px;
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding-bottom: 4px;
-}
-.char-figure-label {
-  font-size: 10px;
-  color: #c8992a;
-  font-weight: 700;
-  text-align: center;
-  margin-top: 4px;
-}
-.char-svg { width: 100px; height: 100px; }
-.char-balloon {
-  background: rgba(255,255,255,.08);
-  border: 1px solid rgba(200,153,42,.4);
-  border-radius: 8px;
-  padding: 4px 8px;
-  font-size: 10px;
-  color: #f0c040;
-  text-align: center;
-  max-width: 110px;
-  margin-top: 4px;
-}
-@media (max-width: 600px) {
-  .char-main-title { font-size: 15px; }
-  .char-figure { width: 80px; }
-  .char-svg { width: 70px; height: 70px; }
-}
-
-/* ── クイックサマリーカード ── */
-.qs-grid {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 10px;
-  margin-bottom: 20px;
-}
-@media (max-width: 600px) {
-  .qs-grid { grid-template-columns: repeat(2, 1fr); }
-}
-.qs-card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 12px 8px;
-  text-align: center;
-  transition: transform .2s, box-shadow .2s;
-}
-.qs-card:hover { transform: translateY(-3px); box-shadow: 0 6px 16px rgba(0,0,0,.4); }
-.qs-icon  { font-size: 18px; margin-bottom: 4px; }
-.qs-label { font-size: 10px; color: var(--muted); margin-bottom: 5px; }
-.qs-value { font-size: 16px; font-weight: 800; }
-.qs-chg   { font-size: 11px; margin-top: 4px; }
-
-/* ── ウォッチリスト ── */
-.watch-item {
-  display: flex;
-  align-items: center;
-  padding: 10px 0;
-  border-bottom: 1px solid var(--border);
-  gap: 8px;
-}
-.watch-item:last-child { border-bottom: none; }
-.watch-rank  { font-size: 12px; color: var(--muted); min-width: 20px; }
-.watch-name  { flex: 1; font-size: 13px; font-weight: 700; }
-.watch-theme { font-size: 10px; color: var(--muted); }
-.watch-price { font-size: 14px; font-weight: 700; min-width: 80px; text-align: right; }
-.watch-chg   { font-size: 13px; font-weight: 700; min-width: 55px; text-align: right; }
-.watch-signal { font-size: 10px; padding: 2px 7px; border-radius: 4px; white-space: nowrap; }
-.sig-buy  { background: rgba(63,185,80,.2); color: #3fb950; }
-.sig-sell { background: rgba(248,81,73,.2); color: #f85149; }
-.sig-hold { background: rgba(210,153,34,.2); color: #d29922; }
-
-/* ── シナリオカード(改良) ── */
-.scenario-card-new {
-  border-radius: 12px;
-  padding: 16px;
-  border: 2px solid;
-  text-align: center;
-}
-.sc-icon   { font-size: 30px; margin-bottom: 6px; }
-.sc-label  { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
-.sc-prob   { font-size: 26px; font-weight: 900; }
-.sc-range  { font-size: 12px; margin-top: 4px; opacity: .85; }
-.sc-desc   { font-size: 11px; line-height: 1.6; margin-top: 8px; text-align: left; }
-
-/* ── 市場ステータスバー ── */
-.market-status-bar {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  padding: 12px 16px;
-  background: var(--card2);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  margin-bottom: 16px;
-  align-items: center;
-}
-.ms-item { display: flex; flex-direction: column; align-items: center; min-width: 70px; }
-.ms-label { font-size: 9px; color: var(--muted); margin-bottom: 2px; }
-.ms-value { font-size: 13px; font-weight: 700; }
-.ms-chg   { font-size: 10px; }
-.ms-sep   { width: 1px; height: 30px; background: var(--border); }
 
 </style>
 </head>
 <body>
 
-<!-- ── リアルタイムティッカーテープ（TradingView）── -->
-<div style="position:sticky;top:0;z-index:100;background:#0d1117;border-bottom:1px solid #30363d">
+<!-- ── トップグラデーションライン ── -->
+<div style="height:3px;background:linear-gradient(90deg,#b06eff,#00b4ff,#00e5ff,#00ff87)"></div>
+
+<!-- ── ティッカーテープ（リアルタイム）── -->
+<div class="ticker-wrap">
   <div class="tradingview-widget-container">
     <div class="tradingview-widget-container__widget"></div>
     <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js" async>
-    {
-      "symbols": [
-        {"proName":"TVC:NI225",      "title":"日経225"},
-        {"proName":"TSE:TOPIX",      "title":"TOPIX"},
-        {"proName":"SP:SPX",         "title":"S&P500"},
-        {"proName":"NASDAQ:NDX",     "title":"Nasdaq100"},
-        {"proName":"FX:USDJPY",      "title":"ドル円"},
-        {"proName":"FX:EURJPY",      "title":"ユーロ円"},
-        {"proName":"TVC:GOLD",       "title":"金"},
-        {"proName":"TVC:USOIL",      "title":"原油"},
-        {"proName":"BITSTAMP:BTCUSD","title":"BTC"},
-        {"proName":"CBOE:VIX",       "title":"VIX"}
-      ],
-      "showSymbolLogo": false,
-      "isTransparent": true,
-      "displayMode": "adaptive",
-      "colorTheme": "dark",
-      "locale": "ja",
-      "width": "100%",
-      "height": 44
-    }
+    {"symbols":[
+      {"proName":"TVC:NI225","title":"日経225"},{"proName":"FX:USDJPY","title":"ドル円"},
+      {"proName":"SP:SPX","title":"S&P500"},{"proName":"TVC:GOLD","title":"金"},
+      {"proName":"TVC:USOIL","title":"原油"},{"proName":"CBOE:VIX","title":"VIX"},
+      {"proName":"BITSTAMP:BTCUSD","title":"BTC"},{"proName":"FX:EURJPY","title":"EUR/JPY"}
+    ],"showSymbolLogo":false,"isTransparent":true,"displayMode":"adaptive","colorTheme":"dark","locale":"ja","width":"100%","height":44}
     </script>
   </div>
 </div>
 
-<!-- ── キャラクターヘッダー ── -->
-<header class="char-header">
-  <div class="char-header-inner">
-    <!-- ガネ先生 (左) -->
-    <div class="char-figure">
-      <img src="assets/gane_sensei.png" style="width:110px;height:110px;object-fit:contain;filter:drop-shadow(0 4px 12px rgba(0,0,0,.6))">
-      <div class="char-figure-label">ガネ先生</div>
-      <div class="char-balloon">相場が良さそう<br>ですね！</div>
-    </div>
+<!-- ── ヘッダー ── -->
 
-    <!-- タイトル (中央) -->
-    <div class="char-title-block">
-      <div class="char-main-title">ガネ先生とカワウソくんの<br>今日の相場ダイジェスト</div>
-      <div class="char-sub-title">AIチーム自動分析レポート</div>
-      <div class="char-date-badge">📅 2026-06-20 11:21</div><br>
-      <span class="char-signal-badge" style="color:#3fb950;border-color:#3fb950;background:rgba(63,185,80,.15)">🚀 強気相場</span>
-      <div style="margin-top:10px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
-        <span style="font-size:12px;color:#f0c040">
-          🇯🇵 日経 <b style="color:#3fb950">0</b>
-          <span class="chg-up">(+0.72%)</span>
-        </span>
-        <span style="font-size:12px;color:#f0c040">
-          🇺🇸 S&P <b style="color:#3fb950">0</b>
-          <span class="chg-up">(+1.08%)</span>
-        </span>
-        <span style="font-size:12px;color:#f0c040">
-          💴 USD/JPY <b>0.00</b>
-        </span>
-      </div>
-    </div>
-
-    <!-- カワウソくん (右) -->
-    <div class="char-figure">
-      <img src="assets/kawauso.png" style="width:110px;height:110px;object-fit:contain;filter:drop-shadow(0 4px 12px rgba(0,0,0,.6))">
-      <div class="char-figure-label">カワウソくん</div>
-      <div class="char-balloon">チャンスかも！<br>積極的に！</div>
-    </div>
-  </div>
-</header>
-
-<main class="container">
-
-<!-- ── データ生成時刻の注記 ── -->
-<div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:8px 14px;margin-bottom:12px;font-size:11px;color:#8b949e;display:flex;align-items:center;gap:8px">
-  <span>📊 下の数値はレポート生成時刻（2026-06-20 11:21 JST）のデータです。リアルタイムチャートはTradingViewウィジェットをご覧ください。</span>
-</div>
-
-<!-- ── クイックサマリー ── -->
-<div class="qs-grid"><div class="qs-card">
-  <div class="qs-icon">🇯🇵</div>
-  <div class="qs-label">日経平均</div>
-  <div class="qs-value">0.00</div>
-  <div class="qs-chg chg-up">+0.72%</div>
-</div><div class="qs-card">
-  <div class="qs-icon">🇺🇸</div>
-  <div class="qs-label">S&P500</div>
-  <div class="qs-value">0.00</div>
-  <div class="qs-chg chg-up">+1.08%</div>
-</div><div class="qs-card">
-  <div class="qs-icon">💴</div>
-  <div class="qs-label">USD/JPY</div>
-  <div class="qs-value">0.00</div>
-  <div class="qs-chg chg-up">+0.46%</div>
-</div><div class="qs-card">
-  <div class="qs-icon">😨</div>
-  <div class="qs-label">VIX 恐怖指数</div>
-  <div class="qs-value" style="color:#3fb950">0.0</div>
-  <div class="qs-chg chg-up">-11.06%</div>
-</div><div class="qs-card">
-  <div class="qs-icon">🎭</div>
-  <div class="qs-label">Fear &amp; Greed</div>
-  <div class="qs-value" style="color:#f85149">38</div>
-  <div class="qs-chg" style="color:#f85149">恐怖 😟</div>
-</div></div>
-
-<!-- ── 市場ステータスバー ── -->
-<div class="market-status-bar"><div class="ms-item">
-  <span class="ms-label">日経225</span>
-  <span class="ms-value" style="color:#3fb950">0.00</span>
-  <span class="ms-chg" style="color:#3fb950">+0.72%</span>
-</div><div class="ms-sep"></div><div class="ms-item">
-  <span class="ms-label">S&P500</span>
-  <span class="ms-value" style="color:#3fb950">0.00</span>
-  <span class="ms-chg" style="color:#3fb950">+1.08%</span>
-</div><div class="ms-sep"></div><div class="ms-item">
-  <span class="ms-label">Nasdaq</span>
-  <span class="ms-value" style="color:#3fb950">0.00</span>
-  <span class="ms-chg" style="color:#3fb950">+1.91%</span>
-</div><div class="ms-sep"></div><div class="ms-item">
-  <span class="ms-label">USD/JPY</span>
-  <span class="ms-value" style="color:#3fb950">0.00</span>
-  <span class="ms-chg" style="color:#3fb950">+0.46%</span>
-</div><div class="ms-sep"></div><div class="ms-item">
-  <span class="ms-label">VIX</span>
-  <span class="ms-value" style="color:#3fb950">0.00</span>
-  <span class="ms-chg" style="color:#3fb950">-11.06%</span>
-</div><div class="ms-sep"></div><div class="ms-item">
-  <span class="ms-label">金(USD)</span>
-  <span class="ms-value" style="color:#f85149">0.00</span>
-  <span class="ms-chg" style="color:#f85149">-3.10%</span>
-</div></div>
-
-<!-- ── データ健全性バッジ ── -->
-
-<section>
-  <div class="card fade-up" style="border-left:3px solid #3fb950">
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap">
-      <span style="font-size:16px">✅</span>
-      <span style="font-weight:700;font-size:13px;color:#3fb950">データ健全性 良好</span>
-      <span style="background:#3fb95022;color:#3fb950;border:1px solid #3fb95055;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700">37/37 正常</span>
-    </div>
-    <div style="font-size:12px;color:var(--muted)">全37指標すべて正常（取得した全データを毎朝自動検査）</div>
-    
-  </div>
-</section>
-
-
-<!-- ── プロの目: クロス指標分析 ── -->
-
-<section class="fade-up">
-  <h2 class="section-title">🏛 プロの目 — クロス指標分析</h2>
-  <div style="background:linear-gradient(135deg,#161b22,#1c2128);border:1px solid #f85149;border-radius:12px;padding:14px 18px;margin-bottom:14px">
-    <div style="display:flex;align-items:center;gap:12px">
-      <span style="font-size:34px">⛈</span>
+<div style="background:rgba(255,255,255,0.03);border-bottom:1px solid rgba(255,255,255,0.09);padding:11px 16px">
+  <div class="wrap" style="display:flex;align-items:center;justify-content:space-between">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div style="width:32px;height:32px;background:linear-gradient(135deg,#b06eff,#00b4ff);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px">📊</div>
       <div>
-        <div style="font-weight:800;font-size:15px;color:#f85149">本日の市場天気図：嵐に備える日</div>
-        <div style="font-size:12px;color:#c9d1d9;margin-top:3px;line-height:1.7">🐘 ガネ先生「複数の警報が同時点灯。ポジションを軽くして現金比率を上げ、嵐が過ぎるのを待つのが上策じゃ。」</div>
+        <div style="font-size:14px;font-weight:900;color:#f0f4ff">市場AI秘書</div>
+        <div style="font-size:10px;color:#5a6a85">2026-06-26</div>
       </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:7px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);border-radius:20px;padding:5px 12px">
+      <div style="width:7px;height:7px;border-radius:50%;background:#00ff87;box-shadow:0 0 8px #00ff87"></div>
+      <span style="font-size:12px;font-weight:700;color:#00ff87">やや強気</span>
     </div>
   </div>
-  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:12px">
-    
-    <div class="card" style="padding:16px">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <span style="font-size:12px;color:#8b949e;font-weight:600">① 日米 恐怖スプレッド</span>
-        <span style="font-size:16px">🔴</span>
-      </div>
-      <div style="font-size:26px;font-weight:800;margin:6px 0;color:#f85149">+14.1pt</div>
-      <div style="font-size:11px;color:#8b949e">日経VI 30.53 − VIX 16.40</div>
-      <div style="margin-top:10px;padding:10px;background:rgba(88,166,255,.05);border-left:3px solid #f85149;border-radius:6px">
-        <div style="font-size:12px;font-weight:700;color:#f85149">🎩 プロの読み</div>
-        <div style="font-size:12px;margin-top:4px;line-height:1.7">日経VI 30.5 に対し米VIX 16.4。スプレッド +14.1pt は明確な異常値。恐怖の震源地は<b>日本側</b>にある（円金利・日銀・円キャリー巻き戻し等の国内要因）。米国だけ見ていると足をすくわれる局面。</div>
-        <div style="font-size:11px;color:#8b949e;margin-top:6px;line-height:1.6">🦦 やさしく言うと：アメリカは落ち着いているのに、日本だけが怖がっている状態。日本固有の悪材料に注意。</div>
-      </div>
-    </div>
-    <div class="card" style="padding:16px">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <span style="font-size:12px;color:#8b949e;font-weight:600">② CME先物ギャップ（寄り付き予測）</span>
-        <span style="font-size:16px">🔴</span>
-      </div>
-      <div style="font-size:26px;font-weight:800;margin:6px 0;color:#f85149">+2.77%</div>
-      <div style="font-size:11px;color:#8b949e">CME日経先物 71,840 − 現物 69,902 = +1,938円</div>
-      <div style="margin-top:10px;padding:10px;background:rgba(88,166,255,.05);border-left:3px solid #f85149;border-radius:6px">
-        <div style="font-size:12px;font-weight:700;color:#f85149">🎩 プロの読み</div>
-        <div style="font-size:12px;margin-top:4px;line-height:1.7">ギャップ +2.77% の大幅高スタート示唆。窓開け局面では寄り成り注文が偏り、最初の5分は値が飛ぶ。指値主体で。</div>
-        <div style="font-size:11px;color:#8b949e;margin-top:6px;line-height:1.6">🦦 やさしく言うと：朝から大きく動いて始まりそう。最初の数分は様子見が安全。</div>
-      </div>
-    </div>
-    <div class="card" style="padding:16px">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <span style="font-size:12px;color:#8b949e;font-weight:600">③ VIX期間構造（恐怖の時間軸）</span>
-        <span style="font-size:16px">🟢</span>
-      </div>
-      <div style="font-size:26px;font-weight:800;margin:6px 0;color:#3fb950">-5.6pt</div>
-      <div style="font-size:11px;color:#8b949e">VIX9D 13.93 − VIX3M 19.57</div>
-      <div style="margin-top:10px;padding:10px;background:rgba(88,166,255,.05);border-left:3px solid #3fb950;border-radius:6px">
-        <div style="font-size:12px;font-weight:700;color:#3fb950">🎩 プロの読み</div>
-        <div style="font-size:12px;margin-top:4px;line-height:1.7">期間構造 -5.6pt の正常コンタンゴ。短期＜長期の健全な形状で、目先のパニックは織り込まれていない。</div>
-        <div style="font-size:11px;color:#8b949e;margin-top:6px;line-height:1.6">🦦 やさしく言うと：ボラティリティ市場は平常運転。差し迫った恐怖はなし。</div>
-      </div>
-    </div>
-    <div class="card" style="padding:16px">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <span style="font-size:12px;color:#8b949e;font-weight:600">④ NT倍率（資金ローテーション）</span>
-        <span style="font-size:16px">🔵</span>
-      </div>
-      <div style="font-size:26px;font-weight:800;margin:6px 0;color:#58a6ff">17.18</div>
-      <div style="font-size:11px;color:#8b949e">日経平均 ÷ TOPIX ＝ 資金の流れの方位磁石</div>
-      <div style="margin-top:10px;padding:10px;background:rgba(88,166,255,.05);border-left:3px solid #58a6ff;border-radius:6px">
-        <div style="font-size:12px;font-weight:700;color:#58a6ff">🎩 プロの読み</div>
-        <div style="font-size:12px;margin-top:4px;line-height:1.7">NT倍率 17.18（-0.66%）と急低下。日経平均（半導体・値がさグロース）よりTOPIX（銀行・商社・バリュー）が相対的に強い。<b>金利上昇・バリュー回帰</b>の典型パターン。</div>
-        <div style="font-size:11px;color:#8b949e;margin-top:6px;line-height:1.6">🦦 やさしく言うと：ハイテク株から銀行などの「地味だけど堅い株」へお金が引っ越し中。</div>
-      </div>
-    </div>
-    <div class="card" style="padding:16px">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <span style="font-size:12px;color:#8b949e;font-weight:600">⑤ グロース体温計（個人のリスク食欲）</span>
-        <span style="font-size:16px">⚪</span>
-      </div>
-      <div style="font-size:26px;font-weight:800;margin:6px 0;color:#3fb950">-0.25pt</div>
-      <div style="font-size:11px;color:#8b949e">グロース250 +0.47% − 日経 +0.72%</div>
-      <div style="margin-top:10px;padding:10px;background:rgba(88,166,255,.05);border-left:3px solid #3fb950;border-radius:6px">
-        <div style="font-size:12px;font-weight:700;color:#3fb950">🎩 プロの読み</div>
-        <div style="font-size:12px;margin-top:4px;line-height:1.7">グロース250 +0.47% vs 日経 +0.72%。大型・小型のリスク選好に偏りなし。</div>
-        <div style="font-size:11px;color:#8b949e;margin-top:6px;line-height:1.6">🦦 やさしく言うと：大きい株も小さい株も同じような動き。</div>
-      </div>
-    </div>
-    <div class="card" style="padding:16px">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <span style="font-size:12px;color:#8b949e;font-weight:600">⑥ 半導体動脈（SOX→東京）</span>
-        <span style="font-size:16px">🟢</span>
-      </div>
-      <div style="font-size:26px;font-weight:800;margin:6px 0;color:#3fb950">+6.42%</div>
-      <div style="font-size:11px;color:#8b949e">SOX指数 → 東エレク・アドテスト → 日経への伝播経路</div>
-      <div style="margin-top:10px;padding:10px;background:rgba(88,166,255,.05);border-left:3px solid #3fb950;border-radius:6px">
-        <div style="font-size:12px;font-weight:700;color:#3fb950">🎩 プロの読み</div>
-        <div style="font-size:12px;margin-top:4px;line-height:1.7">SOX +6.42% の急伸。東京の半導体株に強い追い風。日経はTOPIXをアウトパフォームしやすい（NT倍率上昇要因）。</div>
-        <div style="font-size:11px;color:#8b949e;margin-top:6px;line-height:1.6">🦦 やさしく言うと：アメリカの半導体株が絶好調。日本の半導体株にも追い風。</div>
-      </div>
-    </div>
-  </div>
-  <div style="font-size:10px;color:#484f58;margin-top:8px">
-    分析対象: 日経VI(日経公式) / TOPIX・グロース250(東証) / CME先物・VIX系・SOX(CBOE・PHLX) — 全て一次ソースから自動取得
-  </div>
-</section>
-
-
-<!-- ── Row 1: ゲージ / FearGreed ── -->
-<section>
-  <div class="grid-2">
-    <!-- リスクゲージ -->
-    <div class="card fade-up">
-      <div class="card-title">AIリスクゲージ</div>
-      <div class="gauge-wrap">
-        
-<svg class="gauge-svg" viewBox="0 0 200 130" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="ggrad" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%"   stop-color="#f85149"/>
-      <stop offset="30%"  stop-color="#db6d28"/>
-      <stop offset="50%"  stop-color="#d29922"/>
-      <stop offset="75%"  stop-color="#39d353"/>
-      <stop offset="100%" stop-color="#3fb950"/>
-    </linearGradient>
-  </defs>
-  <!-- 背景トラック -->
-  <path d="M 20,110 A 80,80 0 0,1 180,110"
-        stroke="#30363d" stroke-width="20" fill="none" stroke-linecap="round"/>
-  <!-- カラーアーク -->
-  <path d="M 20,110 A 80,80 0 0,1 180,110"
-        stroke="url(#ggrad)" stroke-width="16" fill="none" stroke-linecap="round"/>
-  <!-- マスク(中央を塗りつぶし) -->
-  <circle cx="100" cy="110" r="60" fill="#161b22"/>
-  <!-- 針: 上向き基準(x1=100,y1=110 → x2=100,y2=40) をneedle_angle°回転 -->
-  <line x1="100" y1="110" x2="100" y2="42"
-        stroke="white" stroke-width="3" stroke-linecap="round">
-    <animateTransform attributeName="transform" type="rotate"
-      from="-90 100 110" to="90.0 100 110"
-      dur="1.2s" calcMode="spline" keySplines="0.4 0 0.2 1" fill="freeze"/>
-  </line>
-  <!-- センタードット -->
-  <circle cx="100" cy="110" r="6" fill="white" stroke="#161b22" stroke-width="2"/>
-  <!-- スコア表示 -->
-  <text x="100" y="96" text-anchor="middle"
-        fill="#3fb950" font-family="'Noto Sans JP', sans-serif"
-        font-size="20" font-weight="900">+16.77</text>
-  <!-- ラベル -->
-  <text x="22"  y="128" fill="#f85149"    font-family="sans-serif" font-size="10">弱気</text>
-  <text x="162" y="128" fill="#3fb950"  font-family="sans-serif" font-size="10">強気</text>
-  <text x="100" y="20"  fill="#d29922" font-family="sans-serif" font-size="10"
-        text-anchor="middle">中立</text>
-</svg>
-        <div class="gauge-score-label">リスクスコア（−3〜＋3）</div>
-      </div>
-      <div style="margin-top:12px;font-size:12px;color:var(--muted)">
-        シグナル: VIX上昇圧力, 半導体SOX上昇圧力, NASDAQ上昇圧力
-      </div>
-    </div>
-
-    <!-- Fear & Greed -->
-    <div class="card fade-up">
-      <div class="card-title">Fear &amp; Greed 指数</div>
-      
-<div class="stat-row">
-  <span class="stat-value" style="color:#db6d28">37.5</span>
-  <span class="stat-unit">/100 — 恐怖 😟</span>
 </div>
-<div class="fg-meter">
-  <div class="fg-pointer" style="left:37.5%"></div>
+
+<!-- ── メインコンテンツ ── -->
+<div class="wrap" style="padding:12px 13px 36px" id="main">
+
+  
+<div class="glass fade glow-green" style="border-color:#00ff8733;padding:16px 16px 12px;margin-bottom:12px;position:relative;overflow:hidden">
+  <!-- 背景グラデーション -->
+  <div style="position:absolute;top:-40px;right:-40px;width:140px;height:140px;border-radius:50%;background:radial-gradient(circle,#00ff8718,transparent 70%);pointer-events:none"></div>
+
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px">
+    <div>
+      <div class="label">今日の相場まとめ</div>
+      <div style="font-size:22px;font-weight:900;color:#00ff87;line-height:1.2">📗 やや強気</div>
+    </div>
+    <div style="text-align:right">
+      <div style="font-size:32px;font-weight:900;color:#00ff87;line-height:1;text-shadow:0 0 20px #00ff8744">+0.80</div>
+      <div style="font-size:9px;color:#5a6a85;margin-top:1px">AIスコア / −3〜+3</div>
+    </div>
+  </div>
+
+  <div style="display:flex;align-items:flex-start;gap:9px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.09)"><span style="font-size:17px;flex-shrink:0;margin-top:1px">📊</span><div style="font-size:12px;line-height:1.75;color:#ffc837">日経平均 <b style="font-size:14px">—円</b> <span style="color:#5a6a85">前日比</span> <b style="color:#ffc837">+0.0%</b> — ほぼ横ばいです。</div></div><div style="display:flex;align-items:flex-start;gap:9px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.09)"><span style="font-size:17px;flex-shrink:0;margin-top:1px">🚨</span><div style="font-size:12px;line-height:1.75;color:#ff3d5a">ドル円 <b style="font-size:14px">161.20円</b> — <b>強い円安。財務省の為替介入リスク</b>に警戒。</div></div><div style="display:flex;align-items:flex-start;gap:9px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.09)"><span style="font-size:17px;flex-shrink:0;margin-top:1px">😨</span><div style="font-size:12px;line-height:1.75;color:#ffc837">恐怖指数VIX <b style="font-size:14px">18.0</b> <span style="background:rgba(255,255,255,.07);border-radius:4px;padding:1px 6px;font-size:10px;font-weight:700;color:#ffc837">注 意</span> — VIXは普通。大きな動きへの備えを。</div></div>
+
+  <div style="margin-top:8px;font-size:9px;color:#5a6a85;text-align:right">2026-06-26 12:25 JST 更新</div>
 </div>
-<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:6px">
-  <span>恐怖</span><span>中立</span><span>強欲</span>
-</div>
-      <div style="margin-top:14px">
-        <div class="card-title">今日の判断</div>
-        <div style="font-size:24px;margin:4px 0">🚀 強気相場</div>
-        <div style="font-size:12px;color:var(--muted)">
-          地合い: <span style="color:#3fb950;font-weight:700">強気 (リスクオン)</span>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ── リアルタイムチャート（TradingView） ── -->
-<section>
-  <div class="section-header">
-    <span class="section-icon">📈</span>
-    <span class="section-title">リアルタイムチャート</span>
-    <span class="section-tag">TradingView</span>
-  </div>
-  <div class="grid-2">
-    <!-- 日経225 チャート -->
-    <div class="card fade-up" style="padding:0;overflow:hidden">
-      <div style="padding:10px 12px 6px;font-size:11px;font-weight:700;color:var(--muted)">🇯🇵 日経225（現物）</div>
-      <div class="tradingview-widget-container">
-        <div class="tradingview-widget-container__widget"></div>
-        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
-        {
-          "symbol": "TVC:NI225",
-          "width": "100%",
-          "height": 200,
-          "locale": "ja",
-          "dateRange": "1D",
-          "colorTheme": "dark",
-          "isTransparent": true,
-          "autosize": true
-        }
-        </script>
-      </div>
-    </div>
-    <!-- 日経先物 チャート -->
-    <div class="card fade-up" style="padding:0;overflow:hidden">
-      <div style="padding:10px 12px 6px;font-size:11px;font-weight:700;color:var(--muted)">🇯🇵 日経225先物（CME）</div>
-      <div class="tradingview-widget-container">
-        <div class="tradingview-widget-container__widget"></div>
-        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
-        {
-          "symbol": "CME:NKD1!",
-          "width": "100%",
-          "height": 200,
-          "locale": "ja",
-          "dateRange": "1D",
-          "colorTheme": "dark",
-          "isTransparent": true,
-          "autosize": true
-        }
-        </script>
-      </div>
-    </div>
-  </div>
-
-  <div class="grid-2" style="margin-top:10px">
-    <!-- S&P500 チャート -->
-    <div class="card fade-up" style="padding:0;overflow:hidden">
-      <div style="padding:10px 12px 6px;font-size:11px;font-weight:700;color:var(--muted)">🇺🇸 S&amp;P500（現物）</div>
-      <div class="tradingview-widget-container">
-        <div class="tradingview-widget-container__widget"></div>
-        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
-        {
-          "symbol": "SP:SPX",
-          "width": "100%",
-          "height": 200,
-          "locale": "ja",
-          "dateRange": "1D",
-          "colorTheme": "dark",
-          "isTransparent": true,
-          "autosize": true
-        }
-        </script>
-      </div>
-    </div>
-    <!-- S&P500先物 チャート -->
-    <div class="card fade-up" style="padding:0;overflow:hidden">
-      <div style="padding:10px 12px 6px;font-size:11px;font-weight:700;color:var(--muted)">🇺🇸 S&amp;P500先物（E-mini）</div>
-      <div class="tradingview-widget-container">
-        <div class="tradingview-widget-container__widget"></div>
-        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
-        {
-          "symbol": "CME_MINI:ES1!",
-          "width": "100%",
-          "height": 200,
-          "locale": "ja",
-          "dateRange": "1D",
-          "colorTheme": "dark",
-          "isTransparent": true,
-          "autosize": true
-        }
-        </script>
-      </div>
-    </div>
-  </div>
-
-  <!-- ドル円チャート -->
-  <div class="card fade-up" style="padding:0;overflow:hidden;margin-top:10px">
-    <div style="padding:10px 12px 6px;font-size:11px;font-weight:700;color:var(--muted)">💴 USD/JPY ドル円（リアルタイム）</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px"><div class="glass-sm fade" style="padding:12px 10px">
+  <div style="font-size:10px;color:#5a6a85;margin-bottom:4px;display:flex;align-items:center;gap:5px"><span>🇯🇵</span>日経225</div>
+  <div style="font-size:20px;font-weight:900;color:#5a6a85;line-height:1.1">—</div>
+  <div style="font-size:11px;color:#5a6a85;font-weight:700;margin-top:2px">━ 0.00%</div>
+  <div style="height:2px;background:rgba(255,255,255,.06);border-radius:1px;margin-top:5px"><div style="width:0%;height:100%;background:#5a6a85;border-radius:1px"></div></div>
+  <div style="font-size:9px;color:#5a6a85;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">円建て / 前日終値比</div>
+</div><div class="glass-sm fade" style="padding:12px 10px">
+  <div style="font-size:10px;color:#5a6a85;margin-bottom:4px;display:flex;align-items:center;gap:5px"><span>💴</span>ドル円</div>
+  <div style="font-size:20px;font-weight:900;color:#00ff87;line-height:1.1">161.20円</div>
+  <div style="font-size:11px;color:#00ff87;font-weight:700;margin-top:2px">▲ 0.42%</div>
+  <div style="height:2px;background:rgba(255,255,255,.06);border-radius:1px;margin-top:5px"><div style="width:8.4%;height:100%;background:#00ff87;border-radius:1px"></div></div>
+  <div style="font-size:9px;color:#5a6a85;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">1ドル = 161.20円</div>
+</div><div class="glass-sm fade" style="padding:12px 10px">
+  <div style="font-size:10px;color:#5a6a85;margin-bottom:4px;display:flex;align-items:center;gap:5px"><span>😨</span>VIX 恐怖指数</div>
+  <div style="font-size:20px;font-weight:900;color:#ffc837;line-height:1.1">18.0</div>
+  <div style="font-size:11px;color:#5a6a85;font-weight:700;margin-top:2px">━ 0.00%</div>
+  <div style="height:2px;background:rgba(255,255,255,.06);border-radius:1px;margin-top:5px"><div style="width:0%;height:100%;background:#5a6a85;border-radius:1px"></div></div>
+  <div style="font-size:9px;color:#5a6a85;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">低いほど市場は安定</div>
+</div><div class="glass-sm fade" style="padding:12px 10px">
+  <div style="font-size:10px;color:#5a6a85;margin-bottom:4px;display:flex;align-items:center;gap:5px"><span>🎭</span>Fear & Greed</div>
+  <div style="font-size:20px;font-weight:900;color:#00b4ff;line-height:1.1">30</div>
+  <div style="font-size:11px;color:#5a6a85;font-weight:700;margin-top:2px">━ 0.00%</div>
+  <div style="height:2px;background:rgba(255,255,255,.06);border-radius:1px;margin-top:5px"><div style="width:0%;height:100%;background:#5a6a85;border-radius:1px"></div></div>
+  <div style="font-size:9px;color:#5a6a85;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">恐 怖</div>
+</div></div>
+  
+  
+<div style="margin-bottom:12px">
+  <div class="label" style="padding:0 2px;margin-bottom:6px">📈 リアルタイムチャート</div>
+  <div class="glass" style="overflow:hidden;margin-bottom:8px;padding:0">
+    <div style="padding:8px 12px 4px;font-size:10px;font-weight:700;color:#5a6a85">🇯🇵 日経225</div>
     <div class="tradingview-widget-container">
       <div class="tradingview-widget-container__widget"></div>
       <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
-      {
-        "symbol": "FX:USDJPY",
-        "width": "100%",
-        "height": 160,
-        "locale": "ja",
-        "dateRange": "1D",
-        "colorTheme": "dark",
-        "isTransparent": true,
-        "autosize": true
-      }
+      {"symbol":"TVC:NI225","width":"100%","height":160,"locale":"ja","dateRange":"1D","colorTheme":"dark","isTransparent":true}
       </script>
     </div>
   </div>
-</section>
-
-<!-- ── インタラクティブ・データチャート（Chart.js）── -->
-
-<!-- ── インタラクティブチャート（Chart.js・実データ）── -->
-<section>
-  <div class="section-header">
-    <span class="section-icon">📊</span>
-    <span class="section-title">インタラクティブ・データチャート</span>
-    <span class="section-tag">タップで操作</span>
+  <div class="glass" style="overflow:hidden;padding:0">
+    <div style="padding:8px 12px 4px;font-size:10px;font-weight:700;color:#5a6a85">💴 ドル円（USD/JPY）</div>
+    <div class="tradingview-widget-container">
+      <div class="tradingview-widget-container__widget"></div>
+      <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
+      {"symbol":"FX:USDJPY","width":"100%","height":140,"locale":"ja","dateRange":"1D","colorTheme":"dark","isTransparent":true}
+      </script>
+    </div>
   </div>
+</div>
+  
+<div style="margin-bottom:12px">
+  <div class="label" style="padding:0 2px;margin-bottom:6px">🤖 AIチーム分析</div>
+  <div class="glass" style="border-color:#00ff8733;padding:14px;position:relative;overflow:hidden">
+    <div style="position:absolute;top:-30px;left:-30px;width:100px;height:100px;border-radius:50%;background:radial-gradient(circle,#00ff8715,transparent 70%);pointer-events:none"></div>
 
-  <div class="card fade-up" style="margin-bottom:12px">
-    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:6px">
-      <div class="card-title" style="margin:0">過去1ヶ月の値動き比較</div>
-      <div class="cj-toggle">
-        <button id="cjModePct" class="cj-btn cj-btn-on" onclick="cjSetMode('pct')">騰落率 %</button>
-        <button id="cjModeRaw" class="cj-btn" onclick="cjSetMode('raw')">実数</button>
+    <!-- スコアヘッダー -->
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.09)">
+      <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#b06eff,#00b4ff);display:flex;align-items:center;justify-content:center;font-size:18px">📗</div>
+      <div>
+        <div style="font-size:10px;color:#5a6a85">AIチームの総合判断</div>
+        <div style="font-size:15px;font-weight:900;color:#00ff87">やや強気</div>
       </div>
+      <div style="margin-left:auto;font-size:22px;font-weight:900;color:#00ff87;text-shadow:0 0 15px #00ff8755">+0.80</div>
     </div>
-    <div style="font-size:11px;color:var(--muted);margin-bottom:8px">
-      初日を起点に、どの資産が強かったかを同じ物差しで比較できます（線をタップで数値表示）
-    </div>
-    <div style="position:relative;height:280px"><canvas id="cjLine"></canvas></div>
+
+    <!-- メインコメント -->
+    <div style="background:rgba(255,255,255,.03);border-left:3px solid #00ff87;border-radius:0 8px 8px 0;padding:10px 12px;font-size:12px;line-height:1.8;color:#f0f4ff;margin-bottom:0">現在のAIシグナルは「やや強気」（スコア +0.80）です。</div>
+
+    <!-- ガネーシャ & カワウソ -->
+    
+
+    <!-- 3視点バブル -->
+    
   </div>
-
-  <div class="card fade-up">
-    <div class="card-title">本日の前日比ランキング</div>
-    <div style="font-size:11px;color:var(--muted);margin-bottom:8px">
-      緑＝好材料方向 / 赤＝警戒方向（VIXは上昇が赤）。バーをタップで正確な数値が出ます
-    </div>
-    <div style="position:relative;height:260px"><canvas id="cjBar"></canvas></div>
+</div>
+  
+<div style="margin-bottom:12px">
+  <div class="label" style="padding:0 2px;margin-bottom:6px">📐 手法シグナル・スキャナー（AI自動判定）</div>
+  <div style="display:flex;flex-direction:column;gap:8px"><div class="glass-sm fade" style="padding:12px;border-left:3px solid #00ff87">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+    <span style="font-size:13px;font-weight:900;color:#f0f4ff">???</span>
+    <span class="badge" style="background:#00ff871a;color:#00ff87;border:1px solid #00ff8755">買い目線</span>
+    <span style="margin-left:auto;font-size:13px;font-weight:800;color:#00ff87">????????</span>
   </div>
-</section>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<script>
-(function(){
-  function init(){
-    if (typeof Chart === 'undefined') { return setTimeout(init, 200); }
-    Chart.defaults.color = '#8b949e';
-    Chart.defaults.font.family = "-apple-system,'Hiragino Sans','Yu Gothic',sans-serif";
-    Chart.defaults.font.size = 11;
-    var grid = 'rgba(139,148,158,0.12)';
-
-    var labels = ["05/18", "05/19", "05/20", "05/21", "05/24", "05/25", "05/26", "05/27", "05/28", "05/31", "06/01", "06/02", "06/03", "06/04", "06/07", "06/08", "06/09", "06/10", "06/11", "06/14", "06/15", "06/16", "06/17", "06/18", "06/19"];
-    var series = [{"name": "日経225", "color": "#5b9bf3", "data": [60550.59, 59804.41, 61684.14, 63339.07, 65158.19, 64996.09, 64999.41, 64693.12, 66329.5, 66934.33, 66734.24, 68402.13, 67470.69, 66588.12, 64024.6, 65416.63, 64179.27, 64217.27, 66020.04, 69317.5, 69404.5, 69902.25, 71053.49, 71250.06], "pct": [0.0, -1.23, 1.87, 4.61, 7.61, 7.34, 7.35, 6.84, 9.54, 10.54, 10.21, 12.97, 11.43, 9.97, 5.74, 8.04, 5.99, 6.06, 9.03, 14.48, 14.62, 15.44, 17.35, 17.67]}, {"name": "S&P500", "color": "#27c281", "data": [7353.61, 7432.97, 7445.72, 7473.47, 7519.12, 7520.36, 7563.63, 7580.06, 7599.96, 7609.78, 7553.68, 7584.31, 7383.74, 7405.73, 7386.65, 7266.99, 7394.3, 7431.46, 7554.29, 7511.35, 7420.1, 7500.58], "pct": [0.0, 1.08, 1.25, 1.63, 2.25, 2.27, 2.86, 3.08, 3.35, 3.48, 2.72, 3.14, 0.41, 0.71, 0.45, -1.18, 0.55, 1.06, 2.73, 2.15, 0.9, 2.0]}, {"name": "ドル円", "color": "#ff9f2e", "data": [158.86, 159.04, 158.89, 159.02, 158.95, 158.95, 159.24, 159.57, 159.27, 159.35, 159.64, 159.97, 159.94, 159.99, 160.33, 160.17, 160.38, 160.53, 160.13, 159.96, 160.23, 160.42, 160.6, 161.29, 161.28], "pct": [0.0, 0.11, 0.02, 0.1, 0.06, 0.06, 0.24, 0.45, 0.26, 0.31, 0.49, 0.7, 0.68, 0.71, 0.93, 0.82, 0.96, 1.05, 0.8, 0.69, 0.86, 0.98, 1.1, 1.53, 1.52]}, {"name": "VIX", "color": "#ef4d4d", "data": [18.06, 17.44, 16.76, 16.7, 16.59, 17.01, 16.29, 15.74, 15.32, 16.05, 15.77, 16.06, 15.4, 21.51, 18.92, 19.87, 22.22, 19.44, 17.68, 16.2, 16.41, 18.44, 16.4, 16.78], "pct": [0.0, -3.43, -7.2, -7.53, -8.14, -5.81, -9.8, -12.85, -15.17, -11.13, -12.68, -11.07, -14.73, 19.1, 4.76, 10.02, 23.03, 7.64, -2.1, -10.3, -9.14, 2.1, -9.19, -7.09]}];
-    var lineChart = null;
-
-    function buildLine(mode){
-      var ds = series.map(function(s){
-        return {
-          label: s.name,
-          data: (mode === 'raw' ? s.data : s.pct),
-          borderColor: s.color,
-          backgroundColor: s.color,
-          borderWidth: 2,
-          pointRadius: 0,
-          pointHoverRadius: 4,
-          tension: 0.25,
-          yAxisID: (mode === 'raw' ? ('y_' + s.name) : 'y'),
-        };
-      });
-      var scales;
-      if (mode === 'raw') {
-        // 実数モードは資産ごとにスケールが違うので各系列を非表示の個別軸へ（重なり比較は％モード推奨）
-        scales = { x: { grid: { color: grid } } };
-        series.forEach(function(s){
-          scales['y_' + s.name] = { display:false };
-        });
-      } else {
-        scales = {
-          x: { grid: { color: grid } },
-          y: { grid: { color: grid },
-                ticks: { callback: function(v){ return v + '%'; } } }
-        };
-      }
-      if (lineChart) lineChart.destroy();
-      lineChart = new Chart(document.getElementById('cjLine'), {
-        type: 'line',
-        data: { labels: labels, datasets: ds },
-        options: {
-          responsive: true, maintainAspectRatio: false,
-          interaction: { mode: 'index', intersect: false },
-          plugins: {
-            legend: { position: 'top', labels: { usePointStyle: true, boxWidth: 8 } },
-            tooltip: { callbacks: { label: function(c){
-              var suf = (mode === 'raw' ? '' : '%');
-              return c.dataset.label + ': ' + c.parsed.y + suf;
-            } } }
-          },
-          scales: scales
-        }
-      });
-    }
-
-    window.cjSetMode = function(mode){
-      document.getElementById('cjModePct').classList.toggle('cj-btn-on', mode==='pct');
-      document.getElementById('cjModeRaw').classList.toggle('cj-btn-on', mode==='raw');
-      buildLine(mode);
-    };
-
-    if (document.getElementById('cjLine')) buildLine('pct');
-
-    if (document.getElementById('cjBar')) {
-      new Chart(document.getElementById('cjBar'), {
-        type: 'bar',
-        data: { labels: ["日経225", "S&P500", "Nasdaq", "ドル円", "金", "原油", "BTC", "VIX"],
-                 datasets: [{ data: [0.72, 1.08, 1.91, 0.46, -3.1, -1.52, -4.29, -11.06], backgroundColor: ["#3fb950", "#3fb950", "#3fb950", "#3fb950", "#f85149", "#f85149", "#f85149", "#3fb950"],
-                              borderRadius: 4 }] },
-        options: {
-          responsive: true, maintainAspectRatio: false, indexAxis: 'y',
-          plugins: { legend: { display: false },
-            tooltip: { callbacks: { label: function(c){
-              return (c.parsed.x>=0?'+':'') + c.parsed.x + '%'; } } } },
-          scales: {
-            x: { grid: { color: grid },
-                  ticks: { callback: function(v){ return v + '%'; } } },
-            y: { grid: { display:false } }
-          }
-        }
-      });
-    }
-  }
-  init();
-})();
-</script>
-
-
-<!-- ── マーケット概況（詳細カード）── -->
-<section>
-  <div class="section-header">
-    <span class="section-icon">💹</span>
-    <span class="section-title">マーケット詳細データ</span>
-    <span class="section-tag">2026-06-20</span>
-  </div>
-  <div class="grid-auto">
-<div class="price-card fade-up">
-  <div class="price-name">日経225 <span style="font-size:9px;opacity:.6">^N225</span></div>
-  <div class="price-value" style="color:#39d353">69,902 <span style="font-size:11px;color:var(--muted)">JPY</span></div>
-  <div class="price-chg chg-up">▲ +0.72%<span style="color:#3fb950;font-size:10px;font-weight:700"> 売られすぎ</span></div>
-  
+  <div style="font-size:11.5px;line-height:1.7;color:#f0f4ff;margin-bottom:5px">????????RSI54?</div>
+  <div style="font-size:11px;line-height:1.65;color:#00b4ff;background:rgba(0,180,255,.07);padding:6px 9px;border-radius:7px">💡 MA25?????????</div>
+</div></div>
+  <div style="font-size:9px;color:#5a6a85;margin-top:5px;padding:0 2px">押し目買い・ブレイク・売られすぎ等を機械的に判定。教科書的なシグナルの有無を示すものです。</div>
 </div>
-<div class="price-card fade-up">
-  <div class="price-name">S&P500 <span style="font-size:9px;opacity:.6">^GSPC</span></div>
-  <div class="price-value" style="color:#39d353">7,501 <span style="font-size:11px;color:var(--muted)">USD</span></div>
-  <div class="price-chg chg-up">▲ +1.08%<span style="color:#3fb950;font-size:10px;font-weight:700"> 売られすぎ</span></div>
   
-</div>
-<div class="price-card fade-up">
-  <div class="price-name">USD/JPY <span style="font-size:9px;opacity:.6">USDJPY=X</span></div>
-  <div class="price-value" style="color:#39d353">161.34 <span style="font-size:11px;color:var(--muted)"></span></div>
-  <div class="price-chg chg-up">▲ +0.46%<span style="color:#3fb950;font-size:10px;font-weight:700"> 売られすぎ</span></div>
   
-</div>
-<div class="price-card fade-up">
-  <div class="price-name">VIX <span style="font-size:9px;opacity:.6">^VIX</span></div>
-  <div class="price-value" style="color:#f85149">16.40 <span style="font-size:11px;color:var(--muted)"></span></div>
-  <div class="price-chg chg-down">▼ -11.06%<span style="color:#3fb950;font-size:10px;font-weight:700"> 売られすぎ</span></div>
   
-</div>
-<div class="price-card fade-up">
-  <div class="price-name">金 <span style="font-size:9px;opacity:.6">GC=F</span></div>
-  <div class="price-value" style="color:#f85149">4,224 <span style="font-size:11px;color:var(--muted)">USD</span></div>
-  <div class="price-chg chg-down">▼ -3.10%<span style="color:#3fb950;font-size:10px;font-weight:700"> 売られすぎ</span></div>
-  
-</div>
-<div class="price-card fade-up">
-  <div class="price-name">BTC <span style="font-size:9px;opacity:.6">BTC-USD</span></div>
-  <div class="price-value" style="color:#f85149">62,784 <span style="font-size:11px;color:var(--muted)">USD</span></div>
-  <div class="price-chg chg-down">▼ -4.29%<span style="color:#3fb950;font-size:10px;font-weight:700"> 売られすぎ</span></div>
-  
-</div>
-<div class="price-card fade-up">
-  <div class="price-name">Nasdaq <span style="font-size:9px;opacity:.6">^IXIC</span></div>
-  <div class="price-value" style="color:#3fb950">26,518 <span style="font-size:11px;color:var(--muted)">USD</span></div>
-  <div class="price-chg chg-up">▲ +1.91%<span style="color:#3fb950;font-size:10px;font-weight:700"> 売られすぎ</span></div>
-  
-</div>
-<div class="price-card fade-up">
-  <div class="price-name">米10年債 <span style="font-size:9px;opacity:.6">^TNX</span></div>
-  <div class="price-value" style="color:#db6d28">4.45 <span style="font-size:11px;color:var(--muted)"></span></div>
-  <div class="price-chg chg-down">▼ -0.80%<span style="color:#3fb950;font-size:10px;font-weight:700"> 売られすぎ</span></div>
+<div style="margin-bottom:12px">
+  <div class="label" style="padding:0 2px;margin-bottom:6px">💹 マーケットデータ詳細</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px"><div class="glass-sm fade" style="padding:10px">
+  <div style="font-size:9px;color:#5a6a85;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">💴 ドル円</div>
+  <div style="font-size:16px;font-weight:800;color:#f0f4ff">161.20 ¥</div>
+  <div style="font-size:10px;color:#00ff87;font-weight:700;margin-top:1px">▲ 0.42%</div>
   
 </div></div>
-</section>
+  <div style="font-size:9px;color:#5a6a85;margin-top:5px;padding:0 2px">RSI: 70↑＝買われすぎ注意 / 30↓＝売られすぎ・反発期待</div>
+</div>
+  
+<div style="margin-bottom:12px">
+  <div class="label" style="padding:0 2px;margin-bottom:6px">💴 ドル円の見方（はじめての方へ）</div>
+  <div class="glass" style="padding:13px 14px">
+    <div style="font-size:12px;line-height:1.7;color:#f0f4ff;margin-bottom:10px">
+      <b style="color:#ff3d5a">ドル円</b>は「1ドル＝何円か」。
+      <b>数字が大きい＝円安</b>（円の価値が下がる）、<b>小さい＝円高</b>です。
+    </div>
+    <div style="background:#ff3d5a14;border:1px solid #ff3d5a44;border-radius:9px;padding:8px 11px;font-size:12px;font-weight:700;color:#ff3d5a;margin-bottom:11px">📍 今は 161.2円 — かなりの円安。介入リスクに警戒する水準。</div>
 
-<!-- ── 注目ウォッチリスト ── -->
-<section>
-  <div class="section-header">
-    <span class="section-icon">👀</span>
-    <span class="section-title">今日のウォッチリスト</span>
-    <span class="section-tag">注目銘柄・資産</span>
+    <div style="font-size:11px;font-weight:800;color:#5a6a85;margin-bottom:2px">何で動く？（3つの力）</div>
+    <div style="display:flex;align-items:flex-start;gap:9px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,0.09)">
+  <span style="font-size:18px;flex-shrink:0">📊</span>
+  <div>
+    <div style="font-size:12px;font-weight:800;color:#00b4ff;margin-bottom:2px">日米の金利差</div>
+    <div style="font-size:11px;line-height:1.7;color:#f0f4ff">アメリカの金利が日本より高いほど、利息の高いドルが買われて<b>円安</b>に。「米金利↑＝ドル円↑（円安）」が基本。</div>
   </div>
-  <div class="card fade-up">
-    <div class="watch-item">
-  <span class="watch-rank">1</span>
-  <div class="watch-name">🇯🇵 日経225<br><span class="watch-theme">総合指数</span></div>
-  <span class="watch-price chg-up">0.00</span>
-  <span class="watch-chg chg-up">+0.72%</span>
-  <span class="watch-signal sig-hold">---</span>
-</div>
-<div class="watch-item">
-  <span class="watch-rank">2</span>
-  <div class="watch-name">💻 Nasdaq<br><span class="watch-theme">テック</span></div>
-  <span class="watch-price chg-up">0.00</span>
-  <span class="watch-chg chg-up">+1.91%</span>
-  <span class="watch-signal sig-hold">---</span>
-</div>
-<div class="watch-item">
-  <span class="watch-rank">3</span>
-  <div class="watch-name">🥇 金 (Gold)<br><span class="watch-theme">安全資産</span></div>
-  <span class="watch-price chg-down">0.00</span>
-  <span class="watch-chg chg-down">-3.10%</span>
-  <span class="watch-signal sig-hold">---</span>
-</div>
-<div class="watch-item">
-  <span class="watch-rank">4</span>
-  <div class="watch-name">₿ Bitcoin<br><span class="watch-theme">暗号資産</span></div>
-  <span class="watch-price chg-down">0.00</span>
-  <span class="watch-chg chg-down">-4.29%</span>
-  <span class="watch-signal sig-hold">---</span>
-</div>
-<div class="watch-item">
-  <span class="watch-rank">5</span>
-  <div class="watch-name">🛢 原油 WTI<br><span class="watch-theme">コモディティ</span></div>
-  <span class="watch-price chg-down">0.00</span>
-  <span class="watch-chg chg-down">-1.52%</span>
-  <span class="watch-signal sig-hold">---</span>
-</div>
+</div><div style="display:flex;align-items:flex-start;gap:9px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,0.09)">
+  <span style="font-size:18px;flex-shrink:0">🌊</span>
+  <div>
+    <div style="font-size:12px;font-weight:800;color:#b06eff;margin-bottom:2px">リスクオン・オフ</div>
+    <div style="font-size:11px;line-height:1.7;color:#f0f4ff">世界が強気（リスクオン）だと円が売られ<b>円安</b>、不安（リスクオフ）だと安全資産の円が買われ<b>円高</b>になりやすい。</div>
   </div>
-</section>
+</div><div style="display:flex;align-items:flex-start;gap:9px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,0.09)">
+  <span style="font-size:18px;flex-shrink:0">🏛</span>
+  <div>
+    <div style="font-size:12px;font-weight:800;color:#ff3d5a;margin-bottom:2px">為替介入</div>
+    <div style="font-size:11px;line-height:1.7;color:#f0f4ff">急激な円安が進むと、日本の財務省・日銀が<b>円買い介入</b>することがある。155〜160円超は要警戒ゾーン。</div>
+  </div>
+</div>
 
-<!-- ── 3シナリオ分析 ── -->
-
-
-<!-- ── セクターヒートマップ ── -->
-<section>
-  <div class="section-header">
-    <span class="section-icon">🏭</span>
-    <span class="section-title">セクター別ヒートマップ</span>
-    <span class="section-tag">前日比</span>
+    <div style="margin-top:10px;font-size:11px;line-height:1.7;color:#00b4ff;background:rgba(0,180,255,.07);padding:8px 11px;border-radius:8px">
+      🧭 <b>プロのコツ</b>：まず週足で大きな方向を見て、日足で「節目（過去に何度も止まった価格）」を確認。
+      指標発表の直前直後は動きが荒れるので、無理に飛び込まないこと。
+    </div>
   </div>
-  <div class="card fade-up">
-    <p style="color:var(--muted);font-size:13px">セクターデータなし（平日のみ）</p>
-  </div>
-  <!-- TradingView マーケット概況 -->
-  <div style="margin-top:12px;border-radius:10px;overflow:hidden">
+</div>
+  
+<div style="margin-bottom:12px">
+  <div class="label" style="padding:0 2px;margin-bottom:6px">🌍 世界の主要市場（リアルタイム）</div>
+  <div style="border-radius:14px;overflow:hidden;border:1px solid rgba(255,255,255,0.09)">
     <div class="tradingview-widget-container">
       <div class="tradingview-widget-container__widget"></div>
       <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-market-overview.js" async>
-      {
-        "colorTheme": "dark",
-        "dateRange": "1D",
-        "showChart": true,
-        "locale": "ja",
-        "width": "100%",
-        "height": 400,
-        "largeChartUrl": "",
-        "isTransparent": true,
-        "showSymbolLogo": false,
-        "showFloatingTooltip": false,
-        "plotLineColorGrowing": "rgba(41, 98, 255, 1)",
-        "plotLineColorFalling": "rgba(41, 98, 255, 1)",
-        "gridLineColor": "rgba(240, 243, 250, 0)",
-        "scaleFontColor": "rgba(120, 123, 134, 1)",
-        "belowLineFillColorGrowing": "rgba(41, 98, 255, 0.12)",
-        "belowLineFillColorFalling": "rgba(41, 98, 255, 0.12)",
-        "belowLineFillColorGrowingBottom": "rgba(41, 98, 255, 0)",
-        "belowLineFillColorFallingBottom": "rgba(41, 98, 255, 0)",
-        "symbolActiveColor": "rgba(41, 98, 255, 0.12)",
-        "tabs": [
-          {
-            "title": "日本株",
-            "symbols": [
-              {"s": "TVC:NI225",  "d": "日経225"},
-              {"s": "TSE:TOPIX",  "d": "TOPIX"},
-              {"s": "TVC:NI225",  "d": "グロース250"}
-            ]
-          },
-          {
-            "title": "米国株",
-            "symbols": [
-              {"s": "SP:SPX",     "d": "S&P500"},
-              {"s": "NASDAQ:NDX", "d": "Nasdaq100"},
-              {"s": "DJ:DJI",     "d": "Dow Jones"}
-            ]
-          },
-          {
-            "title": "為替",
-            "symbols": [
-              {"s": "FX:USDJPY",  "d": "ドル円"},
-              {"s": "FX:EURJPY",  "d": "ユーロ円"},
-              {"s": "FX:GBPJPY",  "d": "ポンド円"}
-            ]
-          },
-          {
-            "title": "コモディティ",
-            "symbols": [
-              {"s": "TVC:GOLD",   "d": "金"},
-              {"s": "TVC:USOIL",  "d": "原油"},
-              {"s": "TVC:SILVER", "d": "銀"}
-            ]
-          }
-        ]
-      }
+      {"colorTheme":"dark","dateRange":"1D","showChart":false,"locale":"ja","width":"100%","height":300,"isTransparent":true,
+        "tabs":[
+          {"title":"株・指数","symbols":[
+            {"s":"TVC:NI225","d":"日経225"},{"s":"TSE:TOPIX","d":"TOPIX"},
+            {"s":"SP:SPX","d":"S&P500"},{"s":"NASDAQ:NDX","d":"Nasdaq100"},{"s":"INDEX:DAX","d":"DAX"}
+          ]},
+          {"title":"FX・商品","symbols":[
+            {"s":"FX:USDJPY","d":"ドル円"},{"s":"FX:EURJPY","d":"ユーロ円"},
+            {"s":"TVC:GOLD","d":"金"},{"s":"TVC:USOIL","d":"原油"},{"s":"BITSTAMP:BTCUSD","d":"BTC"}
+          ]}
+        ]}
       </script>
     </div>
   </div>
-</section>
-
-<!-- ── AIチーム議論 ── -->
-<section>
-  <div class="section-header">
-    <span class="section-icon">🤖</span>
-    <span class="section-title">AIチーム分析・議論</span>
-    <span class="section-tag">ガネ先生チーム</span>
-  </div>
-  <div class="card fade-up">
-    <p style="color:var(--muted);font-size:13px">AI議論データなし</p>
-  </div>
-</section>
-
-<!-- ── YouTube 本格分析 ── -->
-
-
-<!-- ── ニュース ── -->
-<section>
-  <div class="section-header">
-    <span class="section-icon">📰</span>
-    <span class="section-title">注目ニュース</span>
-    <span class="section-tag">重要度別</span>
-  </div>
-  <div class="card fade-up">
-    
-  </div>
-</section>
-
-<!-- ── イベントカレンダー / 予測精度 ── -->
-<section>
-  <div class="grid-2">
-    <div>
-      <div class="section-header">
-        <span class="section-icon">📅</span>
-        <span class="section-title">今週のイベント</span>
-      </div>
-      <div class="card fade-up">
-        <p style="color:var(--muted);font-size:13px">今週の主要イベントなし</p>
-      </div>
-    </div>
-    <div>
-      <div class="section-header">
-        <span class="section-icon">🎯</span>
-        <span class="section-title">AI予測精度</span>
-      </div>
-      <div class="card fade-up">
-        
-<div class="stat-row">
-  <span class="stat-value" style="color:#f85149">0%</span>
-  <span class="stat-unit">正解率 (0/0件)</span>
 </div>
-<div class="acc-bar-wrap">
-  <div class="acc-bar" style="width:0%;background:#f85149"></div>
-</div>
-
-      </div>
+  
+<div style="margin-bottom:12px">
+  <div class="label" style="padding:0 2px;margin-bottom:6px">🔥 通貨の強弱ヒートマップ（リアルタイム）</div>
+  <div class="glass" style="overflow:hidden;border-radius:14px;border:1px solid rgba(255,255,255,0.09)">
+    <div class="tradingview-widget-container">
+      <div class="tradingview-widget-container__widget"></div>
+      <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-forex-heat-map.js" async>
+      {"width":"100%","height":340,"currencies":["EUR","USD","JPY","GBP","AUD","CAD","CHF","CNY"],"isTransparent":true,"colorTheme":"dark","locale":"ja"}
+      </script>
     </div>
   </div>
-</section>
+  <div style="font-size:9px;color:#5a6a85;margin:4px 2px 12px">緑＝その通貨が強い／赤＝弱い。<b style="color:#f0f4ff">JPY（円）の行が赤いほど円安</b>、緑なら円高です。</div>
 
-</main>
+  <div class="label" style="padding:0 2px;margin-bottom:6px">📅 経済指標カレンダー（重要イベント）</div>
+  <div class="glass" style="overflow:hidden;border-radius:14px;border:1px solid rgba(255,255,255,0.09)">
+    <div class="tradingview-widget-container">
+      <div class="tradingview-widget-container__widget"></div>
+      <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-events.js" async>
+      {"width":"100%","height":380,"colorTheme":"dark","isTransparent":true,"locale":"ja","importanceFilter":"0,1","countryFilter":"us,jp,eu,gb"}
+      </script>
+    </div>
+  </div>
+  <div style="font-size:9px;color:#5a6a85;margin:4px 2px 0">★が多い指標ほど相場が動きやすい。<b style="color:#f0f4ff">発表の前後はトレードを控えめに</b>するのがプロの基本です。</div>
+</div>
+  
+  
+<div style="margin-bottom:12px">
+  <div class="label" style="padding:0 2px;margin-bottom:6px">🔥 業種別ヒートマップ（リアルタイム）</div>
+  <div style="display:flex;gap:6px;margin-bottom:8px">
+    <button type="button" onclick="shmTab(this,'jp')" class="shm-btn shm-on">🇯🇵 日本株（東証）</button>
+    <button type="button" onclick="shmTab(this,'us')" class="shm-btn">🇺🇸 米国セクター</button>
+  </div>
+  <div id="shm-jp" style="border-radius:14px;overflow:hidden;border:1px solid rgba(255,255,255,0.09)"><div class="tradingview-widget-container" style="height:420px">
+      <div class="tradingview-widget-container__widget" style="height:100%"></div>
+      <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-stock-heatmap.js" async>
+      {"dataSource":"NIKKEI225","blockSize":"market_cap_basic","blockColor":"change","grouping":"sector","locale":"ja","colorTheme":"dark","hasTopBar":false,"isDataSetEnabled":false,"isZoomEnabled":true,"hasSymbolTooltip":true,"isMonoSize":false,"width":"100%","height":"100%"}
+      </script>
+    </div></div>
+  <div id="shm-us" style="display:none;border-radius:14px;overflow:hidden;border:1px solid rgba(255,255,255,0.09)"><div class="tradingview-widget-container" style="height:420px">
+      <div class="tradingview-widget-container__widget" style="height:100%"></div>
+      <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-stock-heatmap.js" async>
+      {"dataSource":"SPX500","blockSize":"market_cap_basic","blockColor":"change","grouping":"sector","locale":"ja","colorTheme":"dark","hasTopBar":false,"isDataSetEnabled":false,"isZoomEnabled":true,"hasSymbolTooltip":true,"isMonoSize":false,"width":"100%","height":"100%"}
+      </script>
+    </div></div>
+  <div style="font-size:10px;color:#5a6a85;margin-top:6px">💡 タイルの色＝今の上がり下がり（緑=上昇・赤=下落）／ 大きさ＝会社の規模。緑が多い業種に今お金が集まっています</div>
+</div>
+<style>
+.shm-btn{flex:1;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,0.09);color:#5a6a85;border-radius:9px;padding:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s}
+.shm-btn.shm-on{background:rgba(0,180,255,.12);border-color:#00b4ff;color:#00b4ff}
+</style>
+<script>
+function shmTab(btn, which){
+  document.getElementById('shm-jp').style.display = (which==='jp')?'block':'none';
+  document.getElementById('shm-us').style.display = (which==='us')?'block':'none';
+  document.querySelectorAll('.shm-btn').forEach(function(b){b.classList.remove('shm-on');});
+  btn.classList.add('shm-on');
+  window.dispatchEvent(new Event('resize'));
+}
+</script>
+  
+  
+  
+  
+  
+<details style="margin-bottom:12px">
+  <summary style="cursor:pointer;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,0.09);border-radius:12px;padding:10px 14px;font-size:12px;font-weight:700;color:#f0f4ff;list-style:none;display:flex;align-items:center;gap:8px;user-select:none;-webkit-user-select:none">
+    <span style="font-size:14px">📖</span>
+    <span>用語がわからない方はこちら</span>
+    <span style="margin-left:auto;font-size:9px;color:#5a6a85">タップして開く ▼</span>
+  </summary>
+  <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,0.09);border-top:none;border-radius:0 0 12px 12px;padding:0 12px 8px">
+    <div style="display:flex;align-items:flex-start;gap:9px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,0.09)">
+  <span style="font-size:16px;flex-shrink:0;margin-top:1px">📊</span>
+  <div>
+    <div style="font-size:11px;font-weight:700;color:#f0f4ff;margin-bottom:2px">AIスコア（−3〜+3）</div>
+    <div style="font-size:10px;color:#5a6a85;line-height:1.5">複数の指標を総合した市場の強弱スコア。</div>
+    <div style="font-size:9px;color:#00b4ff;margin-top:3px;background:rgba(0,180,255,.07);padding:2px 8px;border-radius:4px;display:inline-block">+1以上=強気 / ±0=中立 / −1以下=弱気</div>
+  </div>
+</div><div style="display:flex;align-items:flex-start;gap:9px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,0.09)">
+  <span style="font-size:16px;flex-shrink:0;margin-top:1px">😨</span>
+  <div>
+    <div style="font-size:11px;font-weight:700;color:#f0f4ff;margin-bottom:2px">VIX（恐怖指数）</div>
+    <div style="font-size:10px;color:#5a6a85;line-height:1.5">市場の荒れを予想しているかの度合い。</div>
+    <div style="font-size:9px;color:#00b4ff;margin-top:3px;background:rgba(0,180,255,.07);padding:2px 8px;border-radius:4px;display:inline-block">30↑=パニック / 20前後=警戒 / 15↓=安定</div>
+  </div>
+</div><div style="display:flex;align-items:flex-start;gap:9px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,0.09)">
+  <span style="font-size:16px;flex-shrink:0;margin-top:1px">📈</span>
+  <div>
+    <div style="font-size:11px;font-weight:700;color:#f0f4ff;margin-bottom:2px">RSI（相対力指数）</div>
+    <div style="font-size:10px;color:#5a6a85;line-height:1.5">買われすぎ・売られすぎを0〜100で表示。</div>
+    <div style="font-size:9px;color:#00b4ff;margin-top:3px;background:rgba(0,180,255,.07);padding:2px 8px;border-radius:4px;display:inline-block">70↑=買われすぎ注意 / 30↓=売られすぎ反発期待</div>
+  </div>
+</div><div style="display:flex;align-items:flex-start;gap:9px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,0.09)">
+  <span style="font-size:16px;flex-shrink:0;margin-top:1px">🎭</span>
+  <div>
+    <div style="font-size:11px;font-weight:700;color:#f0f4ff;margin-bottom:2px">Fear & Greed</div>
+    <div style="font-size:10px;color:#5a6a85;line-height:1.5">市場参加者の心理状態を0〜100で数値化。</div>
+    <div style="font-size:9px;color:#00b4ff;margin-top:3px;background:rgba(0,180,255,.07);padding:2px 8px;border-radius:4px;display:inline-block">25↓=極度の恐怖 / 75↑=極度の欲望</div>
+  </div>
+</div><div style="display:flex;align-items:flex-start;gap:9px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,0.09)">
+  <span style="font-size:16px;flex-shrink:0;margin-top:1px">💴</span>
+  <div>
+    <div style="font-size:11px;font-weight:700;color:#f0f4ff;margin-bottom:2px">ドル円（USD/JPY）</div>
+    <div style="font-size:10px;color:#5a6a85;line-height:1.5">1ドル＝何円かを示す。大きい数字ほど円安。</div>
+    <div style="font-size:9px;color:#00b4ff;margin-top:3px;background:rgba(0,180,255,.07);padding:2px 8px;border-radius:4px;display:inline-block">155円↑=円安警戒 / 140円台=比較的安定</div>
+  </div>
+</div><div style="display:flex;align-items:flex-start;gap:9px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,0.09)">
+  <span style="font-size:16px;flex-shrink:0;margin-top:1px">📉</span>
+  <div>
+    <div style="font-size:11px;font-weight:700;color:#f0f4ff;margin-bottom:2px">CME先物</div>
+    <div style="font-size:10px;color:#5a6a85;line-height:1.5">夜間に米国で売買される翌日の日経の予約価格。</div>
+    <div style="font-size:9px;color:#00b4ff;margin-top:3px;background:rgba(0,180,255,.07);padding:2px 8px;border-radius:4px;display:inline-block">高い→翌朝高く始まる / 低い→翌朝安く始まる</div>
+  </div>
+</div>
+  </div>
+</details>
+<style>details[open] > summary { border-radius:12px 12px 0 0; }</style>
 
-<!-- ── フッター ── -->
-<footer style="text-align:center;padding:24px 16px;color:var(--muted);font-size:11px;border-top:1px solid var(--border);margin-top:20px;background:linear-gradient(0deg,#1a0f00,transparent)">
-  <div style="font-size:16px;margin-bottom:6px">🐘 ガネ先生 &amp; 🦦 カワウソくん</div>
-  <div>AIチーム自動生成レポート · 2026-06-20 11:21 JST</div>
-  <div style="margin-top:4px">このレポートはAIによる自動分析です。投資は自己判断でお願いします。</div>
-</footer>
+  <!-- フッター -->
+  <div style="text-align:center;padding:18px 0 10px;color:#5a6a85;font-size:10px;border-top:1px solid rgba(255,255,255,0.09)">
+    <div style="font-size:13px;margin-bottom:4px;color:#f0f4ff">📊 市場AI秘書 / ミセスワタナベ</div>
+    <div>AIチーム自動生成 · 2026-06-26 12:25 JST</div>
+    <div style="margin-top:4px;background:linear-gradient(90deg,#b06eff,#00b4ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:700">Powered by Gemini AI</div>
+  </div>
+
+</div>
 
 <script>
 (function(){
-  const els = document.querySelectorAll('.fade-up');
-  const io  = new IntersectionObserver(entries => {
-    entries.forEach(e => { if(e.isIntersecting) e.target.style.animationDelay = '0s'; });
-  }, {threshold:0.1});
-  els.forEach((el,i) => {
-    el.style.animationDelay = (i * 0.06) + 's';
+  /* フェードインアニメーション */
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.style.opacity = '1';
+        e.target.style.transform = 'translateY(0)';
+      }
+    });
+  }, {threshold: 0.05});
+
+  document.querySelectorAll('.fade').forEach((el, i) => {
+    el.style.cssText += ';opacity:0;transform:translateY(14px);transition:opacity .45s ease '+(i*.05)+'s,transform .45s ease '+(i*.05)+'s';
     io.observe(el);
   });
-})();
 
+  /* summary の arrow をトグル */
+  document.querySelectorAll('details').forEach(d => {
+    d.addEventListener('toggle', () => {
+      const arrow = d.querySelector('summary span:last-child');
+      if (arrow) arrow.textContent = d.open ? 'タップして閉じる ▲' : 'タップして開く ▼';
+    });
+  });
+})();
 </script>
 
 </body>

@@ -148,6 +148,17 @@ def run(mode: str):
     except Exception:
         logger.error("テクニカル分析エラー"); logger.debug(traceback.format_exc())
 
+    # Step L3b2: 手法シグナル・スキャナー（押し目買い/ブレイク/売られすぎ等）
+    setups = {"available": False}
+    try:
+        logger.info("--- Step L3b2: 手法シグナル・スキャナー ---")
+        from src.setup_scanner import run as run_setups
+        setups = run_setups(prices=prices, technical=technical)
+        if setups.get("available"):
+            logger.info(f"✅ 手法スキャナー完了（{len(setups.get('setups',[]))}銘柄）")
+    except Exception:
+        logger.error("手法スキャナーエラー"); logger.debug(traceback.format_exc())
+
     # Step L3c: ポートフォリオ管理
     portfolio = {"available": False}
     try:
@@ -708,6 +719,7 @@ def run(mode: str):
             character_comments=character_comments,
             cross_check=cross_check,
             sector_ranking=sector_ranking,
+            setups=setups,
             mode=mode,
         )
         logger.info("✅ デザインAIレポート（docs/daily_report.html）生成")
@@ -788,7 +800,8 @@ def run(mode: str):
                   financial_analysis=financial_analysis,
                   supply_demand=supply_demand, kabuyoho=kabuyoho,
                   sector_heatmap=sector_heatmap,
-                  nikkei_internals=nikkei_internals, adr=adr)
+                  nikkei_internals=nikkei_internals, adr=adr,
+                  setups=setups)
     except Exception:
         logger.error("Telegram通知エラー"); logger.debug(traceback.format_exc())
 
