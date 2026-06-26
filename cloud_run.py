@@ -1681,7 +1681,27 @@ a:hover{{text-decoration:underline;}}
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--mode", choices=["morning","noon","evening","test"], default="morning")
-    run(p.parse_args().mode)
+    mode = p.parse_args().mode
+    try:
+        run(mode)
+    except Exception:
+        # ステップ間のつなぎコードで想定外の例外が起きても、
+        # ①最低限の失敗通知をTelegramへ送り、②非ゼロ終了でワークフローを赤くする。
+        # （「成功表示なのに通知が来ない」事故を二度と起こさないための安全網）
+        logger.error("致命的エラーでレポート生成が中断しました")
+        logger.debug(traceback.format_exc())
+        try:
+            from src.notify_telegram import send_message
+            last = (traceback.format_exc().strip().splitlines() or ["不明なエラー"])[-1][:200]
+            send_message(
+                "⚠️ *市場AI秘書*\n"
+                "本日のレポート生成が途中で失敗しました。\n"
+                f"エラー: `{last}`\n"
+                "（GitHub Actions のログを確認してください）"
+            )
+        except Exception:
+            logger.debug("失敗通知の送信にも失敗", exc_info=True)
+        raise  # 終了コード非ゼロ → ワークフローを失敗（赤）にする
 
 
 if __name__ == "__main__":

@@ -208,23 +208,64 @@ def build_three_messages(risk, analysis, mode,
 # 低レベル送信関数
 # ────────────────────────────────────────────────────────────────
 
+def verify_bot() -> bool:
+    """
+    起動時にボットトークンの有効性を確認し、結果をログに明示する。
+    → トークンが失効/不一致のとき、Actionsログに「❌」が必ず残るので
+       「成功表示なのに通知が来ない」事故が一目で分かる。
+    """
+    if not _is_configured():
+        logger.error("❌ Telegram未設定（TOKEN/CHAT_IDが空）。通知は送れません。"
+                     "GitHub Secrets を確認してください。")
+        return False
+    token = os.getenv("TELEGRAM_BOT_TOKEN")
+    try:
+        r = requests.get(f"https://api.telegram.org/bot{token}/getMe", timeout=10)
+        if r.status_code == 200 and r.json().get("ok"):
+            uname = r.json().get("result", {}).get("username", "?")
+            logger.info(f"✅ Telegramボット有効: @{uname}")
+            return True
+        logger.error(f"❌ TELEGRAM_BOT_TOKEN が無効（getMe status={r.status_code}）。"
+                     "BotFatherでトークンを再生成した場合は GitHub Secrets の "
+                     "TELEGRAM_BOT_TOKEN を新トークンに更新してください。")
+        return False
+    except Exception as e:
+        logger.error(f"❌ Telegram getMe 失敗: {e}")
+        return False
+
+
 def send_message(text: str) -> bool:
     if not _is_configured():
         logger.info("Telegram 未設定スキップ")
         return False
     token   = os.getenv("TELEGRAM_BOT_TOKEN")
     chat_id = os.getenv("TELEGRAM_CHAT_ID")
+    url     = f"https://api.telegram.org/bot{token}/sendMessage"
+
+    # ① まず Markdown で送信
     try:
         r = requests.post(
-            f"https://api.telegram.org/bot{token}/sendMessage",
+            url,
             json={"chat_id": chat_id, "text": text, "parse_mode": "Markdown"},
             timeout=15,
         )
+        if r.status_code == 200:
+            logger.info("Telegram テキスト送信 ✅")
+            return True
+        # Markdown構文エラー(400)等 → プレーンで再送して“1通消える”のを防ぐ
+        logger.warning(f"Markdown送信失敗(status={r.status_code}): "
+                       f"{r.text[:160]} → プレーンで再送")
+    except Exception as e:
+        logger.warning(f"Telegram送信例外: {e} → プレーンで再送")
+
+    # ② プレーンテキストで再送（parse_mode なし）
+    try:
+        r = requests.post(url, json={"chat_id": chat_id, "text": text}, timeout=15)
         r.raise_for_status()
-        logger.info("Telegram テキスト送信 ✅")
+        logger.info("Telegram テキスト送信 ✅（プレーン）")
         return True
     except Exception as e:
-        logger.error(f"Telegram 送信失敗: {e}")
+        logger.error(f"Telegram 送信失敗（プレーンも不可）: {e}")
         return False
 
 
@@ -233,19 +274,40 @@ def send_photo(image_path: str, caption: str = "") -> bool:
         return False
     token   = os.getenv("TELEGRAM_BOT_TOKEN")
     chat_id = os.getenv("TELEGRAM_CHAT_ID")
+    url     = f"https://api.telegram.org/bot{token}/sendPhoto"
+    cap     = caption[:1024]
+
+    # ① Markdown キャプションで送信
     try:
         with open(image_path, "rb") as f:
             r = requests.post(
-                f"https://api.telegram.org/bot{token}/sendPhoto",
-                data={"chat_id": chat_id, "caption": caption[:1024], "parse_mode": "Markdown"},
+                url,
+                data={"chat_id": chat_id, "caption": cap, "parse_mode": "Markdown"},
+                files={"photo": f},
+                timeout=30,
+            )
+        if r.status_code == 200:
+            logger.info(f"Telegram 画像送信 ✅: {image_path}")
+            return True
+        logger.warning(f"画像Markdown送信失敗(status={r.status_code}): "
+                       f"{r.text[:160]} → プレーンで再送")
+    except Exception as e:
+        logger.warning(f"Telegram 画像送信例外: {e} → プレーンで再送")
+
+    # ② プレーンキャプションで再送
+    try:
+        with open(image_path, "rb") as f:
+            r = requests.post(
+                url,
+                data={"chat_id": chat_id, "caption": cap},
                 files={"photo": f},
                 timeout=30,
             )
         r.raise_for_status()
-        logger.info(f"Telegram 画像送信 ✅: {image_path}")
+        logger.info(f"Telegram 画像送信 ✅（プレーン）: {image_path}")
         return True
     except Exception as e:
-        logger.error(f"Telegram 画像送信失敗: {e}")
+        logger.error(f"Telegram 画像送信失敗（プレーンも不可）: {e}")
         return False
 
 
@@ -326,6 +388,9 @@ def run(risk, analysis, report_paths, mode,
     if not _is_configured():
         logger.info("Telegram 設定なし。スキップします。")
         return False
+
+    # 起動時にトークンの生死をログへ明示（失効していれば「❌」が必ず残る）
+    verify_bot()
 
     try:
         msgs = build_three_messages(

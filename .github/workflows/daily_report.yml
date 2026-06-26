@@ -72,13 +72,15 @@ jobs:
           CF_PROXY_URL: ${{ secrets.CF_PROXY_URL }}
         run: |
           echo "📋 従来型レポート生成中..."
-          python cloud_run.py --mode morning || true
-          # 拡張版レポート生成
+          # cloud_run.py の失敗は隠さない（|| true を付けない）。
+          # 通知が来ない事故を「緑表示」で見逃さないため、失敗時はこのジョブを赤にする。
+          python cloud_run.py --mode morning
+          # 拡張版・モバイル版は任意（失敗しても続行）
           python generate_expanded_report.py || true
-          # モバイル対応版レポート生成
           python generate_mobile_report.py || true
 
       - name: モバイル版レポートを docs/mobile.html に公開用コピー
+        if: always()
         run: |
           mkdir -p docs
           # メインの daily_report.html は cloud_run の Step 7a2（design_ai）が
@@ -91,6 +93,7 @@ jobs:
           fi
 
       - name: レポート(docs/)と学習データをmainブランチに保存・公開
+        if: always()
         run: |
           git config --global user.email "actions@github.com"
           git config --global user.name "GitHub Actions Bot"
@@ -101,6 +104,7 @@ jobs:
           git push origin main || true
 
       - name: レポートをgh-pagesに公開
+        if: always()
         run: |
           git config --global user.email "actions@github.com"
           git config --global user.name "GitHub Actions"
