@@ -1029,9 +1029,18 @@ def _retitle(ax, text, color=C_GOLD, fs=13):
 
 
 def _metric_card(ax, icon, icon_color, label, value_str, change_str, change_color, note):
-    """上部サマリーカード1枚を描画（アイコンバッジ＋値＋変化＋ひとこと）"""
+    """上部サマリーカード1枚を描画（アイコンバッジ＋値＋変化＋ひとこと・グロー付き）"""
     ax.axis("off")
     ax.set_xlim(0, 1); ax.set_ylim(0, 1)
+
+    # 外周グロー（変化色の薄い重ね）
+    for k in range(4, 0, -1):
+        pad = k * 0.012
+        ax.add_patch(mpatches.FancyBboxPatch(
+            (0.03 - pad, 0.05 - pad), 0.94 + 2 * pad, 0.90 + 2 * pad,
+            boxstyle=f"round,pad=0.01,rounding_size={0.06 + pad}",
+            fc="none", ec=change_color, lw=1.0, alpha=0.05 * k,
+            transform=ax.transAxes, clip_on=False))
 
     # カード背景
     ax.add_patch(mpatches.FancyBboxPatch(
@@ -1039,29 +1048,36 @@ def _metric_card(ax, icon, icon_color, label, value_str, change_str, change_colo
         boxstyle="round,pad=0.01,rounding_size=0.06",
         fc=BG2, ec=C_BORDER, lw=1.4, transform=ax.transAxes, clip_on=False))
 
+    # 上部アクセントライン（変化色）
+    ax.add_patch(mpatches.FancyBboxPatch(
+        (0.10, 0.90), 0.80, 0.025,
+        boxstyle="round,pad=0.005,rounding_size=0.02",
+        fc=change_color, ec="none", alpha=0.9,
+        transform=ax.transAxes, clip_on=False))
+
     # アイコンバッジ（角丸の色付き四角）
     ax.add_patch(mpatches.FancyBboxPatch(
-        (0.08, 0.60), 0.20, 0.28,
+        (0.08, 0.58), 0.20, 0.28,
         boxstyle="round,pad=0.01,rounding_size=0.05",
         fc=icon_color, ec="none", alpha=0.22, transform=ax.transAxes, clip_on=False))
-    ax.text(0.18, 0.74, icon, ha="center", va="center",
+    ax.text(0.18, 0.72, icon, ha="center", va="center",
             fontsize=15, color=icon_color, fontweight="bold")
 
     # ラベル
-    ax.text(0.34, 0.745, label, ha="left", va="center",
+    ax.text(0.34, 0.725, label, ha="left", va="center",
             fontsize=11.5, color=C_WHITE, fontweight="bold")
 
     # 大きな値
-    ax.text(0.50, 0.45, value_str, ha="center", va="center",
+    ax.text(0.50, 0.43, value_str, ha="center", va="center",
             fontsize=18, color=C_WHITE, fontweight="bold")
 
     # 変化率
-    ax.text(0.50, 0.245, change_str, ha="center", va="center",
+    ax.text(0.50, 0.235, change_str, ha="center", va="center",
             fontsize=12.5, color=change_color, fontweight="bold")
 
     # ひとことメモ
     if note:
-        ax.text(0.50, 0.115, note, ha="center", va="center",
+        ax.text(0.50, 0.11, note, ha="center", va="center",
                 fontsize=8.8, color=C_GRAY)
 
 
@@ -1248,27 +1264,57 @@ def build_dashboard(data: dict, out_path: str, premium: dict | None = None) -> s
     _WD = ["月", "火", "水", "木", "金", "土", "日"]
     _wd = _WD[jst_now.weekday()]
 
+    # ─── 背景：縦グラデーション（全面） ───
+    try:
+        def _hx(h):
+            h = h.lstrip("#")
+            return tuple(int(h[i:i+2], 16) / 255 for i in (0, 2, 4))
+        bg_ax = fig.add_axes([0, 0, 1, 1], zorder=-10)
+        bg_ax.axis("off")
+        grad = np.linspace(0, 1, 256).reshape(-1, 1)
+        c_top = np.array(_hx("#111a2b"))   # 上：やや明るいネイビー
+        c_bot = np.array(_hx("#070a11"))   # 下：ほぼ黒
+        grad_rgb = c_bot + (c_top - c_bot) * grad
+        grad_img = np.repeat(grad_rgb[:, np.newaxis, :], 2, axis=1)
+        bg_ax.imshow(grad_img, extent=[0, 1, 0, 1], aspect="auto", zorder=-10)
+    except Exception:
+        pass
+
     # ─── 外枠 GridSpec（縦に6段）───
     outer = fig.add_gridspec(
         6, 1,
         height_ratios=[1.05, 2.7, 1.55, 1.55, 1.95, 0.0001],
         hspace=0.30,
-        top=0.905, bottom=0.035, left=0.035, right=0.965,
+        top=0.895, bottom=0.035, left=0.035, right=0.965,
     )
 
+    # ── ヘッダーバナー（左にゴールドのアクセントバー）──
+    fig.patches.append(mpatches.FancyBboxPatch(
+        (0.035, 0.918), 0.0055, 0.064,
+        boxstyle="round,pad=0,rounding_size=0.003",
+        fc=C_GOLD, ec="none", transform=fig.transFigure, zorder=5))
+
     # ── タイトル（最上部・図座標） ──
-    fig.text(0.035, 0.975, "為替マクロ経済・地政学リスク",
-             ha="left", va="top", color=C_WHITE, fontsize=27, fontweight="bold")
-    fig.text(0.037, 0.943, "ドル/円 FX マクロ要約ダッシュボード",
-             ha="left", va="top", color=C_GOLD, fontsize=14, fontweight="bold")
-    fig.text(0.037, 0.924,
+    fig.text(0.050, 0.978, "為替マクロ経済・地政学リスク",
+             ha="left", va="top", color=C_WHITE, fontsize=27, fontweight="bold",
+             zorder=6)
+    fig.text(0.052, 0.946, "ドル/円 FX マクロ要約ダッシュボード",
+             ha="left", va="top", color=C_GOLD, fontsize=14, fontweight="bold",
+             zorder=6)
+    fig.text(0.052, 0.927,
              f"{jst_now.year}年{jst_now.month}月{jst_now.day}日（{_wd}）"
              f"  {jst_now.strftime('%H:%M')} JST　東京市場 午後レポート",
-             ha="left", va="top", color=C_GRAY, fontsize=11)
+             ha="left", va="top", color=C_GRAY, fontsize=11, zorder=6)
+
+    # ヘッダー下の区切り線
+    line_ax = fig.add_axes([0.035, 0.910, 0.93, 0.001], zorder=5)
+    line_ax.axis("off")
+    line_ax.axhline(0.5, color=C_BORDER, lw=1.0, alpha=0.7)
 
     # 右上の「整理済み」バッジ
-    fig.text(0.80, 0.972, "  表示を整理・補正済み  ",
+    fig.text(0.80, 0.974, "  表示を整理・補正済み  ",
              ha="left", va="top", color=BG, fontsize=11, fontweight="bold",
+             zorder=6,
              bbox=dict(boxstyle="round,pad=0.5", fc=C_GOLD, ec="none"))
 
     # ── Row 0: サマリーカード5枚 ──
