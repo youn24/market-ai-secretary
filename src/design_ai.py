@@ -145,20 +145,27 @@ _OTTER_SVG = """<svg width="72" height="88" viewBox="0 0 100 120" xmlns="http://
 # ──────────────────────────────────────────
 
 _CSS = f"""
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&family=Inter:wght@400;600;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Outfit:wght@400;500;600;700;800;900&display=swap');
 
 *,*::before,*::after{{box-sizing:border-box;margin:0;padding:0}}
 html{{scroll-behavior:smooth}}
 body{{
-  font-family:'Noto Sans JP','Inter',sans-serif;
+  font-family:'Noto Sans JP','Outfit',sans-serif;
   background:{BG};
   color:{TEXT};
   font-size:14px;
-  line-height:1.6;
+  line-height:1.65;
   min-height:100vh;
   -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
   position:relative;
 }}
+
+/* ── プレミアム・タイポグラフィ ── */
+.num{{font-family:'Outfit','Noto Sans JP',sans-serif;font-variant-numeric:tabular-nums;letter-spacing:-.5px;font-weight:800}}
+.display{{font-family:'Outfit','Noto Sans JP',sans-serif;letter-spacing:-.3px}}
+.sect-title{{font-family:'Outfit','Noto Sans JP',sans-serif;font-size:16px;font-weight:800;letter-spacing:.2px;color:{TEXT};display:flex;align-items:center;gap:7px;margin:0 2px 9px}}
+.sect-title::before{{content:"";width:4px;height:16px;border-radius:3px;background:linear-gradient(180deg,{PURPLE},{BLUE});display:inline-block}}
 
 /* ── 動くオーロラ背景（固定・最背面）── */
 .aurora{{
@@ -201,9 +208,10 @@ body{{
   box-shadow:inset 0 1px 0 rgba(255,255,255,0.06), 0 8px 30px rgba(0,0,0,0.35);
 }}
 .glass-sm{{
-  background:rgba(255,255,255,0.04);
-  border:1px solid rgba(255,255,255,0.08);
-  border-radius:12px;
+  background:linear-gradient(160deg,rgba(255,255,255,0.055),rgba(255,255,255,0.02));
+  border:1px solid rgba(255,255,255,0.09);
+  border-radius:13px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.05), 0 4px 16px rgba(0,0,0,0.28);
 }}
 
 /* ネオングロー */
@@ -212,7 +220,7 @@ body{{
 .glow-yellow{{ box-shadow:0 0 20px rgba(255,200,55,.20), 0 0 60px rgba(255,200,55,.08); }}
 
 /* ラベル共通 */
-.label{{font-size:10px;font-weight:700;letter-spacing:1.2px;color:{MUTED};text-transform:uppercase;margin-bottom:5px}}
+.label{{font-size:11px;font-weight:700;letter-spacing:1.4px;color:{MUTED};text-transform:uppercase;margin-bottom:6px;font-family:'Outfit','Noto Sans JP',sans-serif}}
 
 /* フェードイン */
 @keyframes fadeUp{{
@@ -294,18 +302,18 @@ body{{
 def _header(score, today, label, color):
     dot_shadow = f"0 0 8px {color}"
     return f"""
-<div style="background:rgba(255,255,255,0.03);border-bottom:1px solid {BORDER};padding:11px 16px">
+<div style="background:rgba(255,255,255,0.03);border-bottom:1px solid {BORDER};padding:14px 16px">
   <div class="wrap" style="display:flex;align-items:center;justify-content:space-between">
-    <div style="display:flex;align-items:center;gap:10px">
-      <div style="width:32px;height:32px;background:linear-gradient(135deg,{PURPLE},{BLUE});border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px">📊</div>
+    <div style="display:flex;align-items:center;gap:11px">
+      <div style="width:38px;height:38px;background:linear-gradient(135deg,{PURPLE},{BLUE});border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:19px;box-shadow:0 4px 14px {PURPLE}44">📊</div>
       <div>
-        <div style="font-size:14px;font-weight:900;color:{TEXT}">市場AI秘書</div>
-        <div style="font-size:10px;color:{MUTED}">{today}</div>
+        <div class="display" style="font-size:19px;font-weight:900;color:{TEXT};line-height:1.05">市場AI秘書</div>
+        <div style="font-size:11px;color:{MUTED};margin-top:1px">{today}</div>
       </div>
     </div>
-    <div style="display:flex;align-items:center;gap:7px;background:rgba(255,255,255,0.05);border:1px solid {BORDER};border-radius:20px;padding:5px 12px">
-      <div style="width:7px;height:7px;border-radius:50%;background:{color};box-shadow:{dot_shadow}"></div>
-      <span style="font-size:12px;font-weight:700;color:{color}">{label}</span>
+    <div style="display:flex;align-items:center;gap:7px;background:{color}15;border:1px solid {color}40;border-radius:20px;padding:6px 13px">
+      <div style="width:8px;height:8px;border-radius:50%;background:{color};box-shadow:{dot_shadow}"></div>
+      <span style="font-size:13px;font-weight:800;color:{color}">{label}</span>
     </div>
   </div>
 </div>"""
@@ -329,32 +337,32 @@ def _hero(score, prices, fear_greed, risk, now):
 
     # 3行まとめ
     def row(ic, c, txt):
-        return f'<div style="display:flex;align-items:flex-start;gap:9px;padding:8px 0;border-bottom:1px solid {BORDER}"><span style="font-size:17px;flex-shrink:0;margin-top:1px">{ic}</span><div style="font-size:12px;line-height:1.75;color:{c}">{txt}</div></div>'
+        return f'<div style="display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid {BORDER}"><span style="font-size:19px;flex-shrink:0;margin-top:1px">{ic}</span><div style="font-size:13.5px;line-height:1.8;color:{c}">{txt}</div></div>'
 
-    if   nchg >= 1.0:  r1 = row("📈", GREEN,  f'日経平均 <b style="font-size:14px">{_fmt(n225,0)}円</b> <span style="color:{MUTED}">前日比</span> <b style="color:{GREEN}">+{nchg:.1f}%</b> — 上昇中です。')
-    elif nchg <= -1.0: r1 = row("📉", RED,    f'日経平均 <b style="font-size:14px">{_fmt(n225,0)}円</b> <span style="color:{MUTED}">前日比</span> <b style="color:{RED}">{nchg:.1f}%</b> — 下落しています。')
-    else:              r1 = row("📊", YELLOW, f'日経平均 <b style="font-size:14px">{_fmt(n225,0)}円</b> <span style="color:{MUTED}">前日比</span> <b style="color:{YELLOW}">{nchg:+.1f}%</b> — ほぼ横ばいです。')
+    if   nchg >= 1.0:  r1 = row("📈", GREEN,  f'日経平均 <b class="num" style="font-size:16px">{_fmt(n225,0)}円</b> <span style="color:{MUTED}">前日比</span> <b style="color:{GREEN}">+{nchg:.1f}%</b> — 上昇中です。')
+    elif nchg <= -1.0: r1 = row("📉", RED,    f'日経平均 <b class="num" style="font-size:16px">{_fmt(n225,0)}円</b> <span style="color:{MUTED}">前日比</span> <b style="color:{RED}">{nchg:.1f}%</b> — 下落しています。')
+    else:              r1 = row("📊", YELLOW, f'日経平均 <b class="num" style="font-size:16px">{_fmt(n225,0)}円</b> <span style="color:{MUTED}">前日比</span> <b style="color:{YELLOW}">{nchg:+.1f}%</b> — ほぼ横ばいです。')
 
-    if   usd > 158: r2 = row("🚨", RED,    f'ドル円 <b style="font-size:14px">{usd:.2f}円</b> — <b>強い円安。財務省の為替介入リスク</b>に警戒。')
-    elif usd > 153: r2 = row("⚠️", ORANGE, f'ドル円 <b style="font-size:14px">{usd:.2f}円</b>（{uchg:+.2f}%）— 円安傾向。輸入品が高くなりやすい水準。')
-    elif usd > 0:   r2 = row("💴", TEXT,   f'ドル円 <b style="font-size:14px">{usd:.2f}円</b>（{uchg:+.2f}%）— 比較的安定した水準です。')
+    if   usd > 158: r2 = row("🚨", RED,    f'ドル円 <b class="num" style="font-size:16px">{usd:.2f}円</b> — <b>強い円安。財務省の為替介入リスク</b>に警戒。')
+    elif usd > 153: r2 = row("⚠️", ORANGE, f'ドル円 <b class="num" style="font-size:16px">{usd:.2f}円</b>（{uchg:+.2f}%）— 円安傾向。輸入品が高くなりやすい水準。')
+    elif usd > 0:   r2 = row("💴", TEXT,   f'ドル円 <b class="num" style="font-size:16px">{usd:.2f}円</b>（{uchg:+.2f}%）— 比較的安定した水準です。')
     else:           r2 = row("💴", MUTED,  'ドル円データを取得中...')
 
-    r3 = row("😨", vc, f'恐怖指数VIX <b style="font-size:14px">{vix:.1f}</b> <span style="background:rgba(255,255,255,.07);border-radius:4px;padding:1px 6px;font-size:10px;font-weight:700;color:{vc}">{vl}</span> — {vd}')
+    r3 = row("😨", vc, f'恐怖指数VIX <b class="num" style="font-size:16px">{vix:.1f}</b> <span style="background:rgba(255,255,255,.07);border-radius:4px;padding:1px 6px;font-size:10px;font-weight:700;color:{vc}">{vl}</span> — {vd}')
 
     return f"""
-<div class="glass fade {glow_cls}" style="border-color:{color}33;padding:16px 16px 12px;margin-bottom:12px;position:relative;overflow:hidden">
+<div class="glass fade {glow_cls}" style="border-color:{color}33;padding:18px 18px 14px;margin-bottom:14px;position:relative;overflow:hidden">
   <!-- 背景グラデーション -->
-  <div style="position:absolute;top:-40px;right:-40px;width:140px;height:140px;border-radius:50%;background:radial-gradient(circle,{color}18,transparent 70%);pointer-events:none"></div>
+  <div style="position:absolute;top:-50px;right:-50px;width:170px;height:170px;border-radius:50%;background:radial-gradient(circle,{color}22,transparent 70%);pointer-events:none"></div>
 
-  <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px">
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:13px">
     <div>
       <div class="label">今日の相場まとめ</div>
-      <div style="font-size:22px;font-weight:900;color:{color};line-height:1.2">{emoji} {label}</div>
+      <div class="display" style="font-size:28px;font-weight:900;color:{color};line-height:1.15">{emoji} {label}</div>
     </div>
     <div style="text-align:right">
-      <div style="font-size:32px;font-weight:900;color:{color};line-height:1;text-shadow:0 0 20px {color}44">{score:+.2f}</div>
-      <div style="font-size:9px;color:{MUTED};margin-top:1px">AIスコア / −3〜+3</div>
+      <div class="num" style="font-size:42px;font-weight:900;color:{color};line-height:1;text-shadow:0 0 24px {color}55">{score:+.2f}</div>
+      <div style="font-size:10px;color:{MUTED};margin-top:2px">AIスコア / −3〜+3</div>
     </div>
   </div>
 
@@ -383,12 +391,13 @@ def _quick4(prices, fear_greed):
         chg_color = _col(change) if change != 0 else MUTED
         bar_w = min(abs(change) * 20, 100)
         bar_c = GREEN if change > 0 else (RED if change < 0 else MUTED)
-        note_html = f'<div style="font-size:9px;color:{MUTED};margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{note}</div>' if note else ""
-        return f"""<div class="glass-sm fade" style="padding:12px 10px">
-  <div style="font-size:10px;color:{MUTED};margin-bottom:4px;display:flex;align-items:center;gap:5px"><span>{icon}</span>{title}</div>
-  <div style="font-size:20px;font-weight:900;color:{val_color};line-height:1.1">{value}</div>
-  <div style="font-size:11px;color:{chg_color};font-weight:700;margin-top:2px">{_arrow(change)} {abs(change):.2f}%</div>
-  <div style="height:2px;background:rgba(255,255,255,.06);border-radius:1px;margin-top:5px"><div style="width:{bar_w}%;height:100%;background:{bar_c};border-radius:1px"></div></div>
+        note_html = f'<div style="font-size:10px;color:{MUTED};margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{note}</div>' if note else ""
+        return f"""<div class="glass-sm fade" style="padding:15px 13px;position:relative;overflow:hidden">
+  <div style="position:absolute;top:0;left:0;width:100%;height:3px;background:{val_color};opacity:.85"></div>
+  <div style="font-size:11px;color:{MUTED};margin-bottom:6px;display:flex;align-items:center;gap:6px;font-weight:600"><span style="font-size:14px">{icon}</span>{title}</div>
+  <div class="num" style="font-size:27px;font-weight:900;color:{val_color};line-height:1.05">{value}</div>
+  <div style="font-size:12px;color:{chg_color};font-weight:800;margin-top:3px">{_arrow(change)} {abs(change):.2f}%</div>
+  <div style="height:3px;background:rgba(255,255,255,.06);border-radius:2px;margin-top:7px"><div style="width:{bar_w}%;height:100%;background:{bar_c};border-radius:2px;box-shadow:0 0 8px {bar_c}66"></div></div>
   {note_html}
 </div>"""
 
@@ -424,11 +433,11 @@ def _price_strip(prices):
         chg  = p.get("change_pct", 0) or 0
         if val == 0: continue
         c = _col(chg)
-        chips.append(f"""<div style="display:inline-flex;flex-direction:column;align-items:center;background:rgba(255,255,255,.04);border:1px solid {BORDER};border-radius:10px;padding:8px 12px;min-width:72px;flex-shrink:0">
-  <div style="font-size:14px">{icon}</div>
-  <div style="font-size:9px;color:{MUTED};margin:2px 0;white-space:nowrap">{name}</div>
-  <div style="font-size:12px;font-weight:700;color:{TEXT}">{_fmt(val)}</div>
-  <div style="font-size:10px;color:{c};font-weight:700">{_arrow(chg)}{abs(chg):.1f}%</div>
+        chips.append(f"""<div style="display:inline-flex;flex-direction:column;align-items:center;background:linear-gradient(160deg,rgba(255,255,255,.05),rgba(255,255,255,.02));border:1px solid {BORDER};border-radius:12px;padding:10px 14px;min-width:78px;flex-shrink:0">
+  <div style="font-size:16px">{icon}</div>
+  <div style="font-size:10px;color:{MUTED};margin:3px 0;white-space:nowrap">{name}</div>
+  <div class="num" style="font-size:14px;font-weight:800;color:{TEXT}">{_fmt(val)}</div>
+  <div style="font-size:11px;color:{c};font-weight:800;margin-top:1px">{_arrow(chg)}{abs(chg):.1f}%</div>
 </div>""")
 
     if not chips: return ""
