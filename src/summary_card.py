@@ -89,9 +89,9 @@ def _hex_rgb(h):
     return tuple(int(h[i:i+2], 16) / 255 for i in (0, 2, 4))
 
 
-def make_summary_card(prices: dict, fear_greed: dict, risk: dict,
-                      ai_summary: dict = None, news: list = None) -> str | None:
-    """サマリーカードPNGを生成してパスを返す。失敗時 None。"""
+def _make_card_matplotlib(prices: dict, fear_greed: dict, risk: dict,
+                          ai_summary: dict = None, news: list = None) -> str | None:
+    """サマリーカードPNGを生成してパスを返す。失敗時 None。（matplotlibフォールバック）"""
     try:
         prices     = prices or {}
         fear_greed = fear_greed or {}
@@ -312,3 +312,269 @@ def make_summary_card(prices: dict, fear_greed: dict, risk: dict,
         except Exception:
             pass
         return None
+
+
+# ══════════════════════════════════════════════════════════════════════════
+# HTML → PNG（Playwright）版：Canva級デザインの主経路
+# ══════════════════════════════════════════════════════════════════════════
+
+CARD_W = 760  # 描画幅（device_scale_factor=2 で実質1520px・くっきり）
+
+_H_TILES = [
+    ("^N225",    "日経平均",  "",  0, "🇯🇵"),
+    ("^GSPC",    "S&P500",   "",  0, "🇺🇸"),
+    ("^IXIC",    "NASDAQ",   "",  0, "💻"),
+    ("USDJPY=X", "ドル円",   "円", 2, "💴"),
+    ("^VIX",     "VIX",      "",  1, "😨"),
+    ("BTC-USD",  "BTC",      "$", 0, "₿"),
+]
+
+
+def _h_sent(score):
+    if   score >= 2:   return GREEN, "強気", "買い優勢・上昇トレンド"
+    elif score >= 0.5: return GREEN, "やや強気", "やや買い優勢"
+    elif score >= -0.5:return AMBER, "中立", "方向感なし・様子見"
+    elif score >= -2:  return RED,   "やや弱気", "やや売り優勢"
+    else:              return RED,   "弱気", "売り優勢・要警戒"
+
+
+def _build_card_html(prices, fear_greed, risk, ai_summary, news) -> str:
+    n = get_jst_now()
+    wd = _WEEKDAYS_JA[n.weekday()]
+    date_s = f"{n.strftime('%Y.%m.%d')}（{wd}）"
+
+    score = risk.get("score", 0)
+    sent_c, sent, sent_sub = _h_sent(score)
+
+    fg_n = int(fear_greed.get("score") or 50)
+    if   fg_n >= 75: fg_c, fg_lbl = GOLD,  "超強欲"
+    elif fg_n >= 55: fg_c, fg_lbl = GREEN, "強欲"
+    elif fg_n >= 45: fg_c, fg_lbl = ACCENT, "中立"
+    elif fg_n >= 25: fg_c, fg_lbl = AMBER, "恐怖"
+    else:            fg_c, fg_lbl = RED,   "超恐怖"
+
+    # ── 6タイル ──
+    tiles = ""
+    for sym, label, unit, dp, icon in _H_TILES:
+        d   = prices.get(sym, {})
+        val = d.get("latest")
+        chg = d.get("change_pct")
+        c   = GREEN if (chg or 0) >= 0 else RED
+        val_s = "---" if val is None else (f"{unit}{val:,.0f}" if dp == 0 else f"{unit}{val:,.{dp}f}")
+        if chg is None:
+            chg_s, chg_c = "—", MUTED
+        else:
+            chg_s = f"{'▲' if chg>=0 else '▼'} {abs(chg):.2f}%"
+            chg_c = c
+        tiles += f"""
+      <div class="tile">
+        <div class="tile-bar" style="background:{c}"></div>
+        <div class="tile-lbl">{icon} {label}</div>
+        <div class="tile-val">{val_s}</div>
+        <div class="tile-chg" style="color:{chg_c}">{chg_s}</div>
+      </div>"""
+
+    # ── 騰落バー ──
+    bars = ""
+    short = ["日経", "S&P", "NDX", "ドル円", "VIX", "BTC"]
+    for (sym, *_), nm in zip(_H_TILES, short):
+        chg = prices.get(sym, {}).get("change_pct")
+        if chg is None:
+            h, bc, lbl = 0, MUTED, "—"
+        else:
+            h = min(abs(chg) / 3.0 * 100, 100)
+            bc = GREEN if chg >= 0 else RED
+            lbl = f"{chg:+.1f}"
+        up = chg is None or chg >= 0
+        bars += f"""
+        <div class="bcol">
+          <div class="bval" style="color:{bc}">{lbl}</div>
+          <div class="btrack"><div class="bfill" style="height:{h:.0f}%;background:{bc};{'align-self:flex-end' if not up else ''}"></div></div>
+          <div class="bnm">{nm}</div>
+        </div>"""
+
+    # ── AI 3視点 ──
+    def _clip2(t, k):
+        t = (t or "").replace("\n", " ").strip()
+        return (t[:k] + "…") if len(t) > k else (t or "データなし")
+    ai_rows = ""
+    for icon, lbl, c, key in [("▲", "強気", GREEN, "bull_view"),
+                               ("▼", "弱気", RED, "bear_view"),
+                               ("◆", "中立", BLUE, "neutral_view")]:
+        ai_rows += f"""
+        <div class="airow">
+          <span class="aichip" style="color:{c};background:{c}22;border:1px solid {c}55">{icon} {lbl}</span>
+          <span class="aitxt">{_clip2(ai_summary.get(key, ''), 30)}</span>
+        </div>"""
+
+    # ── ニュース ──
+    news_html = ""
+    nv = [x for x in (news or []) if isinstance(x, dict) and x.get("title")][:3]
+    for it in nv:
+        imp = it.get("importance", "C")
+        dot = {"A": RED, "B": AMBER, "C": ACCENT}.get(imp if isinstance(imp, str) else "C", ACCENT)
+        title = (it.get("title", "")[:34]).replace("<", "").replace(">", "")
+        news_html += f"""
+        <div class="nrow"><span class="ndot" style="background:{dot}"></span><span class="ntxt">{title}</span></div>"""
+    if not news_html:
+        news_html = '<div class="nrow"><span class="ntxt" style="color:#8a96a8">ニュースデータなし</span></div>'
+
+    return f"""<!DOCTYPE html><html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Outfit:wght@500;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{{margin:0;padding:0;box-sizing:border-box}}
+.num{{font-family:'Outfit','Noto Sans JP',sans-serif;font-variant-numeric:tabular-nums;letter-spacing:-.5px}}
+body{{font-family:'Noto Sans JP','Outfit',sans-serif}}
+#card{{position:relative;width:{CARD_W}px;padding:26px 24px 20px;overflow:hidden;
+  background:
+    radial-gradient(60% 40% at 15% 0%, rgba(176,110,255,.18), transparent 60%),
+    radial-gradient(60% 45% at 100% 25%, rgba(0,180,255,.15), transparent 60%),
+    radial-gradient(70% 50% at 60% 110%, rgba(0,255,135,.10), transparent 60%),
+    linear-gradient(165deg,#0b1322 0%,#070a12 55%,#05070d 100%);
+  color:#eef4fb}}
+.head{{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}}
+.brand{{display:flex;align-items:center;gap:11px}}
+.logo{{width:40px;height:40px;border-radius:11px;display:grid;place-items:center;font-size:20px;
+  background:linear-gradient(135deg,#b06eff,#00b4ff);box-shadow:0 6px 18px rgba(176,110,255,.35)}}
+.bname{{font-family:'Outfit','Noto Sans JP';font-size:21px;font-weight:900;line-height:1.05}}
+.bsub{{font-size:12px;color:#8a96a8;margin-top:1px}}
+.date{{font-size:13px;color:#8a96a8;font-weight:600}}
+
+.topgrid{{display:grid;grid-template-columns:1.55fr 1fr;gap:12px;margin-bottom:13px}}
+.card{{background:linear-gradient(160deg,rgba(255,255,255,.06),rgba(255,255,255,.02));
+  border:1px solid rgba(255,255,255,.10);border-radius:16px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 8px 26px rgba(0,0,0,.35)}}
+.sent{{padding:16px 18px;position:relative;overflow:hidden;border-color:{sent_c}44}}
+.sent::after{{content:"";position:absolute;top:-30px;right:-30px;width:120px;height:120px;border-radius:50%;
+  background:radial-gradient(circle,{sent_c}33,transparent 70%)}}
+.lbl{{font-size:11px;font-weight:700;letter-spacing:1.4px;color:#8a96a8;text-transform:uppercase}}
+.sent-v{{font-family:'Outfit','Noto Sans JP';font-size:34px;font-weight:900;color:{sent_c};line-height:1.1;margin-top:4px}}
+.sent-s{{font-size:12px;color:#8a96a8;margin-top:3px}}
+.fg{{padding:16px 16px;text-align:center}}
+.fg-n{{font-size:40px;font-weight:900;color:{fg_c};line-height:1}}
+.fg-track{{height:7px;border-radius:5px;background:#1b2433;margin:9px 2px 6px;overflow:hidden}}
+.fg-fill{{height:100%;width:{fg_n}%;background:{fg_c};border-radius:5px}}
+.fg-l{{font-size:12px;font-weight:800;color:{fg_c}}}
+
+.tiles{{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;margin-bottom:13px}}
+.tile{{background:linear-gradient(160deg,rgba(255,255,255,.055),rgba(255,255,255,.02));
+  border:1px solid rgba(255,255,255,.09);border-radius:14px;padding:13px 13px 11px;position:relative;overflow:hidden}}
+.tile-bar{{position:absolute;top:0;left:0;width:100%;height:3px;opacity:.9}}
+.tile-lbl{{font-size:12px;color:#8a96a8;font-weight:600;margin-bottom:5px}}
+.tile-val{{font-family:'Outfit','Noto Sans JP';font-size:23px;font-weight:900;font-variant-numeric:tabular-nums;letter-spacing:-.5px;line-height:1}}
+.tile-chg{{font-size:13px;font-weight:800;margin-top:4px}}
+
+.panel{{background:linear-gradient(160deg,rgba(255,255,255,.05),rgba(255,255,255,.018));
+  border:1px solid rgba(255,255,255,.09);border-radius:16px;padding:15px 17px;margin-bottom:12px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}}
+.ptitle{{font-size:14px;font-weight:800;margin-bottom:12px;display:flex;align-items:center;gap:7px}}
+.ptitle::before{{content:"";width:4px;height:15px;border-radius:3px;background:linear-gradient(180deg,#b06eff,#00b4ff)}}
+
+.bars{{display:flex;justify-content:space-between;align-items:flex-end;gap:8px;height:96px}}
+.bcol{{flex:1;display:flex;flex-direction:column;align-items:center;height:100%}}
+.bval{{font-family:'Outfit';font-size:12px;font-weight:800;margin-bottom:4px}}
+.btrack{{flex:1;width:60%;display:flex;align-items:flex-end;justify-content:center}}
+.bfill{{width:100%;border-radius:5px;min-height:3px}}
+.bnm{{font-size:11px;color:#8a96a8;margin-top:6px}}
+
+.airow{{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.06)}}
+.airow:last-child{{border-bottom:none}}
+.aichip{{font-size:12px;font-weight:800;padding:3px 11px;border-radius:9px;white-space:nowrap;min-width:62px;text-align:center}}
+.aitxt{{font-size:13px;color:#eef4fb}}
+
+.nrow{{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06)}}
+.nrow:last-child{{border-bottom:none}}
+.ndot{{width:9px;height:9px;border-radius:50%;flex-shrink:0;box-shadow:0 0 8px currentColor}}
+.ntxt{{font-size:13px;color:#eef4fb}}
+.foot{{text-align:center;font-size:11px;color:#5a6a85;margin-top:6px}}
+</style></head><body>
+<div id="card">
+  <div class="head">
+    <div class="brand">
+      <div class="logo">📊</div>
+      <div><div class="bname">市場AI秘書</div><div class="bsub">朝のサマリー</div></div>
+    </div>
+    <div class="date">{date_s}</div>
+  </div>
+
+  <div class="topgrid">
+    <div class="card sent">
+      <div class="lbl">本日の地合い</div>
+      <div class="sent-v">{sent}</div>
+      <div class="sent-s">{sent_sub}　AIスコア {score:+.1f}</div>
+    </div>
+    <div class="card fg">
+      <div class="lbl">恐怖＆強欲</div>
+      <div class="num fg-n">{fg_n}</div>
+      <div class="fg-track"><div class="fg-fill"></div></div>
+      <div class="fg-l">{fg_lbl}</div>
+    </div>
+  </div>
+
+  <div class="tiles">{tiles}</div>
+
+  <div class="panel">
+    <div class="ptitle">📊 主要指数の騰落率 (%)</div>
+    <div class="bars">{bars}</div>
+  </div>
+
+  <div class="panel">
+    <div class="ptitle">🤖 AI 3視点分析</div>
+    {ai_rows}
+  </div>
+
+  <div class="panel">
+    <div class="ptitle">📰 注目ニュース</div>
+    {news_html}
+  </div>
+
+  <div class="foot">youn24.github.io/market-ai-secretary</div>
+</div>
+</body></html>"""
+
+
+def _render_card_playwright(html: str, out_path: str) -> bool:
+    try:
+        from playwright.sync_api import sync_playwright
+    except ImportError:
+        logger.warning("playwright 未インストール → matplotlibフォールバック")
+        return False
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch(args=["--no-sandbox"])
+            page = browser.new_page(
+                viewport={"width": CARD_W, "height": 1200},
+                device_scale_factor=2,
+            )
+            page.set_content(html, wait_until="networkidle")
+            page.locator("#card").screenshot(path=out_path)
+            browser.close()
+        return True
+    except Exception as e:
+        logger.warning(f"Playwright描画失敗（フォールバックへ）: {e}")
+        return False
+
+
+def make_summary_card(prices: dict, fear_greed: dict, risk: dict,
+                      ai_summary: dict = None, news: list = None) -> str | None:
+    """
+    サマリーカードPNGを生成してパスを返す。
+    主経路: HTML→PNG（Playwright・Canva級デザイン）
+    保険  : matplotlib 版（_make_card_matplotlib）
+    """
+    prices     = prices or {}
+    fear_greed = fear_greed or {}
+    risk       = risk or {}
+    ai_summary = ai_summary or {}
+
+    out = get_dirs()["charts"] / f"summary_card_{get_today_str()}.png"
+    try:
+        html = _build_card_html(prices, fear_greed, risk, ai_summary, news)
+        if _render_card_playwright(html, str(out)):
+            logger.info(f"✅ サマリーカード生成（HTML→PNG）: {out}")
+            return str(out)
+    except Exception as e:
+        logger.warning(f"HTMLカード生成失敗（フォールバックへ）: {e}")
+        logger.debug(traceback.format_exc())
+
+    return _make_card_matplotlib(prices, fear_greed, risk, ai_summary, news)
