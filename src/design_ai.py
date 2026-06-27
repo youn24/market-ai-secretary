@@ -157,15 +157,48 @@ body{{
   line-height:1.6;
   min-height:100vh;
   -webkit-font-smoothing:antialiased;
+  position:relative;
+}}
+
+/* ── 動くオーロラ背景（固定・最背面）── */
+.aurora{{
+  position:fixed;inset:0;z-index:-2;overflow:hidden;pointer-events:none;
+}}
+.aurora::before,.aurora::after{{
+  content:"";position:absolute;border-radius:50%;
+  filter:blur(70px);opacity:.30;mix-blend-mode:screen;
+}}
+.aurora::before{{
+  width:60vw;height:60vw;top:-15vw;left:-12vw;
+  background:radial-gradient(circle,{PURPLE},transparent 65%);
+  animation:auroraA 22s ease-in-out infinite alternate;
+}}
+.aurora::after{{
+  width:55vw;height:55vw;top:25vh;right:-15vw;
+  background:radial-gradient(circle,{BLUE},transparent 65%);
+  animation:auroraB 26s ease-in-out infinite alternate;
+}}
+.aurora i{{
+  position:absolute;width:45vw;height:45vw;bottom:-12vw;left:20vw;border-radius:50%;
+  filter:blur(80px);opacity:.18;mix-blend-mode:screen;
+  background:radial-gradient(circle,{GREEN},transparent 65%);
+  animation:auroraC 30s ease-in-out infinite alternate;
+}}
+@keyframes auroraA{{from{{transform:translate(0,0) scale(1)}}to{{transform:translate(8vw,6vh) scale(1.15)}}}}
+@keyframes auroraB{{from{{transform:translate(0,0) scale(1.1)}}to{{transform:translate(-7vw,-5vh) scale(.9)}}}}
+@keyframes auroraC{{from{{transform:translate(0,0) scale(1)}}to{{transform:translate(-6vw,-7vh) scale(1.2)}}}}
+@media(prefers-reduced-motion:reduce){{
+  .aurora::before,.aurora::after,.aurora i{{animation:none}}
 }}
 
 /* グラスカード */
 .glass{{
-  background:rgba(255,255,255,0.04);
+  background:linear-gradient(160deg,rgba(255,255,255,0.06),rgba(255,255,255,0.025));
   backdrop-filter:blur(20px);
   -webkit-backdrop-filter:blur(20px);
-  border:1px solid rgba(255,255,255,0.09);
+  border:1px solid rgba(255,255,255,0.10);
   border-radius:16px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.06), 0 8px 30px rgba(0,0,0,0.35);
 }}
 .glass-sm{{
   background:rgba(255,255,255,0.04);
@@ -1329,8 +1362,12 @@ def generate(
 </head>
 <body>
 
+<!-- ── 動くオーロラ背景 ── -->
+<div class="aurora"><i></i></div>
+
 <!-- ── トップグラデーションライン ── -->
-<div style="height:3px;background:linear-gradient(90deg,{PURPLE},{BLUE},{CYAN},{GREEN})"></div>
+<div style="height:3px;background:linear-gradient(90deg,{PURPLE},{BLUE},{CYAN},{GREEN});background-size:300% 100%;animation:topbar 8s linear infinite"></div>
+<style>@keyframes topbar{{0%{{background-position:0% 0}}100%{{background-position:300% 0}}}}</style>
 
 <!-- ── ティッカーテープ（リアルタイム）── -->
 <div class="ticker-wrap">
