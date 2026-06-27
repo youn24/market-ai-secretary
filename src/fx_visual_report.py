@@ -217,19 +217,18 @@ def _ax_style(ax, title: str = "", ylabel: str = "", note: str = ""):
     ax.set_facecolor(BG2)
     for spine in ax.spines.values():
         spine.set_color(C_BORDER)
-    ax.tick_params(colors=C_WHITE, labelsize=10.5, length=4)
-    ax.grid(color=GRID_C, linewidth=0.5, linestyle="--", alpha=0.65)
+    ax.tick_params(colors=C_WHITE, labelsize=11.5, length=4)
+    ax.grid(color=GRID_C, linewidth=0.5, linestyle="--", alpha=0.6)
     if title:
-        ax.set_title(title, color=C_GOLD, fontsize=14, fontweight="bold",
-                     pad=9, loc="left",
-                     bbox=dict(boxstyle="round,pad=0.3", fc=BG3, ec=C_GOLD, alpha=0.6, lw=0.8))
+        ax.set_title(title, color=C_WHITE, fontsize=15, fontweight="bold",
+                     pad=10, loc="left")
     if ylabel:
-        ax.set_ylabel(ylabel, color=C_WHITE, fontsize=10.5)
+        ax.set_ylabel(ylabel, color=C_GRAY, fontsize=11)
     if note:
         ax.text(0.99, 0.97, note, transform=ax.transAxes,
-                fontsize=8.5, color=C_CYAN, va="top", ha="right",
-                style="italic", alpha=0.88,
-                bbox=dict(boxstyle="round,pad=0.28", fc=BG3, ec=C_BORDER, alpha=0.75))
+                fontsize=9.5, color=C_CYAN, va="top", ha="right",
+                style="italic", alpha=0.9,
+                bbox=dict(boxstyle="round,pad=0.32", fc=BG3, ec=C_BORDER, alpha=0.8))
 
 
 def _set_date_xticks(ax, df_index, n_ticks=8):
@@ -1021,11 +1020,16 @@ def panel_dxy_trend(ax, data: dict):
 # ⑤-a サマリーカード & メモ（新デザイン用ヘルパー）
 # ─────────────────────────────────────────────────────────────────────────────
 
-def _retitle(ax, text, color=C_GOLD, fs=13):
-    """パネルのタイトルを letter 付き・色付き・枠付きで上書きする"""
-    ax.set_title(text, color=color, fontsize=fs, fontweight="bold",
-                 pad=8, loc="left",
-                 bbox=dict(boxstyle="round,pad=0.3", fc=BG3, ec=color, alpha=0.55, lw=0.9))
+def _retitle(ax, text, color=C_GOLD, fs=14):
+    """パネルのタイトルを editorial 風（白の大見出し＋色アクセントの下線）で上書き"""
+    ax.set_title(text, color=C_WHITE, fontsize=fs, fontweight="bold",
+                 pad=13, loc="left")
+    # タイトル直下に色付きの短いアクセント下線（Canva/Adobe風の見出し処理）
+    try:
+        ax.plot([0.0, 0.10], [1.045, 1.045], transform=ax.transAxes,
+                color=color, lw=3.5, clip_on=False, solid_capstyle="round")
+    except Exception:
+        pass
 
 
 def _metric_card(ax, icon, icon_color, label, value_str, change_str, change_color, note):
@@ -1065,20 +1069,20 @@ def _metric_card(ax, icon, icon_color, label, value_str, change_str, change_colo
 
     # ラベル
     ax.text(0.34, 0.725, label, ha="left", va="center",
-            fontsize=11.5, color=C_WHITE, fontweight="bold")
+            fontsize=12.5, color=C_GRAY, fontweight="bold")
 
     # 大きな値
     ax.text(0.50, 0.43, value_str, ha="center", va="center",
-            fontsize=18, color=C_WHITE, fontweight="bold")
+            fontsize=22, color=C_WHITE, fontweight="bold")
 
     # 変化率
-    ax.text(0.50, 0.235, change_str, ha="center", va="center",
-            fontsize=12.5, color=change_color, fontweight="bold")
+    ax.text(0.50, 0.225, change_str, ha="center", va="center",
+            fontsize=13.5, color=change_color, fontweight="bold")
 
     # ひとことメモ
     if note:
-        ax.text(0.50, 0.11, note, ha="center", va="center",
-                fontsize=8.8, color=C_GRAY)
+        ax.text(0.50, 0.10, note, ha="center", va="center",
+                fontsize=9.5, color=C_GRAY)
 
 
 def _draw_metric_cards(fig, gs_row, data):
@@ -1294,17 +1298,17 @@ def build_dashboard(data: dict, out_path: str, premium: dict | None = None) -> s
         boxstyle="round,pad=0,rounding_size=0.003",
         fc=C_GOLD, ec="none", transform=fig.transFigure, zorder=5))
 
-    # ── タイトル（最上部・図座標） ──
-    fig.text(0.050, 0.978, "為替マクロ経済・地政学リスク",
-             ha="left", va="top", color=C_WHITE, fontsize=27, fontweight="bold",
+    # ── タイトル（最上部・図座標）editorial 大見出し ──
+    fig.text(0.050, 0.980, "為替マクロ経済・地政学リスク",
+             ha="left", va="top", color=C_WHITE, fontsize=33, fontweight="bold",
              zorder=6)
-    fig.text(0.052, 0.946, "ドル/円 FX マクロ要約ダッシュボード",
-             ha="left", va="top", color=C_GOLD, fontsize=14, fontweight="bold",
+    fig.text(0.052, 0.945, "ドル/円  FX マクロ要約ダッシュボード",
+             ha="left", va="top", color=C_GOLD, fontsize=16, fontweight="bold",
              zorder=6)
-    fig.text(0.052, 0.927,
+    fig.text(0.052, 0.926,
              f"{jst_now.year}年{jst_now.month}月{jst_now.day}日（{_wd}）"
              f"  {jst_now.strftime('%H:%M')} JST　東京市場 午後レポート",
-             ha="left", va="top", color=C_GRAY, fontsize=11, zorder=6)
+             ha="left", va="top", color=C_GRAY, fontsize=12, zorder=6)
 
     # ヘッダー下の区切り線
     line_ax = fig.add_axes([0.035, 0.910, 0.93, 0.001], zorder=5)
