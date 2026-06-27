@@ -296,6 +296,20 @@ def main():
             print("─" * 60)
             return
 
+        # ⓪ FXサマリーカード（HTML→PNG・Canva級の一目でわかる1枚）
+        try:
+            from src.fx_summary_card import make_fx_card
+            _data    = fx_result.get("data", {}) or {}
+            _premium = fx_result.get("premium", {}) or {}
+            _ai      = _gemini_fx_comment(_data, _premium)
+            card_path = make_fx_card(_data, _premium, ai_comment=_ai)
+            if card_path and os.path.exists(card_path):
+                send_photo(card_path, caption="〽️ ミセスワタナベ FX ─ 本日の為替サマリー",
+                           chat_id=FX_CHAT_ID, bot_token=FX_BOT_TOKEN)
+                logger.info("✅ ⓪ FXサマリーカード送信")
+        except Exception:
+            logger.debug(traceback.format_exc())
+
         # ① コンパクトサマリー（FX + マクロ + 地政学 + AI解説 + URL）
         compact = _build_compact_msg(fx_result, mood_emoji, char_info)
         ok1 = send_message(compact, chat_id=FX_CHAT_ID, bot_token=FX_BOT_TOKEN)

@@ -51,7 +51,10 @@ jobs:
             pandas \
             numpy \
             PyYAML \
+            google-generativeai \
+            playwright \
             --quiet
+          python -m playwright install --with-deps chromium
           echo "✅ ライブラリインストール完了"
 
       # ── 5. データ出力ディレクトリ準備 ────────────────────────
