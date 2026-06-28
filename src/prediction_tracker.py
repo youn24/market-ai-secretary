@@ -53,8 +53,8 @@ def save_prediction(prices: dict, risk: dict, ai_summary: dict, scenario: dict,
     today = get_today_str()
     data  = _load()
 
-    # AIの予測方向を判定
-    direction = _extract_direction(ai_summary, scenario, risk)
+    # AIの予測方向を判定（F&Gも渡してバイアス補正）
+    direction = _extract_direction(ai_summary, scenario, risk, fear_greed)
 
     # 現在価格を記録
     def p(sym): return prices.get(sym, {}).get("latest")
@@ -88,17 +88,28 @@ def save_prediction(prices: dict, risk: dict, ai_summary: dict, scenario: dict,
     return record
 
 
-def _extract_direction(ai_summary: dict, scenario: dict, risk: dict) -> str:
+def _extract_direction(ai_summary: dict, scenario: dict, risk: dict, fear_greed: dict = None) -> str:
     """AIの総合的な方向性を文字列で返す"""
     score = risk.get("score", 0)
+    fg = (fear_greed or {}).get("score")
 
-    # スコアベースの判定
-    # 閾値を1.5→3.0に引き上げ（実績データでスコア2〜8が中立に偏っていたため）
-    if score >= 3.0:    base = "bull"
-    elif score <= -3.0: base = "bear"
-    else:               base = "neutral"
+    # Fear&Greedによるスコア補正（恐怖圏では弱気方向に調整）
+    # 実績分析: F&G=25-35の恐怖圏でも強気予測が多発→バイアス修正
+    adjusted_score = score
+    if fg is not None:
+        if fg < 25:    adjusted_score -= 3.0   # 極度の恐怖
+        elif fg < 35:  adjusted_score -= 1.5   # 恐怖
+        elif fg >= 75: adjusted_score += 3.0   # 極度の強欲
+        elif fg >= 65: adjusted_score += 1.5   # 強欲
 
-    # シナリオ確率で補正（確率60%以上の場合のみ方向を決定）
+    # 閾値を3.0→6.0に引き上げ（強気バイアス是正: 実績でスコア3〜8が非bull多発）
+    if adjusted_score >= 6.0:    base = "bull"
+    elif adjusted_score <= -4.0: base = "bear"
+    else:                        base = "neutral"
+
+    # シナリオ確率で補正（確率差25%以上の場合のみ方向を変更）
+    # 旧: 60%単独閾値→どちらも届かず強制neutralになりやすかった
+    # 新: 差分25%以上ならシグナルあり、それ以外はスコアベースを維持
     if scenario and scenario.get("available"):
         bull_p = scenario.get("bull", {}).get("prob", 0) or 0
         bear_p = scenario.get("bear", {}).get("prob", 0) or 0
@@ -106,9 +117,9 @@ def _extract_direction(ai_summary: dict, scenario: dict, risk: dict) -> str:
             bull_p = int(bull_p); bear_p = int(bear_p)
         except Exception:
             pass
-        if bull_p >= 60:   base = "bull"
-        elif bear_p >= 60: base = "bear"
-        else:               base = "neutral"
+        diff = bull_p - bear_p
+        if diff >= 25:    base = "bull"
+        elif diff <= -25: base = "bear"
 
     return base
 
