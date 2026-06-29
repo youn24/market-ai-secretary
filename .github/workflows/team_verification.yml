@@ -36,6 +36,11 @@ jobs:
                       matplotlib kaleido google-generativeai pytz
 
       - name: 予測検証・改善案生成
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          PYTHONIOENCODING: utf-8
         run: |
           echo "🔬 前日の予測を検証中..."
           python run_autonomous_team.py --mode verification
@@ -45,7 +50,7 @@ jobs:
           git config --global user.email "actions@github.com"
           git config --global user.name "Autonomous Team Bot"
           git add data/team_verification_*.json logs/autonomous_team.log || true
-          git diff --staged --quiet || git commit -m "🔬 自動検証: 前日の予測検証結果を記録"
+          git diff --staged --quiet || git commit -m "🔬 自動検証: 前日の予測検証結果を記録" || true
           git push origin main || echo "プッシュスキップ（変更なし）"
 
       - name: 検証結果をTelegramに通知
@@ -55,6 +60,7 @@ jobs:
         if: always()
         run: |
           python -c "
+          import os
           import requests
           import json
           from pathlib import Path

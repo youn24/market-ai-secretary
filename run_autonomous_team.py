@@ -304,16 +304,21 @@ def main():
     args = parser.parse_args()
     
     runner = AutonomousTeamRunner()
-    
-    if args.mode == "morning":
-        runner.run_morning_analysis()
-    
-    elif args.mode == "verification":
-        runner.run_verification()
-    
-    elif args.mode == "full":
-        runner.run_full_cycle()
-    
+
+    try:
+        if args.mode == "morning":
+            runner.run_morning_analysis()
+
+        elif args.mode == "verification":
+            runner.run_verification()
+
+        elif args.mode == "full":
+            runner.run_full_cycle()
+    except Exception as e:
+        logger.error(f"実行エラー (mode={args.mode}): {e}")
+        import traceback
+        logger.debug(traceback.format_exc())
+
     logger.info("🎉 実行が完了しました")
 
 
