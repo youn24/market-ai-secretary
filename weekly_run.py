@@ -73,6 +73,17 @@ def run():
     except Exception:
         logger.error("予測サマリーエラー")
 
+    # 予測精度モニタリング（4週トレンド + パターン分析）
+    accuracy_monitor = {}
+    try:
+        logger.info("--- 精度モニタリング（4週トレンド） ---")
+        from src.accuracy_monitor import run as run_acc
+        accuracy_monitor = run_acc()
+        if accuracy_monitor.get("available"):
+            logger.info(f"✅ 精度モニタリング完了: 30日正解率={accuracy_monitor.get('rate_30d')}%")
+    except Exception:
+        logger.error("精度モニタリングエラー"); logger.debug(traceback.format_exc())
+
     # YouTube要約
     youtube = {}
     try:
@@ -137,7 +148,8 @@ def run():
     _send_weekly_report(weekly_analysis, youtube, memory_analysis, prices, fear_greed, risk,
                         calendar_data, sector, sector_chart_path, pred_summary,
                         self_improve_result=self_improve_result,
-                        weekly_chart_path=weekly_chart_path)
+                        weekly_chart_path=weekly_chart_path,
+                        accuracy_monitor=accuracy_monitor)
 
     logger.info("====== 週次レポート完了 ======")
 
@@ -259,7 +271,7 @@ def _weekly_movers(prices: dict) -> str:
 def _send_weekly_report(weekly, youtube, memory_analysis, prices, fear_greed, risk,
                         calendar_data=None, sector=None, sector_chart_path=None,
                         pred_summary=None, self_improve_result=None,
-                        weekly_chart_path=None):
+                        weekly_chart_path=None, accuracy_monitor=None):
     """週次レポートをTelegramに送信"""
     try:
         from src.notify_telegram import send_message, send_photo
@@ -415,6 +427,73 @@ def _send_weekly_report(weekly, youtube, memory_analysis, prices, fear_greed, ri
                     f"🔴 赤=重要  🟠 橙=注目  🟣 紫=決算\n"
                     f"⏰ 時刻は日本時間・目安です"
                 ))
+
+        # 精度トレンドレポート（4週グラフ + パターン分析）
+        if accuracy_monitor and accuracy_monitor.get("available"):
+            acc    = accuracy_monitor
+            rate30 = acc.get("rate_30d")
+            total30 = acc.get("total_30d", 0)
+            weekly_stats = acc.get("weekly_stats", [])
+            patterns = acc.get("patterns", {})
+            weak = patterns.get("weak_patterns", [])
+
+            # バー表現
+            rate_bar = ("█" * round((rate30 or 0) / 10) + "░" * (10 - round((rate30 or 0) / 10)))
+            if rate30 is None:
+                rate_icon = "📊"
+            elif rate30 >= 60:
+                rate_icon = "🎯"
+            elif rate30 >= 50:
+                rate_icon = "👍"
+            else:
+                rate_icon = "⚠️"
+
+            acc_lines = [
+                f"📈 *AI予測 精度モニタリングレポート*",
+                "━━━━━━━━━━━━━━━",
+                f"{rate_icon} *直近30日の総合正解率: {rate30}%*",
+                f"`{rate_bar}`",
+                f"検証済み予測: {total30}件 / 正解: {acc.get('correct_30d',0)}件",
+                "",
+                "📅 *週別正解率トレンド*",
+            ]
+            for w in weekly_stats:
+                if w["total"] > 0:
+                    bar = "█" * round((w["rate"] or 0) / 10) + "░" * (10 - round((w["rate"] or 0) / 10))
+                    color = "🟢" if (w["rate"] or 0) >= 50 else "🔴"
+                    acc_lines.append(f"  {color} {w['label']} {w['rate']}%  `{bar}`  ({w['correct']}/{w['total']}件)")
+                else:
+                    acc_lines.append(f"  ⚫ {w['label']}  データなし")
+
+            # 方向別正解率
+            dir_s = patterns.get("direction", {})
+            if dir_s:
+                acc_lines += ["", "🎯 *方向別正解率*"]
+                icon_map = {"bull": "📈", "bear": "📉", "neutral": "➡️"}
+                for d, v in dir_s.items():
+                    if v.get("total", 0) > 0:
+                        r = v.get("rate")
+                        flag = "✅" if r and r >= 55 else "⚠️" if r and r < 40 else "▫️"
+                        acc_lines.append(
+                            f"  {flag} {icon_map.get(d,'')} {d}: {r}% ({v['correct']}/{v['total']}件)"
+                        )
+
+            # 苦手パターン
+            if weak:
+                acc_lines += ["", "⚠️ *苦手なパターン（正解率35%以下）*"]
+                for w_pat in weak[:4]:
+                    acc_lines.append(f"  ・{w_pat}")
+
+            # AIコメント
+            if acc.get("ai_comment"):
+                acc_lines += ["", "🤖 *AIコーチより*", acc["ai_comment"]]
+
+            chart_path = acc.get("chart_path")
+            msg_acc = "\n".join(acc_lines)
+            if chart_path and os.path.exists(str(chart_path)):
+                send_photo(str(chart_path), caption=msg_acc)
+            else:
+                send_message(msg_acc)
 
         # 自己改善AIレポート
         if self_improve_result and self_improve_result.get("available"):
