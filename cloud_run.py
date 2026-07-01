@@ -870,7 +870,8 @@ def run(mode: str):
                   supply_demand=supply_demand, kabuyoho=kabuyoho,
                   sector_heatmap=sector_heatmap,
                   nikkei_internals=nikkei_internals, adr=adr,
-                  setups=setups)
+                  setups=setups,
+                  stock_dossier=stock_dossier)
     except Exception:
         logger.error("Telegram通知エラー"); logger.debug(traceback.format_exc())
 

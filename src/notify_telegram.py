@@ -447,7 +447,8 @@ def _build_detail_message(risk, prices, fear_greed, news,
                           sector_analysis, prediction_tracker,
                           autonomous_plan, multi_consensus,
                           character_comments, macro,
-                          nikkei_internals, adr, setups) -> str:
+                          nikkei_internals, adr, setups,
+                          stock_dossier=None) -> str:
     """
     通知②の詳細テキスト（4096文字以内・ボタン付きで送る）
     AIの3視点・シナリオ・テクニカル・セクター・予測精度・自律AIミッション
@@ -609,6 +610,29 @@ def _build_detail_message(risk, prices, fear_greed, news,
             f"🌙 *ADR寄り付き先行:* 主要平均乖離 {div:+.2f}% {div_e}",
         ]
 
+    # ── 銘柄カルテ TOP3（合わせ技スコア順） ──
+    sd = stock_dossier or {}
+    top_dossiers = [d for d in sd.get("dossiers", []) if d.get("confluence", 0) >= 5][:3]
+    if top_dossiers:
+        lines += ["", "🎯 *今日の注目銘柄カルテ（合わせ技上位）*"]
+        for d in top_dossiers:
+            chg = d.get("change_pct")
+            chg_s = f"{chg:+.2f}%" if chg is not None else "---"
+            close = d.get("close")
+            close_s = f"{close:,.0f}円" if close else "---"
+            conf = d.get("confluence", 0)
+            tv = d.get("tv_link", "")
+            lines += [
+                f"",
+                f"📌 *{d.get('name','?')}* ({d.get('code','')}) {close_s} {chg_s}",
+                f"合わせ技スコア: *{conf}/10* | "
+                f"目標: {d['target']:,.0f}円(+{d['upside']:.0f}%)" if d.get('target') else f"合わせ技スコア: *{conf}/10*",
+                f"エントリー: {d.get('entry_zone','')}",
+                f"損切り: {d.get('stop_loss','')}",
+                f"[📈 TradingViewで確認]({tv})" if tv else "",
+            ]
+        lines = [l for l in lines if l != ""]
+
     lines += [
         "",
         "━━━━━━━━━━━━━━━━━━━━",
@@ -667,7 +691,8 @@ def run(risk, analysis, report_paths, mode,
         catalyst=None,
         theme_ranking=None, financial_analysis=None,
         supply_demand=None, kabuyoho=None, sector_heatmap=None,
-        nikkei_internals=None, adr=None, setups=None) -> bool:
+        nikkei_internals=None, adr=None, setups=None,
+        stock_dossier=None) -> bool:
 
     if not _is_configured():
         logger.info("Telegram 設定なし。スキップします。")
@@ -745,6 +770,7 @@ def run(risk, analysis, report_paths, mode,
             autonomous_plan, multi_consensus,
             character_comments, macro,
             nikkei_internals, adr, setups,
+            stock_dossier=stock_dossier,
         )
 
         report_url = report_paths.get("url", "").strip()
