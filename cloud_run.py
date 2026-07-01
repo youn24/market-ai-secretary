@@ -81,6 +81,48 @@ def run(mode: str):
     except Exception:
         logger.error("指標計算エラー"); logger.debug(traceback.format_exc())
 
+    # Step 4.5: 爆速通知 ─ AI解析前に価格＋リスクを即テキスト送信（開始60秒以内）
+    try:
+        logger.info("--- Step 4.5: 爆速通知（価格・リスク速報） ---")
+        from src.notify_telegram import send_message
+
+        def _fv(sym, dp=0, unit=""):
+            d = prices.get(sym, {})
+            v = d.get("latest")
+            c = d.get("change_pct")
+            if v is None:
+                return "---"
+            arrow = "▲" if (c or 0) >= 0 else "▼"
+            return f"{v:,.{dp}f}{unit} ({arrow}{abs(c or 0):.2f}%)"
+
+        _fg     = fear_greed.get("score")
+        _fg_s   = f"{int(_fg)}" if _fg is not None else "---"
+        _fg_r   = fear_greed.get("rating_ja", "---")
+        _rscore = risk.get("score", 0)
+        _rsent  = risk.get("sentiment", "不明")
+        _r_sign = "+" if _rscore >= 0 else ""
+        _now_s  = get_jst_now().strftime("%m/%d %H:%M")
+
+        _early_msg = "\n".join([
+            f"⚡ *朝の速報* — {_now_s} JST",
+            "━━━━━━━━━━━━━━━",
+            f"🇯🇵 日経225: *{_fv('^N225', 0)}*",
+            f"🇺🇸 S&P500: *{_fv('^GSPC', 0)}*",
+            f"🇺🇸 NASDAQ: *{_fv('^IXIC', 0)}*",
+            f"💴 USD/JPY: *{_fv('USDJPY=X', 2, '円')}*",
+            f"😱 VIX: *{_fv('^VIX', 2)}*",
+            "━━━━━━━━━━━━━━━",
+            f"🌡 地合い: *{_rsent}* ({_r_sign}{_rscore:.1f}pt)",
+            f"😰 Fear&Greed: *{_fg_s}* ({_fg_r})",
+            "━━━━━━━━━━━━━━━",
+            "📊 *AI詳細分析は10〜20分後に届きます*",
+        ])
+        send_message(_early_msg)
+        logger.info("✅ 爆速通知送信完了")
+    except Exception:
+        logger.error("爆速通知エラー（メインパイプラインは継続）")
+        logger.debug(traceback.format_exc())
+
     # Step 5: 分析
     try:
         logger.info("--- Step 5: 分析 ---")
