@@ -20,31 +20,67 @@
 GitHub Actions（毎朝7:30 JST）
     ↓
 cloud_run.py（メインスクリプト）
-    ├── Step 1: src/fetch_prices.py      → yfinanceで価格取得
-    ├── Step 2: src/fetch_news.py        → Google News RSS取得
-    ├── Step 3: src/fetch_extra_news.py  → 追加ニュース
-    ├── Step 4: src/indicators.py        → リスクスコア計算
-    ├── Step 5: src/analyze.py           → 基本分析
-    ├── Step 5b: src/ai_debate.py        → AI3視点議論（強気/弱気/中立）
-    ├── Step 5c: src/economic_indicators.py → 経済指標分析
-    ├── Step 5d: src/youtube_summary.py  → YouTube動画要約
-    ├── Step L3a: src/ai_agent.py        → 自律AIエージェント（Gemini Function Calling）
-    ├── Step L3b: src/technical_ai.py   → テクニカル分析（RSI/MACD/BB）
-    ├── Step L3c: src/portfolio.py       → ポートフォリオ管理
-    ├── Step L3d: src/scenario.py        → 3シナリオ分析（楽観/基本/悲観）
-    ├── Step L3e: src/prediction_tracker.py → 予測学習・正解率記録
-    ├── Step L4a: src/sector_analysis.py   → セクター分析・ローテーション
-    │             src/sector_chart.py      → セクターヒートマップ画像
-    ├── Step L4b: src/historical_analysis.py → 長期歴史データ分析（20年分）
-    ├── Step L5a: src/multi_agent_consensus.py → 4AIエージェント多数決合議
-    ├── Step L5b: src/autonomous_orchestrator.py → 完全自律エージェント（今日のミッション決定）
-    ├── Step L5c: src/reinforcement_learning.py → 強化学習ループ（ML予測・パターン学習）
-    ├── Step 5f: src/economic_calendar.py → 週次カレンダー（月曜のみ）
-    ├── Step 5e: src/ai_memory.py        → AI記憶更新・継続分析
-    ├── Step 6: src/visualize.py         → matplotlibチャート生成
-    ├── Step 7: cloud_run._save_html_report() → HTMLレポート生成
-    ├── Step L5d: src/multimodal_analysis.py → チャート画像Gemini Vision分析（Step6後）
-    └── Step 8: src/notify_telegram.py   → Telegram通知送信
+    ├── Step 1:     src/fetch_prices.py          → yfinanceで価格取得
+    ├── Step 1.5:   src/data_integrity.py        → データ健全性チェック（異常値検出）
+    ├── Step 2:     src/fetch_news.py            → Google News RSS取得
+    ├── Step 3:     src/fetch_extra_news.py      → 追加ニュース
+    ├── Step 4:     src/indicators.py            → リスクスコア計算
+    ├── Step 5:     src/analyze.py               → 基本分析
+    ├── Step 5b:    src/ai_debate.py             → AI3視点議論（強気/弱気/中立）
+    ├── Step 5c:    src/economic_indicators.py   → 経済指標分析
+    ├── Step 5d:    src/youtube_summary.py       → YouTube動画要約
+    ├── Step L3a:   src/ai_agent.py             → 自律AIエージェント（Gemini Function Calling）
+    ├── Step L3b:   src/technical_ai.py         → テクニカル分析（RSI/MACD/BB）
+    ├── Step L3b2:  src/setup_scanner.py        → 手法シグナル・スキャナー（押し目/ブレイク等）
+    ├── Step L3c:   src/portfolio.py            → ポートフォリオ管理
+    ├── Step L3d:   src/scenario.py             → 3シナリオ分析（楽観/基本/悲観）
+    ├── Step L3e:   src/prediction_tracker.py   → 予測学習・正解率記録
+    ├── Step L4a:   src/sector_analysis.py      → セクター分析・ローテーション
+    │               src/sector_chart.py         → セクターヒートマップ画像
+    ├── Step L4a2:  src/sector_ranking_jp.py    → 日本業種別ランキング（TOPIX-17 ETF）
+    ├── Step L4b:   src/historical_analysis.py  → 長期歴史データ分析（20年分）
+    ├── Step L4c:   src/fred_data.py            → FRED経済指標（GDP/CPI/FF金利等）
+    ├── Step L4d:   src/correlation_analysis.py → 資産間相関分析
+    ├── Step L4e:   src/backtest.py             → バックテスト（月曜のみ）
+    ├── Step L4f:   src/sentiment_data.py       → センチメントデータ（P/C比率等）
+    ├── Step L4h:   src/monte_carlo.py          → モンテカルロ+マーコウィッツ（月曜のみ）
+    ├── Step L4i:   src/fomc_sentiment.py       → FOMC議事録NLP分析（月曜のみ）
+    ├── Step L4j:   src/congress_trading.py     → 米議員株取引（月曜のみ）
+    ├── Step L5e:   src/self_critique.py        → 自己批判エンジン（過去予測の反省）
+    ├── Step L5f:   src/reddit_sentiment.py     → Redditソーシャル感情分析
+    ├── Step L5g:   src/earnings_preview.py     → 決算前AI事前分析
+    ├── Step L5h:   src/market_chain.py         → グローバル市場連鎖分析
+    ├── Step L5j:   src/jquants_screener.py     → J-Quants日本株スクリーナー（月曜のみ）
+    ├── Step L5a:   src/multi_agent_consensus.py → 4AIエージェント多数決合議
+    ├── Step L5a.5: update_confidence()         → 合議確信度を予測レコードへ書き戻し
+    ├── Step L5a.6: src/cross_check.py          → 情報源クロスチェック（方向一致度）
+    ├── Step L5b:   src/autonomous_orchestrator.py → 完全自律エージェント（今日のミッション決定）
+    ├── Step L5c:   src/reinforcement_learning.py → 強化学習ループ（ML予測・パターン学習）
+    ├── Step 5f:    src/economic_calendar.py    → 週次カレンダー（月曜のみ）
+    ├── Step 5e:    src/ai_memory.py            → AI記憶更新・継続分析
+    ├── Step 6:     src/visualize.py            → matplotlibチャート生成
+    ├── Step CHR:   src/character_commentary.py → AIキャラクターコメント（ガネーシャ&カワウソ）
+    ├── Step L5d:   src/multimodal_analysis.py  → チャート画像Gemini Vision分析（Step6後）
+    ├── Step L5i:   src/notify_line.py          → LINE通知（Telegramと並行送信）
+    ├── Step MA:    src/macro_summary.py        → マクロ要約（ファンダ＋金融政策）
+    ├── Step TD:    src/tdnet_watcher.py        → TDnet適時開示ウォッチャー
+    ├── Step EB:    src/earnings_brief.py       → 決算ブリーフ（PDF AI要約）
+    ├── Step CA:    src/catalyst_analyzer.py    → 材料分析AI（5軸評価＋デイトレ仮説）
+    ├── Step AN:    src/anomaly_calendar.py     → アノマリーカレンダー
+    ├── Step TR:    src/theme_ranker.py         → テーマ株人気ランキング
+    ├── Step FA:    src/financial_analyzer.py   → 財務・決算書分析（月曜のみ）
+    ├── Step SD:    src/supply_demand.py        → 需給分析ランキング（月曜のみ）
+    ├── Step KY:    src/kabuyoho.py             → 株予報（アナリスト目標株価・月曜のみ）
+    ├── Step SH:    src/sector_heatmap.py       → 業種ヒートマップ
+    ├── Step ND:    src/nikkei_market_data.py   → 日経225内部データ（騰落レシオ/空売り/ADR）
+    ├── Step ADR:   src/adr_data.py             → 日本株ADR（夜間NYの値動き）
+    ├── Step 7:     cloud_run._save_html_report() → HTMLレポート生成（バックアップ版）
+    ├── Step 7a2:   src/design_ai.py           → デザインAIレポート（docs/daily_report.html 公開メイン版）
+    ├── Step 7b:    src/note_article.py        → note記事生成
+    ├── Step 7c:    src/note_cover.py          → noteカバー画像生成
+    ├── Step 8:     src/notify_telegram.py     → Telegram通知送信
+    ├── Step 8b:    src/note_article_generator.py → note記事テキスト自動生成
+    └── Step 8d:    src/notify_x.py           → X（Twitter）自動投稿
 ```
 
 ---
@@ -65,18 +101,39 @@ cloud_run.py（メインスクリプト）
 | `src/utils.py` | 共通ユーティリティ（JST時刻、ディレクトリ管理等） |
 | `src/fetch_prices.py` | yfinanceで価格・Fear&Greed取得 |
 | `src/fetch_news.py` | Google News RSS + config/news_sources.yaml |
+| `src/data_integrity.py` | 価格データ健全性チェック（外れ値・欠損検出） |
 | `src/indicators.py` | リスクスコア算出 |
 | `src/ai_debate.py` | Gemini 3視点AIディベート（強気・弱気・中立） |
 | `src/ai_agent.py` | Gemini Function Calling 自律エージェント |
 | `src/technical_ai.py` | RSI/MACD/ボリンジャーバンド計算 |
+| `src/setup_scanner.py` | 手法シグナル・スキャナー（押し目買い/ブレイクアウト等） |
 | `src/portfolio.py` | ポートフォリオ損益管理 |
 | `src/scenario.py` | 楽観/基本/悲観シナリオ生成 |
 | `src/prediction_tracker.py` | 予測記録→翌日検証→正解率→Geminiフィードバック |
 | `src/ai_memory.py` | 過去データを記憶・継続比較分析 |
 | `src/historical_analysis.py` | 長期歴史データ分析（Yahoo Finance API直接取得・20年分） |
+| `src/cross_check.py` | 複数手法の方向一致度クロスチェック（信頼度スコア） |
 | `src/economic_calendar.py` | 週次経済カレンダー画像生成（月曜のみ） |
+| `src/character_commentary.py` | AIキャラクターコメント（ガネーシャ＆カワウソ） |
+| `src/design_ai.py` | 公開用リッチHTMLレポート（docs/daily_report.html メイン着地ページ） |
 | `src/visualize.py` | matplotlibダッシュボード画像生成 |
 | `src/notify_telegram.py` | Telegram Bot通知送信 |
+| `src/notify_line.py` | LINE通知（Telegramと並行送信） |
+| `src/notify_x.py` | X（Twitter）自動投稿 |
+| `src/macro_summary.py` | マクロ要約（ファンダメンタルズ＋金融政策） |
+| `src/tdnet_watcher.py` | TDnet適時開示ウォッチャー（ウォッチリスト銘柄） |
+| `src/earnings_brief.py` | 決算PDFのGemini AI要約 |
+| `src/catalyst_analyzer.py` | 材料分析AI（5軸評価＋デイトレ仮説） |
+| `src/anomaly_calendar.py` | アノマリーカレンダー（経験則・季節性） |
+| `src/theme_ranker.py` | テーマ株人気ランキング |
+| `src/financial_analyzer.py` | 財務・決算書分析（月曜のみ） |
+| `src/supply_demand.py` | 需給分析ランキング（出来高/資金フロー/空売り残） |
+| `src/kabuyoho.py` | 株予報（アナリスト目標株価・月曜のみ） |
+| `src/sector_heatmap.py` | 業種別ヒートマップ生成 |
+| `src/nikkei_market_data.py` | 日経225内部データ（騰落レシオ/空売り比率/ADR等） |
+| `src/adr_data.py` | 日本株ADRデータ（夜間NYの値動き・寄り付き先行ヒント） |
+| `src/note_article.py` | note記事生成（Step 7b） |
+| `src/note_article_generator.py` | note記事テキスト自動生成（Step 8b） |
 | `src/fx_visual_report.py` | FX専用ビジュアルダッシュボード（13パネル・matplotlib） |
 
 ### 設定・データ
@@ -188,6 +245,9 @@ response = model.generate_content(prompt)
 | `axhline transform not allowed` | matplotlibバージョン差 | `ax.plot([0,1],[y,y])` に変更 |
 | `feedparser not found` | monitor.ymlにpip install漏れ | workflow全ファイルのpip installを統一 |
 | 日本語フォント文字化け | ローカルWindowsにフォントなし | GitHub Actionsでは`fonts-noto-cjk`が解決 |
+| `Step 8d` のloggerに `Step 8b` と表示される | logger.infoのStep番号の書き間違い | 2026-07-01修正済み（"Step 8d: X自動投稿"に統一） |
+| 予測正解率が23%まで低下 | `_extract_direction()`の強気バイアス（スコアが高くても bull を出しやすい） | 2026-06-28にバイアス是正コミット済み（推定改善後39%） |
+| Telegram通知停止（2026-06） | GitHub SecretのBot token失効＋iPhoneのプッシュ通知オフ | verify_bot()等で恒久対策済み。再発時はSecretの有効期限を確認 |
 
 ---
 
@@ -224,6 +284,12 @@ response = model.generate_content(prompt)
 | L5i | LINE通知（LINE Notifyで主要サマリーをTelegramと並行送信） | ✅ 完成 |
 | L5j | J-Quants日本株スクリーナー（Nikkei225銘柄の上昇率・ATH近辺を毎週月曜分析） | ✅ 完成 |
 | FX-PM | FX午後ダッシュボード（毎日14:00 JST・13パネル・Telegram配信） | ✅ 完成 |
+
+<!-- ── 2026-07 来月の目標 ──────────────────────────────
+  優先1: 予測精度の改善（6月の正解率23%→強気バイアス是正後の継続モニタリング）
+  優先2: ポートフォリオ登録をTelegram Botコマンドで操作できるようにする（初心者でも使いやすく）
+  優先3: note記事自動投稿の完全自動化（Step 8b の記事を手動コピーなしでnoteに投稿）
+  ────────────────────────────────────────────────── -->
 
 ---
 

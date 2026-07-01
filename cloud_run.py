@@ -822,7 +822,7 @@ def run(mode: str):
 
     # Step 8d: X（Twitter）自動投稿
     try:
-        logger.info("--- Step 8b: X自動投稿 ---")
+        logger.info("--- Step 8d: X自動投稿 ---")
         from src.notify_x import run as notify_x
         x_result = notify_x(risk, prices, fear_greed,
                             ai_summary=ai_summary,
