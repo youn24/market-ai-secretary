@@ -1160,21 +1160,33 @@ def _setups(setups):
     for s in items:
         c = s.get("color", YELLOW)
         bc, btxt = dir_badge.get(s.get("direction", "neutral"), (YELLOW, "中立"))
+
+        wk_html = ""
+        if s.get("weekly_label"):
+            wk_html = f'<div style="font-size:10.5px;color:{MUTED};margin-bottom:5px">{s["weekly_label"]}</div>'
+
+        mtf_html = ""
+        if s.get("mtf_note"):
+            mc = s.get("mtf_color", YELLOW)
+            mtf_html = f'<div style="font-size:10.5px;font-weight:700;color:{mc};margin-bottom:5px">{s["mtf_note"]}</div>'
+
         cards.append(f"""<div class="glass-sm fade" style="padding:12px;border-left:3px solid {c}">
   <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
     <span style="font-size:13px;font-weight:900;color:{TEXT}">{s.get('name','')}</span>
     <span class="badge" style="background:{bc}1a;color:{bc};border:1px solid {bc}55">{btxt}</span>
     <span style="margin-left:auto;font-size:13px;font-weight:800;color:{c}">{s.get('label','')}</span>
   </div>
+  {wk_html}
   <div style="font-size:11.5px;line-height:1.7;color:{TEXT};margin-bottom:5px">{s.get('desc','')}</div>
+  {mtf_html}
   <div style="font-size:11px;line-height:1.65;color:{BLUE};background:rgba(0,180,255,.07);padding:6px 9px;border-radius:7px">💡 {s.get('tip','')}</div>
 </div>""")
 
     return f"""
 <div style="margin-bottom:12px">
-  <div class="label" style="padding:0 2px;margin-bottom:6px">📐 手法シグナル・スキャナー（AI自動判定）</div>
+  <div class="label" style="padding:0 2px;margin-bottom:6px">📐 手法シグナル・スキャナー（週足×日足 マルチタイムフレーム）</div>
   <div style="display:flex;flex-direction:column;gap:8px">{"".join(cards)}</div>
-  <div style="font-size:9px;color:{MUTED};margin-top:5px;padding:0 2px">押し目買い・ブレイク・売られすぎ等を機械的に判定。教科書的なシグナルの有無を示すものです。</div>
+  <div style="font-size:9px;color:{MUTED};margin-top:5px;padding:0 2px">押し目買い・ブレイク・売られすぎ等を機械的に判定。週足の大きな流れと日足シグナルの一致度も表示。教科書的なシグナルの有無を示すものです。</div>
 </div>"""
 
 
