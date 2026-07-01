@@ -215,6 +215,19 @@ def run(mode: str):
     except Exception:
         logger.error("手法スキャナーエラー"); logger.debug(traceback.format_exc())
 
+    # Step L3b3: 銘柄カルテ（合わせ技スコア × TradingViewリンク × リスクファースト）
+    stock_dossier = {"available": False, "dossiers": []}
+    try:
+        logger.info("--- Step L3b3: 銘柄カルテ ---")
+        from src.stock_dossier import run as run_dossier
+        stock_dossier = run_dossier(prices=prices, risk=risk, fear_greed=fear_greed)
+        if stock_dossier.get("available"):
+            cnt = len(stock_dossier.get("dossiers", []))
+            top = stock_dossier["dossiers"][0] if cnt else {}
+            logger.info(f"✅ 銘柄カルテ完了 {cnt}銘柄 最高スコア={top.get('confluence',0)}")
+    except Exception:
+        logger.error("銘柄カルテエラー"); logger.debug(traceback.format_exc())
+
     # Step L3c: ポートフォリオ管理
     portfolio = {"available": False}
     try:
