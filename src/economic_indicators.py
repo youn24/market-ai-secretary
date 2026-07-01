@@ -71,6 +71,7 @@ def analyze_indicators_with_gemini(prices: dict, econ_news: list) -> dict:
 
         prompt = f"""あなたはマクロ経済の専門家です。
 以下の市場データと経済指標ニュースを分析してください。
+【重要ルール】下記【市場データ】の数値のみ引用可。リストにない数字の創作禁止。不明は「記載なし」と書くこと。
 
 【市場データ】
 米10年金利: {fmt('^TNX','%')}

@@ -119,7 +119,7 @@ def run_ai_debate(prices: dict, news: list, risk: dict, fear_greed: dict) -> dic
             s = f"+{chg:.2f}%" if (chg or 0) >= 0 else f"{chg:.2f}%"
             return f"{v:,.2f}{unit}({s})"
 
-        market_data = f"""
+        market_data = f"""【ルール】以下の実データ数値のみ引用可。リストにない株価・指標は創作禁止。不明なら「記載なし」と書くこと。
 日経平均: {fmt('^N225','円')} | S&P500: {fmt('^GSPC')} | NASDAQ: {fmt('^IXIC')}
 ダウ: {fmt('^DJI')} | VIX: {fmt('^VIX')} | ドル円: {fmt('USDJPY=X','円')}
 米10年金利: {fmt('^TNX','%')} | 金: {fmt('GC=F','$')} | 原油: {fmt('CL=F','$')}

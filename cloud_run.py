@@ -55,6 +55,20 @@ def run(mode: str):
     except Exception:
         logger.error("データ健全性チェックエラー"); logger.debug(traceback.format_exc())
 
+    # Step 1.6: 多重ソース照合（Yahoo ＋ Stooq で主要8シンボルをクロスチェック）
+    source_verify_summary = {"verified": 0, "single_source": 0, "disagreement": 0}
+    try:
+        logger.info("--- Step 1.6: 多重ソース照合 ---")
+        from src.source_verify import run as run_sv
+        prices, source_verify_summary = run_sv(prices)
+        disc = source_verify_summary.get("disagreement", 0)
+        if disc:
+            logger.warning(f"⚠️ ソース乖離: {disc}件 → 中央値で補正済み")
+        else:
+            logger.info(f"✅ 多重照合OK: 一致={source_verify_summary.get('verified')}件")
+    except Exception:
+        logger.error("多重ソース照合エラー（スキップ）"); logger.debug(traceback.format_exc())
+
     # Step 2: ニュース取得
     try:
         logger.info("--- Step 2: ニュース取得 ---")
