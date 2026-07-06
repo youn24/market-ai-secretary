@@ -285,6 +285,20 @@
       "verified": false,
       "correct": null,
       "actual_move": null
+    },
+    {
+      "date": "2026-07-07",
+      "direction": "bull",
+      "score": 6.83,
+      "fg": 43.9,
+      "nikkei": 69744.0703,
+      "sp500": 7537.4302,
+      "usdjpy": 162.067,
+      "vix": 15.57,
+      "confidence": null,
+      "verified": false,
+      "correct": null,
+      "actual_move": null
     }
   ],
   "accuracy": {}
