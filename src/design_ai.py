@@ -1478,6 +1478,48 @@ def _kabudragon_section(kd):
 </div>"""
 
 
+def _us_afterhours_section(us_ah):
+    """米国主要株の時間外ムーバー（日本のザラ場への先行シグナル）"""
+    us_ah = us_ah or {}
+    if not us_ah.get("available"):
+        return ""
+    movers = us_ah.get("movers", [])
+    if not movers:
+        return ""
+
+    rows = []
+    for m in movers[:6]:
+        c = _col(m.get("chg_pct") or 0)
+        price_s = f"${m['price']:,.2f}" if m.get("price") else "—"
+        rows.append(f"""<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid {BORDER}">
+  <span style="font-size:9.5px;color:{MUTED};background:rgba(255,255,255,.05);border-radius:4px;padding:1px 6px;min-width:44px;text-align:center">{m.get('symbol','')}</span>
+  <span style="font-size:12px;font-weight:700;color:{TEXT};flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{m.get('name','')}</span>
+  <span style="font-size:9px;color:{MUTED};background:rgba(255,255,255,.04);border-radius:4px;padding:1px 6px">{m.get('sector','')}</span>
+  <span style="font-size:10px;color:{MUTED}">{price_s}</span>
+  <span class="num" style="font-size:13px;font-weight:800;color:{c}">{m['chg_pct']:+.1f}%</span>
+</div>""")
+
+    # 半導体への波及ヒント
+    hint_html = ""
+    semis = [m for m in movers if m.get("sector") == "半導体" and abs(m.get("chg_pct") or 0) >= 2.0]
+    if semis:
+        big = max(semis, key=lambda x: abs(x["chg_pct"]))
+        direction = "追い風" if big["chg_pct"] > 0 else "逆風"
+        hc = GREEN if big["chg_pct"] > 0 else RED
+        hint_html = f'<div style="margin-top:8px;font-size:11px;line-height:1.7;color:{hc};background:{hc}12;border:1px solid {hc}33;padding:7px 10px;border-radius:8px">💡 {big["name"]}が時間外で{big["chg_pct"]:+.1f}% → 今日の日本の半導体株に{direction}になりやすい</div>'
+
+    return f"""
+<div style="margin-bottom:12px">
+  <div class="label" style="padding:0 2px;margin-bottom:6px">🇺🇸 米国 時間外で大きく動いた主要銘柄</div>
+  <div class="glass-sm fade" style="padding:12px;border-top:3px solid {BLUE}">
+    <div style="font-size:10px;color:{MUTED};margin-bottom:4px">{us_ah.get('session_label','')}の値動き（±1%以上）</div>
+    {"".join(rows)}
+    {hint_html}
+  </div>
+  <div style="font-size:9px;color:{MUTED};margin-top:5px;padding:0 2px">米国の時間外は引け後の決算・材料への最初の反応。日本のザラ場（特に半導体・ハイテク）に波及しやすい先行シグナルです。</div>
+</div>"""
+
+
 def _pts_section(pts):
     """PTS夜間取引の急騰・急落銘柄（翌朝の寄り付き先行ヒント）"""
     pts = pts or {}
@@ -1540,6 +1582,7 @@ def generate(
     stock_dossier: dict = None,
     kabudragon: dict = None,
     pts: dict = None,
+    us_afterhours: dict = None,
     **_kwargs,
 ) -> str:
     prices      = prices      or {}
@@ -1570,6 +1613,7 @@ def generate(
     srk_html     = _sector_ranking(sector_ranking)
     kd_html      = _kabudragon_section(kabudragon)
     pts_html     = _pts_section(pts)
+    usah_html    = _us_afterhours_section(us_afterhours)
     pro_html     = _pro_cross(prices)
     news_html    = _news(news)
     cal_html     = _calendar(weekly_calendar)
@@ -1637,6 +1681,7 @@ def generate(
   {tv_html}
   {tvadv_html}
   {srk_html}
+  {usah_html}
   {pts_html}
   {kd_html}
   {shm_html}
@@ -1728,6 +1773,7 @@ def run(
     stock_dossier: dict      = None,
     kabudragon: dict         = None,
     pts: dict                = None,
+    us_afterhours: dict      = None,
     mode: str = "morning",
     **_kwargs,
 ) -> dict:
@@ -1741,7 +1787,7 @@ def run(
             team_debate=team_debate, character_comments=character_comments,
             cross_check=cross_check, sector_ranking=sector_ranking, setups=setups,
             ensemble=ensemble, stock_dossier=stock_dossier, kabudragon=kabudragon,
-            pts=pts,
+            pts=pts, us_afterhours=us_afterhours,
         )
         logger.info(f"✅ デザインAIレポート生成: {path}")
         return {"available": True, "path": path}

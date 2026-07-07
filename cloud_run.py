@@ -800,6 +800,17 @@ def run(mode: str):
     except Exception:
         logger.error("PTSエラー"); logger.debug(traceback.format_exc())
 
+    # Step US: 米国主要株の時間外ムーバー（アフターアワーズ・ザラ場先行シグナル・毎日）
+    us_ah = {"available": False}
+    try:
+        logger.info("--- Step US: 米国時間外ムーバー ---")
+        from src.us_afterhours import run as run_us_ah
+        us_ah = run_us_ah()
+        if us_ah.get("available"):
+            logger.info(f"✅ 米国時間外: {len(us_ah.get('movers',[]))}銘柄が大きく変動")
+    except Exception:
+        logger.error("米国時間外エラー"); logger.debug(traceback.format_exc())
+
     # Step 7: HTMLレポート生成
     report_paths = {}
     try:
@@ -846,6 +857,7 @@ def run(mode: str):
             stock_dossier=stock_dossier,
             kabudragon=kabudragon,
             pts=pts,
+            us_afterhours=us_ah,
             mode=mode,
         )
         logger.info("✅ デザインAIレポート（docs/daily_report.html）生成")
@@ -931,7 +943,8 @@ def run(mode: str):
                   stock_dossier=stock_dossier,
                   ensemble=ensemble,
                   kabudragon=kabudragon,
-                  pts=pts)
+                  pts=pts,
+                  us_afterhours=us_ah)
     except Exception:
         logger.error("Telegram通知エラー"); logger.debug(traceback.format_exc())
 
