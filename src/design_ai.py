@@ -1434,6 +1434,50 @@ def _dossier_section(stock_dossier: dict) -> str:
 # メイン生成関数
 # ──────────────────────────────────────────
 
+def _kabudragon_section(kd):
+    """株ドラゴン・デイトレランキング（値上がり/S高/出来高急増/値下がり）"""
+    kd = kd or {}
+    if not kd.get("available"):
+        return ""
+    rankings = kd.get("rankings", {})
+    if not any(v.get("items") for v in rankings.values()):
+        return ""
+
+    accent = {"age": GREEN, "stopdaka": ORANGE, "dekizou": CYAN, "sage": RED}
+    blocks = []
+    for key in ("age", "stopdaka", "dekizou", "sage"):
+        v = rankings.get(key) or {}
+        items = v.get("items", [])
+        if not items:
+            continue
+        c = accent.get(key, YELLOW)
+        rows = []
+        for it in items[:5]:
+            pct = it.get("chg_pct")
+            pc  = _col(pct or 0)
+            pct_s = f"{pct:+.1f}%" if pct is not None else "—"
+            rows.append(f"""<div style="display:flex;align-items:center;gap:7px;padding:6px 0;border-bottom:1px solid {BORDER}">
+  <span style="font-size:10px;font-weight:800;color:{MUTED};min-width:14px">{it.get('rank','')}</span>
+  <span style="font-size:9.5px;color:{MUTED};background:rgba(255,255,255,.05);border-radius:4px;padding:1px 5px;min-width:38px;text-align:center">{it.get('code','')}</span>
+  <span style="font-size:11.5px;font-weight:700;color:{TEXT};flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{it.get('name','')}</span>
+  <span class="num" style="font-size:12px;font-weight:800;color:{pc}">{pct_s}</span>
+</div>""")
+        blocks.append(f"""<div class="glass-sm fade" style="padding:12px;border-top:3px solid {c}">
+  <div style="font-size:12.5px;font-weight:900;color:{c};margin-bottom:2px">{v.get('icon','')} {v.get('label','')}</div>
+  <div style="font-size:9.5px;color:{MUTED};margin-bottom:6px">{v.get('note','')}</div>
+  {"".join(rows)}
+</div>""")
+
+    if not blocks:
+        return ""
+    return f"""
+<div style="margin-bottom:12px">
+  <div class="label" style="padding:0 2px;margin-bottom:6px">🐉 株ドラゴン・デイトレランキング</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">{"".join(blocks)}</div>
+  <div style="font-size:9px;color:{MUTED};margin-top:5px;padding:0 2px">出典: 株ドラゴン（kabudragon.com）。デイトレーダーが注目する4大ランキングの上位銘柄です。</div>
+</div>"""
+
+
 def generate(
     mode: str = "morning",
     prices: dict = None,
@@ -1455,6 +1499,7 @@ def generate(
     setups: dict = None,
     ensemble: dict = None,
     stock_dossier: dict = None,
+    kabudragon: dict = None,
     **_kwargs,
 ) -> str:
     prices      = prices      or {}
@@ -1483,6 +1528,7 @@ def generate(
     ujguide_html = _usdjpy_guide(prices)
     shm_html     = _sector_heatmap_live()
     srk_html     = _sector_ranking(sector_ranking)
+    kd_html      = _kabudragon_section(kabudragon)
     pro_html     = _pro_cross(prices)
     news_html    = _news(news)
     cal_html     = _calendar(weekly_calendar)
@@ -1550,6 +1596,7 @@ def generate(
   {tv_html}
   {tvadv_html}
   {srk_html}
+  {kd_html}
   {shm_html}
   {pro_html}
   {news_html}
@@ -1637,6 +1684,7 @@ def run(
     setups: dict             = None,
     ensemble: dict           = None,
     stock_dossier: dict      = None,
+    kabudragon: dict         = None,
     mode: str = "morning",
     **_kwargs,
 ) -> dict:
@@ -1649,7 +1697,7 @@ def run(
             prediction_tracker=prediction_tracker, weekly_calendar=weekly_calendar,
             team_debate=team_debate, character_comments=character_comments,
             cross_check=cross_check, sector_ranking=sector_ranking, setups=setups,
-            ensemble=ensemble, stock_dossier=stock_dossier,
+            ensemble=ensemble, stock_dossier=stock_dossier, kabudragon=kabudragon,
         )
         logger.info(f"✅ デザインAIレポート生成: {path}")
         return {"available": True, "path": path}

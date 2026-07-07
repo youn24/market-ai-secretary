@@ -777,6 +777,18 @@ def run(mode: str):
     except Exception:
         logger.error("ADRエラー"); logger.debug(traceback.format_exc())
 
+    # Step KD: 株ドラゴン デイトレランキング（値上がり/S高/出来高急増/値下がり・毎日）
+    kabudragon = {"available": False}
+    try:
+        logger.info("--- Step KD: 株ドラゴン ランキング ---")
+        from src.kabudragon import run as run_kd
+        kabudragon = run_kd()
+        if kabudragon.get("available"):
+            _n_kd = sum(1 for v in kabudragon.get("rankings", {}).values() if v.get("items"))
+            logger.info(f"✅ 株ドラゴン: {_n_kd}ランキング取得")
+    except Exception:
+        logger.error("株ドラゴンエラー"); logger.debug(traceback.format_exc())
+
     # Step 7: HTMLレポート生成
     report_paths = {}
     try:
@@ -821,6 +833,7 @@ def run(mode: str):
             setups=setups,
             ensemble=ensemble,
             stock_dossier=stock_dossier,
+            kabudragon=kabudragon,
             mode=mode,
         )
         logger.info("✅ デザインAIレポート（docs/daily_report.html）生成")
@@ -904,7 +917,8 @@ def run(mode: str):
                   nikkei_internals=nikkei_internals, adr=adr,
                   setups=setups,
                   stock_dossier=stock_dossier,
-                  ensemble=ensemble)
+                  ensemble=ensemble,
+                  kabudragon=kabudragon)
     except Exception:
         logger.error("Telegram通知エラー"); logger.debug(traceback.format_exc())
 
