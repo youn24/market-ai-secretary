@@ -735,6 +735,7 @@ def run(risk, analysis, report_paths, mode,
             card_path = make_summary_card(
                 prices=prices, fear_greed=fear_greed, risk=risk,
                 ai_summary=ai_summary, news=list(news),
+                character_comments=character_comments,
             )
             if card_path and os.path.exists(card_path):
                 send_photo(card_path, caption=overview_caption)

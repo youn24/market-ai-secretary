@@ -338,7 +338,52 @@ def _h_sent(score):
     else:              return RED,   "弱気", "売り優勢・要警戒"
 
 
-def _build_card_html(prices, fear_greed, risk, ai_summary, news) -> str:
+def _char_section(character_comments: dict) -> str:
+    """ガネーシャ🐘＆カワウソ🦦を分析・要約のサイドに配置するセクション"""
+    cc = character_comments or {}
+    ganesha = (cc.get("ganesha") or "").strip()
+    otter   = (cc.get("otter") or "").strip()
+    # コメントが無い日もキャラクターは必ず登場させる（デザイン重視）
+    if not ganesha:
+        ganesha = "市場の流れを読み解いておりますぞ。焦らず、大局を見るのが知恵の第一歩ですぞ。"
+    if not otter:
+        otter = "きょうもデータをチェックしたよ〜！ムリせずコツコツが いちばんだよ🌊"
+
+    try:
+        from src.design_ai import _GANESHA_SVG, _OTTER_SVG
+    except Exception:
+        return ""
+
+    return f"""
+  <div class="panel" style="padding:15px 15px 13px">
+    <div class="ptitle">🐘🦦 AIキャラクター解説</div>
+
+    <div class="chrow chrow-g">
+      <div class="chava">
+        {_GANESHA_SVG}
+        <div class="chname" style="color:#FFD700">ガネーシャ</div>
+      </div>
+      <div class="chbub">
+        <span class="chbadge" style="color:#FFD700;background:rgba(255,215,0,.12);border-color:rgba(255,215,0,.32)">📜 プロの相場解説</span>
+        <div class="chtxt">{ganesha}</div>
+      </div>
+    </div>
+
+    <div class="chrow chrow-o" style="margin-bottom:0">
+      <div class="chava">
+        {_OTTER_SVG}
+        <div class="chname" style="color:#C4956A">カワウソ</div>
+      </div>
+      <div class="chbub">
+        <span class="chbadge" style="color:#C4956A;background:rgba(196,149,106,.13);border-color:rgba(196,149,106,.34)">✨ カンタンまとめ</span>
+        <div class="chtxt">{otter}</div>
+      </div>
+    </div>
+  </div>"""
+
+
+def _build_card_html(prices, fear_greed, risk, ai_summary, news,
+                     character_comments=None) -> str:
     n = get_jst_now()
     wd = _WEEKDAYS_JA[n.weekday()]
     date_s = f"{n.strftime('%Y.%m.%d')}（{wd}）"
@@ -482,6 +527,16 @@ body{{font-family:'Noto Sans JP','Outfit',sans-serif}}
 .aichip{{font-size:12px;font-weight:800;padding:3px 11px;border-radius:9px;white-space:nowrap;min-width:62px;text-align:center}}
 .aitxt{{font-size:13px;color:#eef4fb}}
 
+.chrow{{display:flex;align-items:stretch;gap:12px;border-radius:14px;padding:11px 13px;margin-bottom:10px;overflow:hidden}}
+.chrow-g{{background:linear-gradient(135deg,#1c1600,#271e00);border:1px solid rgba(255,215,0,.24)}}
+.chrow-o{{background:linear-gradient(135deg,#160e09,#1f130c);border:1px solid rgba(196,149,106,.26)}}
+.chava{{width:82px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center}}
+.chava svg{{filter:drop-shadow(0 4px 10px rgba(0,0,0,.45))}}
+.chname{{font-size:11px;font-weight:800;margin-top:4px;white-space:nowrap}}
+.chbub{{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center}}
+.chbadge{{font-size:10.5px;font-weight:800;letter-spacing:.6px;border:1px solid;border-radius:11px;padding:2px 10px;display:inline-block;margin-bottom:7px;align-self:flex-start}}
+.chtxt{{font-size:13px;line-height:1.85;color:#eef4fb;word-break:break-word}}
+
 .nrow{{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06)}}
 .nrow:last-child{{border-bottom:none}}
 .ndot{{width:9px;height:9px;border-radius:50%;flex-shrink:0;box-shadow:0 0 8px currentColor}}
@@ -523,6 +578,8 @@ body{{font-family:'Noto Sans JP','Outfit',sans-serif}}
     {ai_rows}
   </div>
 
+  {_char_section(character_comments)}
+
   <div class="panel">
     <div class="ptitle">📰 注目ニュース</div>
     {news_html}
@@ -556,10 +613,11 @@ def _render_card_playwright(html: str, out_path: str) -> bool:
 
 
 def make_summary_card(prices: dict, fear_greed: dict, risk: dict,
-                      ai_summary: dict = None, news: list = None) -> str | None:
+                      ai_summary: dict = None, news: list = None,
+                      character_comments: dict = None) -> str | None:
     """
     サマリーカードPNGを生成してパスを返す。
-    主経路: HTML→PNG（Playwright・Canva級デザイン）
+    主経路: HTML→PNG（Playwright・Canva級デザイン・ガネーシャ＆カワウソ入り）
     保険  : matplotlib 版（_make_card_matplotlib）
     """
     prices     = prices or {}
@@ -569,7 +627,8 @@ def make_summary_card(prices: dict, fear_greed: dict, risk: dict,
 
     out = get_dirs()["charts"] / f"summary_card_{get_today_str()}.png"
     try:
-        html = _build_card_html(prices, fear_greed, risk, ai_summary, news)
+        html = _build_card_html(prices, fear_greed, risk, ai_summary, news,
+                                character_comments=character_comments)
         if _render_card_playwright(html, str(out)):
             logger.info(f"✅ サマリーカード生成（HTML→PNG）: {out}")
             return str(out)
