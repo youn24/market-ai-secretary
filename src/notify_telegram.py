@@ -449,7 +449,7 @@ def _build_detail_message(risk, prices, fear_greed, news,
                           character_comments, macro,
                           nikkei_internals, adr, setups,
                           stock_dossier=None, ensemble=None,
-                          kabudragon=None) -> str:
+                          kabudragon=None, pts=None) -> str:
     """
     通知②の詳細テキスト（4096文字以内・ボタン付きで送る）
     AIの3視点・シナリオ・テクニカル・セクター・予測精度・自律AIミッション
@@ -624,6 +624,11 @@ def _build_detail_message(risk, prices, fear_greed, news,
             f"🌙 *ADR寄り付き先行:* 主要平均乖離 {div:+.2f}% {div_e}",
         ]
 
+    # ── PTS夜間の急騰・急落（寄り付き先行ヒント） ──
+    pt_data = pts or {}
+    if pt_data.get("available") and pt_data.get("telegram_block"):
+        lines += ["", pt_data["telegram_block"]]
+
     # ── 株ドラゴン デイトレランキング ──
     kd = kabudragon or {}
     if kd.get("available") and kd.get("telegram_block"):
@@ -711,7 +716,8 @@ def run(risk, analysis, report_paths, mode,
         theme_ranking=None, financial_analysis=None,
         supply_demand=None, kabuyoho=None, sector_heatmap=None,
         nikkei_internals=None, adr=None, setups=None,
-        stock_dossier=None, ensemble=None, kabudragon=None) -> bool:
+        stock_dossier=None, ensemble=None, kabudragon=None,
+        pts=None) -> bool:
 
     if not _is_configured():
         logger.info("Telegram 設定なし。スキップします。")
@@ -793,6 +799,7 @@ def run(risk, analysis, report_paths, mode,
             stock_dossier=stock_dossier,
             ensemble=ensemble,
             kabudragon=kabudragon,
+            pts=pts,
         )
 
         report_url = report_paths.get("url", "").strip()

@@ -1478,6 +1478,45 @@ def _kabudragon_section(kd):
 </div>"""
 
 
+def _pts_section(pts):
+    """PTS夜間取引の急騰・急落銘柄（翌朝の寄り付き先行ヒント）"""
+    pts = pts or {}
+    if not pts.get("available"):
+        return ""
+    ups, downs = pts.get("up", []), pts.get("down", [])
+    if not ups and not downs:
+        return ""
+
+    def _block(items, label, c, icon):
+        if not items:
+            return ""
+        rows = []
+        for it in items[:5]:
+            pc = _col(it.get("chg_pct") or 0)
+            close_s = f"{it['close_price']:,.0f}" if it.get("close_price") else "—"
+            pts_s   = f"{it['pts_price']:,.1f}".rstrip("0").rstrip(".") if it.get("pts_price") else "—"
+            rows.append(f"""<div style="display:flex;align-items:center;gap:7px;padding:6px 0;border-bottom:1px solid {BORDER}">
+  <span style="font-size:9.5px;color:{MUTED};background:rgba(255,255,255,.05);border-radius:4px;padding:1px 5px;min-width:38px;text-align:center">{it.get('code','')}</span>
+  <span style="font-size:11.5px;font-weight:700;color:{TEXT};flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{it.get('name','')}</span>
+  <span style="font-size:9.5px;color:{MUTED}">{close_s}→{pts_s}</span>
+  <span class="num" style="font-size:12px;font-weight:800;color:{pc}">{it['chg_pct']:+.1f}%</span>
+</div>""")
+        return f"""<div class="glass-sm fade" style="padding:12px;border-top:3px solid {c}">
+  <div style="font-size:12.5px;font-weight:900;color:{c};margin-bottom:6px">{icon} {label}</div>
+  {"".join(rows)}
+</div>"""
+
+    up_html   = _block(ups,   "PTS夜間 急騰", GREEN, "🌙⬆️")
+    down_html = _block(downs, "PTS夜間 急落", RED,   "🌙⬇️")
+
+    return f"""
+<div style="margin-bottom:12px">
+  <div class="label" style="padding:0 2px;margin-bottom:6px">🌙 PTS夜間取引で大きく動いた銘柄</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">{up_html}{down_html}</div>
+  <div style="font-size:9px;color:{MUTED};margin-top:5px;padding:0 2px">夜間PTS（16:30〜23:59）は取引終了後のニュースへの最初の反応。翌朝の寄り付きで同じ方向に動きやすい先行ヒントです。出典: 株探</div>
+</div>"""
+
+
 def generate(
     mode: str = "morning",
     prices: dict = None,
@@ -1500,6 +1539,7 @@ def generate(
     ensemble: dict = None,
     stock_dossier: dict = None,
     kabudragon: dict = None,
+    pts: dict = None,
     **_kwargs,
 ) -> str:
     prices      = prices      or {}
@@ -1529,6 +1569,7 @@ def generate(
     shm_html     = _sector_heatmap_live()
     srk_html     = _sector_ranking(sector_ranking)
     kd_html      = _kabudragon_section(kabudragon)
+    pts_html     = _pts_section(pts)
     pro_html     = _pro_cross(prices)
     news_html    = _news(news)
     cal_html     = _calendar(weekly_calendar)
@@ -1596,6 +1637,7 @@ def generate(
   {tv_html}
   {tvadv_html}
   {srk_html}
+  {pts_html}
   {kd_html}
   {shm_html}
   {pro_html}
@@ -1685,6 +1727,7 @@ def run(
     ensemble: dict           = None,
     stock_dossier: dict      = None,
     kabudragon: dict         = None,
+    pts: dict                = None,
     mode: str = "morning",
     **_kwargs,
 ) -> dict:
@@ -1698,6 +1741,7 @@ def run(
             team_debate=team_debate, character_comments=character_comments,
             cross_check=cross_check, sector_ranking=sector_ranking, setups=setups,
             ensemble=ensemble, stock_dossier=stock_dossier, kabudragon=kabudragon,
+            pts=pts,
         )
         logger.info(f"✅ デザインAIレポート生成: {path}")
         return {"available": True, "path": path}

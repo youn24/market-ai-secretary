@@ -789,6 +789,17 @@ def run(mode: str):
     except Exception:
         logger.error("株ドラゴンエラー"); logger.debug(traceback.format_exc())
 
+    # Step PTS: PTS夜間取引の急騰・急落銘柄（株探・寄り付き先行ヒント・毎日）
+    pts = {"available": False}
+    try:
+        logger.info("--- Step PTS: PTS夜間 急騰急落 ---")
+        from src.pts_data import run as run_pts
+        pts = run_pts()
+        if pts.get("available"):
+            logger.info(f"✅ PTS: 急騰{len(pts.get('up',[]))}件 急落{len(pts.get('down',[]))}件")
+    except Exception:
+        logger.error("PTSエラー"); logger.debug(traceback.format_exc())
+
     # Step 7: HTMLレポート生成
     report_paths = {}
     try:
@@ -834,6 +845,7 @@ def run(mode: str):
             ensemble=ensemble,
             stock_dossier=stock_dossier,
             kabudragon=kabudragon,
+            pts=pts,
             mode=mode,
         )
         logger.info("✅ デザインAIレポート（docs/daily_report.html）生成")
@@ -918,7 +930,8 @@ def run(mode: str):
                   setups=setups,
                   stock_dossier=stock_dossier,
                   ensemble=ensemble,
-                  kabudragon=kabudragon)
+                  kabudragon=kabudragon,
+                  pts=pts)
     except Exception:
         logger.error("Telegram通知エラー"); logger.debug(traceback.format_exc())
 
