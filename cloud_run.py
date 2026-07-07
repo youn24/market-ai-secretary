@@ -158,6 +158,18 @@ def run(mode: str):
     except Exception:
         logger.error("AI議論エラー"); logger.debug(traceback.format_exc())
 
+    # Step 5b.5: 校閲ループ（断定軟化・空セクション除去・捏造数字検出）
+    try:
+        logger.info("--- Step 5b.5: 校閲ループ ---")
+        from src.editorial_qa import qa_ai_summary
+        ai_summary = qa_ai_summary(ai_summary, prices)
+        if ai_summary.get("qa_applied"):
+            logger.info(f"✅ 校閲完了: {ai_summary.get('qa_fixes',0)}件修正")
+        else:
+            logger.info("校閲: 修正なし")
+    except Exception:
+        logger.error("校閲エラー（スキップ）"); logger.debug(traceback.format_exc())
+
     # Step 5c: 経済指標分析
     econ_analysis = {"available": False}
     try:
@@ -499,6 +511,24 @@ def run(mode: str):
             logger.info(f"✅ {cross_check.get('summary')}")
     except Exception:
         logger.error("クロスチェックエラー"); logger.debug(traceback.format_exc())
+
+    # Step L5a.7: 較正アンサンブル（複数手法の重み付き多数決予測）
+    ensemble = {"available": False}
+    try:
+        logger.info("--- Step L5a.7: 較正アンサンブル ---")
+        from src.ensemble import run as run_ensemble
+        ensemble = run_ensemble(
+            risk=risk, ai_summary=ai_summary, scenario=scenario,
+            technical=technical, multi_consensus=multi_consensus,
+        )
+        if ensemble.get("available"):
+            logger.info(
+                f"✅ アンサンブル: {ensemble['direction']} "
+                f"一致率={ensemble['agreement_pct']:.0f}% "
+                f"信頼度={ensemble['confidence']}"
+            )
+    except Exception:
+        logger.error("アンサンブルエラー（スキップ）"); logger.debug(traceback.format_exc())
 
     # Step L5b: 完全自律エージェント（今日のミッション決定）
     autonomous_plan = {"available": False}
@@ -871,7 +901,8 @@ def run(mode: str):
                   sector_heatmap=sector_heatmap,
                   nikkei_internals=nikkei_internals, adr=adr,
                   setups=setups,
-                  stock_dossier=stock_dossier)
+                  stock_dossier=stock_dossier,
+                  ensemble=ensemble)
     except Exception:
         logger.error("Telegram通知エラー"); logger.debug(traceback.format_exc())
 

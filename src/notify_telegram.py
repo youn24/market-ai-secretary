@@ -448,7 +448,7 @@ def _build_detail_message(risk, prices, fear_greed, news,
                           autonomous_plan, multi_consensus,
                           character_comments, macro,
                           nikkei_internals, adr, setups,
-                          stock_dossier=None) -> str:
+                          stock_dossier=None, ensemble=None) -> str:
     """
     通知②の詳細テキスト（4096文字以内・ボタン付きで送る）
     AIの3視点・シナリオ・テクニカル・セクター・予測精度・自律AIミッション
@@ -503,6 +503,19 @@ def _build_detail_message(risk, prices, fear_greed, news,
         lines += [
             "",
             f"🤝 *4AI合議:* {dir_icon} {v.get('direction','---')} | {v.get('consensus_level','')} | 確信度 {v.get('consensus_confidence', '?')}",
+        ]
+
+    # ── アンサンブル予測 ──
+    ens = ensemble or {}
+    if ens.get("available"):
+        dir_icon = {"bull": "📈", "bear": "📉", "neutral": "➡️"}.get(ens.get("direction",""), "")
+        conf_icon = {"high": "🟢", "mid": "🟡", "low": "🔴"}.get(ens.get("confidence",""), "")
+        brier = ens.get("brier_score")
+        brier_s = f" | Brier={brier:.3f}" if brier is not None else ""
+        lines += [
+            "",
+            f"🎯 *アンサンブル予測:* {dir_icon} *{ens.get('direction','---')}*"
+            f" 一致率={ens.get('agreement_pct',0):.0f}% {conf_icon}{brier_s}",
         ]
 
     # ── テクニカル（日経225のみ） ──
@@ -692,7 +705,7 @@ def run(risk, analysis, report_paths, mode,
         theme_ranking=None, financial_analysis=None,
         supply_demand=None, kabuyoho=None, sector_heatmap=None,
         nikkei_internals=None, adr=None, setups=None,
-        stock_dossier=None) -> bool:
+        stock_dossier=None, ensemble=None) -> bool:
 
     if not _is_configured():
         logger.info("Telegram 設定なし。スキップします。")
@@ -771,6 +784,7 @@ def run(risk, analysis, report_paths, mode,
             character_comments, macro,
             nikkei_internals, adr, setups,
             stock_dossier=stock_dossier,
+            ensemble=ensemble,
         )
 
         report_url = report_paths.get("url", "").strip()
