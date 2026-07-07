@@ -819,6 +819,8 @@ def run(mode: str):
             cross_check=cross_check,
             sector_ranking=sector_ranking,
             setups=setups,
+            ensemble=ensemble,
+            stock_dossier=stock_dossier,
             mode=mode,
         )
         logger.info("✅ デザインAIレポート（docs/daily_report.html）生成")

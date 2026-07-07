@@ -1310,6 +1310,126 @@ def _guide():
 <style>details[open] > summary {{ border-radius:12px 12px 0 0; }}</style>"""
 
 
+def _ensemble_section(ensemble: dict) -> str:
+    """アンサンブル予測の視覚カード"""
+    if not ensemble or not ensemble.get("available"):
+        return ""
+    direction   = ensemble.get("direction", "neutral")
+    agree_pct   = ensemble.get("agreement_pct", 0)
+    confidence  = ensemble.get("confidence", "low")
+    brier       = ensemble.get("brier_score")
+    members     = ensemble.get("members", [])
+
+    dir_icon  = {"bull": "📈", "bear": "📉", "neutral": "➡️"}.get(direction, "➡️")
+    dir_label = {"bull": "強気", "bear": "弱気", "neutral": "中立"}.get(direction, direction)
+    conf_color = {"high": "#3fb950", "mid": "#d29922", "low": "#f85149"}.get(confidence, "#8b949e")
+    bar_w = int(agree_pct)
+
+    members_html = "".join(
+        f'<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.05)">'
+        f'<span style="color:#8b949e;font-size:11px">{m["name"]}</span>'
+        f'<span style="font-size:11px;color:{"#3fb950" if m["direction"]=="bull" else "#f85149" if m["direction"]=="bear" else "#8b949e"}">'
+        f'{"▲" if m["direction"]=="bull" else "▼" if m["direction"]=="bear" else "—"} {m["direction"]}'
+        f'</span></div>'
+        for m in members
+    )
+
+    brier_s = f'<span style="color:#8b949e;font-size:11px">Brier={brier:.3f}</span>' if brier is not None else ""
+
+    return f'''<section class="fade" style="background:#0d1117;border:1px solid #30363d;border-radius:12px;padding:14px;margin:10px 0">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+    <span style="font-size:18px">{dir_icon}</span>
+    <span style="font-weight:700;font-size:14px">アンサンブル予測</span>
+    <span style="margin-left:auto;background:{conf_color}22;border:1px solid {conf_color};color:{conf_color};border-radius:6px;padding:2px 8px;font-size:11px">{confidence.upper()}</span>
+    {brier_s}
+  </div>
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+    <span style="font-size:22px;font-weight:900;color:{conf_color}">{dir_label}</span>
+    <div style="flex:1;background:#21262d;border-radius:4px;height:8px;overflow:hidden">
+      <div style="width:{bar_w}%;height:100%;background:{conf_color};border-radius:4px"></div>
+    </div>
+    <span style="color:{conf_color};font-weight:700">{agree_pct:.0f}%</span>
+  </div>
+  <div style="font-size:11px;color:#8b949e;margin-bottom:6px">各手法の方向</div>
+  {members_html}
+</section>'''
+
+
+def _dossier_section(stock_dossier: dict) -> str:
+    """銘柄カルテ上位3件のHTMLカード"""
+    if not stock_dossier or not stock_dossier.get("available"):
+        return ""
+    dossiers = [d for d in stock_dossier.get("dossiers", []) if d.get("confluence", 0) >= 5][:3]
+    if not dossiers:
+        return ""
+
+    cards = []
+    for d in dossiers:
+        code    = d.get("code", "")
+        name    = d.get("name", "")
+        close   = d.get("close")
+        chg     = d.get("change_pct")
+        target  = d.get("target")
+        upside  = d.get("upside")
+        conf    = d.get("confluence", 0)
+        tv_link = d.get("tv_link", "")
+        entry   = d.get("entry_zone", "")
+        stop    = d.get("stop_loss", "")
+        rr      = d.get("risk_reward", "")
+
+        chg_color = "#3fb950" if (chg or 0) >= 0 else "#f85149"
+        chg_s  = f"{chg:+.2f}%" if chg is not None else "---"
+        close_s = f"{close:,.0f}円" if close else "---"
+        bar_w  = int(conf / 10 * 100)
+
+        target_row = (
+            f'<div style="display:flex;justify-content:space-between"><span style="color:#8b949e;font-size:11px">目標株価</span>'
+            f'<span style="font-size:11px">{target:,.0f}円 (+{upside:.0f}%)</span></div>'
+            if target else ""
+        )
+        tv_btn = (
+            f'<a href="{tv_link}" target="_blank" style="display:inline-block;margin-top:8px;'
+            f'padding:4px 10px;background:#1e2a3a;border:1px solid #388bfd;color:#58a6ff;'
+            f'border-radius:6px;font-size:11px;text-decoration:none">📈 TradingViewで確認</a>'
+            if tv_link else ""
+        )
+
+        cards.append(f'''<div style="background:#161b22;border:1px solid #30363d;border-radius:10px;padding:12px;margin-bottom:8px">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+    <span style="font-weight:700">{name}</span>
+    <span style="color:#8b949e;font-size:11px">({code})</span>
+    <span style="margin-left:auto;font-size:13px;font-weight:700">{close_s}</span>
+    <span style="color:{chg_color};font-size:12px">{chg_s}</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+    <span style="font-size:11px;color:#8b949e">合わせ技</span>
+    <div style="flex:1;background:#21262d;border-radius:3px;height:6px;overflow:hidden">
+      <div style="width:{bar_w}%;height:100%;background:#3fb950;border-radius:3px"></div>
+    </div>
+    <span style="font-size:12px;font-weight:700;color:#3fb950">{conf}/10</span>
+  </div>
+  {target_row}
+  <div style="display:flex;justify-content:space-between;margin-top:4px">
+    <span style="color:#8b949e;font-size:11px">エントリー</span>
+    <span style="font-size:11px">{entry[:30]}</span>
+  </div>
+  <div style="display:flex;justify-content:space-between">
+    <span style="color:#f85149;font-size:11px">損切り</span>
+    <span style="font-size:11px">{stop[:30]}</span>
+  </div>
+  <div style="display:flex;justify-content:space-between">
+    <span style="color:#8b949e;font-size:11px">RR</span>
+    <span style="font-size:11px">{rr[:25]}</span>
+  </div>
+  {tv_btn}
+</div>''')
+
+    return f'''<section class="fade" style="background:#0d1117;border:1px solid #30363d;border-radius:12px;padding:14px;margin:10px 0">
+  <div style="font-weight:700;font-size:14px;margin-bottom:10px">🎯 今日の注目銘柄カルテ（合わせ技上位）</div>
+  {''.join(cards)}
+</section>'''
+
+
 # ──────────────────────────────────────────
 # メイン生成関数
 # ──────────────────────────────────────────
@@ -1333,6 +1453,8 @@ def generate(
     cross_check: dict = None,
     sector_ranking: dict = None,
     setups: dict = None,
+    ensemble: dict = None,
+    stock_dossier: dict = None,
     **_kwargs,
 ) -> str:
     prices      = prices      or {}
@@ -1364,8 +1486,10 @@ def generate(
     pro_html     = _pro_cross(prices)
     news_html    = _news(news)
     cal_html     = _calendar(weekly_calendar)
-    pred_html    = _pred(prediction_tracker)
-    cc_html      = _crosscheck(cross_check)
+    pred_html     = _pred(prediction_tracker)
+    ensemble_html = _ensemble_section(ensemble)
+    dossier_html  = _dossier_section(stock_dossier)
+    cc_html       = _crosscheck(cross_check)
     guide_html   = _guide()
 
     html = f"""<!DOCTYPE html>
@@ -1417,6 +1541,8 @@ def generate(
   {charts_html}
   {ai_html}
   {setups_html}
+  {ensemble_html}
+  {dossier_html}
   {cc_html}
   {sc_html}
   {mkt_html}
@@ -1509,6 +1635,8 @@ def run(
     cross_check: dict        = None,
     sector_ranking: dict     = None,
     setups: dict             = None,
+    ensemble: dict           = None,
+    stock_dossier: dict      = None,
     mode: str = "morning",
     **_kwargs,
 ) -> dict:
@@ -1521,6 +1649,7 @@ def run(
             prediction_tracker=prediction_tracker, weekly_calendar=weekly_calendar,
             team_debate=team_debate, character_comments=character_comments,
             cross_check=cross_check, sector_ranking=sector_ranking, setups=setups,
+            ensemble=ensemble, stock_dossier=stock_dossier,
         )
         logger.info(f"✅ デザインAIレポート生成: {path}")
         return {"available": True, "path": path}
