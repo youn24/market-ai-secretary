@@ -811,6 +811,17 @@ def run(mode: str):
     except Exception:
         logger.error("米国時間外エラー"); logger.debug(traceback.format_exc())
 
+    # Step CFD: CFD/24時間先物＋SQ情報（CME日経ギャップ・SQ日程・毎日）
+    cfd_sq = {"available": False}
+    try:
+        logger.info("--- Step CFD: CFD/24時間先物・SQ ---")
+        from src.cfd_sq import run as run_cfd
+        cfd_sq = run_cfd(prices)
+        if cfd_sq.get("available"):
+            logger.info(f"✅ CFD/SQ: CMEギャップ={cfd_sq.get('cme_gap_pct')}% SQ={cfd_sq.get('sq',{}).get('date')}")
+    except Exception:
+        logger.error("CFD/SQエラー"); logger.debug(traceback.format_exc())
+
     # Step 7: HTMLレポート生成
     report_paths = {}
     try:
@@ -859,6 +870,7 @@ def run(mode: str):
             pts=pts,
             us_afterhours=us_ah,
             adr=adr,
+            cfd_sq=cfd_sq,
             mode=mode,
         )
         logger.info("✅ デザインAIレポート（docs/daily_report.html）生成")
@@ -945,7 +957,8 @@ def run(mode: str):
                   ensemble=ensemble,
                   kabudragon=kabudragon,
                   pts=pts,
-                  us_afterhours=us_ah)
+                  us_afterhours=us_ah,
+                  cfd_sq=cfd_sq)
     except Exception:
         logger.error("Telegram通知エラー"); logger.debug(traceback.format_exc())
 

@@ -1565,6 +1565,68 @@ def _pts_section(pts):
 </div>"""
 
 
+def _cfd_sq_section(cfd_sq):
+    """CFD/24時間先物（CME日経ギャップ・米先物）＋SQ日程"""
+    cf = cfd_sq or {}
+    if not cf.get("available"):
+        return ""
+    futures = cf.get("futures", [])
+    gap = cf.get("cme_gap_pct")
+    sq  = cf.get("sq") or {}
+
+    # CME日経ギャップ（主役）
+    cme = next((f for f in futures if f.get("symbol") == "NIY=F"), None)
+    gap_html = ""
+    if cme:
+        if gap is not None:
+            gc  = GREEN if gap > 0.3 else RED if gap < -0.3 else YELLOW
+            gt  = "上ギャップ示唆" if gap > 0.3 else "下ギャップ示唆" if gap < -0.3 else "横ばい示唆"
+            sub = f"大阪終値比 <b style='color:{gc}'>{gap:+.2f}%</b> → 寄り付き{gt}"
+        else:
+            c   = _col(cme.get("change_pct") or 0)
+            sub = f"前日比 <b style='color:{c}'>{cme['change_pct']:+.2f}%</b>"
+        gap_html = f"""<div style="flex:1;min-width:150px">
+  <div style="font-size:10px;color:{MUTED};margin-bottom:2px">🌐 CME日経225先物（24時間・CFD価格の実体）</div>
+  <div class="num" style="font-size:20px;font-weight:900;color:{TEXT}">{cme['latest']:,.0f}<span style="font-size:11px;color:{MUTED}">円</span></div>
+  <div style="font-size:10.5px;color:{MUTED};margin-top:1px">{sub}</div>
+</div>"""
+
+    # 米先物チップ
+    chips = []
+    for f in futures:
+        if f.get("symbol") == "NIY=F":
+            continue
+        c = _col(f.get("change_pct") or 0)
+        nm = f["name"].replace("先物", "")
+        chips.append(f"""<div style="background:{CARD2};border:1px solid {BORDER};border-radius:8px;padding:6px 10px;text-align:center">
+  <div style="font-size:9px;color:{MUTED}">{nm}</div>
+  <div class="num" style="font-size:13px;font-weight:800;color:{c}">{f['change_pct']:+.2f}%</div>
+</div>""")
+    chips_html = f"""<div style="display:flex;gap:6px;flex-wrap:wrap">{''.join(chips)}</div>""" if chips else ""
+
+    # SQカウントダウン
+    sq_html = ""
+    if sq:
+        sqc = RED if sq.get("is_today") else YELLOW if sq.get("is_sq_week") else MUTED
+        sq_stat = "★本日SQ日" if sq.get("is_today") else f"あと{sq.get('days_to')}日"
+        sq_note = "⚠️ SQ週は清算に向けたポジション調整で荒れやすい" if sq.get("is_sq_week") and not sq.get("is_today") else ""
+        sq_html = f"""<div style="border-left:3px solid {sqc};padding:4px 10px;min-width:130px">
+  <div style="font-size:10px;color:{MUTED}">📅 {sq.get('type','SQ')}</div>
+  <div style="font-size:14px;font-weight:900;color:{sqc}">{sq.get('date','')} <span style="font-size:11px">{sq_stat}</span></div>
+  {f'<div style="font-size:9px;color:{YELLOW};margin-top:1px">{sq_note}</div>' if sq_note else ''}
+</div>"""
+
+    return f"""
+<div style="margin-bottom:12px">
+  <div class="label" style="padding:0 2px;margin-bottom:6px">🌐 CFD/24時間先物・SQ情報</div>
+  <div class="glass-sm fade" style="padding:12px;display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+    {gap_html}{sq_html}
+  </div>
+  {f'<div style="margin-top:8px">{chips_html}</div>' if chips_html else ''}
+  <div style="font-size:9px;color:{MUTED};margin-top:5px;padding:0 2px">CME先物はCFD価格のベース。大阪終値との差が今朝の寄り付きギャップの目安です。SQ=毎月第2金曜の特別清算指数（3/6/9/12月はメジャーSQ）。</div>
+</div>"""
+
+
 def _adr_section(adr):
     """日本株ADR（米国夜間の値動き・寄り付き先行ヒント）"""
     adr = adr or {}
@@ -1633,6 +1695,7 @@ def generate(
     pts: dict = None,
     us_afterhours: dict = None,
     adr: dict = None,
+    cfd_sq: dict = None,
     **_kwargs,
 ) -> str:
     prices      = prices      or {}
@@ -1665,6 +1728,7 @@ def generate(
     pts_html     = _pts_section(pts)
     usah_html    = _us_afterhours_section(us_afterhours)
     adr_html     = _adr_section(adr)
+    cfdsq_html   = _cfd_sq_section(cfd_sq)
     pro_html     = _pro_cross(prices)
     news_html    = _news(news)
     cal_html     = _calendar(weekly_calendar)
@@ -1732,6 +1796,7 @@ def generate(
   {tv_html}
   {tvadv_html}
   {srk_html}
+  {cfdsq_html}
   {usah_html}
   {adr_html}
   {pts_html}
@@ -1827,6 +1892,7 @@ def run(
     pts: dict                = None,
     us_afterhours: dict      = None,
     adr: dict                = None,
+    cfd_sq: dict             = None,
     mode: str = "morning",
     **_kwargs,
 ) -> dict:
@@ -1840,7 +1906,7 @@ def run(
             team_debate=team_debate, character_comments=character_comments,
             cross_check=cross_check, sector_ranking=sector_ranking, setups=setups,
             ensemble=ensemble, stock_dossier=stock_dossier, kabudragon=kabudragon,
-            pts=pts, us_afterhours=us_afterhours, adr=adr,
+            pts=pts, us_afterhours=us_afterhours, adr=adr, cfd_sq=cfd_sq,
         )
         logger.info(f"✅ デザインAIレポート生成: {path}")
         return {"available": True, "path": path}
