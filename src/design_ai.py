@@ -1559,6 +1559,49 @@ def _pts_section(pts):
 </div>"""
 
 
+def _adr_section(adr):
+    """日本株ADR（米国夜間の値動き・寄り付き先行ヒント）"""
+    adr = adr or {}
+    if not adr.get("available"):
+        return ""
+    top, bottom = adr.get("top", []), adr.get("bottom", [])
+    if not top and not bottom:
+        return ""
+    mav = adr.get("major_avg_divergence", 0) or 0
+    mav_c = GREEN if mav > 0.5 else RED if mav < -0.5 else YELLOW
+
+    def _block(items, label, c, icon):
+        if not items:
+            return ""
+        rows = []
+        for it in items[:5]:
+            dv = it.get("divergence", 0) or 0
+            pc = _col(dv)
+            adr_s = f"{it['adr_yen']:,.0f}" if it.get("adr_yen") else "—"
+            tky_s = f"{it['tokyo_close']:,.0f}" if it.get("tokyo_close") else "—"
+            rows.append(f"""<div style="display:flex;align-items:center;gap:7px;padding:6px 0;border-bottom:1px solid {BORDER}">
+  <span style="font-size:9.5px;color:{MUTED};background:rgba(255,255,255,.05);border-radius:4px;padding:1px 5px;min-width:38px;text-align:center">{it.get('code','')}</span>
+  <span style="font-size:11.5px;font-weight:700;color:{TEXT};flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{it.get('name','')}</span>
+  <span style="font-size:9.5px;color:{MUTED}">{tky_s}→{adr_s}</span>
+  <span class="num" style="font-size:12px;font-weight:800;color:{pc}">{dv:+.1f}%</span>
+</div>""")
+        return f"""<div class="glass-sm fade" style="padding:12px;border-top:3px solid {c}">
+  <div style="font-size:12.5px;font-weight:900;color:{c};margin-bottom:6px">{icon} {label}</div>
+  {"".join(rows)}
+</div>"""
+
+    up_html   = _block(top,    "ADR 買い先行期待", GREEN, "🌏⬆️")
+    down_html = _block(bottom, "ADR 売り先行懸念", RED,   "🌏⬇️")
+
+    return f"""
+<div style="margin-bottom:12px">
+  <div class="label" style="padding:0 2px;margin-bottom:6px">🌏 日本株ADR（米国夜間の値動き）
+    <span class="num" style="font-weight:800;color:{mav_c};margin-left:6px">主要平均乖離 {mav:+.2f}%</span></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">{up_html}{down_html}</div>
+  <div style="font-size:9px;color:{MUTED};margin-top:5px;padding:0 2px">ADRは米国市場で取引される日本株。東京終値との乖離＝NY時間の評価変化で、寄り付きが同じ方向に動きやすい先行ヒントです。</div>
+</div>"""
+
+
 def generate(
     mode: str = "morning",
     prices: dict = None,
@@ -1583,6 +1626,7 @@ def generate(
     kabudragon: dict = None,
     pts: dict = None,
     us_afterhours: dict = None,
+    adr: dict = None,
     **_kwargs,
 ) -> str:
     prices      = prices      or {}
@@ -1614,6 +1658,7 @@ def generate(
     kd_html      = _kabudragon_section(kabudragon)
     pts_html     = _pts_section(pts)
     usah_html    = _us_afterhours_section(us_afterhours)
+    adr_html     = _adr_section(adr)
     pro_html     = _pro_cross(prices)
     news_html    = _news(news)
     cal_html     = _calendar(weekly_calendar)
@@ -1682,6 +1727,7 @@ def generate(
   {tvadv_html}
   {srk_html}
   {usah_html}
+  {adr_html}
   {pts_html}
   {kd_html}
   {shm_html}
@@ -1774,6 +1820,7 @@ def run(
     kabudragon: dict         = None,
     pts: dict                = None,
     us_afterhours: dict      = None,
+    adr: dict                = None,
     mode: str = "morning",
     **_kwargs,
 ) -> dict:
@@ -1787,7 +1834,7 @@ def run(
             team_debate=team_debate, character_comments=character_comments,
             cross_check=cross_check, sector_ranking=sector_ranking, setups=setups,
             ensemble=ensemble, stock_dossier=stock_dossier, kabudragon=kabudragon,
-            pts=pts, us_afterhours=us_afterhours,
+            pts=pts, us_afterhours=us_afterhours, adr=adr,
         )
         logger.info(f"✅ デザインAIレポート生成: {path}")
         return {"available": True, "path": path}

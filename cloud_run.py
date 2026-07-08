@@ -858,6 +858,7 @@ def run(mode: str):
             kabudragon=kabudragon,
             pts=pts,
             us_afterhours=us_ah,
+            adr=adr,
             mode=mode,
         )
         logger.info("✅ デザインAIレポート（docs/daily_report.html）生成")
