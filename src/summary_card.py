@@ -25,21 +25,26 @@ from src.utils import get_today_str, get_jst_now, get_dirs, setup_logger
 
 logger = setup_logger("summary_card")
 
-# ── パレット（深いネイビー基調＋ネオンアクセント）──────────────────────
-BG_TOP = "#0a1020"      # 上部グラデ
-BG_BOT = "#05080f"      # 下部グラデ
-CARD   = "#141c2b"
+# ── パレット（design_system が唯一の真実・HTMLレポートと同一トーン）──────
+try:
+    from src.design_system import get_theme as _get_theme
+    _T = _get_theme("dark")
+except Exception:
+    _T = {}
+BG_TOP = "#0a1020"      # 上部グラデ（画像専用の演出）
+BG_BOT = _T.get("bg", "#05080f")
+CARD   = _T.get("surface", "#141c2b")
 CARD2  = "#0f1623"
-PANEL  = "#0d1422"
-BORDER = "#243044"
-WHITE  = "#eef4fb"
-MUTED  = "#8a96a8"
-GREEN  = "#21d07a"
-RED    = "#ff5470"
-AMBER  = "#ffc857"
-BLUE   = "#5bc0ff"
-ACCENT = "#7aa2ff"
-GOLD   = "#ffd45e"
+PANEL  = _T.get("surface2", "#0d1422")
+BORDER = _T.get("border", "#243044")
+WHITE  = _T.get("text", "#eef4fb")
+MUTED  = _T.get("text_muted", "#8a96a8")
+GREEN  = _T.get("up", "#21d07a")
+RED    = _T.get("down", "#ff5470")
+AMBER  = _T.get("warn", "#ffc857")
+BLUE   = _T.get("info", "#5bc0ff")
+ACCENT = _T.get("accent", "#7aa2ff")
+GOLD   = "#ffd45e"      # ガネ先生の金アクセント（キャラ専用色）
 
 _WEEKDAYS_JA = ["月", "火", "水", "木", "金", "土", "日"]
 

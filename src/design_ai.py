@@ -17,16 +17,22 @@ CF_PROXY_URL = os.getenv("CF_PROXY_URL", "").strip().rstrip("/")
 # ──────────────────────────────────────────
 # カラーパレット（ネオン系ダーク）
 # ──────────────────────────────────────────
-BG      = "#06080f"
+# デザイントークンは design_system が唯一の真実（失敗時は従来値へフォールバック）
+try:
+    from src.design_system import get_theme as _get_theme
+    _T = _get_theme("dark")
+except Exception:
+    _T = {}
+BG      = _T.get("bg", "#06080f")
 CARD    = "rgba(255,255,255,0.04)"
 CARD2   = "rgba(255,255,255,0.07)"
 BORDER  = "rgba(255,255,255,0.09)"
-TEXT    = "#f0f4ff"
-MUTED   = "#5a6a85"
-GREEN   = "#00ff87"
-RED     = "#ff3d5a"
-YELLOW  = "#ffc837"
-BLUE    = "#00b4ff"
+TEXT    = _T.get("text", "#f0f4ff")
+MUTED   = _T.get("text_dim", "#5a6a85")
+GREEN   = _T.get("up", "#00ff87")
+RED     = _T.get("down", "#ff3d5a")
+YELLOW  = _T.get("warn", "#ffc837")
+BLUE    = _T.get("info", "#00b4ff")
 ORANGE  = "#ff7b2c"
 PURPLE  = "#b06eff"
 CYAN    = "#00e5ff"
