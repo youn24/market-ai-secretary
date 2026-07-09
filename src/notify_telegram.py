@@ -450,7 +450,8 @@ def _build_detail_message(risk, prices, fear_greed, news,
                           nikkei_internals, adr, setups,
                           stock_dossier=None, ensemble=None,
                           kabudragon=None, pts=None,
-                          us_afterhours=None, cfd_sq=None) -> str:
+                          us_afterhours=None, cfd_sq=None,
+                          upcoming=None) -> str:
     """
     通知②の詳細テキスト（4096文字以内・ボタン付きで送る）
     AIの3視点・シナリオ・テクニカル・セクター・予測精度・自律AIミッション
@@ -615,6 +616,11 @@ def _build_detail_message(risk, prices, fear_greed, news,
             (f"  空売り比率={short}%" if short else ""),
         ]
 
+    # ── 今後のイベント予定（SQ/雇用統計/FOMC＋週次カレンダー） ──
+    up = upcoming or {}
+    if up.get("available") and up.get("telegram_block"):
+        lines += ["", up["telegram_block"]]
+
     # ── CFD/24時間先物・SQ（CME日経ギャップ・SQ日程） ──
     cf = cfd_sq or {}
     if cf.get("available") and cf.get("telegram_block"):
@@ -728,7 +734,7 @@ def run(risk, analysis, report_paths, mode,
         supply_demand=None, kabuyoho=None, sector_heatmap=None,
         nikkei_internals=None, adr=None, setups=None,
         stock_dossier=None, ensemble=None, kabudragon=None,
-        pts=None, us_afterhours=None, cfd_sq=None) -> bool:
+        pts=None, us_afterhours=None, cfd_sq=None, upcoming=None) -> bool:
 
     if not _is_configured():
         logger.info("Telegram 設定なし。スキップします。")
@@ -813,6 +819,7 @@ def run(risk, analysis, report_paths, mode,
             pts=pts,
             us_afterhours=us_afterhours,
             cfd_sq=cfd_sq,
+            upcoming=upcoming,
         )
 
         report_url = report_paths.get("url", "").strip()

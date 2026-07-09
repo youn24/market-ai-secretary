@@ -822,6 +822,17 @@ def run(mode: str):
     except Exception:
         logger.error("CFD/SQエラー"); logger.debug(traceback.format_exc())
 
+    # Step EV: 今後のイベント予定（SQ/雇用統計/FOMC確定計算＋週次カレンダー永続分・毎日）
+    upcoming = {"available": False}
+    try:
+        logger.info("--- Step EV: 今後のイベント予定 ---")
+        from src.upcoming_events import run as run_ev
+        upcoming = run_ev()
+        if upcoming.get("available"):
+            logger.info(f"✅ 今後のイベント: {len(upcoming.get('events', []))}件")
+    except Exception:
+        logger.error("イベント予定エラー"); logger.debug(traceback.format_exc())
+
     # Step 7: HTMLレポート生成
     report_paths = {}
     try:
@@ -871,6 +882,7 @@ def run(mode: str):
             us_afterhours=us_ah,
             adr=adr,
             cfd_sq=cfd_sq,
+            upcoming=upcoming,
             mode=mode,
         )
         logger.info("✅ デザインAIレポート（docs/daily_report.html）生成")
@@ -958,7 +970,8 @@ def run(mode: str):
                   kabudragon=kabudragon,
                   pts=pts,
                   us_afterhours=us_ah,
-                  cfd_sq=cfd_sq)
+                  cfd_sq=cfd_sq,
+                  upcoming=upcoming)
     except Exception:
         logger.error("Telegram通知エラー"); logger.debug(traceback.format_exc())
 

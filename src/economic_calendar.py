@@ -445,6 +445,20 @@ def run() -> dict:
     # 画像生成
     image_path = generate_calendar_image(unique_events, week_dates)
 
+    # 永続化: 火〜金も upcoming_events.py が「今後のイベント」として毎日表示できるように保存
+    try:
+        from pathlib import Path
+        _f = Path(__file__).parent.parent / "data" / "weekly_calendar.json"
+        _f.parent.mkdir(exist_ok=True)
+        _f.write_text(json.dumps({
+            "saved_at": week_dates[0].strftime("%Y-%m-%d"),
+            "events": unique_events,
+            "upcoming_earnings": upcoming_earnings,
+        }, ensure_ascii=False, indent=1), encoding="utf-8")
+        logger.info(f"週次カレンダーを永続化: {_f.name} ({len(unique_events)}件)")
+    except Exception:
+        logger.debug(traceback.format_exc())
+
     logger.info(f"カレンダー完了: {len(unique_events)}件")
     return {
         "available": image_path is not None,

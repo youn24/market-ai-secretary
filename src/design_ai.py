@@ -1491,7 +1491,8 @@ def _us_afterhours_section(us_ah):
         return ""
     movers = us_ah.get("movers", [])
     if not movers:
-        return ""
+        return f"""
+<div class="glass-sm fade" style="padding:10px 12px;margin-bottom:12px;font-size:11px;color:{MUTED}">🇺🇸 米国時間外: 主要銘柄チェック済み — ±1%超の大きな変動なし（静かな夜）</div>"""
 
     rows = []
     for m in movers[:6]:
@@ -1562,6 +1563,32 @@ def _pts_section(pts):
   <div class="label" style="padding:0 2px;margin-bottom:6px">🌙 PTS夜間取引で大きく動いた銘柄</div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">{up_html}{down_html}</div>
   <div style="font-size:9px;color:{MUTED};margin-top:5px;padding:0 2px">夜間PTS（16:30〜23:59）は取引終了後のニュースへの最初の反応。翌朝の寄り付きで同じ方向に動きやすい先行ヒントです。出典: 株探</div>
+</div>"""
+
+
+def _upcoming_section(upcoming):
+    """今後の注目イベント（SQ・雇用統計・FOMC・週次カレンダー）"""
+    up = upcoming or {}
+    if not up.get("available") or not up.get("events"):
+        return ""
+    rows = []
+    for e in up["events"][:8]:
+        days = e.get("days_to", 99)
+        hot  = e.get("importance") == "high"
+        when = "★今日" if days == 0 else "明日" if days == 1 else f"あと{days}日"
+        wc   = RED if days <= 1 else YELLOW if days <= 3 else MUTED
+        d_s  = str(e.get("date", ""))[5:].replace("-", "/")
+        rows.append(f"""<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid {BORDER}">
+  <span class="num" style="font-size:10px;color:{MUTED};min-width:36px">{d_s}</span>
+  <span style="font-size:12px">{e.get('icon','🌐')}</span>
+  <span style="font-size:11.5px;font-weight:{'800' if hot else '600'};color:{TEXT};flex:1;min-width:0">{e.get('label','')}</span>
+  <span style="font-size:10px;font-weight:800;color:{wc};white-space:nowrap">{when}</span>
+</div>""")
+    return f"""
+<div style="margin-bottom:12px">
+  <div class="label" style="padding:0 2px;margin-bottom:6px">📅 今後の注目イベント</div>
+  <div class="glass-sm fade" style="padding:8px 12px">{"".join(rows)}</div>
+  <div style="font-size:9px;color:{MUTED};margin-top:5px;padding:0 2px">SQ・米雇用統計・FOMCは確定日程を自動計算。そのほかは週次カレンダーから今日以降の予定を毎日表示します。</div>
 </div>"""
 
 
@@ -1696,6 +1723,7 @@ def generate(
     us_afterhours: dict = None,
     adr: dict = None,
     cfd_sq: dict = None,
+    upcoming: dict = None,
     **_kwargs,
 ) -> str:
     prices      = prices      or {}
@@ -1729,6 +1757,7 @@ def generate(
     usah_html    = _us_afterhours_section(us_afterhours)
     adr_html     = _adr_section(adr)
     cfdsq_html   = _cfd_sq_section(cfd_sq)
+    upcoming_html = _upcoming_section(upcoming)
     pro_html     = _pro_cross(prices)
     news_html    = _news(news)
     cal_html     = _calendar(weekly_calendar)
@@ -1796,6 +1825,7 @@ def generate(
   {tv_html}
   {tvadv_html}
   {srk_html}
+  {upcoming_html}
   {cfdsq_html}
   {usah_html}
   {adr_html}
@@ -1893,6 +1923,7 @@ def run(
     us_afterhours: dict      = None,
     adr: dict                = None,
     cfd_sq: dict             = None,
+    upcoming: dict           = None,
     mode: str = "morning",
     **_kwargs,
 ) -> dict:
@@ -1907,6 +1938,7 @@ def run(
             cross_check=cross_check, sector_ranking=sector_ranking, setups=setups,
             ensemble=ensemble, stock_dossier=stock_dossier, kabudragon=kabudragon,
             pts=pts, us_afterhours=us_afterhours, adr=adr, cfd_sq=cfd_sq,
+            upcoming=upcoming,
         )
         logger.info(f"✅ デザインAIレポート生成: {path}")
         return {"available": True, "path": path}

@@ -105,7 +105,13 @@ def run(*_args, **_kwargs) -> dict:
                                    else "寄り付き前の時間外（プレマーケット）")
 
         if not movers:
+            # 「動きなし」も必ず報告する（チェック済みであることを明示）
             logger.info(f"米国時間外: {THRESHOLD}%以上動いた主要銘柄なし（静かな夜）")
+            result["available"] = True
+            result["telegram_block"] = (
+                f"🇺🇸 *米国時間外（{len(quotes)}銘柄チェック済み）*\n"
+                f"±{THRESHOLD:.0f}%超の大きな変動なし — 静かな夜でした"
+            )
             return result
 
         result["movers"] = movers
