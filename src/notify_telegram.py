@@ -2,6 +2,7 @@
 Telegram通知モジュール（初心者でも一目でわかるデザイン）
 """
 import os
+import re
 import traceback
 import requests
 from dotenv import load_dotenv
@@ -312,8 +313,44 @@ def send_photo(image_path: str, caption: str = "",
         return False
 
 
+# ── 通知②の読みやすさ強化: Markdown風テキスト → Telegram HTML（カテゴリ折りたたみ） ──
+_CAT = "\x00CAT\x00"   # カテゴリ区切りセンチネル（_to_html_message が blockquote に変換）
+
+
+def _esc_html(t: str) -> str:
+    return t.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+
+def _md_to_tg_html(t: str) -> str:
+    """*bold* と [text](url) を Telegram HTML に変換（stray * はそのまま安全）"""
+    t = _esc_html(t)
+    t = re.sub(r"\[([^\]]+)\]\((https?://[^)\s]+)\)", r'<a href="\2">\1</a>', t)
+    t = re.sub(r"\*([^*\n]+)\*", r"<b>\1</b>", t)
+    t = re.sub(r"`([^`\n]+)`", r"<code>\1</code>", t)
+    return t
+
+
+def _to_html_message(raw: str) -> str:
+    """センチネル区切りを「▼カテゴリ見出し＋タップで展開ブロック」へ変換"""
+    parts = raw.split(_CAT)
+    out = [_md_to_tg_html(parts[0].strip())]
+    for p in parts[1:]:
+        title, _, body = p.partition("\n")
+        body = body.strip()
+        if not body:
+            continue   # 中身のないカテゴリは表示しない
+        out.append(f"\n<b>▼ {_esc_html(title.strip())}</b>")
+        out.append(f"<blockquote expandable>{_md_to_tg_html(body)}</blockquote>")
+    msg = "\n".join(out)
+    if len(msg) > 4090:   # タグ途中で切れるとHTML全体が壊れるためブロック境界で切る
+        cut = msg.rfind("</blockquote>", 0, 4090)
+        msg = msg[:cut + 13] if cut != -1 else msg[:4090]
+    return msg
+
+
 def send_message_with_button(text: str, button_text: str, button_url: str,
-                             chat_id: str = None, bot_token: str = None) -> bool:
+                             chat_id: str = None, bot_token: str = None,
+                             parse_modes=("Markdown", None)) -> bool:
     """インラインキーボードボタン付きのメッセージを送信"""
     _tok = bot_token or os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
     _cid = str(chat_id) if chat_id is not None else os.getenv("TELEGRAM_CHAT_ID", "").strip()
@@ -322,8 +359,13 @@ def send_message_with_button(text: str, button_text: str, button_url: str,
     url = f"https://api.telegram.org/bot{_tok}/sendMessage"
     markup = {"inline_keyboard": [[{"text": button_text, "url": button_url}]]}
 
-    for parse_mode in ("Markdown", None):
-        payload = {"chat_id": _cid, "text": text[:4096], "reply_markup": markup}
+    for parse_mode in parse_modes:
+        body = text
+        if parse_mode is None and "<" in text:
+            # HTML失敗時のプレーン再送: タグを剥がして可読性を保つ
+            body = re.sub(r"<[^>]+>", "", text)
+            body = body.replace("&amp;", "&").replace("&lt;", "<").replace("&gt;", ">")
+        payload = {"chat_id": _cid, "text": body[:4096], "reply_markup": markup}
         if parse_mode:
             payload["parse_mode"] = parse_mode
         try:
@@ -467,14 +509,13 @@ def _build_detail_message(risk, prices, fear_greed, news,
         bull = (ai.get("bull_view") or "")[:160].strip()
         bear = (ai.get("bear_view") or "")[:160].strip()
         neut = (ai.get("neutral_view") or "")[:200].strip()
-        lines += [
-            "",
+        _blk = [
             "🤖 *AI 3視点分析*",
             f"📈 *強気派:* {bull}" if bull else "",
             f"📉 *弱気派:* {bear}" if bear else "",
             f"⚖️ *総合判断:* {neut}" if neut else "",
         ]
-        lines = [l for l in lines if l != ""]
+        lines += [""] + [l for l in _blk if l]
 
     # ── キャラクターコメント ──
     cc = character_comments or {}
@@ -549,12 +590,11 @@ def _build_detail_message(risk, prices, fear_greed, news,
         rot  = sec.get("rotation", {})
         top3 = sec.get("top3", [])
         top_str = "  ".join(f"{s['name']} {s['chg_1d']:+.1f}%" for s in top3[:2])
-        lines += [
-            "",
+        _blk = [
             f"🌐 *セクター:* {rot.get('phase','---')}",
             f"🟢 強いセクター: {top_str}" if top_str else "",
         ]
-        lines = [l for l in lines if l != ""]
+        lines += [""] + [l for l in _blk if l]
         if sec.get("ai_comment"):
             lines.append(f"💬 {sec['ai_comment'][:100]}")
 
@@ -580,13 +620,12 @@ def _build_detail_message(risk, prices, fear_greed, news,
             today_pred = pt.get("today_prediction", {})
             dir_icon_map = {"bull":"📈 強気（上昇）","bear":"📉 弱気（下落）","neutral":"➡️ 中立（横ばい）"}
             dir_str = dir_icon_map.get(today_pred.get("direction",""), "")
-            lines += [
-                "",
+            _blk = [
                 f"🧠 *AI予測精度* (直近10日)",
                 f"{bar_e} `{bar_t}` {rate}%  ({r10.get('correct',0)}/{r10.get('total',0)}日正解)",
                 f"🎯 今日の予測: {dir_str}" if dir_str else "",
             ]
-            lines = [l for l in lines if l != ""]
+            lines += [""] + [l for l in _blk if l]
 
     # ── 自律AIの今日のミッション ──
     ap = autonomous_plan or {}
@@ -616,7 +655,16 @@ def _build_detail_message(risk, prices, fear_greed, news,
             (f"  空売り比率={short}%" if short else ""),
         ]
 
-    # ── 今後のイベント予定（SQ/雇用統計/FOMC＋週次カレンダー） ──
+    # ═══ ここから下は _to_html_message() がカテゴリ折りたたみに変換 ═══
+    lines += [
+        "",
+        "━━━━━━━━━━━━━━━━━━━━",
+        "📌 チャート・経済指標など全データはフルレポートへ（下のボタン）",
+    ]
+
+    # ── カテゴリ①: 予定・イベント ──
+    lines += [_CAT + "📅 予定・イベント・先物"]
+
     up = upcoming or {}
     if up.get("available") and up.get("telegram_block"):
         lines += ["", up["telegram_block"]]
@@ -625,6 +673,9 @@ def _build_detail_message(risk, prices, fear_greed, news,
     cf = cfd_sq or {}
     if cf.get("available") and cf.get("telegram_block"):
         lines += ["", cf["telegram_block"]]
+
+    # ── カテゴリ②: 夜間市場チェック ──
+    lines += [_CAT + "🌙 夜間市場チェック（寄り付き先行）"]
 
     # ── ADR（寄り付き先行ヒント） ──
     ad = adr or {}
@@ -651,11 +702,11 @@ def _build_detail_message(risk, prices, fear_greed, news,
     if kd.get("available") and kd.get("telegram_block"):
         lines += ["", kd["telegram_block"]]
 
-    # ── 銘柄カルテ TOP3（合わせ技スコア順） ──
+    # ── カテゴリ③: 注目銘柄カルテ TOP3（合わせ技スコア順） ──
+    lines += [_CAT + "🎯 今日の注目銘柄カルテ"]
     sd = stock_dossier or {}
     top_dossiers = [d for d in sd.get("dossiers", []) if d.get("confluence", 0) >= 5][:3]
     if top_dossiers:
-        lines += ["", "🎯 *今日の注目銘柄カルテ（合わせ技上位）*"]
         for d in top_dossiers:
             chg = d.get("change_pct")
             chg_s = f"{chg:+.2f}%" if chg is not None else "---"
@@ -663,8 +714,7 @@ def _build_detail_message(risk, prices, fear_greed, news,
             close_s = f"{close:,.0f}円" if close else "---"
             conf = d.get("confluence", 0)
             tv = d.get("tv_link", "")
-            lines += [
-                f"",
+            _blk = [
                 f"📌 *{d.get('name','?')}* ({d.get('code','')}) {close_s} {chg_s}",
                 f"合わせ技スコア: *{conf}/10* | "
                 f"目標: {d['target']:,.0f}円(+{d['upside']:.0f}%)" if d.get('target') else f"合わせ技スコア: *{conf}/10*",
@@ -672,13 +722,7 @@ def _build_detail_message(risk, prices, fear_greed, news,
                 f"損切り: {d.get('stop_loss','')}",
                 f"[📈 TradingViewで確認]({tv})" if tv else "",
             ]
-        lines = [l for l in lines if l != ""]
-
-    lines += [
-        "",
-        "━━━━━━━━━━━━━━━━━━━━",
-        "📌 チャート・経済指標・議員取引・バックテストなど全データはフルレポートへ",
-    ]
+            lines += [""] + [l for l in _blk if l]
 
     return "\n".join(lines)
 
@@ -828,9 +872,10 @@ def run(risk, analysis, report_paths, mode,
                                    "https://youn24.github.io/market-ai-secretary") + "/daily_report.html"
 
         send_message_with_button(
-            text        = detail_text,
+            text        = _to_html_message(detail_text),
             button_text = "📊 フルレポートを開く →",
             button_url  = report_url,
+            parse_modes = ("HTML", None),
         )
         logger.info("✅ 通知②: 詳細分析 + ボタン送信")
 
