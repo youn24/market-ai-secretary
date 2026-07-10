@@ -331,21 +331,28 @@ def _md_to_tg_html(t: str) -> str:
 
 
 def _to_html_message(raw: str) -> str:
-    """センチネル区切りを「▼カテゴリ見出し＋タップで展開ブロック」へ変換"""
+    """
+    センチネル区切りを「┏━ 太字下線タイトル ＋ 枠ブロック」へ変換する。
+    Telegramの<blockquote>は色付き背景＋左バーで描画される＝カテゴリの枠。
+    センチネル直後の1文字: "0"=常時表示の枠 / "1"=タップで展開する枠（長い データ用）
+    """
     parts = raw.split(_CAT)
     out = [_md_to_tg_html(parts[0].strip())]
     for p in parts[1:]:
-        title, _, body = p.partition("\n")
+        head, _, body = p.partition("\n")
         body = body.strip()
         if not body:
-            continue   # 中身のないカテゴリは表示しない
-        out.append(f"\n<b>▼ {_esc_html(title.strip())}</b>")
-        out.append(f"<blockquote expandable>{_md_to_tg_html(body)}</blockquote>")
+            continue   # 中身のないカテゴリは枠ごと表示しない
+        flag  = head[:1]
+        title = head[1:].strip() if flag in "01" else head.strip()
+        tag   = "<blockquote expandable>" if flag == "1" else "<blockquote>"
+        out.append(f"\n┏━ <b><u>{_esc_html(title)}</u></b>")
+        out.append(f"{tag}{_md_to_tg_html(body)}</blockquote>")
     msg = "\n".join(out)
-    if len(msg) > 4090:   # タグ途中で切れるとHTML全体が壊れるためブロック境界で切る
-        cut = msg.rfind("</blockquote>", 0, 4090)
-        msg = msg[:cut + 13] if cut != -1 else msg[:4090]
-    return msg
+    if len(msg) > 4000:   # タグ途中で切れるとHTML全体が壊れるため枠の境界で切る
+        cut = msg.rfind("</blockquote>", 0, 4000)
+        msg = msg[:cut + 13] if cut != -1 else msg[:4000]
+    return msg + "\n\n📌 チャート・全データは下のボタンからフルレポートへ"
 
 
 def send_message_with_button(text: str, button_text: str, button_url: str,
@@ -503,6 +510,9 @@ def _build_detail_message(risk, prices, fear_greed, news,
         "━━━━━━━━━━━━━━━━━━━━",
     ]
 
+    # ── カテゴリA: AI分析（3視点・キャラ・シナリオ） ──
+    lines += [_CAT + "0🤖 AI分析（3視点・シナリオ）"]
+
     # ── AI 3視点 ──
     ai = ai_summary or {}
     if ai.get("available"):
@@ -538,6 +548,9 @@ def _build_detail_message(risk, prices, fear_greed, news,
         ]
         if sc.get("top_risk"):
             lines.append(f"⚡ 最大リスク: {sc['top_risk'][:80]}")
+
+    # ── カテゴリB: シグナル・テクニカル・AI精度 ──
+    lines += [_CAT + "0📊 シグナル・テクニカル・AI精度"]
 
     # ── マルチエージェント合議 ──
     mc = multi_consensus or {}
@@ -627,6 +640,9 @@ def _build_detail_message(risk, prices, fear_greed, news,
             ]
             lines += [""] + [l for l in _blk if l]
 
+    # ── カテゴリC: マクロ・市場内部データ ──
+    lines += [_CAT + "1🏛 マクロ・市場内部データ"]
+
     # ── 自律AIの今日のミッション ──
     ap = autonomous_plan or {}
     if ap.get("available") and ap.get("todays_mission"):
@@ -655,15 +671,8 @@ def _build_detail_message(risk, prices, fear_greed, news,
             (f"  空売り比率={short}%" if short else ""),
         ]
 
-    # ═══ ここから下は _to_html_message() がカテゴリ折りたたみに変換 ═══
-    lines += [
-        "",
-        "━━━━━━━━━━━━━━━━━━━━",
-        "📌 チャート・経済指標など全データはフルレポートへ（下のボタン）",
-    ]
-
-    # ── カテゴリ①: 予定・イベント ──
-    lines += [_CAT + "📅 予定・イベント・先物"]
+    # ── カテゴリD: 予定・イベント ──
+    lines += [_CAT + "0📅 予定・イベント・先物"]
 
     up = upcoming or {}
     if up.get("available") and up.get("telegram_block"):
@@ -674,8 +683,8 @@ def _build_detail_message(risk, prices, fear_greed, news,
     if cf.get("available") and cf.get("telegram_block"):
         lines += ["", cf["telegram_block"]]
 
-    # ── カテゴリ②: 夜間市場チェック ──
-    lines += [_CAT + "🌙 夜間市場チェック（寄り付き先行）"]
+    # ── カテゴリE: 夜間市場チェック ──
+    lines += [_CAT + "1🌙 夜間市場チェック（寄り付き先行）"]
 
     # ── ADR（寄り付き先行ヒント） ──
     ad = adr or {}
@@ -702,8 +711,8 @@ def _build_detail_message(risk, prices, fear_greed, news,
     if kd.get("available") and kd.get("telegram_block"):
         lines += ["", kd["telegram_block"]]
 
-    # ── カテゴリ③: 注目銘柄カルテ TOP3（合わせ技スコア順） ──
-    lines += [_CAT + "🎯 今日の注目銘柄カルテ"]
+    # ── カテゴリF: 注目銘柄カルテ TOP3（合わせ技スコア順） ──
+    lines += [_CAT + "0🎯 今日の注目銘柄カルテ"]
     sd = stock_dossier or {}
     top_dossiers = [d for d in sd.get("dossiers", []) if d.get("confluence", 0) >= 5][:3]
     if top_dossiers:
