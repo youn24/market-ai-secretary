@@ -326,6 +326,29 @@ def generate_comments(prices: dict, risk: dict, fear_greed: dict, ai_summary: di
     mood   = _get_mood(rs, vix)
     result["mood"] = mood
 
+    # ドル円（キー揺れに対応）＋ 状況を一言で（プロンプトの具体性を上げる）
+    _fx = prices.get("JPY=X") or prices.get("USDJPY=X") or prices.get("ドル円") or {}
+    usdjpy     = _fx.get("latest", 0) or 0
+    usdjpy_chg = _fx.get("change_pct", 0) or 0
+    _fx_note = "円安方向" if usdjpy_chg > 0.1 else ("円高方向" if usdjpy_chg < -0.1 else "ほぼ横ばい")
+    _vix_note = "高く警戒" if vix >= 22 else ("やや高め" if vix >= 18 else "落ち着いている")
+
+    # 分析力を最大化する追加素材（NASDAQ・米10年金利・AIチームの各論）
+    nq_chg = prices.get("^IXIC", {}).get("change_pct", 0) or 0
+    _t10 = prices.get("^TNX", {}).get("latest", 0) or 0
+    us10y_str = f"{_t10:.2f}%" if 0 < _t10 < 20 else "—"
+    _bits = []
+    if ai_summary:
+        for _k, _lbl in [("summary", "要約"), ("bull_view", "強気論"),
+                         ("bear_view", "弱気論"), ("neutral_view", "中立論")]:
+            _v = ai_summary.get(_k)
+            if isinstance(_v, dict):
+                _v = _v.get("point") or _v.get("text") or _v.get("summary")
+            _v = str(_v or "").strip()
+            if len(_v) > 15:
+                _bits.append(f"・{_lbl}: {_v[:90]}")
+    ai_context = ("【AIチーム分析メモ（参考）】\n" + "\n".join(_bits)) if _bits else ""
+
     neut_view = ""
     if ai_summary and ai_summary.get("available"):
         neut_view = (ai_summary.get("neutral_view") or "")[:120]
@@ -350,32 +373,48 @@ def generate_comments(prices: dict, risk: dict, fear_greed: dict, ai_summary: di
         ])
 
         # ── ガネーシャのコメント ──
-        ganesha_prompt = f"""あなたは「AIガネーシャ」です。インドの知恵の神・ガネーシャとして市場を解説してください。
-語尾は「〜じゃ」「〜ですぞ」「〜であります」のような、少し古風で威厳ある口調。
-語彙豊かに、毎回ちがう表現を心がけ、決まり文句の繰り返しは避けてください。
-今回は特に: {ganesha_flavor}。
-絵文字は🐘のみ使用可。3〜4文で。
+        ganesha_prompt = f"""あなたは「AIガネーシャ」。数十年の実戦を積んだ老練なマクロ・ストラテジストが、知恵の神ガネーシャの姿を借りて相場を語る——という設定です。
+口調は「〜じゃ」「〜ですぞ」「〜であります」など古風で威厳ある調子。ただし中身は機関投資家水準の、洗練された語彙と鋭い洞察で。
+今回の彩り: {ganesha_flavor}。
 
-市場状況: VIX={vix:.1f} / S&P500={sp_chg:+.2f}% / 日経={nk_chg:+.2f}% / F&G={fg} / リスクスコア={rs:+.2f}
+【必ず盛り込む分析の骨子（4〜5文に自然に織り込む。箇条書きにはしない）】
+1. 現状認識：主要指標の具体数値に最低一度は触れる（VIX・ドル円・米株・日経など）
+2. 因果：なぜ今この地合いなのか、背景を論理でつなぐ
+3. 波及と目線：米国市場→日本株・為替への波及、寄り付きで意識すべき水準や方向
+4. リスク：見落とされがちな逆風、あるいはシナリオが崩れる条件を一つ具体的に
+5. 相場格言をひとつだけ、文脈に品よく重ねる
+
+状況に合致する相場用語（リスクオン/リスクオフ・ボラティリティ・押し目/戻り売り・需給・
+イールドカーブ・タームプレミアム・センチメント・過熱感/リスクプレミアム・レンジ・節目・
+リスクパリティ・キャリー など）を、正確に、文脈に合うものだけ用いること。羅列・誤用は厳禁。
+断定は避け、確度に応じて「〜の公算」「〜には一考の余地」など含みを持たせる。
+絵文字は🐘のみ。密度高く、240字以内。
+
+【市場データ】
+VIX={vix:.1f}（{_vix_note}） / S&P500={sp_chg:+.2f}% / NASDAQ={nq_chg:+.2f}% / 日経={nk_chg:+.2f}%
+ドル円={usdjpy:.2f}（{usdjpy_chg:+.2f}%・{_fx_note}） / 米10年金利={us10y_str} / F&G={fg} / リスクスコア={rs:+.2f}
 地合い: {sentiment}（{mood}）
-{f'AI要約: {neut_view}' if neut_view else ''}
+{ai_context}
 
-今日の相場をガネーシャとして解説してください（200字以内）。"""
+老練なストラテジストの見識を、ガネーシャの威厳で凝縮して語ってください（240字以内）。"""
 
         ganesha_resp = model.generate_content(ganesha_prompt)
         result["ganesha"] = ganesha_resp.text.strip()
 
         # ── カワウソのコメント ──
-        otter_prompt = f"""あなたは「AIカワウソ」です。めちゃくちゃかわいいカワウソとして、今日の相場を超シンプルに説明してください。
+        otter_prompt = f"""あなたは「AIカワウソ」です。めちゃくちゃかわいいカワウソとして、今日の相場を超シンプルに通訳してください。
 語尾は「〜だよ〜！」「〜なの〜♪」「〜してね！」のようなかわいい口調。
 毎回ちがう言い回し・語尾を使って、ワンパターンにならないようにしてください。
 今回は特に: {otter_flavor}。
-絵文字を2〜3個使用。中学生でもわかる言葉で2〜3文。専門用語は使わない。
+【役割】今日いちばん大事なポイントを1つに絞って、まっすぐ伝えること（あれもこれも言わない）。
+むずかしい専門用語（例: VIX・リスクオフ・円安 など）を1つだけ登場させ、
+そのすぐ後に「＝〜ってこと」と中学生にもわかる言い換えを必ず添えること（用語を1つ覚えてもらう役割）。
+それ以外はやさしい言葉で。絵文字を2〜3個使用。2〜3文で。
 
-市場状況: VIX={vix:.1f} / S&P500={sp_chg:+.2f}% / 日経={nk_chg:+.2f}% / F&G={fg}
+市場状況: VIX={vix:.1f}（{_vix_note}） / 日経={nk_chg:+.2f}% / 米株(S&P)={sp_chg:+.2f}% / ドル円={usdjpy_chg:+.2f}%（{_fx_note}） / F&G={fg}
 地合い: {sentiment}
 
-カワウソらしくかわいく説明してください（100字以内）。"""
+今日の一番大事なことを1つ、用語を1つやさしく教えながら、かわいく伝えてください（120字以内）。"""
 
         otter_resp = model.generate_content(otter_prompt)
         result["otter"] = otter_resp.text.strip()

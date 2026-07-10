@@ -261,27 +261,42 @@ body{{
   .wrap{{max-width:520px;margin:0 auto}}
 }}
 
-/* ── キャラクターカード ── */
+/* ── キャラクター（立体アバター＋しっぽ付き吹き出し） ── */
 .char-card{{
-  display:flex;align-items:flex-start;gap:0;
-  border-radius:14px;overflow:hidden;margin-bottom:8px;
-}}
-.char-ganesha{{
-  background:linear-gradient(135deg,#1c1600,#271e00);
-  border:1px solid rgba(255,215,0,.22);
-}}
-.char-otter{{
-  background:linear-gradient(135deg,#160e09,#1f130c);
-  border:1px solid rgba(196,149,106,.22);
+  display:flex;align-items:center;gap:11px;
+  margin-bottom:13px;overflow:visible;
 }}
 .char-avatar{{
-  width:80px;flex-shrink:0;text-align:center;
-  padding:10px 4px 8px;
+  flex-shrink:0;text-align:center;position:relative;z-index:3;
 }}
-.char-name-g{{font-size:9px;font-weight:800;color:#FFD700;margin-top:3px;white-space:nowrap}}
-.char-name-o{{font-size:9px;font-weight:800;color:#C4956A;margin-top:3px;white-space:nowrap}}
-.char-bubble{{flex:1;padding:11px 13px 11px 10px;min-width:0}}
-.char-bubble-r{{flex:1;padding:11px 10px 11px 13px;min-width:0}}
+.char-sprite{{
+  width:86px;height:86px;margin:0 auto;border-radius:50%;
+  background-repeat:no-repeat;background-size:400% 900%;
+  box-shadow:0 13px 24px rgba(0,0,0,.6), 0 3px 8px rgba(0,0,0,.5), 0 0 0 3px rgba(255,255,255,.10);
+}}
+.char-ganesha .char-sprite{{box-shadow:0 13px 24px rgba(0,0,0,.6),0 3px 8px rgba(0,0,0,.5),0 0 0 3px rgba(255,215,0,.30)}}
+.char-otter   .char-sprite{{box-shadow:0 13px 24px rgba(0,0,0,.6),0 3px 8px rgba(0,0,0,.5),0 0 0 3px rgba(196,149,106,.30)}}
+.char-name-g{{font-size:9.5px;font-weight:800;color:#FFD700;margin-top:6px;white-space:nowrap;text-shadow:0 1px 3px #000}}
+.char-name-o{{font-size:9.5px;font-weight:800;color:#C4956A;margin-top:6px;white-space:nowrap;text-shadow:0 1px 3px #000}}
+.char-bubble,.char-bubble-r{{
+  flex:1;min-width:0;position:relative;padding:12px 15px;border-radius:15px;
+}}
+.char-bubble{{
+  background:rgba(255,215,0,.08);border:1px solid rgba(255,215,0,.30);border-bottom-left-radius:5px;
+}}
+.char-bubble::before{{
+  content:'';position:absolute;left:-9px;top:26px;width:0;height:0;
+  border-top:8px solid transparent;border-bottom:8px solid transparent;
+  border-right:10px solid rgba(255,215,0,.32);
+}}
+.char-bubble-r{{
+  background:rgba(196,149,106,.10);border:1px solid rgba(196,149,106,.30);border-bottom-right-radius:5px;
+}}
+.char-bubble-r::after{{
+  content:'';position:absolute;right:-9px;top:26px;width:0;height:0;
+  border-top:8px solid transparent;border-bottom:8px solid transparent;
+  border-left:10px solid rgba(196,149,106,.32);
+}}
 .char-badge-g{{
   font-size:9px;font-weight:800;color:#FFD700;letter-spacing:.6px;
   background:rgba(255,215,0,.12);border:1px solid rgba(255,215,0,.28);
@@ -294,9 +309,9 @@ body{{
 }}
 .char-text{{font-size:11.5px;line-height:1.8;word-break:break-word}}
 @media(max-width:400px){{
-  .char-card{{flex-direction:column;padding:10px}}
-  .char-avatar{{width:100%;padding:4px 0}}
-  .char-bubble,.char-bubble-r{{padding:8px 0 0}}
+  .char-card{{gap:8px}}
+  .char-sprite{{width:70px;height:70px}}
+  .char-bubble::before,.char-bubble-r::after{{display:none}}
 }}
 """
 
@@ -489,6 +504,17 @@ def _charts():
 # セクション 5：AI分析（チャット吹き出し風）
 # ──────────────────────────────────────────
 
+def _char_avatar(col: int, row: int, b64: str) -> str:
+    """スプライト1コマを丸く切り抜き、影で浮かせた立体アバターを返す（4列×9行）"""
+    x = col * 100 / 3
+    y = row * 100 / 8
+    return (
+        f'<div class="char-sprite" style="'
+        f"background-image:url('data:image/png;base64,{b64}');"
+        f'background-position:{x:.2f}% {y:.2f}%"></div>'
+    )
+
+
 def _ai_section(ai_summary, team_debate, score, character_comments=None):
     color, label, _, emoji, mode = _score_info(score)
 
@@ -524,12 +550,29 @@ def _ai_section(ai_summary, team_debate, score, character_comments=None):
     if g_txt or o_txt:
         g_display = g_txt or "市場データを分析中ですぞ…"
         o_display = o_txt or "データ取得中だよ〜♪"
+
+        # 本物のキャラ画像（気分別スプライトを丸く切り抜き・立体表示）。無ければSVGフォールバック
+        mood = cc.get("mood", "neutral")
+        gane_av, otter_av = _GANESHA_SVG, _OTTER_SVG
+        try:
+            from src.character_commentary import (
+                _load_sprite_b64, OTTER_MOOD_MAP, GANESHA_MOOD_MAP,
+            )
+            _b64 = _load_sprite_b64()
+            if _b64:
+                gc, gr = GANESHA_MOOD_MAP.get(mood, GANESHA_MOOD_MAP["neutral"])
+                oc, orw = OTTER_MOOD_MAP.get(mood, OTTER_MOOD_MAP["neutral"])
+                gane_av  = _char_avatar(gc, gr, _b64)
+                otter_av = _char_avatar(oc, orw, _b64)
+        except Exception:
+            pass
+
         char_html = f"""
 <div style="margin-top:10px">
   <!-- 🐘 ガネーシャ -->
   <div class="char-card char-ganesha">
     <div class="char-avatar">
-      {_GANESHA_SVG}
+      {gane_av}
       <div class="char-name-g">🐘 AIガネーシャ</div>
     </div>
     <div class="char-bubble">
@@ -544,7 +587,7 @@ def _ai_section(ai_summary, team_debate, score, character_comments=None):
       <div class="char-text" style="color:{TEXT}">{o_display}</div>
     </div>
     <div class="char-avatar">
-      {_OTTER_SVG}
+      {otter_av}
       <div class="char-name-o">🦦 AIカワウソ</div>
     </div>
   </div>
