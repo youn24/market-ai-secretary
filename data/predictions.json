@@ -326,6 +326,21 @@
       "usdjpy": 162.552,
       "vix": 16.9,
       "confidence": null,
+      "verified": true,
+      "correct": false,
+      "actual_move": -2.11,
+      "actual_dir": "bear"
+    },
+    {
+      "date": "2026-07-10",
+      "direction": "bull",
+      "score": 10.71,
+      "fg": 47.2,
+      "nikkei": 66819.0469,
+      "sp500": 7543.6401,
+      "usdjpy": 162.358,
+      "vix": 15.84,
+      "confidence": null,
       "verified": false,
       "correct": null,
       "actual_move": null
