@@ -102,14 +102,15 @@ def _extract_direction(ai_summary: dict, scenario: dict, risk: dict, fear_greed:
         elif fg >= 75: adjusted_score += 3.0   # 極度の強欲
         elif fg >= 65: adjusted_score += 1.5   # 強欲
 
-    # 閾値を3.0→6.0に引き上げ（強気バイアス是正: 実績でスコア3〜8が非bull多発）
-    if adjusted_score >= 6.0:    base = "bull"
-    elif adjusted_score <= -4.0: base = "bear"
+    # 閾値を6.0→9.0に再引き上げ（2026-07-12実績分析: bull的中率20%(2/10)で
+    # まだ強気過多。予測分布bull53%/bear26%/neutral21% vs 実際bear42%/neutral32%/bull26%）
+    # bear閾値は-4.0→-3.0に緩和（bear的中率40%で相対的に信頼度が高いため拾いやすく）
+    if adjusted_score >= 9.0:    base = "bull"
+    elif adjusted_score <= -3.0: base = "bear"
     else:                        base = "neutral"
 
-    # シナリオ確率で補正（確率差25%以上の場合のみ方向を変更）
-    # 旧: 60%単独閾値→どちらも届かず強制neutralになりやすかった
-    # 新: 差分25%以上ならシグナルあり、それ以外はスコアベースを維持
+    # シナリオ確率で補正（確率差30%以上の場合のみ方向を変更）
+    # 2026-07-12: 25%閾値だとスコア2.5点でもbullに上書きされ外れた実績があったため30%に引き上げ
     if scenario and scenario.get("available"):
         bull_p = scenario.get("bull", {}).get("prob", 0) or 0
         bear_p = scenario.get("bear", {}).get("prob", 0) or 0
@@ -118,8 +119,8 @@ def _extract_direction(ai_summary: dict, scenario: dict, risk: dict, fear_greed:
         except Exception:
             pass
         diff = bull_p - bear_p
-        if diff >= 25:    base = "bull"
-        elif diff <= -25: base = "bear"
+        if diff >= 30:    base = "bull"
+        elif diff <= -30: base = "bear"
 
     return base
 

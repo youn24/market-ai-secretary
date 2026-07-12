@@ -250,6 +250,7 @@ response = model.generate_content(prompt)
 | `Step 8d` のloggerに `Step 8b` と表示される | logger.infoのStep番号の書き間違い | 2026-07-01修正済み（"Step 8d: X自動投稿"に統一） |
 | 予測正解率が23%まで低下 | `_extract_direction()`の強気バイアス（スコアが高くても bull を出しやすい） | 2026-06-28にバイアス是正コミット済み（推定改善後39%） |
 | Telegram通知停止（2026-06） | GitHub SecretのBot token失効＋iPhoneのプッシュ通知オフ | verify_bot()等で恒久対策済み。再発時はSecretの有効期限を確認 |
+| 予測正解率が26.3%(5/19)に再低下（2026-07-12時点） | bull閾値6.0でも強気過多継続（bull的中率20%、予測分布bull53%が実際26%を大幅超過）、シナリオ差分25%オーバーライドが低スコア(2.5点)でもbullに上書き | 2026-07-12: bull閾値9.0・bear閾値-3.0・シナリオ差分30%に再調整、git push済み |
 
 ---
 
