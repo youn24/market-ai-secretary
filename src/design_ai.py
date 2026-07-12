@@ -226,7 +226,14 @@ body{{
 .glow-yellow{{ box-shadow:0 0 20px rgba(255,200,55,.20), 0 0 60px rgba(255,200,55,.08); }}
 
 /* ラベル共通 */
-.label{{font-size:11px;font-weight:700;letter-spacing:1.4px;color:{MUTED};text-transform:uppercase;margin-bottom:6px;font-family:'Outfit','Noto Sans JP',sans-serif}}
+.label{{display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:800;letter-spacing:1.7px;color:{MUTED};text-transform:uppercase;margin-bottom:9px;font-family:'Outfit','Noto Sans JP',sans-serif;padding-bottom:5px;border-bottom:2px solid rgba(255,255,255,.06)}}
+.label::before{{content:'';width:4px;height:15px;border-radius:3px;background:currentColor;box-shadow:0 0 10px currentColor;opacity:.9}}
+.cat-mkt{{color:#7aa2ff;border-bottom-color:rgba(122,162,255,.28)}}
+.cat-news{{color:#35d6c6;border-bottom-color:rgba(53,214,198,.28)}}
+.cat-ai{{color:#b98cff;border-bottom-color:rgba(185,140,255,.28)}}
+.cat-heat{{color:#ff8a4c;border-bottom-color:rgba(255,138,76,.28)}}
+.cat-cal{{color:#4fd67a;border-bottom-color:rgba(79,214,122,.28)}}
+.cat-stock{{color:#ffc837;border-bottom-color:rgba(255,200,55,.28)}}
 
 /* フェードイン */
 @keyframes fadeUp{{
@@ -503,6 +510,29 @@ def _charts():
 # ──────────────────────────────────────────
 # セクション 5：AI分析（チャット吹き出し風）
 # ──────────────────────────────────────────
+
+def _categorize_labels(html: str) -> str:
+    """各セクション見出し(.label)にカテゴリ色クラスを自動付与（キーワード/絵文字で判定）"""
+    import re
+    rules = [
+        ("cat-stock", ("ランキング", "銘柄", "デイトレ", "ADR", "PTS", "時間外", "株ドラゴン", "🐉", "🌙", "💴")),
+        ("cat-news",  ("ニュース", "📰")),
+        ("cat-ai",    ("AI", "予測", "シナリオ", "クロス", "シグナル", "スキャナー", "🤖", "🎯", "🔬", "🔎", "🔭")),
+        ("cat-heat",  ("ヒートマップ", "強弱", "🔥")),
+        ("cat-cal",   ("カレンダー", "イベント", "経済指標", "📅")),
+    ]
+
+    def cls_of(text):
+        for cls, keys in rules:
+            if any(k in text for k in keys):
+                return cls
+        return "cat-mkt"
+
+    def repl(m):
+        return f'<div class="label {cls_of(m.group(2))}"{m.group(1)}>{m.group(2)}</div>'
+
+    return re.sub(r'<div class="label"([^>]*)>(.*?)</div>', repl, html, flags=re.S)
+
 
 def _char_avatar(col: int, row: int, b64: str) -> str:
     """スプライト1コマを丸く切り抜き、影で浮かせた立体アバターを返す（4列×9行）"""
@@ -1923,6 +1953,7 @@ def generate(
     # docs/ に保存（GitHub Pages 公開先）
     docs_dir = Path(__file__).parent.parent / "docs"
     docs_dir.mkdir(exist_ok=True)
+    html = _categorize_labels(html)
     out_path = docs_dir / "daily_report.html"
     out_path.write_text(html, encoding="utf-8")
 
