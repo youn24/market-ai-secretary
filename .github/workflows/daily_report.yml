@@ -45,6 +45,15 @@ jobs:
         run: |
           python -m playwright install --with-deps chromium
 
+      - name: VOICEVOX音声エンジン起動（要約動画のキャラ声・失敗しても続行）
+        run: |
+          docker run -d --name voicevox -p 50021:50021 \
+            voicevox/voicevox_engine:cpu-ubuntu20.04-latest || true
+          # 起動待ち（最大60秒）。起動しなければedge-ttsに自動フォールバック
+          for i in $(seq 1 30); do
+            curl -sf http://127.0.0.1:50021/version && break || sleep 2
+          done || true
+
       - name: 完全自律AIチームシステム - 朝の分析を実行
         env:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
@@ -70,6 +79,7 @@ jobs:
           X_ACCESS_TOKEN: ${{ secrets.X_ACCESS_TOKEN }}
           X_ACCESS_TOKEN_SECRET: ${{ secrets.X_ACCESS_TOKEN_SECRET }}
           CF_PROXY_URL: ${{ secrets.CF_PROXY_URL }}
+          VOICEVOX_URL: "http://127.0.0.1:50021"
         run: |
           echo "📋 従来型レポート生成中..."
           # cloud_run.py の失敗は隠さない（|| true を付けない）。
