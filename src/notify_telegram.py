@@ -313,6 +313,31 @@ def send_photo(image_path: str, caption: str = "",
         return False
 
 
+def send_video(video_path: str, caption: str = "",
+               chat_id: str = None, bot_token: str = None) -> bool:
+    """MP4動画を送信（通知③・要約ナレーション動画）"""
+    _tok = bot_token or os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
+    _cid = str(chat_id) if chat_id is not None else os.getenv("TELEGRAM_CHAT_ID", "").strip()
+    if not _tok or not _cid or not video_path or not os.path.exists(video_path):
+        return False
+    url = f"https://api.telegram.org/bot{_tok}/sendVideo"
+    try:
+        with open(video_path, "rb") as f:
+            r = requests.post(
+                url,
+                data={"chat_id": _cid, "caption": caption[:1024],
+                      "parse_mode": "HTML", "supports_streaming": True},
+                files={"video": f},
+                timeout=120,
+            )
+        r.raise_for_status()
+        logger.info(f"Telegram 動画送信 ✅: {video_path}")
+        return True
+    except Exception as e:
+        logger.error(f"Telegram 動画送信失敗: {e}")
+        return False
+
+
 # ── 通知②の読みやすさ強化: Markdown風テキスト → Telegram HTML（カテゴリ折りたたみ） ──
 _CAT = "\x00CAT\x00"   # カテゴリ区切りセンチネル（_to_html_message が blockquote に変換）
 
@@ -787,7 +812,8 @@ def run(risk, analysis, report_paths, mode,
         supply_demand=None, kabuyoho=None, sector_heatmap=None,
         nikkei_internals=None, adr=None, setups=None,
         stock_dossier=None, ensemble=None, kabudragon=None,
-        pts=None, us_afterhours=None, cfd_sq=None, upcoming=None) -> bool:
+        pts=None, us_afterhours=None, cfd_sq=None, upcoming=None,
+        video_path=None) -> bool:
 
     if not _is_configured():
         logger.info("Telegram 設定なし。スキップします。")
@@ -888,7 +914,19 @@ def run(risk, analysis, report_paths, mode,
         )
         logger.info("✅ 通知②: 詳細分析 + ボタン送信")
 
-        logger.info("✅ Telegram 通知完了（2通）")
+        # ════════════════════════════════════════════════════════
+        # 通知③  要約ナレーション動画（生成できた時のみ）
+        # ════════════════════════════════════════════════════════
+        sent_video = False
+        if video_path and os.path.exists(str(video_path)):
+            try:
+                if send_video(str(video_path), caption="🎬 <b>今朝の要約動画</b>（ガネーシャ＆カワウソ）"):
+                    sent_video = True
+                    logger.info("✅ 通知③: 要約動画送信")
+            except Exception:
+                logger.debug(traceback.format_exc())
+
+        logger.info(f"✅ Telegram 通知完了（{'3通' if sent_video else '2通'}）")
         return True
 
     except Exception as e:

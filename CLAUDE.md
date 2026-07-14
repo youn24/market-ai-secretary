@@ -181,10 +181,12 @@ GITHUB_PAGES_URL    → https://youn24.github.io/market-ai-secretary
 3. **`get_jst_now` を関数内でimportしない**
    → `from src.utils import get_jst_now` はモジュール先頭のみ（局所importするとUnboundLocalError発生）
 
-4. **Telegramは2通構成を維持**
+4. **Telegramは2通＋動画（通知③）構成を維持**
    → ① サマリーカード画像＋全体俯瞰キャプション（価格/F&G/VIX/ニュース/AI一言）
    → ② 詳細AI分析テキスト＋「フルレポートを開く」インラインボタン
-   → この2通のみ。追加の個別通知は送らない（週次レポートは別扱い）
+   → ③ 要約ナレーション動画（src/video_summary.py・edge-tts＋ffmpeg・生成成功時のみ）
+   → この①②③以外の追加個別通知は送らない（週次レポートは別扱い）
+   → ③はオーナー承認済み（2026-07）。ffmpeg/edge-tts無い環境では自動スキップし①②は必ず送る
 
 5. **`data/predictions.json`, `data/ai_memory.json` をgitignoreに入れない**
    → 予測学習データの永続化に必須

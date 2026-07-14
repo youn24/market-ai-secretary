@@ -928,7 +928,22 @@ def run(mode: str):
         if sector_chart_path:
             chart_paths["sector"] = sector_chart_path
 
+        # Step VID: 要約ナレーション動画（通知③・失敗しても通知①②は継続）
+        video_path = None
+        try:
+            logger.info("--- Step VID: 要約ナレーション動画 ---")
+            from src.video_summary import run as run_video
+            _vid = run_video(prices=prices, fear_greed=fear_greed, risk=risk,
+                             ai_summary=ai_summary, news=news,
+                             character_comments=character_comments, mode=mode)
+            if _vid.get("available"):
+                video_path = _vid.get("path")
+                logger.info("✅ 要約動画 準備完了")
+        except Exception:
+            logger.debug(traceback.format_exc())
+
         notify_tg(risk, analysis, report_paths, mode,
+                  video_path=video_path,
                   prices=prices, news=news,
                   fear_greed=fear_greed, ai_summary=ai_summary,
                   chart_paths=chart_paths,

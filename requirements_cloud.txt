@@ -11,3 +11,4 @@ yfinance>=0.2.40
 matplotlib>=3.7.0
 google-generativeai>=0.5.0
 playwright>=1.40.0   # noteカバー画像のHTML→PNG描画用（要: playwright install chromium）
+edge-tts>=6.1.0      # 要約ナレーション動画の日本語音声（通知③・無料/APIキー不要・要ffmpeg）
