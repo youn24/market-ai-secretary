@@ -343,21 +343,51 @@ def _h_sent(score):
     else:              return RED,   "弱気", "売り優勢・要警戒"
 
 
+def _char_photo(kind: str, mood: str = "neutral", size: int = 74) -> str:
+    """高解像度の本物キャラ画像を丸く切り抜いて返す（気分別・base64埋め込み）。無ければSVG"""
+    from pathlib import Path
+    import base64, glob
+    root = Path(__file__).resolve().parent.parent
+    paths = []
+    if kind == "ganesha":
+        name = {"strong_bull": "bullish", "bull": "bullish", "bear": "bearish",
+                "crisis": "crash", "fear": "uncertain",
+                "neutral": "analyzing", "analytical": "analyzing"}.get(mood, "analyzing")
+        paths += sorted(glob.glob(str(root / "data" / "fx_charts" / f"character_{name}_*.png")))
+        paths.append(str(root / "assets" / "gane_sensei.png"))
+    else:
+        paths += [str(root / "assets" / "kawauso (4).png"),
+                  str(root / "assets" / "kawauso.png")]
+    for p in paths:
+        try:
+            fp = Path(p)
+            if fp.exists() and fp.stat().st_size > 0:
+                b64 = base64.b64encode(fp.read_bytes()).decode()
+                return (f'<img src="data:image/png;base64,{b64}" '
+                        f'style="width:{size}px;height:{size}px;border-radius:50%;'
+                        f'object-fit:cover;box-shadow:0 6px 16px rgba(0,0,0,.55),'
+                        f'0 0 0 2px rgba(255,255,255,.14)">')
+        except Exception:
+            pass
+    try:
+        from src.design_ai import _GANESHA_SVG, _OTTER_SVG
+        return _GANESHA_SVG if kind == "ganesha" else _OTTER_SVG
+    except Exception:
+        return ""
+
+
 def _char_section(character_comments: dict) -> str:
     """ガネーシャ🐘＆カワウソ🦦を分析・要約のサイドに配置するセクション"""
     cc = character_comments or {}
-    ganesha = (cc.get("ganesha") or "").strip()
-    otter   = (cc.get("otter") or "").strip()
+    # カードは画像なので「ひとこと版」を使う（長文だとレイアウトが崩れる）
+    ganesha = (cc.get("ganesha_short") or cc.get("ganesha") or "").strip()[:130]
+    otter   = (cc.get("otter_short")   or cc.get("otter")   or "").strip()[:130]
+    mood    = (cc.get("mood") or "neutral")
     # コメントが無い日もキャラクターは必ず登場させる（デザイン重視）
     if not ganesha:
         ganesha = "市場の流れを読み解いておりますぞ。焦らず、大局を見るのが知恵の第一歩ですぞ。"
     if not otter:
         otter = "きょうもデータをチェックしたよ〜！ムリせずコツコツが いちばんだよ🌊"
-
-    try:
-        from src.design_ai import _GANESHA_SVG, _OTTER_SVG
-    except Exception:
-        return ""
 
     return f"""
   <div class="panel" style="padding:15px 15px 13px">
@@ -365,7 +395,7 @@ def _char_section(character_comments: dict) -> str:
 
     <div class="chrow chrow-g">
       <div class="chava">
-        {_GANESHA_SVG}
+        {_char_photo("ganesha", mood)}
         <div class="chname" style="color:#FFD700">ガネーシャ</div>
       </div>
       <div class="chbub">
@@ -376,7 +406,7 @@ def _char_section(character_comments: dict) -> str:
 
     <div class="chrow chrow-o" style="margin-bottom:0">
       <div class="chava">
-        {_OTTER_SVG}
+        {_char_photo("otter", mood)}
         <div class="chname" style="color:#C4956A">カワウソ</div>
       </div>
       <div class="chbub">

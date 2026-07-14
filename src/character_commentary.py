@@ -304,11 +304,65 @@ OTTER_SVG = """<svg width="90" height="110" viewBox="0 0 100 120" xmlns="http://
 </svg>"""
 
 
-def generate_comments(prices: dict, risk: dict, fear_greed: dict, ai_summary: dict = None) -> dict:
-    """AIガネーシャとAIカワウソのコメントを生成"""
+def _sector_ctx(sector: dict = None, sector_ranking: dict = None) -> str:
+    """セクター/業種データをプロンプト用テキストに整形（分析を厚くする材料）"""
+    lines = []
+    sa = sector or {}
+    if sa.get("available"):
+        rot = sa.get("rotation") or {}
+        if rot.get("label") or rot.get("phase"):
+            lines.append(f"・ローテーション判定: {rot.get('label','')}（フェーズ: {rot.get('phase','')}）")
+        if rot.get("detail"):
+            lines.append(f"・詳細: {str(rot['detail'])[:150]}")
+
+        def _fmt(items):
+            out = []
+            for s in (items or [])[:3]:
+                if isinstance(s, dict):
+                    nm = s.get("name", "")
+                    ch = s.get("chg_1d")
+                    out.append(f"{nm}{f'({ch:+.2f}%)' if isinstance(ch,(int,float)) else ''}")
+            return " / ".join(out)
+
+        t3, b3 = _fmt(sa.get("top3")), _fmt(sa.get("bottom3"))
+        if t3:
+            lines.append(f"・米国セクター 強い順: {t3}")
+        if b3:
+            lines.append(f"・米国セクター 弱い順: {b3}")
+        if isinstance(sa.get("ai_comment"), str) and len(sa["ai_comment"]) > 10:
+            lines.append(f"・セクターAI所見: {sa['ai_comment'][:150]}")
+
+    sr = sector_ranking or {}
+    if sr.get("available"):
+        rk = sr.get("ranking") or sr.get("sectors") or []
+        ups, downs = [], []
+        for it in rk:
+            if isinstance(it, dict):
+                nm = it.get("name") or it.get("sector") or ""
+                ch = it.get("change_pct", it.get("chg_1d"))
+                if nm and isinstance(ch, (int, float)):
+                    (ups if ch >= 0 else downs).append(f"{nm}{ch:+.2f}%")
+        if ups:
+            lines.append("・日本の業種別 上昇上位: " + " / ".join(ups[:5]))
+        if downs:
+            lines.append("・日本の業種別 下落上位: " + " / ".join(downs[-5:]))
+
+    return ("【セクター/業種データ】\n" + "\n".join(lines)) if lines else ""
+
+
+def generate_comments(prices: dict, risk: dict, fear_greed: dict,
+                      ai_summary: dict = None, news: list = None,
+                      sector: dict = None, sector_ranking: dict = None) -> dict:
+    """AIガネーシャとAIカワウソのコメントを生成
+
+    ganesha/otter        = 詳細版（動画ナレーション・HTMLレポート・Telegram詳細用）
+    ganesha_short/otter_short = ひとこと版（サマリーカード画像用・レイアウト崩れ防止）
+    """
     result = {
         "ganesha": "",
         "otter": "",
+        "ganesha_short": "",
+        "otter_short": "",
         "available": False,
         "mood": "neutral",
     }
@@ -349,6 +403,16 @@ def generate_comments(prices: dict, risk: dict, fear_greed: dict, ai_summary: di
                 _bits.append(f"・{_lbl}: {_v[:90]}")
     ai_context = ("【AIチーム分析メモ（参考）】\n" + "\n".join(_bits)) if _bits else ""
 
+    # 今日の材料（ニュース見出し）— 分析の具体性を上げる
+    _heads = []
+    for n in (news or [])[:6]:
+        t = (n.get("title") if isinstance(n, dict) else str(n)) or ""
+        t = t.strip()
+        if t:
+            _heads.append(f"・{t[:70]}")
+    news_ctx = ("【今日の主な材料（ニュース見出し）】\n" + "\n".join(_heads)) if _heads else ""
+    sector_ctx = _sector_ctx(sector, sector_ranking)
+
     neut_view = ""
     if ai_summary and ai_summary.get("available"):
         neut_view = (ai_summary.get("neutral_view") or "")[:120]
@@ -377,47 +441,84 @@ def generate_comments(prices: dict, risk: dict, fear_greed: dict, ai_summary: di
 口調は「〜じゃ」「〜ですぞ」「〜であります」など古風で威厳ある調子。ただし中身は機関投資家水準の、洗練された語彙と鋭い洞察で。
 今回の彩り: {ganesha_flavor}。
 
-【必ず盛り込む分析の骨子（4〜5文に自然に織り込む。箇条書きにはしない）】
-1. 現状認識：主要指標の具体数値に最低一度は触れる（VIX・ドル円・米株・日経など）
-2. 因果：なぜ今この地合いなのか、背景を論理でつなぐ
-3. 波及と目線：米国市場→日本株・為替への波及、寄り付きで意識すべき水準や方向
-4. リスク：見落とされがちな逆風、あるいはシナリオが崩れる条件を一つ具体的に
-5. 相場格言をひとつだけ、文脈に品よく重ねる
+【必ず盛り込む分析の骨子（自然な文章に織り込む。箇条書きにはしない）】
+1. 現状認識：主要指標の具体数値に触れる（VIX・ドル円・米株・日経・金利など）
+2. 因果：なぜ今この地合いなのか、背景と主因を論理でつなぐ
+3. 材料の読み：今日のニュース見出しがあれば、その意味と影響度を評価する
+4. 波及と目線：米国市場→日本株・為替への波及、寄り付きで意識される水準や方向感
+5. 【最重要・厚く書く】セクター/物色戦略：与えられたセクターデータを必ず使い、
+   (a) いま資金が向かっているセクターと、逃げているセクターを具体名と数値で挙げる
+   (b) そのローテーションが景気サイクルのどの局面を示唆するのか解釈する
+   (c) 米国のセクター動向が日本のどの業種に波及しやすいか、道筋をつけて説明する
+   (d) 明日以降の物色の方向（グロース/バリュー、ディフェンシブ/シクリカル）を示す
+   → この項目だけで全体の3分の1程度を割き、最も深く論じること
+6. 需給とセンチメント：F&G・VIX・リスクスコアから市場心理を読む
+7. リスク：見落とされがちな逆風、シナリオが崩れる条件を具体的に
+8. 着眼点：今日ひとつだけ注視すべきものを明示する
+9. 相場格言をひとつだけ、文脈に品よく重ねて締める
 
 状況に合致する相場用語（リスクオン/リスクオフ・ボラティリティ・押し目/戻り売り・需給・
 イールドカーブ・タームプレミアム・センチメント・過熱感/リスクプレミアム・レンジ・節目・
-リスクパリティ・キャリー など）を、正確に、文脈に合うものだけ用いること。羅列・誤用は厳禁。
-断定は避け、確度に応じて「〜の公算」「〜には一考の余地」など含みを持たせる。
-絵文字は🐘のみ。密度高く、240字以内。
+キャリー・グロース/バリュー・ディフェンシブ・循環物色 など）を、正確に、文脈に合うものだけ用いる。
+羅列・誤用は厳禁。断定は避け「〜の公算」「〜には一考の余地」など確度に応じた含みを持たせる。
+絵文字は🐘のみ。
+
+【出力形式（この2ブロックを必ずこの順で、見出し記号もそのまま出力）】
+【詳細】
+（ここに 700〜850字 の詳細分析。10〜14文。うちセクター/物色の論述に3分の1を割く。
+　密度高く、具体的に。ただし箇条書きにはせず、流れるような一続きの語りにする）
+【ひとこと】
+（ここに 90字以内 で今日の要点を1〜2文に凝縮）
 
 【市場データ】
 VIX={vix:.1f}（{_vix_note}） / S&P500={sp_chg:+.2f}% / NASDAQ={nq_chg:+.2f}% / 日経={nk_chg:+.2f}%
 ドル円={usdjpy:.2f}（{usdjpy_chg:+.2f}%・{_fx_note}） / 米10年金利={us10y_str} / F&G={fg} / リスクスコア={rs:+.2f}
 地合い: {sentiment}（{mood}）
+{sector_ctx}
+{news_ctx}
 {ai_context}
 
-老練なストラテジストの見識を、ガネーシャの威厳で凝縮して語ってください（240字以内）。"""
+老練なストラテジストの見識を、ガネーシャの威厳で、深く・長く・具体的に語ってください。"""
 
         ganesha_resp = model.generate_content(ganesha_prompt)
-        result["ganesha"] = ganesha_resp.text.strip()
+        g_long, g_short = _split_long_short(ganesha_resp.text)
+        result["ganesha"] = g_long
+        result["ganesha_short"] = g_short
 
         # ── カワウソのコメント ──
         otter_prompt = f"""あなたは「AIカワウソ」です。めちゃくちゃかわいいカワウソとして、今日の相場を超シンプルに通訳してください。
 語尾は「〜だよ〜！」「〜なの〜♪」「〜してね！」のようなかわいい口調。
 毎回ちがう言い回し・語尾を使って、ワンパターンにならないようにしてください。
 今回は特に: {otter_flavor}。
-【役割】今日いちばん大事なポイントを1つに絞って、まっすぐ伝えること（あれもこれも言わない）。
-むずかしい専門用語（例: VIX・リスクオフ・円安 など）を1つだけ登場させ、
-そのすぐ後に「＝〜ってこと」と中学生にもわかる言い換えを必ず添えること（用語を1つ覚えてもらう役割）。
-それ以外はやさしい言葉で。絵文字を2〜3個使用。2〜3文で。
+【役割】ガネーシャの難しい話を、中学生にもわかる言葉に「通訳」すること。
+今日のポイントを4つに分けて、順番にやさしく説明してください。
+　①何が起きたの？（昨日の海外市場のできごと）
+　②どの業種が元気／元気ないの？（セクターの話を、身近な例えでかわいく。
+　　　例:「半導体＝スマホやゲーム機の頭脳をつくる会社」のように必ず言い換える）
+　③だから日本の株はどうなりそう？
+　④気をつけることは？
+むずかしい専門用語（例: VIX・リスクオン/オフ・円安・押し目・ディフェンシブ など）を2〜3つ登場させ、
+そのすぐ後に必ず「＝〜ってこと」と言い換えを添えること（用語を覚えてもらう役割）。
+それ以外はやさしい言葉で。絵文字は4〜5個まで。
 
-市場状況: VIX={vix:.1f}（{_vix_note}） / 日経={nk_chg:+.2f}% / 米株(S&P)={sp_chg:+.2f}% / ドル円={usdjpy_chg:+.2f}%（{_fx_note}） / F&G={fg}
+【出力形式（この2ブロックを必ずこの順で、見出し記号もそのまま出力）】
+【詳細】
+（ここに 320〜400字。6〜9文。4つのポイントを順にかわいく、たっぷり説明）
+【ひとこと】
+（ここに 90字以内 で今日いちばん大事なことを1〜2文に凝縮）
+
+市場状況: VIX={vix:.1f}（{_vix_note}） / 日経={nk_chg:+.2f}% / 米株(S&P)={sp_chg:+.2f}% / NASDAQ={nq_chg:+.2f}%
+ドル円={usdjpy:.2f}（{usdjpy_chg:+.2f}%・{_fx_note}） / F&G={fg}
 地合い: {sentiment}
+{sector_ctx}
+{news_ctx}
 
-今日の一番大事なことを1つ、用語を1つやさしく教えながら、かわいく伝えてください（120字以内）。"""
+カワウソらしくかわいく、4つのポイントをやさしく詳しく伝えてください。"""
 
         otter_resp = model.generate_content(otter_prompt)
-        result["otter"] = otter_resp.text.strip()
+        o_long, o_short = _split_long_short(otter_resp.text)
+        result["otter"] = o_long
+        result["otter_short"] = o_short
         result["available"] = True
 
         logger.info(f"✅ キャラクターコメント生成完了 [mood={mood}]")
@@ -425,10 +526,25 @@ VIX={vix:.1f}（{_vix_note}） / S&P500={sp_chg:+.2f}% / NASDAQ={nq_chg:+.2f}% /
 
     except Exception as e:
         logger.warning(f"キャラクターコメント生成エラー: {e}")
-        result["ganesha"]   = _pick_fallback(_GANESHA_LINES, mood)
-        result["otter"]     = _pick_fallback(_OTTER_LINES, mood)
-        result["available"] = True
+        result["ganesha"]       = _pick_fallback(_GANESHA_LINES, mood)
+        result["otter"]         = _pick_fallback(_OTTER_LINES, mood)
+        result["ganesha_short"] = result["ganesha"]
+        result["otter_short"]   = result["otter"]
+        result["available"]     = True
         return result
+
+
+def _split_long_short(text: str):
+    """Geminiの【詳細】【ひとこと】出力を (詳細, ひとこと) に分解"""
+    import re
+    t = (text or "").strip()
+    m = re.search(r"【詳細】\s*(.+?)\s*【ひとこと】\s*(.+)", t, re.S)
+    if m:
+        return m.group(1).strip(), m.group(2).strip()
+    # マーカーが無い場合：全文を詳細とし、先頭1文をひとことに
+    head = t.split("。")[0].strip()
+    short = (head + "。") if head and not head.endswith("。") else head
+    return t, short[:90]
 
 
 def _pick_fallback(lines: dict, mood: str) -> str:

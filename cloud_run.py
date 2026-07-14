@@ -602,7 +602,10 @@ def run(mode: str):
     try:
         logger.info("--- Step CHR: AIキャラクターコメント生成 ---")
         from src.character_commentary import generate_comments
-        character_comments = generate_comments(prices, risk, fear_greed, ai_summary=ai_summary)
+        character_comments = generate_comments(prices, risk, fear_greed,
+                                               ai_summary=ai_summary, news=news,
+                                               sector=sector_analysis,
+                                               sector_ranking=sector_ranking)
         if character_comments.get("available"):
             logger.info("✅ ガネーシャ＆カワウソ コメント生成完了")
     except Exception:
@@ -935,7 +938,8 @@ def run(mode: str):
             from src.video_summary import run as run_video
             _vid = run_video(prices=prices, fear_greed=fear_greed, risk=risk,
                              ai_summary=ai_summary, news=news,
-                             character_comments=character_comments, mode=mode)
+                             character_comments=character_comments,
+                             chart_paths=chart_paths, mode=mode)
             if _vid.get("available"):
                 video_path = _vid.get("path")
                 logger.info("✅ 要約動画 準備完了")
