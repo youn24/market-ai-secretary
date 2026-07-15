@@ -350,9 +350,62 @@ def _sector_ctx(sector: dict = None, sector_ranking: dict = None) -> str:
     return ("【セクター/業種データ】\n" + "\n".join(lines)) if lines else ""
 
 
+def _market_extras_ctx(extras: dict) -> str:
+    """経済指標・決算・大きく動いた銘柄・材料など、各モジュールの結果を
+    プロンプト用の短いテキストに変換（分析を具体的にする核）。構造が違っても
+    要約テキスト→ムーバーのリスト→HTMLの順に、防御的に中身を拾う。"""
+    if not extras:
+        return ""
+    import re
+
+    def _strip(h):
+        t = re.sub(r"<[^>]+>", " ", str(h or ""))
+        return re.sub(r"\s+", " ", t).strip()
+
+    def _snippet(obj):
+        if not isinstance(obj, dict) or not obj.get("available"):
+            return ""
+        # 1) 明示的な要約テキスト
+        for k in ("summary", "text", "comment", "ai_comment", "headline",
+                  "conclusion", "brief", "detail"):
+            v = obj.get(k)
+            if isinstance(v, str) and len(v.strip()) > 8:
+                return v.strip()[:240]
+        # 2) 銘柄ムーバー系のリスト（具体名＋変化率）
+        for lk in ("movers", "gainers", "up", "ranking", "stocks", "items",
+                   "top", "losers", "down", "list"):
+            lst = obj.get(lk)
+            if isinstance(lst, list) and lst:
+                parts = []
+                for it in lst[:5]:
+                    if isinstance(it, dict):
+                        nm = (it.get("name") or it.get("ticker") or it.get("symbol")
+                              or it.get("code") or it.get("title") or "")
+                        ch = it.get("change_pct", it.get("chg_1d", it.get("change")))
+                        if nm:
+                            suffix = f"({ch:+.1f}%)" if isinstance(ch, (int, float)) else ""
+                            parts.append(f"{nm}{suffix}")
+                if parts:
+                    return " / ".join(parts)
+        # 3) HTMLを素にする
+        h = _strip(obj.get("html"))
+        return h[:240] if len(h) > 12 else ""
+
+    blocks = []
+    for label, obj in extras.items():
+        s = _snippet(obj)
+        if s:
+            blocks.append(f"・{label}: {s}")
+    if not blocks:
+        return ""
+    return ("【今日の詳しい材料（経済指標・決算・大きく動いた銘柄・ニュース等）】\n"
+            + "\n".join(blocks))
+
+
 def generate_comments(prices: dict, risk: dict, fear_greed: dict,
                       ai_summary: dict = None, news: list = None,
-                      sector: dict = None, sector_ranking: dict = None) -> dict:
+                      sector: dict = None, sector_ranking: dict = None,
+                      extras: dict = None) -> dict:
     """AIガネーシャとAIカワウソのコメントを生成
 
     ganesha/otter        = 詳細版（動画ナレーション・HTMLレポート・Telegram詳細用）
@@ -412,6 +465,7 @@ def generate_comments(prices: dict, risk: dict, fear_greed: dict,
             _heads.append(f"・{t[:70]}")
     news_ctx = ("【今日の主な材料（ニュース見出し）】\n" + "\n".join(_heads)) if _heads else ""
     sector_ctx = _sector_ctx(sector, sector_ranking)
+    extras_ctx = _market_extras_ctx(extras)
 
     neut_view = ""
     if ai_summary and ai_summary.get("available"):
@@ -444,7 +498,9 @@ def generate_comments(prices: dict, risk: dict, fear_greed: dict,
 【必ず盛り込む分析の骨子（自然な文章に織り込む。箇条書きにはしない）】
 1. 現状認識：主要指標の具体数値に触れる（VIX・ドル円・米株・日経・金利など）
 2. 因果：なぜ今この地合いなのか、背景と主因を論理でつなぐ
-3. 材料の読み：今日のニュース見出しがあれば、その意味と影響度を評価する
+3. 材料の読み：今日のニュース見出し・経済指標の結果・決算イベント・大きく動いた銘柄
+   （国内外）が与えられていれば、必ず固有名や具体的な数値を挙げて、その意味と影響度を評価する。
+   一般論で流さず「何が」「どれだけ」動いたかを具体的に述べること
 4. 波及と目線：米国市場→日本株・為替への波及、寄り付きで意識される水準や方向感
 5. 【最重要・厚く書く】セクター/物色戦略：与えられたセクターデータを必ず使い、
    (a) いま資金が向かっているセクターと、逃げているセクターを具体名と数値で挙げる
@@ -479,9 +535,11 @@ VIX={vix:.1f}（{_vix_note}） / S&P500={sp_chg:+.2f}% / NASDAQ={nq_chg:+.2f}% /
 ドル円={usdjpy:.2f}（{usdjpy_chg:+.2f}%・{_fx_note}） / 米10年金利={us10y_str} / F&G={fg} / リスクスコア={rs:+.2f}
 地合い: {sentiment}（{mood}）
 {sector_ctx}
+{extras_ctx}
 {news_ctx}
 {ai_context}
 
+与えられた具体データ（指標・決算・動いた銘柄・材料）は積極的に固有名を挙げて引用すること。
 老練なストラテジストの見識を、ガネーシャの威厳で、深く・長く・具体的に語ってください。"""
 
         ganesha_resp = model.generate_content(ganesha_prompt)
@@ -496,7 +554,8 @@ VIX={vix:.1f}（{_vix_note}） / S&P500={sp_chg:+.2f}% / NASDAQ={nq_chg:+.2f}% /
 今回は特に: {otter_flavor}。
 【役割】ガネーシャの難しい話を、中学生にもわかる言葉に「通訳」すること。
 今日のポイントを5つに分けて、順番にやさしく、たっぷり説明してください。
-　①何が起きたの？（昨日の海外市場のできごとを、具体的な数字も交えて）
+　①何が起きたの？（昨日の海外市場のできごと・経済指標の結果・大きなニュースを、
+　　　具体的な数字や会社の名前も交えて。決算や大きく動いた銘柄があれば必ず名前を出してかわいく紹介）
 　②どの業種が元気／元気ないの？（セクターの話を、身近な例えでかわいく。
 　　　例:「半導体＝スマホやゲーム機の頭脳をつくる会社」のように必ず言い換える。強い業種と弱い業種の両方）
 　③だから日本の株はどうなりそう？（どんな会社が上がりそうか、理由もセットで）
@@ -516,9 +575,11 @@ VIX={vix:.1f}（{_vix_note}） / S&P500={sp_chg:+.2f}% / NASDAQ={nq_chg:+.2f}% /
 ドル円={usdjpy:.2f}（{usdjpy_chg:+.2f}%・{_fx_note}） / F&G={fg}
 地合い: {sentiment}
 {sector_ctx}
+{extras_ctx}
 {news_ctx}
 
-カワウソらしくかわいく、4つのポイントをやさしく詳しく伝えてください。"""
+具体的な会社名や指標の名前が材料にあれば、やさしく言い換えつつ実際に紹介してね。
+カワウソらしくかわいく、5つのポイントをやさしく詳しく伝えてください。"""
 
         otter_resp = model.generate_content(otter_prompt)
         o_long, o_short = _split_long_short(otter_resp.text)

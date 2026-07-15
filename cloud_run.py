@@ -597,19 +597,9 @@ def run(mode: str):
     except Exception:
         logger.error("チャート生成エラー（続行）"); logger.debug(traceback.format_exc())
 
-    # Step CHR: AIキャラクターコメント生成（ガネーシャ＆カワウソ）
+    # Step CHR は後方（決算・材料・動いた銘柄など全素材が揃った後）へ移動。
+    # ここでは器だけ用意しておく（以降の各ステップは character_comments を参照しない）。
     character_comments = {"available": False, "ganesha": "", "otter": ""}
-    try:
-        logger.info("--- Step CHR: AIキャラクターコメント生成 ---")
-        from src.character_commentary import generate_comments
-        character_comments = generate_comments(prices, risk, fear_greed,
-                                               ai_summary=ai_summary, news=news,
-                                               sector=sector_analysis,
-                                               sector_ranking=sector_ranking)
-        if character_comments.get("available"):
-            logger.info("✅ ガネーシャ＆カワウソ コメント生成完了")
-    except Exception:
-        logger.error("キャラクターコメントエラー"); logger.debug(traceback.format_exc())
 
     # Step L5d: マルチモーダル分析（チャート画像をVisionで解析・Step6後に実行）
     multimodal = {"available": False}
@@ -835,6 +825,35 @@ def run(mode: str):
             logger.info(f"✅ 今後のイベント: {len(upcoming.get('events', []))}件")
     except Exception:
         logger.error("イベント予定エラー"); logger.debug(traceback.format_exc())
+
+    # Step CHR: AIキャラクターコメント生成（全素材が揃ったこの位置で実行）
+    try:
+        logger.info("--- Step CHR: AIキャラクターコメント生成（詳細材料つき） ---")
+        from src.character_commentary import generate_comments
+        _extras = {
+            "経済指標":            econ_analysis,
+            "決算プレビュー":       earnings_preview,
+            "決算ブリーフ":         earnings_brief,
+            "材料分析":            catalyst,
+            "テーマ株ランキング":    theme_ranking,
+            "需給ランキング":       supply_demand,
+            "日経内部指標":         nikkei_internals,
+            "日本株ADR(夜間)":     adr,
+            "株ドラゴン":          kabudragon,
+            "PTS夜間":            pts,
+            "米国時間外ムーバー":    us_ah,
+            "CFD/SQ":            cfd_sq,
+            "今後のイベント":       upcoming,
+        }
+        character_comments = generate_comments(prices, risk, fear_greed,
+                                               ai_summary=ai_summary, news=news,
+                                               sector=sector_analysis,
+                                               sector_ranking=sector_ranking,
+                                               extras=_extras)
+        if character_comments.get("available"):
+            logger.info("✅ ガネーシャ＆カワウソ コメント生成完了（詳細材料反映）")
+    except Exception:
+        logger.error("キャラクターコメントエラー"); logger.debug(traceback.format_exc())
 
     # Step 7: HTMLレポート生成
     report_paths = {}
