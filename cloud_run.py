@@ -832,9 +832,15 @@ def run(mode: str):
         from src.character_commentary import generate_comments
         _extras = {
             "経済指標":            econ_analysis,
+            "マクロ要約":          macro,
             "決算プレビュー":       earnings_preview,
             "決算ブリーフ":         earnings_brief,
+            "財務・決算分析":       financial_analysis,
             "材料分析":            catalyst,
+            "TDnet適時開示":       tdnet,
+            "手法シグナル(押し目/ブレイク)": setups,
+            "注目銘柄ドシエ":       stock_dossier,
+            "日本株スクリーナー":    jquants,
             "テーマ株ランキング":    theme_ranking,
             "需給ランキング":       supply_demand,
             "日経内部指標":         nikkei_internals,
