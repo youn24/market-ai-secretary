@@ -1,0 +1,64 @@
+# Telegram専用通知（手動実行）
+# X（Twitter）/ note などの公開投稿はしない。
+# 仕組み: notify_x は X の API認証4点が無いと自動スキップするため、
+#         この Workflow では X 系 Secret を env に渡さない → Telegram だけ届く。
+
+name: Telegram専用通知（X投稿なし）
+
+on:
+  workflow_dispatch:   # 手動実行のみ
+
+permissions:
+  contents: write
+
+jobs:
+  telegram-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: リポジトリをチェックアウト
+        uses: actions/checkout@v4
+
+      - name: Python 3.11 セットアップ
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: 日本語・絵文字フォント＋ffmpegインストール
+        run: |
+          sudo apt-get install -y fonts-noto-cjk fonts-noto-color-emoji ffmpeg
+          fc-cache -fv
+
+      - name: ライブラリインストール
+        run: |
+          pip install --upgrade pip
+          pip install pandas numpy requests feedparser beautifulsoup4 \
+                      lxml python-dotenv PyYAML yfinance plotly \
+                      matplotlib kaleido google-generativeai google-genai playwright \
+                      edge-tts
+
+      - name: Playwright Chromium インストール（サマリーカードのHTML→PNG用）
+        run: |
+          python -m playwright install --with-deps chromium
+
+      - name: VOICEVOX音声エンジン起動（キャラ声・失敗しても続行）
+        run: |
+          docker run -d --name voicevox -p 50021:50021 \
+            voicevox/voicevox_engine:cpu-ubuntu20.04-latest || true
+          for i in $(seq 1 30); do
+            curl -sf http://127.0.0.1:50021/version && break || sleep 2
+          done || true
+
+      - name: Telegram通知のみ実行（X/note の Secret は渡さない＝自動スキップ）
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GITHUB_PAGES_URL: "https://youn24.github.io/market-ai-secretary"
+          CF_PROXY_URL: ${{ secrets.CF_PROXY_URL }}
+          VOICEVOX_URL: "http://127.0.0.1:50021"
+        run: |
+          echo "📨 Telegram専用モードで実行（X/note投稿なし）..."
+          python cloud_run.py --mode morning
