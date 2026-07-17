@@ -5,7 +5,11 @@ on:
   schedule:
     - cron: "*/15 22-23 * * 0-4"  # UTC 22-23時（JST 7-8時）平日
     - cron: "*/15 0-13 * * 1-5"   # UTC 0-13時（JST 9-22時）平日
+    - cron: "*/30 14-21 * * 1-5"  # UTC 14-21時（JST 23-翌6時）夜間＝日経先物・米市場監視（30分毎）
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   monitor:
@@ -35,3 +39,14 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           python monitor_run.py
+
+      - name: アラート状態を保存（クールダウン連発防止用）
+        run: |
+          if [ -n "$(git status --porcelain data/alert_state.json)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add data/alert_state.json
+            git commit -m "chore: アラート状態更新 [skip ci]"
+            git pull --rebase origin main || true
+            git push || true
+          fi

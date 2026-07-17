@@ -5,8 +5,9 @@
 import os
 import json
 import traceback
+from datetime import datetime
 from pathlib import Path
-from src.utils import setup_logger, get_jst_now, get_dirs
+from src.utils import setup_logger, get_jst_now, get_dirs, BASE_DIR
 
 logger = setup_logger("alert_monitor")
 
@@ -14,12 +15,50 @@ logger = setup_logger("alert_monitor")
 # 細かい急変通知は廃止。本当に大きな暴落・恐怖急騰の時だけ安全網として通知する。
 #   dir="down" … その%以上の「下落」で発火
 #   dir="up"   … その%以上の「上昇」で発火（VIX＝恐怖の急騰用）
+# 日経はほぼ24時間動くCME先物(NIY=F)を主監視 — 夜間の暴落も検知できる。
+# 現物(^N225)は先物取得失敗時の安全網としてザラ場中のみ機能する。
 THRESHOLDS = {
-    "^N225": {"name": "日経平均",    "pct": 3.0,  "dir": "down"},
-    "^GSPC": {"name": "S&P500",     "pct": 2.5,  "dir": "down"},
-    "^IXIC": {"name": "NASDAQ",     "pct": 3.0,  "dir": "down"},
-    "^VIX":  {"name": "VIX恐怖指数", "pct": 25.0, "dir": "up"},
+    "NIY=F": {"name": "日経先物(CME 24h)", "pct": 3.0,  "dir": "down"},
+    "^N225": {"name": "日経平均(現物)",     "pct": 3.0,  "dir": "down"},
+    "^GSPC": {"name": "S&P500",           "pct": 2.5,  "dir": "down"},
+    "^IXIC": {"name": "NASDAQ",           "pct": 3.0,  "dir": "down"},
+    "^VIX":  {"name": "VIX恐怖指数",       "pct": 25.0, "dir": "up"},
 }
+
+# クールダウン: 同一銘柄のアラートは4時間抑制（さらに1pt以上悪化したら再通知）
+_STATE_FILE     = BASE_DIR / "data" / "alert_state.json"
+_COOLDOWN_HOURS = 4
+_ESCALATE_PT    = 1.0
+
+
+def _apply_cooldown(alerts: list) -> list:
+    """15分ごとの実行で同じ暴落を連発通知しないためのゲート。"""
+    now = get_jst_now()
+    try:
+        st = json.loads(_STATE_FILE.read_text(encoding="utf-8"))
+    except Exception:
+        st = {}
+    kept = []
+    for a in alerts:
+        rec = st.get(a["symbol"])
+        if rec:
+            try:
+                hours = (now - datetime.fromisoformat(rec["ts"])).total_seconds() / 3600
+            except Exception:
+                hours = 99
+            if hours < _COOLDOWN_HOURS and abs(a["change"]) < abs(rec.get("chg", 0)) + _ESCALATE_PT:
+                logger.info(f"クールダウン中のためスキップ: {a['name']} ({a['change']:+.2f}%)")
+                continue
+        kept.append(a)
+    if kept:
+        for a in kept:
+            st[a["symbol"]] = {"ts": now.isoformat(), "chg": a["change"]}
+        try:
+            _STATE_FILE.parent.mkdir(exist_ok=True)
+            _STATE_FILE.write_text(json.dumps(st, ensure_ascii=False), encoding="utf-8")
+        except Exception:
+            logger.debug(traceback.format_exc())
+    return kept
 
 
 def check_alerts(prices: dict) -> list:
@@ -77,7 +116,22 @@ def build_alert_message(alerts: list, prices: dict, fear_greed: dict, risk: dict
 def run_alert_check(prices: dict, fear_greed: dict, risk: dict) -> bool:
     """アラートチェックを実行してTelegram通知"""
     try:
+        # 日経先物(CME・ほぼ24時間)を取得して監視対象へ注入 — 夜間の暴落も捕捉
+        try:
+            from src.cfd_sq import _fetch_one
+            f = _fetch_one("NIY=F")
+            if f and f.get("latest") and f.get("change_pct") is not None:
+                prices = {**prices, "NIY=F": f}
+                logger.info(f"日経先物: {f['latest']:,.0f} ({f['change_pct']:+.2f}%)")
+        except Exception:
+            logger.debug(traceback.format_exc())
+
         alerts = check_alerts(prices)
+        # 先物と現物が同時ヒットした場合は先物のみ通知（重複排除）
+        syms = {a["symbol"] for a in alerts}
+        if "NIY=F" in syms and "^N225" in syms:
+            alerts = [a for a in alerts if a["symbol"] != "^N225"]
+        alerts = _apply_cooldown(alerts)
         if not alerts:
             logger.info(f"アラートなし（{len(prices)}銘柄チェック済み）")
             return False
