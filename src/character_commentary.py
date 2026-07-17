@@ -402,6 +402,55 @@ def _market_extras_ctx(extras: dict) -> str:
             + "\n".join(blocks))
 
 
+def _rates_semi_ctx(prices: dict) -> str:
+    """イールドカーブ全体・半導体ブレッドス・米セクターETF・コモディティ/ドルを
+    価格dictから正確に整形（金利と半導体を厚く語らせる材料）"""
+    p = prices or {}
+
+    def v(k):
+        it = p.get(k, {})
+        if isinstance(it, dict):
+            return it.get("latest"), it.get("change_pct")
+        return None, None
+
+    def num(x):
+        return isinstance(x, (int, float))
+
+    lines = []
+
+    # 米イールドカーブ
+    curve = [("3ヶ月", "^IRX"), ("2年", "2YY=F"), ("5年", "^FVX"), ("10年", "^TNX"), ("30年", "^TYX")]
+    pts = []
+    for lbl, k in curve:
+        lv, _ = v(k)
+        if num(lv):
+            pts.append(f"{lbl}{lv:.2f}%")
+    if pts:
+        y2, _ = v("2YY=F"); y10, _ = v("^TNX")
+        tail = ""
+        if num(y2) and num(y10):
+            spread = y10 - y2
+            tail = f"（2s10s={spread:+.2f}%・{'順イールド' if spread > 0 else '逆イールド'}）"
+        lines.append("・米イールドカーブ: " + " / ".join(pts) + tail)
+
+    def breadth(pairs, label):
+        seg = []
+        for nm, k in pairs:
+            _, ch = v(k)
+            if num(ch):
+                seg.append(f"{nm}{ch:+.1f}%")
+        if seg:
+            lines.append(f"・{label}: " + " / ".join(seg))
+
+    breadth([("SOX", "^SOX"), ("SMH", "SMH"), ("エヌビディア", "NVDA"), ("AMD", "AMD"),
+             ("ブロードコム", "AVGO"), ("マイクロン", "MU"), ("アーム", "ARM")], "半導体（指数と個別）")
+    breadth([("テック", "XLK"), ("金融", "XLF"), ("エネルギー", "XLE"), ("公益", "XLU")], "米セクターETF")
+    breadth([("金", "GC=F"), ("銀", "SI=F"), ("銅", "HG=F"), ("原油", "CL=F"),
+             ("ドル指数", "DX-Y.NYB")], "コモディティ/ドル")
+
+    return ("【金利・半導体・セクターの詳細データ】\n" + "\n".join(lines)) if lines else ""
+
+
 def generate_comments(prices: dict, risk: dict, fear_greed: dict,
                       ai_summary: dict = None, news: list = None,
                       sector: dict = None, sector_ranking: dict = None,
@@ -466,6 +515,7 @@ def generate_comments(prices: dict, risk: dict, fear_greed: dict,
     news_ctx = ("【今日の主な材料（ニュース見出し）】\n" + "\n".join(_heads)) if _heads else ""
     sector_ctx = _sector_ctx(sector, sector_ranking)
     extras_ctx = _market_extras_ctx(extras)
+    rates_semi_ctx = _rates_semi_ctx(prices)
 
     neut_view = ""
     if ai_summary and ai_summary.get("available"):
@@ -547,11 +597,14 @@ def generate_comments(prices: dict, risk: dict, fear_greed: dict,
 VIX={vix:.1f}（{_vix_note}） / S&P500={sp_chg:+.2f}% / NASDAQ={nq_chg:+.2f}% / 日経={nk_chg:+.2f}%
 ドル円={usdjpy:.2f}（{usdjpy_chg:+.2f}%・{_fx_note}） / 米10年金利={us10y_str} / F&G={fg} / リスクスコア={rs:+.2f}
 地合い: {sentiment}（{mood}）
+{rates_semi_ctx}
 {sector_ctx}
 {extras_ctx}
 {news_ctx}
 {ai_context}
 
+金利は必ずイールドカーブの形状（順/逆イールド・2s10s）に触れ、半導体は指数だけでなく
+個別（メモリ/AI/装置）の強弱の二極化を具体名で述べること。
 与えられた具体データ（指標・決算・動いた銘柄・材料）は積極的に固有名を挙げて引用すること。
 老練なストラテジストの見識を、ガネーシャの威厳で、深く・長く・具体的に語ってください。"""
 
