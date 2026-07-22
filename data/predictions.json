@@ -418,6 +418,35 @@
       "verified": false,
       "correct": null,
       "actual_move": null
+    },
+    {
+      "date": "2026-07-21",
+      "direction": "neutral",
+      "score": 1.73,
+      "fg": 37.5,
+      "nikkei": 64141.1211,
+      "sp500": 7443.2798,
+      "usdjpy": 162.495,
+      "vix": 18.65,
+      "confidence": null,
+      "verified": true,
+      "correct": true,
+      "actual_move": 0.0,
+      "actual_dir": "neutral"
+    },
+    {
+      "date": "2026-07-22",
+      "direction": "bull",
+      "score": 15.31,
+      "fg": 41.0,
+      "nikkei": 64141.1211,
+      "sp500": 7509.2002,
+      "usdjpy": 163.2,
+      "vix": 17.05,
+      "confidence": null,
+      "verified": false,
+      "correct": null,
+      "actual_move": null
     }
   ],
   "accuracy": {}
