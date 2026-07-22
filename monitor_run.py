@@ -48,6 +48,14 @@ def run():
     except Exception:
         logger.error("アラートエラー"); logger.debug(traceback.format_exc())
 
+    # 米国時間外の個別株 大変動アラート（±5%級＝決算反応など）
+    try:
+        from src.alert_monitor import run_afterhours_alert
+        if run_afterhours_alert():
+            logger.info("✅ 時間外ムーバーアラート送信完了")
+    except Exception:
+        logger.error("時間外アラートエラー"); logger.debug(traceback.format_exc())
+
     logger.info("====== 監視完了 ======")
 
 

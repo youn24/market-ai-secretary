@@ -113,6 +113,64 @@ def build_alert_message(alerts: list, prices: dict, fear_greed: dict, risk: dict
     return "\n".join(lines)
 
 
+# 米国時間外の個別株アラート閾値（決算級の大きな反応のみ・スパム防止）
+AH_ALERT_PCT = 5.0
+
+
+def run_afterhours_alert() -> bool:
+    """
+    米国主要株の時間外（アフターアワーズ/プレマーケット）±5%級の大変動を通知。
+    決算発表への最初の反応など、翌朝の東京市場に波及しやすい動きを夜のうちに知らせる。
+    クールダウン（4時間・1pt悪化で再通知）は指数アラートと同じゲートを共用。
+    """
+    try:
+        from src.us_afterhours import run as run_us
+        us = run_us()
+        movers = [m for m in us.get("movers", [])
+                  if abs(m.get("chg_pct") or 0) >= AH_ALERT_PCT]
+        if not movers:
+            logger.info(f"時間外±{AH_ALERT_PCT:.0f}%級の個別株変動なし")
+            return False
+
+        alerts = [{
+            "symbol": f"AH:{m['symbol']}",
+            "name":   f"{m['name']}({m['symbol']})",
+            "value":  m.get("price"),
+            "change": m["chg_pct"],
+            "direction": "急騰🔺" if m["chg_pct"] > 0 else "急落🔻",
+        } for m in movers]
+        alerts = _apply_cooldown(alerts)
+        if not alerts:
+            return False
+
+        session = movers[0].get("session", "post")
+        s_label = "引け後の時間外" if session == "post" else "寄り付き前の時間外"
+        now = get_jst_now().strftime("%m-%d %H:%M JST")
+        lines = [
+            "🇺🇸 *時間外で大きな動き* 🚨",
+            f"⏰ {now}（{s_label}）",
+            "━━━━━━━━━━━━━━━",
+        ]
+        for a in alerts[:5]:
+            price_s = f"${a['value']:,.2f}" if a.get("value") else "—"
+            s = "▲" if a["change"] > 0 else "▼"
+            lines.append(f"{a['direction']} *{a['name']}*: {price_s} ({s}{abs(a['change']):.1f}%)")
+        lines += [
+            "━━━━━━━━━━━━━━━",
+            "決算・材料への時間外反応。翌朝の東京市場の関連銘柄・セクターに波及しやすい動きです。",
+            "📱 市場AI秘書",
+        ]
+
+        from src.notify_telegram import send_message
+        send_message("\n".join(lines))
+        logger.info(f"🚨 時間外ムーバーアラート送信: {len(alerts)}銘柄")
+        return True
+    except Exception:
+        logger.error("時間外アラートエラー")
+        logger.debug(traceback.format_exc())
+        return False
+
+
 def run_alert_check(prices: dict, fear_greed: dict, risk: dict) -> bool:
     """アラートチェックを実行してTelegram通知"""
     try:
