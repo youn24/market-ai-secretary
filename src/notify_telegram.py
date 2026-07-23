@@ -525,7 +525,7 @@ def _build_detail_message(risk, prices, fear_greed, news,
                           stock_dossier=None, ensemble=None,
                           kabudragon=None, pts=None,
                           us_afterhours=None, cfd_sq=None,
-                          upcoming=None) -> str:
+                          upcoming=None, theme_ranking=None) -> str:
     """
     通知②の詳細テキスト（4096文字以内・ボタン付きで送る）
     AIの3視点・シナリオ・テクニカル・セクター・予測精度・自律AIミッション
@@ -633,6 +633,21 @@ def _build_detail_message(risk, prices, fear_greed, news,
             f"🟢 強いセクター: {top_str}" if top_str else "",
         ]
         lines += [""] + [l for l in _blk if l]
+
+    # ── テーマ株ランキング（上位3＋前回からの変動） ──
+    th = theme_ranking or {}
+    if th.get("available") and th.get("top5"):
+        medals = ["🥇", "🥈", "🥉"]
+        _blk = ["🔥 *人気テーマ*"]
+        for i, r in enumerate(th["top5"][:3]):
+            arrow = "▲" if r.get("perf_5d", 0) > 0 else "▼" if r.get("perf_5d", 0) < 0 else "➡"
+            _blk.append(f"{medals[i]} {r['theme']} {arrow}{abs(r.get('perf_5d', 0)):.1f}% (ニュース{r.get('news_count', 0)}件)")
+        for m in (th.get("movers") or [])[:3]:
+            if m.get("kind") == "new":
+                _blk.append(f"🆕 急浮上: *{m['theme']}*（圏外 → {m['rank']}位）")
+            else:
+                _blk.append(f"⬆️ 上昇中: *{m['theme']}*（{m['prev']}位 → {m['rank']}位）")
+        lines += [""] + _blk
         if sec.get("ai_comment"):
             lines.append(f"💬 {sec['ai_comment'][:100]}")
 
@@ -899,6 +914,7 @@ def run(risk, analysis, report_paths, mode,
             us_afterhours=us_afterhours,
             cfd_sq=cfd_sq,
             upcoming=upcoming,
+            theme_ranking=theme_ranking,
         )
 
         report_url = report_paths.get("url", "").strip()

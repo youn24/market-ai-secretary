@@ -109,7 +109,7 @@ jobs:
           git config --global user.name "GitHub Actions Bot"
           # GitHub Pages は main/docs を公開するため、生成した docs/ を必ずpushする
           # （これをしないと公開ページが更新されず古いまま固定される）
-          git add docs data/predictions.json data/ai_memory.json 2>/dev/null || true
+          git add docs data/predictions.json data/ai_memory.json data/theme_history.json data/weekly_calendar.json 2>/dev/null || true
           git diff --staged --quiet || git commit -m "📊 レポート更新 $(date '+%Y-%m-%d %H:%M JST')"
           git push origin main || true
 

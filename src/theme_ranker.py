@@ -201,6 +201,39 @@ def run(prices: dict = None, risk: dict = None, fear_greed: dict = None,
     # 4. スコア降順でソート
     rankings.sort(key=lambda x: x["score"], reverse=True)
 
+    # 4.5 前回実行との変動検出（新規ランクイン・急上昇）
+    movers = []
+    try:
+        hist_f = Path(__file__).parent.parent / "data" / "theme_history.json"
+        prev_rank = {}
+        prev_date = ""
+        try:
+            h = json.loads(hist_f.read_text(encoding="utf-8"))
+            prev_date = h.get("date", "")
+            prev_rank = {t: i + 1 for i, t in enumerate(h.get("order", []))}
+        except Exception:
+            pass
+        today_s = get_jst_now().strftime("%Y-%m-%d")
+        # 同日再実行の自己比較は変動ゼロになるだけで誤検出はしない
+        if prev_rank and prev_date != today_s:
+            for i, r in enumerate(rankings[:10]):
+                rank = i + 1
+                p = prev_rank.get(r["theme"])
+                if p is None and rank <= 5:
+                    movers.append({"theme": r["theme"], "prev": None,
+                                   "rank": rank, "kind": "new"})
+                elif p is not None and p - rank >= 3:
+                    movers.append({"theme": r["theme"], "prev": p,
+                                   "rank": rank, "kind": "up"})
+        hist_f.parent.mkdir(exist_ok=True)
+        hist_f.write_text(json.dumps(
+            {"date": today_s, "order": [r["theme"] for r in rankings]},
+            ensure_ascii=False), encoding="utf-8")
+        if movers:
+            logger.info(f"テーマ変動: {len(movers)}件（前回={prev_date}比）")
+    except Exception:
+        logger.debug(traceback.format_exc())
+
     # 5. Gemini 総評
     ai_comment = _gemini_theme_analysis(rankings, news)
 
@@ -213,12 +246,20 @@ def run(prices: dict = None, risk: dict = None, fear_greed: dict = None,
         medal = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣"][i]
         arrow = "▲" if r["perf_5d"] > 0 else "▼" if r["perf_5d"] < 0 else "➡"
         tg += f"{medal} {r['theme']}  {arrow}{abs(r['perf_5d']):.1f}%  ニュース{r['news_count']}件\n"
+    if movers:
+        tg += "\n📈 前回からの変動:\n"
+        for m in movers[:4]:
+            if m["kind"] == "new":
+                tg += f"🆕 {m['theme']}: 圏外 → {m['rank']}位\n"
+            else:
+                tg += f"⬆️ {m['theme']}: {m['prev']}位 → {m['rank']}位\n"
     if ai_comment:
         tg += f"\n💡 {ai_comment}"
 
     return {
         "available":        True,
         "rankings":         rankings,
+        "movers":           movers,
         "top5":             rankings[:5],
         "kabutan_trending": kabutan_themes[:10],
         "ai_comment":       ai_comment,
