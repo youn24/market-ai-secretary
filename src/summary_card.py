@@ -141,7 +141,8 @@ def _make_card_matplotlib(prices: dict, fear_greed: dict, risk: dict,
                    ec=color, lw=1.0, rad=rad + pad, z=z, alpha=0.05 * k)
 
         # ─── ① ヘッダー ──────────────────────────────────────────────
-        ax.text(4, 97.4, "🤖 市場AI秘書", color=WHITE, fontsize=16,
+        rr(4, 96.3, 2.2, 2.2, ACCENT, rad=0.6, z=4)
+        ax.text(7.4, 97.4, "市場AI秘書", color=WHITE, fontsize=16,
                 fontweight="bold", va="center", zorder=4)
         rr(4, 95.6, 13, 0.45, ACCENT, rad=0.2, z=4)  # アクセント下線
         ax.text(96, 97.4, _now_label(), color=MUTED, fontsize=9.5,
@@ -175,7 +176,7 @@ def _make_card_matplotlib(prices: dict, fear_greed: dict, risk: dict,
         else:            fg_c, fg_lbl = RED,   "超恐怖"
 
         rr(62, 82.8, 34, 10.5, CARD2, ec=BORDER, lw=1.0, z=3)
-        ax.text(79, 91.2, "恐怖＆強欲指数", color=MUTED, fontsize=8.5,
+        ax.text(79, 91.2, "市場の気分（恐怖＆強欲指数）", color=MUTED, fontsize=7.8,
                 ha="center", va="center", zorder=5)
         ax.text(75.5, 86.6, str(fg_n), color=fg_c, fontsize=23,
                 fontweight="bold", ha="center", va="center", zorder=5)
@@ -193,6 +194,16 @@ def _make_card_matplotlib(prices: dict, fear_greed: dict, risk: dict,
         gy_top, gh, gvg = 80.5, 9.8, 1.3
         tile_chgs = []
 
+        # 初心者向けミニ解説（各指標が「何を意味するか」を一言で）
+        _HINTS = {
+            "日経平均":  "日本株全体の体温計",
+            "S&P500":   "米国株の代表指数",
+            "NASDAQ":   "米ハイテク株",
+            "ドル円":    "↑=円安 輸出に追い風",
+            "VIX":      "恐怖度 低いほど安心",
+            "BTC":      "リスク選好の目安",
+        }
+
         for i, (sym, label, unit, dp) in enumerate(_TILES):
             col = i % 3
             row = i // 3
@@ -202,7 +213,11 @@ def _make_card_matplotlib(prices: dict, fear_greed: dict, risk: dict,
             val = d.get("latest")
             chg = d.get("change_pct")
             tile_chgs.append(chg)
-            c   = _tile_color(chg)
+            # VIX（恐怖指数）だけは逆: 下落=安心=緑 / 上昇=警戒=赤
+            if label == "VIX" and chg is not None:
+                c = _tile_color(-chg)
+            else:
+                c = _tile_color(chg)
 
             rr(x, y, gw, gh, CARD2, ec=BORDER, lw=0.8, z=3)
             rr(x, y, gw, 0.5, c, rad=0.25, z=4)  # 上部アクセントライン
@@ -218,16 +233,23 @@ def _make_card_matplotlib(prices: dict, fear_greed: dict, risk: dict,
             else:
                 ax.text(x + 3.2, y + 1.9, "—", color=MUTED, fontsize=9,
                         va="center", zorder=5)
+            hint = _HINTS.get(label)
+            if hint:
+                ax.text(x + gw - 1.4, y + gh - 2.1, hint, color=MUTED,
+                        fontsize=6.2, ha="right", va="center", zorder=5, alpha=0.9)
 
         # ─── ④ ミニ棒グラフ ──────────────────────────────────────────
         bax, bay, baw, bah = 4, 46.5, 92, 11.0
         rr(bax, bay, baw, bah + 1.8, PANEL, ec=BORDER, lw=0.8, z=3)
-        ax.text(bax + 2.5, bay + bah + 0.9, "📊 主要指数の騰落率 (%)",
+        rr(bax + 2.5, bay + bah + 0.15, 1.5, 1.5, ACCENT, rad=0.4, z=5)
+        ax.text(bax + 4.9, bay + bah + 0.9, "きょうの動き（前日比%）",
                 color=WHITE, fontsize=9.5, fontweight="bold", va="center", zorder=5)
+        ax.text(bax + baw - 2.5, bay + bah + 0.9, "上=上昇・下=下落／VIXだけ下がると安心=緑",
+                color=MUTED, fontsize=6.8, ha="right", va="center", zorder=5)
 
-        center_y  = bay + bah / 2 - 0.5
+        center_y  = bay + bah * 0.60
         max_pct   = 3.0
-        bar_scale = (bah * 0.40) / max_pct
+        bar_scale = (bah * 0.36) / max_pct
         bspacing  = baw / 6
         bw_bar    = bspacing * 0.50
 
@@ -237,16 +259,23 @@ def _make_card_matplotlib(prices: dict, fear_greed: dict, risk: dict,
         for i, (chg, lbl) in enumerate(zip(tile_chgs, _TILE_SHORT)):
             bx = bax + bspacing * i + bspacing / 2 - bw_bar / 2
             if chg is not None and chg != 0:
-                bh = min(abs(chg) * bar_scale, bah * 0.40)
+                bh = min(abs(chg) * bar_scale, bah * 0.36)
                 by = center_y if chg > 0 else center_y - bh
-                bc = GREEN if chg > 0 else RED
+                # VIXは下落=安心なので色だけ反転（バーの向きは事実どおり）
+                good = (chg < 0) if lbl == "VIX" else (chg > 0)
+                bc = GREEN if good else RED
                 rr(bx, by, bw_bar, bh, bc, rad=0.5, lw=0, z=5)
-                offset = bh + 1.3
-                va     = "bottom" if chg > 0 else "top"
-                ty     = center_y + offset if chg > 0 else center_y - offset
-                ax.text(bx + bw_bar / 2, ty, f"{chg:+.2f}",
-                        color=bc, fontsize=8, fontweight="bold",
-                        ha="center", va=va, zorder=6)
+                ty_raw = center_y + bh + 1.3 if chg > 0 else center_y - bh - 1.3
+                if bay + 2.6 <= ty_raw <= bay + bah + 0.4:
+                    va = "bottom" if chg > 0 else "top"
+                    ax.text(bx + bw_bar / 2, ty_raw, f"{chg:+.2f}",
+                            color=bc, fontsize=8, fontweight="bold",
+                            ha="center", va=va, zorder=6)
+                else:
+                    # 収まらない大きなバーは、バーの中に濃色で表示
+                    ax.text(bx + bw_bar / 2, by + bh / 2, f"{chg:+.2f}",
+                            color="#0a1626", fontsize=8, fontweight="bold",
+                            ha="center", va="center", zorder=6)
             ax.text(bx + bw_bar / 2, bay + 0.6, lbl,
                     color=MUTED, fontsize=8.5, ha="center", va="bottom", zorder=6)
 
@@ -255,7 +284,8 @@ def _make_card_matplotlib(prices: dict, fear_greed: dict, risk: dict,
         aiy, aih = 28.7, 17.0
         rr(4, aiy, 92, aih, PANEL, ec=BORDER, lw=0.8, z=3)
         rr(4, aiy + aih - 0.5, 92, 0.5, ACCENT, rad=0.25, z=4, alpha=0.6)
-        ax.text(6.5, aiy + aih - 2.0, "🤖 AI分析要約",
+        rr(6.5, aiy + aih - 2.8, 1.6, 1.6, GOLD, rad=0.4, z=5)
+        ax.text(9.0, aiy + aih - 2.0, "AI分析要約",
                 color=WHITE, fontsize=11, fontweight="bold", va="center", zorder=5)
         ax.text(93.5, aiy + aih - 2.0, "Gemini 3視点ディベート",
                 color=MUTED, fontsize=7, ha="right", va="center", zorder=5)
@@ -291,8 +321,11 @@ def _make_card_matplotlib(prices: dict, fear_greed: dict, risk: dict,
         ny_top = aiy - 1.2
         ny_h   = ny_top - 3.0
         rr(4, 3.0, 92, ny_h, PANEL, ec=BORDER, lw=0.8, z=3)
-        ax.text(6.5, ny_top - 2.0, "📰 注目ニュース",
+        rr(6.5, ny_top - 2.7, 1.5, 1.5, BLUE, rad=0.4, z=5)
+        ax.text(8.9, ny_top - 2.0, "注目ニュース",
                 color=WHITE, fontsize=9.5, fontweight="bold", va="center", zorder=5)
+        ax.text(93.5, ny_top - 2.0, "●=重要度", color=MUTED, fontsize=6.8,
+                ha="right", va="center", zorder=5)
 
         news_items = news[:3]
         nry = ny_top - 5.6
