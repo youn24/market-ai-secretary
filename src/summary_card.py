@@ -250,30 +250,42 @@ def _make_card_matplotlib(prices: dict, fear_greed: dict, risk: dict,
             ax.text(bx + bw_bar / 2, bay + 0.6, lbl,
                     color=MUTED, fontsize=8.5, ha="center", va="bottom", zorder=6)
 
-        # ─── ⑤ AI 3視点分析 ──────────────────────────────────────────
-        aiy, aih = 32.5, 13.2
+        # ─── ⑤ AI分析要約（タイポグラフィ階層: 見出し11 sans → 総合11.5 明朝 → 論点8.5） ───
+        _SERIF = ["Noto Serif CJK JP", "Yu Mincho", "MS Mincho", "serif"]
+        aiy, aih = 28.7, 17.0
         rr(4, aiy, 92, aih, PANEL, ec=BORDER, lw=0.8, z=3)
         rr(4, aiy + aih - 0.5, 92, 0.5, ACCENT, rad=0.25, z=4, alpha=0.6)
-        ax.text(6.5, aiy + aih - 2.0, "🤖 AI 3視点分析",
-                color=WHITE, fontsize=9.5, fontweight="bold", va="center", zorder=5)
+        ax.text(6.5, aiy + aih - 2.0, "🤖 AI分析要約",
+                color=WHITE, fontsize=11, fontweight="bold", va="center", zorder=5)
+        ax.text(93.5, aiy + aih - 2.0, "Gemini 3視点ディベート",
+                color=MUTED, fontsize=7, ha="right", va="center", zorder=5)
 
-        bull = _clip(ai_summary.get("bull_view", ""), 26)
-        bear = _clip(ai_summary.get("bear_view", ""), 26)
-        neut = _clip(ai_summary.get("neutral_view", ""), 26)
+        # 総合判断＝主役（明朝体・大きめ・2行）
+        neut_raw = (ai_summary.get("neutral_view") or "").strip()
+        n1, n2 = neut_raw[:22], neut_raw[22:43] + ("…" if len(neut_raw) > 43 else "")
+        rr(6.5, aiy + aih - 5.6, 11.5, 2.6, ACCENT, rad=0.6, z=4, alpha=0.22)
+        ax.text(12.2, aiy + aih - 4.3, "総合判断", color=ACCENT, fontsize=8,
+                fontweight="bold", ha="center", va="center", zorder=5)
+        ax.text(6.5, aiy + aih - 7.6, n1 or "データなし", color=WHITE,
+                fontsize=11.5, fontweight="bold", fontfamily=_SERIF,
+                va="center", zorder=5)
+        if n2:
+            ax.text(6.5, aiy + aih - 10.4, n2, color=WHITE,
+                    fontsize=11.5, fontweight="bold", fontfamily=_SERIF,
+                    va="center", zorder=5)
 
-        point_rows = [
-            ("▲", "強気", GREEN, bull or "データなし"),
-            ("▼", "弱気", RED,   bear or "データなし"),
-            ("◆", "中立", BLUE,  neut or "データなし"),
-        ]
-        ry = aiy + aih - 5.2
-        for icon, lbl, c, txt in point_rows:
-            rr(6.5, ry - 1.1, 8.5, 2.4, c, rad=0.6, z=4, alpha=0.16)
-            ax.text(8.0, ry, icon, color=c, fontsize=9, va="center", zorder=5)
-            ax.text(11.0, ry, lbl, color=c, fontsize=9,
+        # 強気・弱気の論点（小さめゴシック・色ラベル）
+        bull = _clip(ai_summary.get("bull_view", ""), 31)
+        bear = _clip(ai_summary.get("bear_view", ""), 31)
+        ry = aiy + 4.6
+        for icon, lbl, c, txt in (("▲", "強気", GREEN, bull or "データなし"),
+                                  ("▼", "弱気", RED,   bear or "データなし")):
+            rr(6.5, ry - 1.05, 8.5, 2.3, c, rad=0.6, z=4, alpha=0.16)
+            ax.text(8.0, ry, icon, color=c, fontsize=8.5, va="center", zorder=5)
+            ax.text(11.0, ry, lbl, color=c, fontsize=8.5,
                     fontweight="bold", va="center", zorder=5)
-            ax.text(17.5, ry, txt, color=WHITE, fontsize=9, va="center", zorder=5)
-            ry -= 3.5
+            ax.text(17.5, ry, txt, color=WHITE, fontsize=8.5, va="center", zorder=5)
+            ry -= 3.1
 
         # ─── ⑥ 注目ニュース ──────────────────────────────────────────
         ny_top = aiy - 1.2
