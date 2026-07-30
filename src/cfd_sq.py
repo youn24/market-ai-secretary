@@ -22,6 +22,17 @@ _FUTURES = [
     ("YM=F",  "NYダウ先物"),
 ]
 
+# CFDで24時間取引されるコモディティ・欧州指数（朝のレポート表示用）
+_COMMODITIES = [
+    ("GC=F",   "金",        "🥇"),
+    ("SI=F",   "銀",        "🥈"),
+    ("CL=F",   "WTI原油",   "🛢"),
+    ("NG=F",   "天然ガス",   "🔥"),
+    ("HG=F",   "銅",        "🔶"),
+    ("^GDAXI", "独DAX",     "🇩🇪"),
+    ("^FTSE",  "英FTSE",    "🇬🇧"),
+]
+
 
 def _fetch_one(sym: str):
     """最新値と前日清算値比%を返す。失敗は None。"""
@@ -79,6 +90,22 @@ def run(prices: dict = None) -> dict:
         if d:
             futures.append({"symbol": sym, "name": name, **d})
 
+    # コモディティ・欧州指数（24時間CFD銘柄）を並列取得
+    commodities = []
+    try:
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+        with ThreadPoolExecutor(max_workers=5) as ex:
+            fs = {ex.submit(_fetch_one, s): (s, n, ic) for s, n, ic in _COMMODITIES}
+            for f in as_completed(fs):
+                s, n, ic = fs[f]
+                d = f.result()
+                if d:
+                    commodities.append({"symbol": s, "name": n, "icon": ic, **d})
+        order = {s: i for i, (s, _, _) in enumerate(_COMMODITIES)}
+        commodities.sort(key=lambda x: order.get(x["symbol"], 99))
+    except Exception:
+        logger.debug("コモディティ取得スキップ")
+
     # CME日経 vs 前日の日経225終値 → 寄り付きギャップ予想
     cme_gap = None
     n225 = (prices.get("^N225") or {}).get("latest")
@@ -104,6 +131,9 @@ def run(prices: dict = None) -> dict:
                 for f in futures if f["symbol"] != "NIY=F"]
     if us_parts:
         lines.append("米先物: " + " / ".join(us_parts))
+    if commodities:
+        cm_parts = [f"{c['icon']}{c['name']} {c['change_pct']:+.1f}%" for c in commodities]
+        lines.append("商品・欧州: " + " / ".join(cm_parts))
     if sq:
         sq_s = f"📅 {sq['type']}: {sq['date']}"
         sq_s += " ★本日SQ" if sq["is_today"] else f" (あと{sq['days_to']}日)"
@@ -114,11 +144,13 @@ def run(prices: dict = None) -> dict:
     result = {
         "available": True,
         "futures": futures,
+        "commodities": commodities,
         "cme_gap_pct": cme_gap,
         "sq": sq,
         "telegram_block": "\n".join(lines),
     }
-    logger.info(f"✅ CFD/SQ: 先物{len(futures)}本 CMEギャップ={cme_gap}% SQまで{sq.get('days_to')}日")
+    logger.info(f"✅ CFD/SQ: 先物{len(futures)}本 商品{len(commodities)}本 "
+                f"CMEギャップ={cme_gap}% SQまで{sq.get('days_to')}日")
     return result
 
 

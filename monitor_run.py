@@ -56,6 +56,14 @@ def run():
     except Exception:
         logger.error("時間外アラートエラー"); logger.debug(traceback.format_exc())
 
+    # CFD/24時間マーケット（指数先物・欧州指数・コモディティ）の急変アラート
+    try:
+        from src.alert_monitor import run_cfd_alert
+        if run_cfd_alert():
+            logger.info("✅ CFD/24時間アラート送信完了")
+    except Exception:
+        logger.error("CFD/24時間アラートエラー"); logger.debug(traceback.format_exc())
+
     logger.info("====== 監視完了 ======")
 
 

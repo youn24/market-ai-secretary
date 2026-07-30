@@ -116,6 +116,94 @@ def build_alert_message(alerts: list, prices: dict, fear_greed: dict, risk: dict
 # 米国時間外の個別株アラート閾値（決算級の大きな反応のみ・スパム防止）
 AH_ALERT_PCT = 5.0
 
+# ── CFD/24時間マーケット監視（株価指数先物・コモディティ・欧州指数）──────
+# CFD業者が24時間配信している価格の実体＝これらの先物/指数。
+# 日本の夜間に大きく動くとそのまま翌朝の寄り付きに影響するため上下どちらも通知。
+# 閾値は各商品の平常ボラティリティに合わせて個別設定（原油・銀は元々よく動く）。
+CFD_WATCH = [
+    # 株価指数先物（24時間）
+    ("NIY=F", "日経225先物(CME)",   "指数", 2.0),
+    ("ES=F",  "S&P500先物",         "指数", 1.5),
+    ("NQ=F",  "NASDAQ100先物",      "指数", 2.0),
+    ("YM=F",  "NYダウ先物",          "指数", 1.5),
+    # 欧州株価指数（日本の夕方〜深夜が取引時間）
+    ("^GDAXI", "ドイツDAX",         "欧州", 2.0),
+    ("^FTSE",  "英FTSE100",        "欧州", 2.0),
+    # コモディティ（商品先物・CFDの主力）
+    ("GC=F",  "金(ゴールド)",        "商品", 2.0),
+    ("SI=F",  "銀(シルバー)",        "商品", 3.5),
+    ("CL=F",  "WTI原油",            "商品", 3.5),
+    ("NG=F",  "天然ガス",            "商品", 5.0),
+    ("HG=F",  "銅",                 "商品", 2.5),
+    ("ZC=F",  "トウモロコシ",        "商品", 3.0),
+]
+_CFD_ICON = {"指数": "📈", "欧州": "🇪🇺", "商品": "🛢"}
+
+
+def run_cfd_alert() -> bool:
+    """
+    CFD/24時間マーケット（指数先物・欧州指数・コモディティ）の急変を通知。
+    夜間に金や原油、欧州株が大きく動いた場合も翌朝の東京市場に影響するため、
+    上昇・下落どちらの方向でも閾値超えで知らせる。
+    """
+    try:
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+        from src.cfd_sq import _fetch_one
+
+        hits = []
+        with ThreadPoolExecutor(max_workers=6) as ex:
+            futs = {ex.submit(_fetch_one, s): (s, n, cat, th)
+                    for s, n, cat, th in CFD_WATCH}
+            for fut in as_completed(futs):
+                s, n, cat, th = futs[fut]
+                d = fut.result()
+                if not d or d.get("change_pct") is None:
+                    continue
+                chg = d["change_pct"]
+                if abs(chg) >= th:
+                    hits.append({"symbol": f"CFD:{s}", "name": n, "cat": cat,
+                                 "value": d.get("latest"), "change": chg,
+                                 "direction": "急騰🔺" if chg > 0 else "急落🔻"})
+        if not hits:
+            logger.info(f"CFD/24時間: 閾値超えの急変なし（{len(CFD_WATCH)}銘柄チェック済み）")
+            return False
+
+        hits.sort(key=lambda x: abs(x["change"]), reverse=True)
+        alerts = _apply_cooldown(hits)
+        if not alerts:
+            return False
+
+        now = get_jst_now().strftime("%m-%d %H:%M JST")
+        lines = [
+            "🌐 *24時間マーケットで大きな動き* 🚨",
+            f"⏰ {now}",
+            "━━━━━━━━━━━━━━━",
+        ]
+        for cat in ("指数", "欧州", "商品"):
+            grp = [a for a in alerts if a["cat"] == cat]
+            if not grp:
+                continue
+            lines.append(f"{_CFD_ICON[cat]} *{cat}*")
+            for a in grp[:4]:
+                v = a.get("value")
+                v_s = f"{v:,.2f}" if v and v < 1000 else f"{v:,.0f}" if v else "—"
+                s = "▲" if a["change"] > 0 else "▼"
+                lines.append(f"　{a['direction']} {a['name']}: {v_s} ({s}{abs(a['change']):.2f}%)")
+        lines += [
+            "━━━━━━━━━━━━━━━",
+            "CFDで24時間動く先物・商品の急変です。翌朝の東京市場や関連セクターに波及しやすい動きです。",
+            "📱 市場AI秘書",
+        ]
+
+        from src.notify_telegram import send_message
+        send_message("\n".join(lines))
+        logger.info(f"🚨 CFD/24時間アラート送信: {len(alerts)}銘柄")
+        return True
+    except Exception:
+        logger.error("CFD/24時間アラートエラー")
+        logger.debug(traceback.format_exc())
+        return False
+
 
 def run_afterhours_alert() -> bool:
     """

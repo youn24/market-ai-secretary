@@ -1702,6 +1702,13 @@ def _cfd_sq_section(cfd_sq):
   <div style="font-size:9px;color:{MUTED}">{nm}</div>
   <div class="num" style="font-size:13px;font-weight:800;color:{c}">{f['change_pct']:+.2f}%</div>
 </div>""")
+    # コモディティ・欧州指数チップ（24時間CFD銘柄）
+    for cm in (cf.get("commodities") or []):
+        c = _col(cm.get("change_pct") or 0)
+        chips.append(f"""<div style="background:{CARD2};border:1px solid {BORDER};border-radius:8px;padding:6px 10px;text-align:center">
+  <div style="font-size:9px;color:{MUTED}">{cm.get('icon','')}{cm['name']}</div>
+  <div class="num" style="font-size:13px;font-weight:800;color:{c}">{cm['change_pct']:+.2f}%</div>
+</div>""")
     chips_html = f"""<div style="display:flex;gap:6px;flex-wrap:wrap">{''.join(chips)}</div>""" if chips else ""
 
     # SQカウントダウン
