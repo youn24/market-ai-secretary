@@ -462,6 +462,20 @@
       "verified": false,
       "correct": null,
       "actual_move": null
+    },
+    {
+      "date": "2026-08-03",
+      "direction": "neutral",
+      "score": 5.63,
+      "fg": 42.5,
+      "nikkei": 64362.0195,
+      "sp500": 7489.7202,
+      "usdjpy": 157.786,
+      "vix": 15.99,
+      "confidence": null,
+      "verified": false,
+      "correct": null,
+      "actual_move": null
     }
   ],
   "accuracy": {}
