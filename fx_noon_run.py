@@ -3,13 +3,18 @@ fx_noon_run.py
 FX午後レポート実行スクリプト — 毎日 14:00 JST 配信
 GitHub Actions: .github/workflows/fx_noon.yml から呼ばれる
 
-通知構成（2メッセージに圧縮）:
-  ① テキスト: FX主要レート + マクロ + 地政学 + URL を1通にまとめ
-  ② 画像: matplotlib 16パネルダッシュボード
+通知構成（1通に集約）:
+  統合サマリーカード画像（ドル円 / 週足×日足 / クロス円 / テクニカル /
+  マクロ / 投機筋・介入 / 地政学 / 主要マーケット / AI解説）
+  ＋ 要点キャプション ＋「詳細レポートを開く」インラインボタン
+
+  13パネルの詳細ダッシュボードは docs/fx_dashboard.png として
+  GitHub Pages に公開し、ボタン先のレポートから閲覧できる。
 """
 
 import os
 import sys
+import shutil
 import traceback
 from pathlib import Path
 
@@ -282,60 +287,65 @@ def main():
         logger.error("FX分析 エラー")
         logger.debug(traceback.format_exc())
 
-    # ── Step 2: Telegram 送信（3メッセージ構成） ────────────────────
+    # ── Step 2: ダッシュボードを docs/ へ公開（Pagesからいつでも閲覧可） ──
     try:
-        logger.info("--- Step 2: Telegram 送信（3メッセージ）---")
-        from src.notify_telegram import send_message, send_photo, _is_configured
+        chart_path = fx_result.get("chart_path", "")
+        if chart_path and os.path.exists(chart_path):
+            docs_dir = Path(__file__).parent / "docs"
+            docs_dir.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(chart_path, docs_dir / "fx_dashboard.png")
+            logger.info("✅ ダッシュボードを docs/fx_dashboard.png へ公開")
+    except Exception:
+        logger.debug(traceback.format_exc())
+
+    # ── Step 3: Telegram 送信（1通に集約：カード画像＋要点＋ボタン） ──
+    try:
+        logger.info("--- Step 3: Telegram 送信（1通に集約）---")
+        from src.notify_telegram import (
+            send_message, send_photo_with_button, _is_configured,
+        )
+
+        _data    = fx_result.get("data", {}) or {}
+        _premium = fx_result.get("premium", {}) or {}
 
         if not _is_configured():
             logger.info("Telegram 未設定 → スキップ")
             print("\n" + "─" * 60)
             print(_build_compact_msg(fx_result, mood_emoji, char_info))
             print("─" * 60)
-            print(_build_imm_cb_msg(fx_result))
-            print("─" * 60)
             return
 
-        # ⓪ FXサマリーカード（HTML→PNG・Canva級の一目でわかる1枚）
+        # AI解説は1回だけ生成して使い回す（従来は2回呼ばれていた）
+        ai_comment = ""
         try:
-            from src.fx_summary_card import make_fx_card
-            _data    = fx_result.get("data", {}) or {}
-            _premium = fx_result.get("premium", {}) or {}
-            _ai      = _gemini_fx_comment(_data, _premium)
-            card_path = make_fx_card(_data, _premium, ai_comment=_ai)
-            if card_path and os.path.exists(card_path):
-                send_photo(card_path, caption="〽️ ミセスワタナベ FX ─ 本日の為替サマリー",
-                           chat_id=FX_CHAT_ID, bot_token=FX_BOT_TOKEN)
-                logger.info("✅ ⓪ FXサマリーカード送信")
+            ai_comment = _gemini_fx_comment(_data, _premium)
         except Exception:
             logger.debug(traceback.format_exc())
 
-        # ① コンパクトサマリー（FX + マクロ + 地政学 + AI解説 + URL）
-        compact = _build_compact_msg(fx_result, mood_emoji, char_info)
-        ok1 = send_message(compact, chat_id=FX_CHAT_ID, bot_token=FX_BOT_TOKEN)
-        logger.info(f"{'✅' if ok1 else '❌'} ① FXサマリー送信")
+        # 統合カード（ドル円/週足×日足/クロス円/テクニカル/マクロ/
+        #             投機筋・介入/地政学/主要マーケット/AI解説）
+        card_path, caption = None, ""
+        try:
+            from src.fx_summary_card import make_fx_card, build_caption
+            card_path = make_fx_card(_data, _premium, ai_comment=ai_comment)
+            caption   = build_caption(_data, _premium, ai_comment)
+        except Exception:
+            logger.error("FXカード生成エラー")
+            logger.debug(traceback.format_exc())
 
-        # ② IMM 投機筋ポジション + 中央銀行・介入監視
-        imm_cb = _build_imm_cb_msg(fx_result)
-        ok2 = send_message(imm_cb, chat_id=FX_CHAT_ID, bot_token=FX_BOT_TOKEN)
-        logger.info(f"{'✅' if ok2 else '❌'} ② 投機筋ポジション・介入監視送信")
-
-        # ③ ダッシュボード画像
-        chart_path = fx_result.get("chart_path", "")
-        if chart_path and os.path.exists(chart_path):
-            caption = (
-                "💱 *為替FX 16パネルダッシュボード*\n"
-                "━━━━━━━━━━━━━━━━━━━━\n"
-                "📈 ドル円チャート ／ テクニカル指標\n"
-                "💵 ドル指数 ／ 日米金利差 ／ 通貨強弱\n"
-                "🏦 利下げ確率 ／ 投機ポジション ／ VIX\n"
-                "🌐 米国債イールドカーブ ／ マクロ指標"
+        if card_path and os.path.exists(card_path):
+            ok = send_photo_with_button(
+                card_path, caption=caption,
+                button_text="📊 詳細レポート・13面チャートを開く",
+                button_url=f"{PAGES_URL}/daily_report.html",
+                chat_id=FX_CHAT_ID, bot_token=FX_BOT_TOKEN,
             )
-            ok3 = send_photo(chart_path, caption=caption,
-                             chat_id=FX_CHAT_ID, bot_token=FX_BOT_TOKEN)
-            logger.info(f"{'✅' if ok3 else '❌'} ③ ダッシュボード画像送信")
+            logger.info(f"{'✅' if ok else '❌'} FXレポート送信（1通）")
         else:
-            logger.warning("チャートファイルなし（深夜テスト時は正常）")
+            # カードが作れない環境ではテキスト1通にフォールバック（無音回避）
+            compact = _build_compact_msg(fx_result, mood_emoji, char_info)
+            ok = send_message(compact, chat_id=FX_CHAT_ID, bot_token=FX_BOT_TOKEN)
+            logger.info(f"{'✅' if ok else '❌'} FXレポート送信（テキスト・フォールバック）")
 
     except Exception:
         logger.error("Telegram 送信エラー")

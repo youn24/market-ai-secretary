@@ -3,6 +3,7 @@ Telegram通知モジュール（初心者でも一目でわかるデザイン）
 """
 import os
 import re
+import json
 import traceback
 import requests
 from dotenv import load_dotenv
@@ -410,6 +411,40 @@ def send_message_with_button(text: str, button_text: str, button_url: str,
         except Exception as e:
             logger.warning(f"Telegram送信例外: {e}")
     logger.error("Telegram ボタン付きメッセージ 送信失敗")
+    return False
+
+
+def send_photo_with_button(image_path: str, caption: str,
+                           button_text: str, button_url: str,
+                           chat_id: str = None, bot_token: str = None) -> bool:
+    """
+    画像＋キャプション＋インラインボタンを「1通」で送る。
+    通知を1本にまとめたいときに使う（FX午後レポート等）。
+    Markdown失敗時はプレーンで自動再送する。
+    """
+    _tok = bot_token or os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
+    _cid = str(chat_id) if chat_id is not None else os.getenv("TELEGRAM_CHAT_ID", "").strip()
+    if not _tok or not _cid:
+        return False
+    url    = f"https://api.telegram.org/bot{_tok}/sendPhoto"
+    cap    = (caption or "")[:1024]
+    markup = json.dumps({"inline_keyboard": [[{"text": button_text, "url": button_url}]]})
+
+    for parse_mode in ("Markdown", None):
+        data = {"chat_id": _cid, "caption": cap, "reply_markup": markup}
+        if parse_mode:
+            data["parse_mode"] = parse_mode
+        try:
+            with open(image_path, "rb") as f:
+                r = requests.post(url, data=data, files={"photo": f}, timeout=40)
+            if r.status_code == 200:
+                logger.info(f"Telegram 画像+ボタン送信 ✅: {image_path}")
+                return True
+            logger.warning(f"画像+ボタン送信失敗(status={r.status_code}): "
+                           f"{r.text[:160]}" + ("→ プレーンで再送" if parse_mode else ""))
+        except Exception as e:
+            logger.warning(f"Telegram 画像+ボタン送信例外: {e}")
+    logger.error("Telegram 画像+ボタン 送信失敗")
     return False
 
 
