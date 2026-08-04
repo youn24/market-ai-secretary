@@ -551,6 +551,116 @@ def _build_overview_caption(risk, prices, fear_greed, news, ai_summary) -> str:
     return "\n".join(lines)
 
 
+def _build_unified_caption(risk, prices, fear_greed, ai_summary,
+                           setups=None, prediction_tracker=None,
+                           us_afterhours=None, pts=None, adr=None,
+                           kabudragon=None) -> str:
+    """
+    朝レポートを1通に集約したときのキャプション（Telegram上限1024字）。
+
+    価格・F&G・VIX・ニュース・AI3視点・キャラクターは
+    サマリーカード画像に載っているため重複させない。
+    ここでは「カードに写らない・かつ寄り付き前に効く」情報を優先する。
+    優先度の低いブロックから順に落として1024字に収める。
+    """
+    from datetime import date as _date
+    today   = get_today_str()
+    weekday = ["月", "火", "水", "木", "金", "土", "日"][_date.today().weekday()]
+
+    score    = (risk or {}).get("score", 0)
+    tl, mood = _mood(score)
+    score_s  = f"+{score:.1f}" if score >= 0 else f"{score:.1f}"
+
+    head = [
+        f"🤖 *市場AI秘書* | {today}（{weekday}）",
+        "━━━━━━━━━━━━━━",
+        f"{tl} *{mood}*　スコア `{score_s}`",
+    ]
+
+    # ── 寄り付き前チェック（最優先：時間が経つと価値が消える情報） ──
+    pre = []
+    ua = us_afterhours or {}
+    if ua.get("available"):
+        movers = ua.get("movers", [])
+        if movers:
+            top = movers[0]
+            e = "⬆️" if top["chg_pct"] >= 0 else "⬇️"
+            pre.append(f"🇺🇸 米時間外: {e}{top['name']} {top['chg_pct']:+.1f}%")
+            semis = [m for m in movers if m.get("sector") == "半導体"
+                     and abs(m.get("chg_pct") or 0) >= 2.0]
+            if semis:
+                big = max(semis, key=lambda x: abs(x["chg_pct"]))
+                pre.append(f"　→ 日本の半導体株に{'追い風' if big['chg_pct']>0 else '逆風'}")
+        else:
+            pre.append("🇺🇸 米時間外: 大きな変動なし")
+
+    pt = pts or {}
+    if pt.get("available"):
+        u = (pt.get("up") or [])[:1]
+        d = (pt.get("down") or [])[:1]
+        seg = []
+        if u: seg.append(f"⬆️{u[0]['name']} {u[0]['chg_pct']:+.1f}%")
+        if d: seg.append(f"⬇️{d[0]['name']} {d[0]['chg_pct']:+.1f}%")
+        if seg:
+            pre.append("🌙 PTS夜間: " + " / ".join(seg))
+
+    ad = adr or {}
+    if ad.get("available") and ad.get("major_avg_divergence") is not None:
+        div = ad["major_avg_divergence"]
+        pre.append(f"🌏 ADR乖離 {div:+.2f}%（寄り付き示唆）")
+
+    kd = kabudragon or {}
+    if kd.get("available"):
+        ups = ((kd.get("rankings") or {}).get("age") or {}).get("items", [])[:1]
+        if ups and ups[0].get("chg_pct") is not None:
+            pre.append(f"🐉 前日値上がり1位: {ups[0]['name']} {ups[0]['chg_pct']:+.1f}%")
+
+    # ── シグナル ──
+    sig = []
+    st = setups or {}
+    if st.get("available") and st.get("setups"):
+        s0 = st["setups"][0]
+        line = f"🎯 {s0.get('name','')}: {s0.get('label','')}"
+        if s0.get("mtf_note"):
+            line += f"（{s0['mtf_note']}）"
+        sig.append(line)
+
+    # ── 予測精度 ──
+    acc = []
+    ptk = prediction_tracker or {}
+    if ptk.get("available"):
+        r10 = (ptk.get("stats") or {}).get("10d", {})
+        rate = r10.get("rate")
+        if rate is not None:
+            mark = "🎯" if rate >= 65 else "🔶" if rate >= 50 else "⚠️"
+            acc.append(f"🧠 AI直近10日の的中率 {mark} {rate}%")
+
+    # ── AIの一言 ──
+    ai_one = ""
+    if (ai_summary or {}).get("available"):
+        ai_one = ((ai_summary.get("neutral_view") or "")[:110]).strip()
+    ai_blk = [f"⚖️ {ai_one}"] if ai_one else []
+
+    foot = ["👇 3シナリオ・チャート・全データはレポートへ"]
+
+    # 優先度の低い順に落として1024字に収める
+    blocks = [pre, sig, acc, ai_blk]
+    while True:
+        parts = [head]
+        parts += [b for b in blocks if b]
+        parts.append(foot)
+        text = "\n\n".join("\n".join(p) for p in parts)
+        if len(text) <= 1024:
+            return text
+        # 後ろのブロックから削る（AI一言 → 精度 → シグナル の順）
+        for i in range(len(blocks) - 1, -1, -1):
+            if blocks[i]:
+                blocks[i] = []
+                break
+        else:
+            return text[:1024]
+
+
 def _build_detail_message(risk, prices, fear_greed, news,
                           ai_summary, scenario, technical,
                           sector_analysis, prediction_tracker,
@@ -880,76 +990,16 @@ def run(risk, analysis, report_paths, mode,
 
     try:
         # ════════════════════════════════════════════════════════
-        # 通知①  全体俯瞰サマリー
-        #   サマリーカード画像 + 価格/F&G/VIX/ニュース/AI一言
+        # 朝レポート ─ 1通に集約
+        #   サマリーカード画像 ＋ 寄り付き前チェックのキャプション
+        #   ＋「フルレポートを開く」インラインボタン
+        #   ※詳細（3シナリオ/合議/セクター/株ドラゴン等）はレポート側に集約
         # ════════════════════════════════════════════════════════
-        overview_caption = _build_overview_caption(
-            risk, prices, fear_greed, news, ai_summary
-        )
-
-        card_sent = False
-        try:
-            from src.summary_card import make_summary_card
-            card_path = make_summary_card(
-                prices=prices, fear_greed=fear_greed, risk=risk,
-                ai_summary=ai_summary, news=list(news),
-                character_comments=character_comments,
-            )
-            if card_path and os.path.exists(card_path):
-                send_photo(card_path, caption=overview_caption)
-                card_sent = True
-                logger.info("✅ 通知①: サマリーカード + キャプション送信")
-        except Exception:
-            logger.debug(traceback.format_exc())
-
-        # 画像生成失敗時はテキストで送信
-        if not card_sent:
-            # チャートがあれば代わりに使う
-            for key in ("overview", "prices", "indices"):
-                path = chart_paths.get(key, "")
-                if path and os.path.exists(str(path)):
-                    send_photo(str(path), caption=overview_caption)
-                    card_sent = True
-                    break
-            if not card_sent:
-                send_message(overview_caption)
-                logger.info("✅ 通知①: テキスト送信（画像なし）")
-
-        # 月曜のみ：週次カレンダー画像をここに追加（2通以外の例外として最小限）
-        if weekly_calendar and weekly_calendar.get("available"):
-            cal_path = weekly_calendar.get("image_path", "")
-            if cal_path and os.path.exists(str(cal_path)):
-                n_ev    = len(weekly_calendar.get("events", []))
-                w_start = weekly_calendar.get("week_start", "")
-                w_end   = weekly_calendar.get("week_end", "")
-                send_photo(str(cal_path), caption=(
-                    f"📅 *今週の注目イベント*\n"
-                    f"━━━━━━━━━━━━━━━\n"
-                    f"📆 {w_start} 〜 {w_end}\n"
-                    f"📋 全{n_ev}件  🔴超重要 🟠注目 🟣決算\n"
-                    f"⏰ 時刻はすべて日本時間（目安）"
-                ))
-                logger.info("✅ 週次カレンダー送信（月曜ボーナス）")
-
-        # ════════════════════════════════════════════════════════
-        # 通知②  詳細AI分析 ＋「フルレポートを開く」ボタン
-        #   AI3視点・シナリオ・テクニカル・セクター・予測精度・ミッション
-        # ════════════════════════════════════════════════════════
-        detail_text = _build_detail_message(
-            risk, prices, fear_greed, news,
-            ai_summary, scenario, technical,
-            sector_analysis, prediction_tracker,
-            autonomous_plan, multi_consensus,
-            character_comments, macro,
-            nikkei_internals, adr, setups,
-            stock_dossier=stock_dossier,
-            ensemble=ensemble,
+        caption = _build_unified_caption(
+            risk, prices, fear_greed, ai_summary,
+            setups=setups, prediction_tracker=prediction_tracker,
+            us_afterhours=us_afterhours, pts=pts, adr=adr,
             kabudragon=kabudragon,
-            pts=pts,
-            us_afterhours=us_afterhours,
-            cfd_sq=cfd_sq,
-            upcoming=upcoming,
-            theme_ranking=theme_ranking,
         )
 
         report_url = report_paths.get("url", "").strip()
@@ -957,27 +1007,42 @@ def run(risk, analysis, report_paths, mode,
             report_url = os.getenv("GITHUB_PAGES_URL",
                                    "https://youn24.github.io/market-ai-secretary") + "/daily_report.html"
 
-        send_message_with_button(
-            text        = _to_html_message(detail_text),
-            button_text = "📊 フルレポートを開く →",
-            button_url  = report_url,
-            parse_modes = ("HTML", None),
-        )
-        logger.info("✅ 通知②: 詳細分析 + ボタン送信")
+        card_path = None
+        try:
+            from src.summary_card import make_summary_card
+            card_path = make_summary_card(
+                prices=prices, fear_greed=fear_greed, risk=risk,
+                ai_summary=ai_summary, news=list(news),
+                character_comments=character_comments,
+            )
+        except Exception:
+            logger.error("サマリーカード生成エラー")
+            logger.debug(traceback.format_exc())
 
-        # ════════════════════════════════════════════════════════
-        # 通知③  要約ナレーション動画（生成できた時のみ）
-        # ════════════════════════════════════════════════════════
-        sent_video = False
-        if video_path and os.path.exists(str(video_path)):
-            try:
-                if send_video(str(video_path), caption="🎬 <b>今朝の要約動画</b>（ガネーシャ＆カワウソ）"):
-                    sent_video = True
-                    logger.info("✅ 通知③: 要約動画送信")
-            except Exception:
-                logger.debug(traceback.format_exc())
+        # 画像が作れなければ既存チャートで代替
+        if not (card_path and os.path.exists(str(card_path))):
+            for key in ("overview", "prices", "indices"):
+                p = chart_paths.get(key, "")
+                if p and os.path.exists(str(p)):
+                    card_path = str(p)
+                    break
 
-        logger.info(f"✅ Telegram 通知完了（{'3通' if sent_video else '2通'}）")
+        sent = False
+        if card_path and os.path.exists(str(card_path)):
+            sent = send_photo_with_button(
+                str(card_path), caption=caption,
+                button_text="📊 フルレポートを開く →",
+                button_url=report_url,
+            )
+        if not sent:
+            # 画像がまったく無い場合もテキスト1通で必ず届ける（無音を回避）
+            sent = send_message_with_button(
+                text=caption,
+                button_text="📊 フルレポートを開く →",
+                button_url=report_url,
+            )
+
+        logger.info(f"{'✅' if sent else '❌'} 朝レポート送信（1通）")
         return True
 
     except Exception as e:
