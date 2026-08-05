@@ -5,7 +5,7 @@
 import os
 import json
 import traceback
-from datetime import datetime
+from datetime import timedelta
 from pathlib import Path
 from src.utils import setup_logger, get_jst_now, get_dirs, BASE_DIR
 
@@ -25,15 +25,22 @@ THRESHOLDS = {
     "^VIX":  {"name": "VIX恐怖指数",       "pct": 25.0, "dir": "up"},
 }
 
-# クールダウン: 同一銘柄のアラートは4時間抑制（さらに1pt以上悪化したら再通知）
-_STATE_FILE     = BASE_DIR / "data" / "alert_state.json"
-_COOLDOWN_HOURS = 4
-_ESCALATE_PT    = 1.0
+# 連発防止: 同じ銘柄のアラートは1セッションにつき「一度だけ」送る。
+# セッション = JST 6:00 〜 翌 5:59（夜間の暴落が日付をまたいでも1回に保たれる）。
+# 値がさらに悪化しても追撃通知はしない（オーナー指示: 何度も通知しない）。
+_STATE_FILE = BASE_DIR / "data" / "alert_state.json"
+
+
+def _session_key(now=None) -> str:
+    """JST 6時始まりの取引セッションを表すキー（例: 2026-07-30）。"""
+    now = now or get_jst_now()
+    return (now - timedelta(hours=6)).strftime("%Y-%m-%d")
 
 
 def _apply_cooldown(alerts: list) -> list:
-    """15分ごとの実行で同じ暴落を連発通知しないためのゲート。"""
-    now = get_jst_now()
+    """同一銘柄はこのセッションで既に通知済みなら送らない（1回だけ）。"""
+    now  = get_jst_now()
+    skey = _session_key(now)
     try:
         st = json.loads(_STATE_FILE.read_text(encoding="utf-8"))
     except Exception:
@@ -41,18 +48,17 @@ def _apply_cooldown(alerts: list) -> list:
     kept = []
     for a in alerts:
         rec = st.get(a["symbol"])
-        if rec:
-            try:
-                hours = (now - datetime.fromisoformat(rec["ts"])).total_seconds() / 3600
-            except Exception:
-                hours = 99
-            if hours < _COOLDOWN_HOURS and abs(a["change"]) < abs(rec.get("chg", 0)) + _ESCALATE_PT:
-                logger.info(f"クールダウン中のためスキップ: {a['name']} ({a['change']:+.2f}%)")
-                continue
+        if isinstance(rec, dict) and rec.get("session") == skey:
+            logger.info(f"通知済みのためスキップ: {a['name']} ({a['change']:+.2f}%)")
+            continue
         kept.append(a)
     if kept:
         for a in kept:
-            st[a["symbol"]] = {"ts": now.isoformat(), "chg": a["change"]}
+            st[a["symbol"]] = {"session": skey, "ts": now.isoformat(),
+                               "chg": a["change"]}
+        # 古い記録を掃除（当日セッション分のみ残す＝ファイルの肥大化防止）
+        st = {k: v for k, v in st.items()
+              if isinstance(v, dict) and v.get("session") == skey}
         try:
             _STATE_FILE.parent.mkdir(exist_ok=True)
             _STATE_FILE.write_text(json.dumps(st, ensure_ascii=False), encoding="utf-8")
@@ -209,7 +215,7 @@ def run_afterhours_alert() -> bool:
     """
     米国主要株の時間外（アフターアワーズ/プレマーケット）±5%級の大変動を通知。
     決算発表への最初の反応など、翌朝の東京市場に波及しやすい動きを夜のうちに知らせる。
-    クールダウン（4時間・1pt悪化で再通知）は指数アラートと同じゲートを共用。
+    「1セッション1回だけ」のゲートは指数アラートと共用。
     """
     try:
         from src.us_afterhours import run as run_us
@@ -285,12 +291,9 @@ def run_alert_check(prices: dict, fear_greed: dict, risk: dict) -> bool:
         logger.info(f"🚨 急変検知: {len(alerts)}件")
         msg = build_alert_message(alerts, prices, fear_greed, risk)
 
-        from src.notify_telegram import send_message
-        send_message(msg)
-
-        # Gemini AIによる急変分析
+        # Gemini AIによる急変分析（別送せず本文に統合＝アラートは必ず1通）
         try:
-            api_key = os.getenv("GEMINI_API_KEY","").strip()
+            api_key = os.getenv("GEMINI_API_KEY", "").strip()
             if api_key:
                 import google.generativeai as genai
                 genai.configure(api_key=api_key)
@@ -307,12 +310,15 @@ def run_alert_check(prices: dict, fear_greed: dict, risk: dict) -> bool:
 事実と推測を分け、断定表現は使わないでください。"""
 
                 resp = model.generate_content(prompt)
-                ai_comment = resp.text[:300]
-                send_message(f"🤖 *Gemini AI緊急分析*\n\n{ai_comment}\n\n📱 市場AI秘書")
-                logger.info("Gemini急変分析送信完了")
+                ai_comment = (resp.text or "").strip()[:300]
+                if ai_comment:
+                    msg += f"\n\n🤖 *AI緊急分析*\n{ai_comment}"
+                logger.info("Gemini急変分析をアラート本文へ統合")
         except Exception as e:
             logger.error(f"Gemini急変分析エラー: {e}")
 
+        from src.notify_telegram import send_message
+        send_message(msg)
         return True
 
     except Exception as e:
