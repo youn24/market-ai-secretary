@@ -64,6 +64,15 @@ def run():
     except Exception:
         logger.error("CFD/24時間アラートエラー"); logger.debug(traceback.format_exc())
 
+    # ヒドゥンダイバージェンス（日足トレンド × 1時間足RSI）検出アラート
+    # トレンド継続のサイン。検出時のみ・同一銘柄は1セッション1回だけ通知
+    try:
+        from src.divergence import run_divergence_alert
+        if run_divergence_alert():
+            logger.info("✅ ヒドゥンダイバージェンス通知送信完了")
+    except Exception:
+        logger.error("ダイバージェンス検出エラー"); logger.debug(traceback.format_exc())
+
     logger.info("====== 監視完了 ======")
 
 
