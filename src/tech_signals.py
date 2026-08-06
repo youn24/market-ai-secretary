@@ -229,6 +229,82 @@ _DETECTORS = (
     _sig_rsi_reversal,
 )
 
+# ── 時間軸（長い足ほど重い）────────────────────────────────────
+# (yfinance interval, 表示名, 取得期間, 重み)
+_TF_SPECS = [
+    ("1wk", "週足", "10y", 2.0),   # 長期＝最も重い
+    ("1d",  "日足", "2y",  1.0),
+]
+_TF_HIDDEN_WEIGHT = 0.5            # ヒドゥン（1時間足）は軽め
+
+# シグナル種別ごとの基礎スコア（重要度）
+_TYPE_SCORE = {
+    "golden_cross": 3.0, "dead_cross": 3.0,
+    "ma200_up":     3.0, "ma200_down": 3.0,
+    "bullish_divergence": 2.0, "bearish_divergence": 2.0,
+    "bullish_hidden":     2.0, "bearish_hidden":     2.0,
+    "macd_gc": 1.5, "macd_dc": 1.5,
+    "bb_upper": 1.0, "bb_lower": 1.0,
+    "rsi_recover": 1.0, "rsi_cooldown": 1.0,
+}
+
+# 信頼度のしきい値（合計スコア）
+_CONF_HIGH = 6.0
+_CONF_MID  = 3.5
+
+# 週足のときにラベルの「日」表記を「週」に直す
+_RELABEL = (("25日線", "25週線"), ("75日線", "75週線"),
+            ("200日移動平均線", "200週移動平均線"), ("200日線", "200週線"))
+
+
+def _relabel(text: str, tf_name: str) -> str:
+    if tf_name != "週足" or not text:
+        return text
+    for a, b in _RELABEL:
+        text = text.replace(a, b)
+    return text
+
+
+def _confluence(hits: list) -> list:
+    """
+    銘柄ごとにシグナルを束ね、方向別に信頼度スコアを合計する。
+    長い足ほど重く、重要なシグナルほど重く効く。
+    返り値: [{symbol,name,ticker,direction,score,stars,signals:[...]}, ...]
+    """
+    by_sym = {}
+    for h in hits:
+        g = by_sym.setdefault(h["symbol"], {
+            "symbol": h["symbol"], "name": h["name"], "ticker": h["ticker"],
+            "buy": 0.0, "sell": 0.0, "signals": [],
+        })
+        g["signals"].append(h)
+        d = h.get("direction")
+        if d in ("buy", "sell"):
+            base = h.get("base_type") or h.get("type", "")
+            g[d] += _TYPE_SCORE.get(base, 1.0) * h.get("tf_weight", 1.0)
+
+    groups = []
+    for g in by_sym.values():
+        # 買い・売りの強い方を採用（拮抗しているときは差分で評価）
+        if g["buy"] >= g["sell"]:
+            direction, score, opposite = "buy", g["buy"], g["sell"]
+        else:
+            direction, score, opposite = "sell", g["sell"], g["buy"]
+        net = score - opposite          # 逆方向のシグナルがあるほど信頼度は下がる
+
+        if net >= _CONF_HIGH:   stars, rank = "★★★", "高"
+        elif net >= _CONF_MID:  stars, rank = "★★",  "中"
+        else:                   stars, rank = "★",   "参考"
+
+        # 長い足のシグナルを先に見せる
+        g["signals"].sort(key=lambda x: (-x.get("tf_weight", 1.0),
+                                         x.get("priority", 9)))
+        groups.append({**g, "direction": direction, "score": score,
+                       "net": net, "stars": stars, "rank": rank,
+                       "conflict": opposite > 0})
+    groups.sort(key=lambda x: -x["net"])
+    return groups
+
 
 # ── 連発防止（1セッション1回） ──────────────────────────────────
 def _session_key(now=None) -> str:
@@ -268,66 +344,125 @@ def _apply_cooldown(hits: list) -> list:
 
 # ── 実行 ─────────────────────────────────────────────────────────
 def detect() -> list:
-    """全対象・全シグナルを日足で検査して返す（ヒドゥンは divergence.py 側）"""
+    """
+    全対象を「週足 → 日足」の順で検査する。
+    長い足のシグナルほど重み（tf_weight）が大きい。
+    ヒドゥンダイバージェンス（1時間足）は divergence.py から合流。
+    """
     hits = []
     for sym, name, unit, ticker in TARGETS:
-        try:
-            df = _fetch(sym, "2y", "1d")
-            if df is None or len(df) < 30:
-                continue
-            c = df["Close"]
-            for fn in _DETECTORS:
-                try:
-                    r = fn(c)
-                except Exception:
-                    logger.debug(traceback.format_exc())
+        for interval, tf_name, period, weight in _TF_SPECS:
+            try:
+                df = _fetch(sym, period, interval)
+                if df is None or len(df) < 30:
                     continue
-                if r:
-                    r.update({"symbol": sym, "name": name,
-                              "unit": unit, "ticker": ticker})
+                c = df["Close"]
+                for fn in _DETECTORS:
+                    try:
+                        r = fn(c)
+                    except Exception:
+                        logger.debug(traceback.format_exc())
+                        continue
+                    if not r:
+                        continue
+                    r["label"] = _relabel(r.get("label", ""), tf_name)
+                    r["desc"]  = _relabel(r.get("desc", ""), tf_name)
+                    r.update({
+                        "symbol": sym, "name": name, "unit": unit, "ticker": ticker,
+                        "tf": tf_name, "tf_weight": weight,
+                        "base_type": r["type"],          # スコア算出用
+                        # 時間軸ごとに別シグナル扱い（週足と日足は別々に通知したい）
+                        "type": f"{r['type']}@{interval}",
+                    })
                     hits.append(r)
-        except Exception:
-            logger.debug(traceback.format_exc())
+            except Exception:
+                logger.debug(traceback.format_exc())
 
-    # ヒドゥンダイバージェンス（1時間足・トレンド一致のみ）も合流させる
+    # ヒドゥンダイバージェンス（1時間足・日足トレンドと一致したものだけ）
     try:
         from src.divergence import detect as detect_hidden
         for h in detect_hidden():
-            h.setdefault("type", h.get("kind", "hidden"))
+            h["base_type"] = h.get("kind", "hidden")
+            h["type"] = f"{h['base_type']}@1h"
             h.setdefault("emoji", "🟢" if h.get("direction") == "buy" else "🔴")
             h.setdefault("priority", 3)
             h["label"] = h["label"].replace("🟢 ", "").replace("🔴 ", "")
+            h["tf"] = "1時間足"
+            h["tf_weight"] = _TF_HIDDEN_WEIGHT
             hits.append(h)
     except Exception:
         logger.debug(traceback.format_exc())
 
-    hits.sort(key=lambda x: x.get("priority", 9))
+    # 長い足・重要なものを先頭へ
+    hits.sort(key=lambda x: (-x.get("tf_weight", 1.0), x.get("priority", 9)))
     return hits
+
+
+_DIR_JA = {"buy": "買い", "sell": "売り"}
 
 
 def build_message(hits: list) -> str:
     """
     通知メッセージ。Telegramの通知バーには1行目しか出ないため、
-    銘柄名・ティッカーとシグナル名を必ず1行目に入れる。
+    銘柄名・ティッカー・信頼度を必ず1行目に入れる。
+    シグナルは銘柄ごとにまとめ、重なった数と信頼度★で示す。
     """
-    if len(hits) == 1:
-        h = hits[0]
-        title = f"{h['emoji']} *{h['name']}（{h['ticker']}）* {h['label']}"
+    groups = _confluence(hits)
+
+    # ── タイトル行（＝スマホの通知バーに出る文言）──
+    top = groups[0]
+    n_top = len([s for s in top["signals"] if s.get("direction") == top["direction"]])
+    if len(groups) == 1:
+        if n_top >= 2:
+            title = (f"🔥 *{top['name']}（{top['ticker']}）* "
+                     f"{_DIR_JA[top['direction']]}シグナル{n_top}つ重複"
+                     f"【信頼度{top['stars']}】")
+        else:
+            s0 = top["signals"][0]
+            title = (f"{s0['emoji']} *{top['name']}（{top['ticker']}）* "
+                     f"【{s0.get('tf','')}】{s0['label']}【{top['stars']}】")
     else:
-        names = "・".join(dict.fromkeys(f"{h['name']}({h['ticker']})" for h in hits))
-        title = f"📊 *{names}* テクニカルシグナル{len(hits)}件"
+        names = "・".join(f"{g['name']}({g['ticker']})" for g in groups)
+        title = (f"📊 *{names}* テクニカルシグナル"
+                 f"（最高信頼度 {top['stars']}）")
 
     lines = [title, "━━━━━━━━━━━━━━"]
-    for h in hits:
-        lines += [
-            "",
-            f"{h['emoji']} *{h['name']}（{h['ticker']}）*　{h['label']}",
-            h.get("desc", ""),
-            f"→ {h.get('meaning','')}",
-            f"💡 {h.get('tip','')}",
-        ]
-    lines.append("\n※教科書的なシグナルの発生を機械判定したものです。")
-    return "\n".join(l for l in lines if l is not None)
+
+    for g in groups:
+        same = [s for s in g["signals"] if s.get("direction") == g["direction"]]
+        head = (f"{'🔥' if len(same) >= 2 else same[0]['emoji'] if same else '📊'} "
+                f"*{g['name']}（{g['ticker']}）*　"
+                f"{_DIR_JA[g['direction']]}方向 {g['stars']}"
+                f"（信頼度{g['rank']}・スコア {g['net']:.1f}）")
+        lines += ["", head]
+
+        for s in g["signals"]:
+            mark = "・" if s.get("direction") == g["direction"] else "※逆"
+            lines.append(f"{mark}【{s.get('tf','')}】{s['emoji']} {s['label']}")
+
+        # 重なりの意味づけ
+        if len(same) >= 2:
+            tfs = list(dict.fromkeys(s.get("tf", "") for s in same))
+            if len(tfs) >= 2:
+                lines.append(f"→ {'・'.join(tfs)}の複数の時間軸で"
+                             f"{_DIR_JA[g['direction']]}サインが重なっている。信頼度の高い場面。")
+            else:
+                lines.append(f"→ {tfs[0]}で{_DIR_JA[g['direction']]}サインが"
+                             f"{len(same)}つ重なっている。")
+        if g["conflict"]:
+            lines.append("⚠️ 逆方向のシグナルも出ているため、勢いはやや不透明。")
+
+        # 代表シグナル（最も重い1つ）の詳細だけ載せる
+        lead = g["signals"][0]
+        if lead.get("desc"):
+            lines.append(lead["desc"])
+        if lead.get("tip"):
+            lines.append(f"💡 {lead['tip']}")
+
+    lines.append("\n★★★=長い足を含む複数一致 ／ ★=単発。"
+                 "教科書的なシグナルの発生を機械判定したものです。")
+    text = "\n".join(l for l in lines if l)
+    return text[:4000]
 
 
 def run_tech_alert() -> bool:
