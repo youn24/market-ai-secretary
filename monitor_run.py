@@ -64,6 +64,16 @@ def run():
     except Exception:
         logger.error("CFD/24時間アラートエラー"); logger.debug(traceback.format_exc())
 
+    # 高信頼テクニカルシグナル（ゴールデンクロス・200日線ブレイク等）
+    # 日足の確定が必要なため、東京の引け後〜夜間のみ判定する（ザラ場中の未確定足で誤発火させない）
+    if now.hour >= 15 or now.hour < 6:
+        try:
+            from src.alert_monitor import run_technical_alert
+            if run_technical_alert():
+                logger.info("✅ テクニカルシグナル通知送信完了")
+        except Exception:
+            logger.error("テクニカルアラートエラー"); logger.debug(traceback.format_exc())
+
     # 明確なテクニカルシグナル検出アラート
     #   GC/DC・200日線・通常ダイバージェンス・ヒドゥンダイバージェンス・
     #   MACDクロス・ボリンジャー±2σ・RSI30/70反転

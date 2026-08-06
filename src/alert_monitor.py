@@ -211,6 +211,58 @@ def run_cfd_alert() -> bool:
         return False
 
 
+def run_technical_alert() -> bool:
+    """
+    明確で信頼性の強いテクニカルシグナル（ゴールデンクロス・200日線ブレイク等）
+    が出たときだけ通知する。弱いシグナルや方向が食い違う相場では鳴らさない。
+    「1セッション1回だけ」のゲートを他のアラートと共用。
+    """
+    try:
+        from src.technical_signal import run as run_ts
+        res = run_ts()
+        if not res.get("available"):
+            return False
+
+        alerts = [{
+            "symbol": f"TS:{h['symbol']}:{h['direction']}",
+            "name":   h["name"],
+            "value":  h.get("price"),
+            "change": h["score"],          # ゲート表示用（スコアを流用）
+            "direction": h["direction"],
+            "signals": h["signals"],
+            "rsi":    h.get("rsi"),
+        } for h in res["hits"]]
+        alerts = _apply_cooldown(alerts)
+        if not alerts:
+            return False
+
+        now = get_jst_now().strftime("%m-%d %H:%M JST")
+        lines = ["📐 *テクニカル・シグナル発生*", f"⏰ {now}", "━━━━━━━━━━━━━━━"]
+        for a in alerts[:3]:
+            icon = "🟢 買いシグナル" if a["direction"] == "bull" else "🔴 売りシグナル"
+            v = a.get("value")
+            v_s = f"{v:,.2f}" if v and v < 1000 else f"{v:,.0f}" if v else "—"
+            lines.append(f"{icon}  *{a['name']}* {v_s}")
+            for s in a["signals"][:3]:
+                lines.append(f"　・{s['label']}")
+            lines.append(f"　信頼度スコア: *{a['change']:.1f}*"
+                         + (f" / RSI {a['rsi']:.0f}" if a.get("rsi") else ""))
+        lines += [
+            "━━━━━━━━━━━━━━━",
+            "複数のテクニカル指標が同じ方向に重なった、信頼性の高い節目のみ通知しています。",
+            "📱 市場AI秘書",
+        ]
+
+        from src.notify_telegram import send_message
+        send_message("\n".join(lines))
+        logger.info(f"🚨 テクニカルシグナル通知: {len(alerts)}件")
+        return True
+    except Exception:
+        logger.error("テクニカルシグナルアラートエラー")
+        logger.debug(traceback.format_exc())
+        return False
+
+
 def run_afterhours_alert() -> bool:
     """
     米国主要株の時間外（アフターアワーズ/プレマーケット）±5%級の大変動を通知。
