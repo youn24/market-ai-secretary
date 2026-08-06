@@ -7,6 +7,14 @@
   1) 単独でも希少・信頼性の高い節目シグナル（ゴールデンクロス/200日線ブレイク等）
   2) 弱〜中程度のシグナルでも「同じ方向に複数重なった（コンフルエンス）」場合
 
+検出するシグナル（重み順）:
+  3.5 52週移動平均（年線）ブレイク / 52週高値・安値の更新
+  3.0 ゴールデン・デッドクロス（50日×200日） / 200日線ブレイク
+  2.5 一目均衡表の雲抜け
+  2.0-2.5 MACDクロス
+  2.0 RSI極値からの反転 / RSIダイバージェンス / スクイーズ後のバンドブレイク
+  1.0 出来高急増（ブレイクの裏付けとして加算）
+
 各シグナルは信頼度の重み(weight)を持ち、同方向の合計が ALERT_SCORE 以上で発火。
 逆方向のシグナルが混在する場合は打ち消して減点する（迷いのある相場では鳴らさない）。
 
@@ -59,14 +67,18 @@ def _ema_series(a, p):
 
 def detect(symbol: str, name: str) -> dict:
     """1銘柄の高信頼シグナルを検出する。"""
-    out = {"available": False, "symbol": symbol, "name": name, "signals": []}
+    out = {"available": False, "symbol": symbol, "name": name,
+           "signals": [], "direction": "neutral", "score": 0.0}
     try:
         import yfinance as yf
-        hist = yf.Ticker(symbol).history(period="1y")
+        # 52週線(≒260営業日)と52週高値の判定に1年分では足りないため2年取得
+        hist = yf.Ticker(symbol).history(period="2y")
         if hist is None or hist.empty or len(hist) < 210:
             return out
         close = [float(x) for x in hist["Close"].dropna().values]
         price = close[-1]
+        vols = ([float(x) for x in hist["Volume"].fillna(0).values]
+                if "Volume" in hist else [])
 
         bull, bear = [], []   # (ラベル, 重み)
 
@@ -146,6 +158,84 @@ def detect(symbol: str, name: str) -> dict:
                     bull.append(("値動き収縮からの上放れ（ボリンジャー上限突破）", 2.0))
                 elif price < ma20 - 2 * sd20:
                     bear.append(("値動き収縮からの下放れ（ボリンジャー下限割れ）", 2.0))
+
+        # ── ⑥ 52週移動平均線（年線）ブレイク ── 重み3.5: 相場の一年の勝ち負けを分ける線
+        # 日本で「年線」と呼ばれる最重要の長期線。200日線と同じくダマシ除去を課す。
+        ma260 = _sma(close, 260)
+        p260 = _sma(close[:-1], 260)
+        if ma260 and p260 and len(close) >= 281:
+            gap = abs(price - ma260) / ma260 * 100
+            recent = close[-21:-1]
+            below = sum(1 for c in recent if c < ma260)
+            if gap >= max(atr_pct, 0.4):
+                if price > ma260 and close[-2] <= p260 and below >= 14:
+                    bull.append(("52週移動平均（年線）を上抜け", 3.5))
+                elif price < ma260 and close[-2] >= p260 and (len(recent) - below) >= 14:
+                    bear.append(("52週移動平均（年線）を下抜け", 3.5))
+
+        # ── ⑦ 52週高値／安値の更新 ── 重み3.5: モメンタム投資の王道シグナル
+        # 「1年間の誰もが含み益／含み損」という需給の節目。連日更新中の追随は避け、
+        # 直近20日ぶりの新値更新（＝節目を初めて抜けた瞬間）だけを拾う。
+        if len(close) >= 260:
+            win = close[-260:]
+            hi52, lo52 = max(win[:-1]), min(win[:-1])
+            prev20_hi = max(close[-21:-1])
+            prev20_lo = min(close[-21:-1])
+            if price > hi52 and prev20_hi <= hi52:
+                bull.append(("52週高値を更新（1年ぶりの高値圏）", 3.5))
+            elif price < lo52 and prev20_lo >= lo52:
+                bear.append(("52週安値を更新（1年ぶりの安値圏）", 3.5))
+
+        # ── ⑧ 一目均衡表の雲抜け ── 重み2.5: 日本株で最も重視される長期の抵抗帯
+        # 雲（先行スパンA・B）を実体で抜けたかを判定する。
+        if len(close) >= 78 and "High" in hist and "Low" in hist:
+            highs = [float(x) for x in hist["High"].dropna().values]
+            lows = [float(x) for x in hist["Low"].dropna().values]
+            if len(highs) >= 78 and len(lows) >= 78:
+                def _mid(h, l, n, shift=0):
+                    e = len(h) - shift
+                    return (max(h[e - n:e]) + min(l[e - n:e])) / 2
+                # 26日前時点の値が現在に先行して雲を形成する
+                tenkan = _mid(highs, lows, 9, 26)
+                kijun = _mid(highs, lows, 26, 26)
+                span_a = (tenkan + kijun) / 2
+                span_b = _mid(highs, lows, 52, 26)
+                top, bot = max(span_a, span_b), min(span_a, span_b)
+                # 1日前も同じ雲で判定して「抜けた瞬間」を捉える
+                t2 = _mid(highs[:-1], lows[:-1], 9, 26)
+                k2 = _mid(highs[:-1], lows[:-1], 26, 26)
+                a2, b2 = (t2 + k2) / 2, _mid(highs[:-1], lows[:-1], 52, 26)
+                top2, bot2 = max(a2, b2), min(a2, b2)
+                if price > top and close[-2] <= top2:
+                    bull.append(("一目均衡表の雲を上抜け（抵抗帯を突破）", 2.5))
+                elif price < bot and close[-2] >= bot2:
+                    bear.append(("一目均衡表の雲を下抜け（支持帯を割れ）", 2.5))
+
+        # ── ⑨ RSIダイバージェンス ── 重み2.0: 天井/底の先行サイン
+        # 価格が新高値でもRSIが切り下がる＝上昇の勢いが衰えている、の検出。
+        if rsi_now is not None and len(close) >= 40:
+            seg = close[-30:]
+            idx_hi = seg.index(max(seg))
+            idx_lo = seg.index(min(seg))
+            r_at = lambda i: _rsi(close[:len(close) - 30 + i + 1])
+            if idx_hi <= 20 and price >= max(seg) * 0.999:
+                r_prev = r_at(idx_hi)
+                if r_prev and rsi_now < r_prev - 5 and rsi_now > 55:
+                    bear.append(("高値更新でも勢いが低下（弱気ダイバージェンス）", 2.0))
+            if idx_lo <= 20 and price <= min(seg) * 1.001:
+                r_prev = r_at(idx_lo)
+                if r_prev and rsi_now > r_prev + 5 and rsi_now < 45:
+                    bull.append(("安値更新でも売り圧力が減少（強気ダイバージェンス）", 2.0))
+
+        # ── 出来高の裏付け ── ブレイク系シグナルに出来高が伴えば信頼度を加算
+        # 「出来高なきブレイクはダマシ」というトレーダーの経験則を反映。
+        if vols and len(vols) >= 21 and (bull or bear):
+            avg20 = sum(vols[-21:-1]) / 20
+            if avg20 > 0:
+                vr = vols[-1] / avg20
+                if vr >= 1.5:
+                    tgt = bull if len(bull) >= len(bear) else bear
+                    tgt.append((f"出来高が平均の{vr:.1f}倍に急増（ブレイクの裏付け）", 1.0))
 
         # ── 集計: 同方向の合計から逆方向を差し引く（迷いのある相場は鳴らさない）──
         bull_s = sum(w for _, w in bull)
