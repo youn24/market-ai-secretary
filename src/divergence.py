@@ -30,12 +30,12 @@ from src.utils import setup_logger, get_jst_now, BASE_DIR
 
 logger = setup_logger("divergence")
 
-# 監視対象（シンボル, 表示名, 単位）
+# 監視対象（yfinanceシンボル, 表示名, 単位, 通知に出すティッカー表記）
 TARGETS = [
-    ("USDJPY=X", "ドル円",     "円"),
-    ("^N225",    "日経225",    "円"),
-    ("NIY=F",    "日経先物",   "円"),
-    ("^GSPC",    "S&P500",     ""),
+    ("USDJPY=X", "ドル円",   "円", "USD/JPY"),
+    ("^N225",    "日経225",  "円", "NI225"),
+    ("NIY=F",    "日経先物", "円", "NIY=F"),
+    ("^GSPC",    "S&P500",   "",   "SPX"),
 ]
 
 # ── 検出パラメータ ──
@@ -207,7 +207,7 @@ def _apply_cooldown(hits: list) -> list:
 def detect() -> list:
     """全対象を検査し、トレンドと一致したヒドゥンダイバージェンスを返す"""
     hits = []
-    for sym, name, unit in TARGETS:
+    for sym, name, unit, ticker in TARGETS:
         try:
             trend = _daily_trend(sym)
             if trend not in ("up", "down"):
@@ -218,7 +218,7 @@ def detect() -> list:
             r = _check(df, trend)
             if r:
                 r.update({"symbol": sym, "name": name, "unit": unit,
-                          "daily_trend": trend})
+                          "ticker": ticker, "daily_trend": trend})
                 hits.append(r)
         except Exception:
             logger.debug(traceback.format_exc())
@@ -226,14 +226,30 @@ def detect() -> list:
 
 
 def build_message(hits: list) -> str:
+    """
+    通知メッセージを組み立てる。
+    Telegramの通知バーには「1行目」しか出ないため、
+    どの銘柄・通貨ペアのシグナルなのかを必ず1行目に明記する。
+    """
     trend_ja = {"up": "📈 日足は上昇トレンド", "down": "📉 日足は下降トレンド"}
-    lines = ["📐 *ヒドゥンダイバージェンス検出*",
-             "（日足トレンド × 1時間足のRSI）",
-             "━━━━━━━━━━━━━━"]
+
+    # ── タイトル行（＝スマホの通知バーに出る文言）──
+    if len(hits) == 1:
+        h = hits[0]
+        side = "強気" if h["direction"] == "buy" else "弱気"
+        mark = "🟢" if h["direction"] == "buy" else "🔴"
+        title = (f"{mark} *{h['name']}（{h['ticker']}）* "
+                 f"{side}ヒドゥンダイバージェンス")
+    else:
+        names = "・".join(f"{h['name']}({h['ticker']})" for h in hits)
+        title = f"📐 *{names}* ヒドゥンダイバージェンス検出（{len(hits)}件）"
+
+    lines = [title, "（日足トレンド × 1時間足のRSI）", "━━━━━━━━━━━━━━"]
+
     for h in hits:
         lines += [
             "",
-            f"*{h['name']}*　{h['label']}",
+            f"*{h['name']}（{h['ticker']}）*　{h['label']}",
             f"　{trend_ja.get(h['daily_trend'], '')}",
             h["desc"],
             f"→ {h['meaning']}",
