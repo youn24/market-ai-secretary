@@ -759,6 +759,17 @@ def run(mode: str):
     except Exception:
         logger.error("日経内部データエラー"); logger.debug(traceback.format_exc())
 
+    # Step VW: バリュエーション節目ウォッチ（PER/PBR/配当利回り/イールドスプレッド）
+    valuation = {"available": False}
+    try:
+        logger.info("--- Step VW: バリュエーション節目 ---")
+        from src.valuation_watch import run as run_vw
+        valuation = run_vw(nikkei_internals)
+        if valuation.get("available"):
+            logger.info(f"✅ バリュエーション節目通過: {len(valuation.get('events', []))}件")
+    except Exception:
+        logger.error("バリュエーション監視エラー"); logger.debug(traceback.format_exc())
+
     # Step ADR: 日本株ADR（夜間NYの値動き・寄り付き先行ヒント・毎日）
     adr = {"available": False}
     try:
@@ -911,6 +922,7 @@ def run(mode: str):
             adr=adr,
             cfd_sq=cfd_sq,
             upcoming=upcoming,
+            valuation=valuation,
             mode=mode,
         )
         logger.info("✅ デザインAIレポート（docs/daily_report.html）生成")
@@ -1015,7 +1027,8 @@ def run(mode: str):
                   pts=pts,
                   us_afterhours=us_ah,
                   cfd_sq=cfd_sq,
-                  upcoming=upcoming)
+                  upcoming=upcoming,
+                  valuation=valuation)
     except Exception:
         logger.error("Telegram通知エラー"); logger.debug(traceback.format_exc())
 

@@ -1639,6 +1639,50 @@ def _pts_section(pts):
 </div>"""
 
 
+def _valuation_section(valuation):
+    """バリュエーション（PER/PBR/配当利回り/イールドスプレッド）の現在ゾーン"""
+    vw = valuation or {}
+    cur = vw.get("current") or {}
+    if not cur:
+        return ""
+    _JA = {"per": "PER", "pbr": "PBR",
+           "dividend_yield": "配当利回り", "spread": "イールドスプレッド"}
+    _SUB = {"per": "株価は利益の何倍か", "pbr": "株価は純資産の何倍か",
+            "dividend_yield": "配当の魅力", "spread": "株 vs 国債の魅力差"}
+    _UNIT = {"per": "倍", "pbr": "倍", "dividend_yield": "%", "spread": "%"}
+    # 割安側=緑 / 標準=黄 / 割高側=赤（ゾーン名から判定）
+    def _c(name):
+        if any(k in name for k in ("割安", "妙味", "高利回り", "解散価値")):
+            return GREEN
+        if any(k in name for k in ("割高", "高評価", "低い")):
+            return RED
+        return YELLOW
+
+    changed = {e["key"] for e in vw.get("events", [])}
+    cards = []
+    for k in ("per", "pbr", "dividend_yield", "spread"):
+        d = cur.get(k)
+        if not d:
+            continue
+        c = _c(d.get("name", ""))
+        badge = (f'<span style="font-size:8.5px;color:{BG};background:{c};'
+                 f'border-radius:4px;padding:1px 5px;margin-left:4px;font-weight:800">節目通過</span>'
+                 if k in changed else "")
+        cards.append(f"""<div style="background:{CARD2};border:1px solid {BORDER};border-left:3px solid {c};border-radius:8px;padding:9px 11px">
+  <div style="font-size:9.5px;color:{MUTED}">{_JA[k]}<span style="font-size:8px;margin-left:4px">{_SUB[k]}</span></div>
+  <div class="num" style="font-size:19px;font-weight:900;color:{TEXT};margin:1px 0">{d['value']:.2f}<span style="font-size:10px;color:{MUTED}">{_UNIT[k]}</span></div>
+  <div style="font-size:10px;font-weight:800;color:{c}">{d.get('name','')}{badge}</div>
+</div>""")
+    if not cards:
+        return ""
+    return f"""
+<div style="margin-bottom:12px">
+  <div class="label" style="padding:0 2px;margin-bottom:6px">📐 日経平均のバリュエーション（割安・割高の物差し）</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">{''.join(cards)}</div>
+  <div style="font-size:9px;color:{MUTED};margin-top:5px;padding:0 2px">PER・PBRは低いほど割安、配当利回り・イールドスプレッドは高いほど株の魅力が大きい状態です。「節目通過」は投資判断の分かれ目を跨いだ指標です。</div>
+</div>"""
+
+
 def _upcoming_section(upcoming):
     """今後の注目イベント（SQ・雇用統計・FOMC・週次カレンダー）"""
     up = upcoming or {}
@@ -1804,6 +1848,7 @@ def generate(
     adr: dict = None,
     cfd_sq: dict = None,
     upcoming: dict = None,
+    valuation: dict = None,
     **_kwargs,
 ) -> str:
     prices      = prices      or {}
@@ -1838,6 +1883,7 @@ def generate(
     adr_html     = _adr_section(adr)
     cfdsq_html   = _cfd_sq_section(cfd_sq)
     upcoming_html = _upcoming_section(upcoming)
+    valuation_html = _valuation_section(valuation)
     pro_html     = _pro_cross(prices)
     news_html    = _news(news)
     cal_html     = _calendar(weekly_calendar)
@@ -1906,6 +1952,7 @@ def generate(
   {tvadv_html}
   {srk_html}
   {upcoming_html}
+  {valuation_html}
   {cfdsq_html}
   {usah_html}
   {adr_html}
@@ -2005,6 +2052,7 @@ def run(
     adr: dict                = None,
     cfd_sq: dict             = None,
     upcoming: dict           = None,
+    valuation: dict          = None,
     mode: str = "morning",
     **_kwargs,
 ) -> dict:
@@ -2019,7 +2067,7 @@ def run(
             cross_check=cross_check, sector_ranking=sector_ranking, setups=setups,
             ensemble=ensemble, stock_dossier=stock_dossier, kabudragon=kabudragon,
             pts=pts, us_afterhours=us_afterhours, adr=adr, cfd_sq=cfd_sq,
-            upcoming=upcoming,
+            upcoming=upcoming, valuation=valuation,
         )
         logger.info(f"✅ デザインAIレポート生成: {path}")
         return {"available": True, "path": path}

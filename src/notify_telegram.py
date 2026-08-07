@@ -554,7 +554,7 @@ def _build_overview_caption(risk, prices, fear_greed, news, ai_summary) -> str:
 def _build_unified_caption(risk, prices, fear_greed, ai_summary,
                            setups=None, prediction_tracker=None,
                            us_afterhours=None, pts=None, adr=None,
-                           kabudragon=None) -> str:
+                           kabudragon=None, valuation=None) -> str:
     """
     朝レポートを1通に集約したときのキャプション（Telegram上限1024字）。
 
@@ -576,6 +576,15 @@ def _build_unified_caption(risk, prices, fear_greed, ai_summary,
         "━━━━━━━━━━━━━━",
         f"{tl} *{mood}*　スコア `{score_s}`",
     ]
+
+    # ── バリュエーション節目（滅多に出ないが出たら最重要なので先頭付近に置く）──
+    vw = valuation or {}
+    if vw.get("available"):
+        head.append("")
+        for e in vw.get("events", [])[:2]:
+            short = e["label"].split("（")[0]
+            head.append(f"{e['emoji']} *{short} {e['value']:.2f}{e['unit']}*"
+                        f"「{e['prev_zone']}」→「{e['zone']}」")
 
     # ── 寄り付き前チェック（最優先：時間が経つと価値が消える情報） ──
     pre = []
@@ -670,7 +679,8 @@ def _build_detail_message(risk, prices, fear_greed, news,
                           stock_dossier=None, ensemble=None,
                           kabudragon=None, pts=None,
                           us_afterhours=None, cfd_sq=None,
-                          upcoming=None, theme_ranking=None) -> str:
+                          upcoming=None, theme_ranking=None,
+                          valuation=None) -> str:
     """
     通知②の詳細テキスト（4096文字以内・ボタン付きで送る）
     AIの3視点・シナリオ・テクニカル・セクター・予測精度・自律AIミッション
@@ -973,7 +983,7 @@ def run(risk, analysis, report_paths, mode,
         nikkei_internals=None, adr=None, setups=None,
         stock_dossier=None, ensemble=None, kabudragon=None,
         pts=None, us_afterhours=None, cfd_sq=None, upcoming=None,
-        video_path=None) -> bool:
+        valuation=None, video_path=None) -> bool:
 
     if not _is_configured():
         logger.info("Telegram 設定なし。スキップします。")
@@ -999,7 +1009,7 @@ def run(risk, analysis, report_paths, mode,
             risk, prices, fear_greed, ai_summary,
             setups=setups, prediction_tracker=prediction_tracker,
             us_afterhours=us_afterhours, pts=pts, adr=adr,
-            kabudragon=kabudragon,
+            kabudragon=kabudragon, valuation=valuation,
         )
 
         report_url = report_paths.get("url", "").strip()
