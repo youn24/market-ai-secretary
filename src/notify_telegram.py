@@ -554,7 +554,7 @@ def _build_overview_caption(risk, prices, fear_greed, news, ai_summary) -> str:
 def _build_unified_caption(risk, prices, fear_greed, ai_summary,
                            setups=None, prediction_tracker=None,
                            us_afterhours=None, pts=None, adr=None,
-                           kabudragon=None, valuation=None) -> str:
+                           kabudragon=None, valuation=None, macro_watch=None) -> str:
     """
     朝レポートを1通に集約したときのキャプション（Telegram上限1024字）。
 
@@ -582,6 +582,15 @@ def _build_unified_caption(risk, prices, fear_greed, ai_summary,
     if vw.get("available"):
         head.append("")
         for e in vw.get("events", [])[:2]:
+            short = e["label"].split("（")[0]
+            head.append(f"{e['emoji']} *{short} {e['value']:.2f}{e['unit']}*"
+                        f"「{e['prev_zone']}」→「{e['zone']}」")
+
+    # ── 景気・信用の先行シグナル（滅多に変わらないが変われば最重要）──
+    mw = macro_watch or {}
+    if mw.get("available"):
+        head.append("")
+        for e in mw.get("events", [])[:2]:
             short = e["label"].split("（")[0]
             head.append(f"{e['emoji']} *{short} {e['value']:.2f}{e['unit']}*"
                         f"「{e['prev_zone']}」→「{e['zone']}」")
@@ -983,7 +992,7 @@ def run(risk, analysis, report_paths, mode,
         nikkei_internals=None, adr=None, setups=None,
         stock_dossier=None, ensemble=None, kabudragon=None,
         pts=None, us_afterhours=None, cfd_sq=None, upcoming=None,
-        valuation=None, video_path=None) -> bool:
+        valuation=None, macro_watch=None, video_path=None) -> bool:
 
     if not _is_configured():
         logger.info("Telegram 設定なし。スキップします。")
@@ -1009,7 +1018,7 @@ def run(risk, analysis, report_paths, mode,
             risk, prices, fear_greed, ai_summary,
             setups=setups, prediction_tracker=prediction_tracker,
             us_afterhours=us_afterhours, pts=pts, adr=adr,
-            kabudragon=kabudragon, valuation=valuation,
+            kabudragon=kabudragon, valuation=valuation, macro_watch=macro_watch,
         )
 
         report_url = report_paths.get("url", "").strip()

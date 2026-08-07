@@ -1639,6 +1639,70 @@ def _pts_section(pts):
 </div>"""
 
 
+def _macro_section(macro_watch):
+    """景気・信用の先行シグナル（何を意味するかを添えて常時表示）"""
+    mw = macro_watch or {}
+    cur = mw.get("current") or {}
+    if not cur:
+        return ""
+    _JA = {
+        "hy_spread":   ("信用不安", "企業の資金繰りの苦しさ", "%"),
+        "yield_curve": ("逆イールド", "景気後退の先行指標", "%"),
+        "sahm":        ("雇用の悪化速度", "0.5超で景気後退サイン", "pt"),
+        "real_rate":   ("実質金利", "高いと株に逆風", "%"),
+        "buffett":     ("バフェット指数", "米国株が経済規模の何倍か", "%"),
+    }
+    # 良い状態=緑 / 注意=黄 / 悪い状態=赤（ゾーン名から判定）
+    def _c(name):
+        if any(k in name for k in ("危険", "後退", "警戒", "割高", "高い")):
+            return RED
+        if any(k in name for k in ("悪化", "平坦", "やや")):
+            return YELLOW
+        if any(k in name for k in ("安定", "健全", "正常", "割安", "低い", "マイナス", "急峻")):
+            return GREEN
+        return YELLOW
+
+    changed = {e["key"] for e in mw.get("events", [])}
+    cards = []
+    for k in ("hy_spread", "yield_curve", "sahm", "real_rate", "buffett"):
+        d = cur.get(k)
+        if not d or d.get("value") is None:
+            continue
+        name, sub, unit = _JA[k]
+        c = _c(d.get("name", ""))
+        badge = (f'<span style="font-size:8.5px;color:{BG};background:{c};border-radius:4px;'
+                 f'padding:1px 5px;margin-left:4px;font-weight:800">変化</span>'
+                 if k in changed else "")
+        cards.append(f"""<div style="background:{CARD2};border:1px solid {BORDER};border-left:3px solid {c};border-radius:8px;padding:9px 11px">
+  <div style="font-size:9.5px;color:{MUTED}">{name}<span style="font-size:8px;margin-left:4px">{sub}</span></div>
+  <div class="num" style="font-size:18px;font-weight:900;color:{TEXT};margin:1px 0">{d['value']:.2f}<span style="font-size:10px;color:{MUTED}">{unit}</span></div>
+  <div style="font-size:10px;font-weight:800;color:{c}">{d.get('name','')}{badge}</div>
+</div>""")
+
+    eps = mw.get("eps")
+    eps_html = ""
+    if eps:
+        ec = GREEN if eps["state"] == "増益トレンド" else RED if eps["state"] == "減益トレンド" else YELLOW
+        eps_html = f"""<div style="background:{CARD2};border:1px solid {BORDER};border-left:3px solid {ec};border-radius:8px;padding:9px 11px;margin-top:8px">
+  <div style="font-size:9.5px;color:{MUTED}">日経平均のEPS（1株あたり利益）<span style="font-size:8px;margin-left:4px">株価の土台になる数字</span></div>
+  <div style="display:flex;align-items:baseline;gap:8px">
+    <span class="num" style="font-size:18px;font-weight:900;color:{TEXT}">{eps['value']:,.0f}<span style="font-size:10px;color:{MUTED}">円</span></span>
+    <span class="num" style="font-size:12px;font-weight:800;color:{ec}">3か月で{eps['chg_pct']:+.1f}%・{eps['state']}</span>
+  </div>
+  <div style="font-size:9.5px;color:{MUTED};margin-top:2px">{eps['meaning']}</div>
+</div>"""
+
+    if not cards and not eps_html:
+        return ""
+    return f"""
+<div style="margin-bottom:12px">
+  <div class="label" style="padding:0 2px;margin-bottom:6px">🌡 景気・信用の先行シグナル（この先どうなりそうか）</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">{''.join(cards)}</div>
+  {eps_html}
+  <div style="font-size:9px;color:{MUTED};margin-top:5px;padding:0 2px">PER・PBRが「今が高いか安いか」なのに対し、こちらは「この先どうなりそうか」を示す指標です。緑=良好、黄=注意、赤=警戒。「変化」は意味の変わる節目を跨いだ指標です。</div>
+</div>"""
+
+
 def _valuation_section(valuation):
     """バリュエーション（PER/PBR/配当利回り/イールドスプレッド）の現在ゾーン"""
     vw = valuation or {}
@@ -1849,6 +1913,7 @@ def generate(
     cfd_sq: dict = None,
     upcoming: dict = None,
     valuation: dict = None,
+    macro_watch: dict = None,
     **_kwargs,
 ) -> str:
     prices      = prices      or {}
@@ -1884,6 +1949,7 @@ def generate(
     cfdsq_html   = _cfd_sq_section(cfd_sq)
     upcoming_html = _upcoming_section(upcoming)
     valuation_html = _valuation_section(valuation)
+    macro_html = _macro_section(macro_watch)
     pro_html     = _pro_cross(prices)
     news_html    = _news(news)
     cal_html     = _calendar(weekly_calendar)
@@ -1953,6 +2019,7 @@ def generate(
   {srk_html}
   {upcoming_html}
   {valuation_html}
+  {macro_html}
   {cfdsq_html}
   {usah_html}
   {adr_html}
@@ -2053,6 +2120,7 @@ def run(
     cfd_sq: dict             = None,
     upcoming: dict           = None,
     valuation: dict          = None,
+    macro_watch: dict        = None,
     mode: str = "morning",
     **_kwargs,
 ) -> dict:
@@ -2067,7 +2135,7 @@ def run(
             cross_check=cross_check, sector_ranking=sector_ranking, setups=setups,
             ensemble=ensemble, stock_dossier=stock_dossier, kabudragon=kabudragon,
             pts=pts, us_afterhours=us_afterhours, adr=adr, cfd_sq=cfd_sq,
-            upcoming=upcoming, valuation=valuation,
+            upcoming=upcoming, valuation=valuation, macro_watch=macro_watch,
         )
         logger.info(f"✅ デザインAIレポート生成: {path}")
         return {"available": True, "path": path}

@@ -770,6 +770,17 @@ def run(mode: str):
     except Exception:
         logger.error("バリュエーション監視エラー"); logger.debug(traceback.format_exc())
 
+    # Step MW: 景気・信用の先行シグナル（HYスプレッド/逆イールド/サーム/実質金利/バフェット指数）
+    macro_watch = {"available": False}
+    try:
+        logger.info("--- Step MW: 景気・信用シグナル ---")
+        from src.macro_watch import run as run_mw
+        macro_watch = run_mw(nikkei_internals)
+        if macro_watch.get("available"):
+            logger.info(f"✅ マクロ節目通過: {len(macro_watch.get('events', []))}件")
+    except Exception:
+        logger.error("マクロ監視エラー"); logger.debug(traceback.format_exc())
+
     # Step ADR: 日本株ADR（夜間NYの値動き・寄り付き先行ヒント・毎日）
     adr = {"available": False}
     try:
@@ -923,6 +934,7 @@ def run(mode: str):
             cfd_sq=cfd_sq,
             upcoming=upcoming,
             valuation=valuation,
+            macro_watch=macro_watch,
             mode=mode,
         )
         logger.info("✅ デザインAIレポート（docs/daily_report.html）生成")
@@ -1028,7 +1040,8 @@ def run(mode: str):
                   us_afterhours=us_ah,
                   cfd_sq=cfd_sq,
                   upcoming=upcoming,
-                  valuation=valuation)
+                  valuation=valuation,
+                  macro_watch=macro_watch)
     except Exception:
         logger.error("Telegram通知エラー"); logger.debug(traceback.format_exc())
 
