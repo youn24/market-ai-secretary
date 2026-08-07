@@ -781,6 +781,17 @@ def run(mode: str):
     except Exception:
         logger.error("マクロ監視エラー"); logger.debug(traceback.format_exc())
 
+    # Step MS: 市場内部シグナル（SOX/SKEW/VVIX/ドル指数/NT倍率・取得済み価格から判定）
+    market_signals = {"available": False}
+    try:
+        logger.info("--- Step MS: 市場内部シグナル ---")
+        from src.market_signals import run as run_ms
+        market_signals = run_ms(prices)
+        if market_signals.get("available"):
+            logger.info(f"✅ 市場内部シグナル: {len(market_signals.get('events', []))}件")
+    except Exception:
+        logger.error("市場内部シグナルエラー"); logger.debug(traceback.format_exc())
+
     # Step ADR: 日本株ADR（夜間NYの値動き・寄り付き先行ヒント・毎日）
     adr = {"available": False}
     try:
@@ -935,6 +946,7 @@ def run(mode: str):
             upcoming=upcoming,
             valuation=valuation,
             macro_watch=macro_watch,
+            market_signals=market_signals,
             mode=mode,
         )
         logger.info("✅ デザインAIレポート（docs/daily_report.html）生成")
@@ -1041,7 +1053,8 @@ def run(mode: str):
                   cfd_sq=cfd_sq,
                   upcoming=upcoming,
                   valuation=valuation,
-                  macro_watch=macro_watch)
+                  macro_watch=macro_watch,
+                  market_signals=market_signals)
     except Exception:
         logger.error("Telegram通知エラー"); logger.debug(traceback.format_exc())
 

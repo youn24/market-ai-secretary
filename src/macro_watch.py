@@ -34,6 +34,13 @@ _FRED = {
     "real_rate":  "DFII10",         # 10年物価連動債利回り＝実質金利（%）日次
 }
 
+# 流動性（カネ余り度）。水準ではなく「増えているか減っているか」が効くため、
+# 前年比の変化率で判定する。
+_FRED_FLOW = {
+    "cb_assets": "WALCL",           # FRB総資産（週次・百万ドル）
+    "m2":        "M2SL",            # M2マネーサプライ（月次・十億ドル）
+}
+
 # ゾーン定義: (上限, 名前, 絵文字, これは何か+今の状態, だからどうするか)
 # 上限は「この値未満ならこのゾーン」。末尾は上限なし。
 _ZONES = {
@@ -95,6 +102,36 @@ _ZONES = {
              "グロース株・金には逆風。バリュー株が相対的に有利になりやすい。"),
         ],
     },
+    "cb_assets": {
+        "label": "FRBの総資産（市場に出回るお金の量）",
+        "what": "中央銀行が抱える資産の増減。増える＝市場にお金を流している（緩和）、減る＝回収している（引き締め）。株価の最大の追い風・向かい風になる",
+        "unit": "%",
+        "bands": [
+            (-5.0, "強い引き締め", "🔴", "中央銀行が急ピッチでお金を回収している。株には強い逆風。",
+             "上値が重くなりやすい環境。守りを意識したい。"),
+            (0.0, "引き締め", "🟠", "お金の量が緩やかに減っている。",
+             "相場全体の上昇力は鈍りやすい。"),
+            (5.0, "中立", "🟡", "お金の量はほぼ横ばい。",
+             "流動性は判断材料にならない局面。"),
+            (None, "緩和的", "🟢", "中央銀行がお金を増やしている。株には追い風。",
+             "リスク資産に資金が向かいやすい環境。"),
+        ],
+    },
+    "m2": {
+        "label": "M2マネーサプライ（世の中のお金の総量）",
+        "what": "現金・預金など、実際に使えるお金の総量の前年比。増えれば株や不動産に流れ込みやすい",
+        "unit": "%",
+        "bands": [
+            (0.0, "減少（異例）", "🔴", "お金の総量が前年より減っている。歴史的にも稀で、景気に強い逆風。",
+             "リスクを取りにくい環境。現金の価値が相対的に高まる。"),
+            (3.0, "低い伸び", "🟠", "お金の増え方が鈍い。",
+             "相場の勢いは出にくい。"),
+            (8.0, "標準", "🟡", "平常的な増加ペース。",
+             "特段の追い風も向かい風もない。"),
+            (None, "カネ余り", "🟢", "お金が大きく増えている。株・不動産などに資金が向かいやすい。",
+             "資産価格が上がりやすい環境。ただしインフレにも注意。"),
+        ],
+    },
     "buffett": {
         "label": "バフェット指数（米国株の時価総額 ÷ GDP）",
         "what": "国全体の株価が経済規模の何倍かを見る長期の物差し。バフェット氏が重視すると語ったことで有名",
@@ -129,6 +166,22 @@ def _latest(series_id: str):
         return None
     try:
         return float(rows[-1][1])
+    except Exception:
+        return None
+
+
+def _yoy(series_id: str, per_year: int):
+    """
+    前年比の変化率(%)を返す。per_year は年あたりのデータ本数
+    （週次=52・月次=12）。流動性は水準でなく増減が効くため。
+    """
+    rows = _fetch(series_id, limit=per_year + 8)
+    if len(rows) < per_year + 1:
+        return None
+    try:
+        now = float(rows[-1][1])
+        ago = float(rows[-1 - per_year][1])
+        return round((now - ago) / ago * 100, 2) if ago else None
     except Exception:
         return None
 
@@ -214,9 +267,12 @@ def run(nikkei_internals: dict = None) -> dict:
     values = {}
     try:
         from concurrent.futures import ThreadPoolExecutor
-        with ThreadPoolExecutor(max_workers=5) as ex:
+        with ThreadPoolExecutor(max_workers=6) as ex:
             futs = {k: ex.submit(_latest, sid) for k, sid in _FRED.items()}
             futs["buffett"] = ex.submit(_buffett_index)
+            # 流動性は前年比（週次52本 / 月次12本さかのぼる）
+            futs["cb_assets"] = ex.submit(_yoy, _FRED_FLOW["cb_assets"], 52)
+            futs["m2"] = ex.submit(_yoy, _FRED_FLOW["m2"], 12)
             for k, f in futs.items():
                 try:
                     values[k] = f.result(timeout=40)

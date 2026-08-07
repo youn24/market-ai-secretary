@@ -554,7 +554,7 @@ def _build_overview_caption(risk, prices, fear_greed, news, ai_summary) -> str:
 def _build_unified_caption(risk, prices, fear_greed, ai_summary,
                            setups=None, prediction_tracker=None,
                            us_afterhours=None, pts=None, adr=None,
-                           kabudragon=None, valuation=None, macro_watch=None) -> str:
+                           kabudragon=None, valuation=None, macro_watch=None, market_signals=None) -> str:
     """
     朝レポートを1通に集約したときのキャプション（Telegram上限1024字）。
 
@@ -594,6 +594,14 @@ def _build_unified_caption(risk, prices, fear_greed, ai_summary,
             short = e["label"].split("（")[0]
             head.append(f"{e['emoji']} *{short} {e['value']:.2f}{e['unit']}*"
                         f"「{e['prev_zone']}」→「{e['zone']}」")
+
+    # ── 市場内部シグナル（SOXは寄り付きに直結するので上に出す）──
+    ms = market_signals or {}
+    if ms.get("available"):
+        head.append("")
+        for e in ms.get("events", [])[:2]:
+            short = e["label"].split("（")[0]
+            head.append(f"{e['emoji']} *{short}* {e['zone']}")
 
     # ── 寄り付き前チェック（最優先：時間が経つと価値が消える情報） ──
     pre = []
@@ -992,7 +1000,7 @@ def run(risk, analysis, report_paths, mode,
         nikkei_internals=None, adr=None, setups=None,
         stock_dossier=None, ensemble=None, kabudragon=None,
         pts=None, us_afterhours=None, cfd_sq=None, upcoming=None,
-        valuation=None, macro_watch=None, video_path=None) -> bool:
+        valuation=None, macro_watch=None, market_signals=None, video_path=None) -> bool:
 
     if not _is_configured():
         logger.info("Telegram 設定なし。スキップします。")
@@ -1018,7 +1026,7 @@ def run(risk, analysis, report_paths, mode,
             risk, prices, fear_greed, ai_summary,
             setups=setups, prediction_tracker=prediction_tracker,
             us_afterhours=us_afterhours, pts=pts, adr=adr,
-            kabudragon=kabudragon, valuation=valuation, macro_watch=macro_watch,
+            kabudragon=kabudragon, valuation=valuation, macro_watch=macro_watch, market_signals=market_signals,
         )
 
         report_url = report_paths.get("url", "").strip()

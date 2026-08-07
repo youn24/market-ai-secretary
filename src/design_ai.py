@@ -1639,6 +1639,71 @@ def _pts_section(pts):
 </div>"""
 
 
+def _market_signals_section(market_signals, prices=None):
+    """市場内部シグナル（SOX/SKEW/VVIX/ドル指数/NT倍率）"""
+    ms = market_signals or {}
+    cur = ms.get("current") or {}
+    if not cur:
+        return ""
+    _JA = {
+        "skew": ("SKEW", "暴落への備えの厚さ", ""),
+        "vvix": ("VVIX", "恐怖指数の荒れ具合", ""),
+        "dxy":  ("ドル指数", "ドル自身の強さ", ""),
+        "nt":   ("NT倍率", "相場の質（偏りの度合い）", "倍"),
+    }
+    def _c(name):
+        if any(k in name for k in ("強い警戒", "極端", "極めて")):
+            return RED
+        if any(k in name for k in ("警戒", "不安定", "ドル高", "偏重")):
+            return YELLOW
+        return GREEN
+
+    changed = {e["key"] for e in ms.get("events", [])}
+    cards = []
+    for k in ("skew", "vvix", "dxy", "nt"):
+        d = cur.get(k)
+        if not d or d.get("value") is None:
+            continue
+        name, sub, unit = _JA[k]
+        c = _c(d.get("name", ""))
+        badge = (f'<span style="font-size:8.5px;color:{BG};background:{c};border-radius:4px;'
+                 f'padding:1px 5px;margin-left:4px;font-weight:800">変化</span>'
+                 if k in changed else "")
+        cards.append(f"""<div style="background:{CARD2};border:1px solid {BORDER};border-left:3px solid {c};border-radius:8px;padding:9px 11px">
+  <div style="font-size:9.5px;color:{MUTED}">{name}<span style="font-size:8px;margin-left:4px">{sub}</span></div>
+  <div class="num" style="font-size:18px;font-weight:900;color:{TEXT};margin:1px 0">{d['value']:.2f}<span style="font-size:10px;color:{MUTED}">{unit}</span></div>
+  <div style="font-size:10px;font-weight:800;color:{c}">{d.get('name','')}{badge}</div>
+</div>""")
+
+    # SOXは水準でなく「昨夜どれだけ動いたか」が翌朝に効くので別枠で見せる
+    sox_html = ""
+    sx = (prices or {}).get("^SOX") or {}
+    if sx.get("latest") and sx.get("change_pct") is not None:
+        chg = sx["change_pct"]
+        c = _col(chg)
+        note = ("日本の半導体株に追い風が吹きやすい" if chg >= 2.5 else
+                "日本の半導体株に逆風が吹きやすい" if chg <= -2.5 else
+                "日本の半導体株への影響は限定的")
+        sox_html = f"""<div style="background:{CARD2};border:1px solid {BORDER};border-left:3px solid {c};border-radius:8px;padding:9px 11px;margin-top:8px">
+  <div style="font-size:9.5px;color:{MUTED}">🔥 SOX指数（米半導体）<span style="font-size:8px;margin-left:4px">東エレク・アドテスト等の先行指標</span></div>
+  <div style="display:flex;align-items:baseline;gap:8px">
+    <span class="num" style="font-size:18px;font-weight:900;color:{TEXT}">{sx['latest']:,.0f}</span>
+    <span class="num" style="font-size:13px;font-weight:800;color:{c}">{chg:+.2f}%</span>
+  </div>
+  <div style="font-size:9.5px;color:{MUTED};margin-top:2px">{note}</div>
+</div>"""
+
+    if not cards and not sox_html:
+        return ""
+    return f"""
+<div style="margin-bottom:12px">
+  <div class="label" style="padding:0 2px;margin-bottom:6px">🧭 市場内部シグナル（相場の中身）</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">{''.join(cards)}</div>
+  {sox_html}
+  <div style="font-size:9px;color:{MUTED};margin-top:5px;padding:0 2px">価格そのものではなく「相場の中身」を示す指標です。SKEW・VVIXは急落への警戒度、NT倍率は上昇が一部の値がさ株に偏っていないかを表します。</div>
+</div>"""
+
+
 def _macro_section(macro_watch):
     """景気・信用の先行シグナル（何を意味するかを添えて常時表示）"""
     mw = macro_watch or {}
@@ -1914,6 +1979,7 @@ def generate(
     upcoming: dict = None,
     valuation: dict = None,
     macro_watch: dict = None,
+    market_signals: dict = None,
     **_kwargs,
 ) -> str:
     prices      = prices      or {}
@@ -1950,6 +2016,7 @@ def generate(
     upcoming_html = _upcoming_section(upcoming)
     valuation_html = _valuation_section(valuation)
     macro_html = _macro_section(macro_watch)
+    msignal_html = _market_signals_section(market_signals, prices)
     pro_html     = _pro_cross(prices)
     news_html    = _news(news)
     cal_html     = _calendar(weekly_calendar)
@@ -2020,6 +2087,7 @@ def generate(
   {upcoming_html}
   {valuation_html}
   {macro_html}
+  {msignal_html}
   {cfdsq_html}
   {usah_html}
   {adr_html}
@@ -2121,6 +2189,7 @@ def run(
     upcoming: dict           = None,
     valuation: dict          = None,
     macro_watch: dict        = None,
+    market_signals: dict     = None,
     mode: str = "morning",
     **_kwargs,
 ) -> dict:
@@ -2135,7 +2204,7 @@ def run(
             cross_check=cross_check, sector_ranking=sector_ranking, setups=setups,
             ensemble=ensemble, stock_dossier=stock_dossier, kabudragon=kabudragon,
             pts=pts, us_afterhours=us_afterhours, adr=adr, cfd_sq=cfd_sq,
-            upcoming=upcoming, valuation=valuation, macro_watch=macro_watch,
+            upcoming=upcoming, valuation=valuation, macro_watch=macro_watch, market_signals=market_signals,
         )
         logger.info(f"✅ デザインAIレポート生成: {path}")
         return {"available": True, "path": path}
