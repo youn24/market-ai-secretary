@@ -78,6 +78,17 @@ def run():
         except Exception:
             logger.error("テクニカルシグナル検出エラー"); logger.debug(traceback.format_exc())
 
+    # マクロ（ファンダメンタル）レジーム変化アラート
+    #   逆イールド・サームルール・信用スプレッド・実質金利。
+    #   月次/週次データなので判定は1日1回だけ（内部でセッションガード）。
+    #   重要な状態変化が起きたときのみ通知するので通常は無風。
+    try:
+        from src.fundamental_signals import run_macro_alert
+        if run_macro_alert():
+            logger.info("✅ マクロレジーム変化アラート送信完了")
+    except Exception:
+        logger.error("マクロシグナル検出エラー"); logger.debug(traceback.format_exc())
+
     logger.info("====== 監視完了 ======")
 
 

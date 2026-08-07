@@ -837,6 +837,18 @@ def run(mode: str):
     except Exception:
         logger.error("米国時間外エラー"); logger.debug(traceback.format_exc())
 
+    # Step MACRO: マクロ（ファンダメンタル）レジーム判定
+    #   逆イールド・サームルール・信用スプレッド・実質金利（歴史的に実績のある指標）
+    macro_regime = {"available": False}
+    try:
+        logger.info("--- Step MACRO: マクロレジーム判定 ---")
+        from src.fundamental_signals import run as run_macro_regime
+        macro_regime = run_macro_regime()
+        if macro_regime.get("available"):
+            logger.info(f"✅ マクロレジーム: {len(macro_regime.get('signals', []))}件")
+    except Exception:
+        logger.error("マクロレジームエラー"); logger.debug(traceback.format_exc())
+
     # Step CFD: CFD/24時間先物＋SQ情報（CME日経ギャップ・SQ日程・毎日）
     cfd_sq = {"available": False}
     try:
@@ -942,6 +954,7 @@ def run(mode: str):
             pts=pts,
             us_afterhours=us_ah,
             adr=adr,
+            macro_regime=macro_regime,
             cfd_sq=cfd_sq,
             upcoming=upcoming,
             valuation=valuation,
@@ -1050,6 +1063,7 @@ def run(mode: str):
                   kabudragon=kabudragon,
                   pts=pts,
                   us_afterhours=us_ah,
+                  macro_regime=macro_regime,
                   cfd_sq=cfd_sq,
                   upcoming=upcoming,
                   valuation=valuation,

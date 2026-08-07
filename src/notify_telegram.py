@@ -554,7 +554,8 @@ def _build_overview_caption(risk, prices, fear_greed, news, ai_summary) -> str:
 def _build_unified_caption(risk, prices, fear_greed, ai_summary,
                            setups=None, prediction_tracker=None,
                            us_afterhours=None, pts=None, adr=None,
-                           kabudragon=None, valuation=None, macro_watch=None, market_signals=None) -> str:
+                           kabudragon=None, valuation=None, macro_watch=None,
+                           market_signals=None, macro_regime=None) -> str:
     """
     朝レポートを1通に集約したときのキャプション（Telegram上限1024字）。
 
@@ -661,6 +662,13 @@ def _build_unified_caption(risk, prices, fear_greed, ai_summary,
             mark = "🎯" if rate >= 65 else "🔶" if rate >= 50 else "⚠️"
             acc.append(f"🧠 AI直近10日の的中率 {mark} {rate}%")
 
+    # ── マクロ環境（歴史的に実績のあるファンダ指標） ──
+    mac = []
+    mr = macro_regime or {}
+    if mr.get("available"):
+        for s in (mr.get("signals") or [])[:2]:
+            mac.append(f"{s.get('emoji','')} {s.get('title','')}　{s.get('value','')}")
+
     # ── AIの一言 ──
     ai_one = ""
     if (ai_summary or {}).get("available"):
@@ -670,7 +678,7 @@ def _build_unified_caption(risk, prices, fear_greed, ai_summary,
     foot = ["👇 3シナリオ・チャート・全データはレポートへ"]
 
     # 優先度の低い順に落として1024字に収める
-    blocks = [pre, sig, acc, ai_blk]
+    blocks = [pre, sig, acc, mac, ai_blk]
     while True:
         parts = [head]
         parts += [b for b in blocks if b]
@@ -1000,7 +1008,8 @@ def run(risk, analysis, report_paths, mode,
         nikkei_internals=None, adr=None, setups=None,
         stock_dossier=None, ensemble=None, kabudragon=None,
         pts=None, us_afterhours=None, cfd_sq=None, upcoming=None,
-        valuation=None, macro_watch=None, market_signals=None, video_path=None) -> bool:
+        valuation=None, macro_watch=None, market_signals=None,
+        macro_regime=None, video_path=None) -> bool:
 
     if not _is_configured():
         logger.info("Telegram 設定なし。スキップします。")
@@ -1026,7 +1035,8 @@ def run(risk, analysis, report_paths, mode,
             risk, prices, fear_greed, ai_summary,
             setups=setups, prediction_tracker=prediction_tracker,
             us_afterhours=us_afterhours, pts=pts, adr=adr,
-            kabudragon=kabudragon, valuation=valuation, macro_watch=macro_watch, market_signals=market_signals,
+            kabudragon=kabudragon, valuation=valuation, macro_watch=macro_watch,
+            market_signals=market_signals, macro_regime=macro_regime,
         )
 
         report_url = report_paths.get("url", "").strip()
