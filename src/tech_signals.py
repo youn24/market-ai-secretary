@@ -220,9 +220,143 @@ def _sig_rsi_reversal(c: pd.Series) -> dict | None:
     return None
 
 
+def _noise_floor(c: pd.Series) -> float:
+    """直近20本の平均変動率(%)。線をかすっただけのダマシを弾く基準に使う。"""
+    ch = c.pct_change().abs().tail(20) * 100
+    return float(ch.mean()) if not ch.isna().all() else 0.0
+
+
+def _sig_ma52w(c: pd.Series) -> dict | None:
+    """52週移動平均線（年線）の上抜け / 下抜け。日本で最重視される長期線。
+
+    本物の転換だけを拾うため3条件を課す:
+      (a) 平常の変動幅を超える明確な突破（線をかすっただけを除外）
+      (b) 直近20本の7割が線の反対側にいた（レンジ内の往復を除外）
+      (c) 直近5本以内に線の反対側から来て、今日が初めて明確に離れた日
+          （じり上がりで抜けるケースも拾いつつ、翌日以降の重複発火は防ぐ）
+    """
+    if len(c) < 281:
+        return None
+    ma = c.rolling(260).mean()
+    if pd.isna(ma.iloc[-2]):
+        return None
+    price, mv = c.iloc[-1], ma.iloc[-1]
+    floor = max(_noise_floor(c), 0.4)
+    gap = abs(price - mv) / mv * 100
+    if gap < floor:
+        return None
+    # 前日はまだ「明確な突破」ではなかった＝今日が突破の初日
+    prev_gap = abs(c.iloc[-2] - ma.iloc[-2]) / ma.iloc[-2] * 100
+    prev_broken = (c.iloc[-2] > ma.iloc[-2]) == (price > mv) and prev_gap >= floor
+    if prev_broken:
+        return None
+    recent = c.iloc[-21:-1]
+    below = int((recent < mv).sum())
+    # 直近5本以内に反対側にいたか（じり上がり・じり下がりでの突破に対応）
+    last5 = c.iloc[-6:-1]
+    came_from_below = bool((last5 < ma.iloc[-6:-1]).any())
+    came_from_above = bool((last5 > ma.iloc[-6:-1]).any())
+    if price > mv and came_from_below and below >= 14:
+        return {"type": "ma52w_up", "emoji": "🌅", "direction": "buy",
+                "label": "52週移動平均（年線）を上抜け",
+                "desc": f"終値 {price:,.2f} が年線 {mv:,.2f} を上回った。",
+                "meaning": "1年間の平均コストを回復。長期の地合いが強気へ傾く節目。",
+                "tip": "年線の上に定着できるかが分かれ目。急がず定着を確認したい。",
+                "priority": 1}
+    if price < mv and came_from_above and (len(recent) - below) >= 14:
+        return {"type": "ma52w_down", "emoji": "🌑", "direction": "sell",
+                "label": "52週移動平均（年線）を下抜け",
+                "desc": f"終値 {price:,.2f} が年線 {mv:,.2f} を下回った。",
+                "meaning": "1年間の平均コストを割れ、長期の地合いが弱気へ傾く節目。",
+                "tip": "戻り売りが出やすい局面。反発しても慎重に。",
+                "priority": 1}
+    return None
+
+
+def _sig_52w_range(c: pd.Series) -> dict | None:
+    """52週高値／安値の更新（モメンタムの王道シグナル）。
+
+    連日更新中の追随通知を避けるため、直近20本ぶりに節目を抜けた瞬間だけ拾う。
+    """
+    if len(c) < 260:
+        return None
+    win = c.iloc[-260:]
+    price = c.iloc[-1]
+    hi52, lo52 = float(win.iloc[:-1].max()), float(win.iloc[:-1].min())
+    prev20 = c.iloc[-21:-1]
+    if price > hi52 and float(prev20.max()) <= hi52:
+        return {"type": "high52w", "emoji": "🔝", "direction": "buy",
+                "label": "52週高値を更新",
+                "desc": f"終値 {price:,.2f} が1年間の高値 {hi52:,.2f} を突破。",
+                "meaning": "保有者全員が含み益＝上値で売る人が少ない状態。",
+                "tip": "上昇が続きやすい形。ただし高値圏なので損切り位置は明確に。",
+                "priority": 1}
+    if price < lo52 and float(prev20.min()) >= lo52:
+        return {"type": "low52w", "emoji": "🔻", "direction": "sell",
+                "label": "52週安値を更新",
+                "desc": f"終値 {price:,.2f} が1年間の安値 {lo52:,.2f} を割れた。",
+                "meaning": "保有者全員が含み損＝戻ると売りが出やすい状態。",
+                "tip": "下落が続きやすい形。安いという理由だけの買いは危険。",
+                "priority": 1}
+    return None
+
+
+def _sig_ichimoku(c: pd.Series, h: pd.Series = None, l: pd.Series = None) -> dict | None:
+    """一目均衡表の雲抜け。日本株で最も意識される抵抗帯／支持帯。"""
+    if len(c) < 78:
+        return None
+    h = c if h is None else h
+    l = c if l is None else l
+
+    def _cloud(end: int):
+        """end時点（先行26本ずらし）の雲の上下を返す。"""
+        e = end - 26
+        if e < 52:
+            return None
+        mid = lambda n: (float(h.iloc[e - n:e].max()) + float(l.iloc[e - n:e].min())) / 2
+        span_a = (mid(9) + mid(26)) / 2
+        span_b = mid(52)
+        return max(span_a, span_b), min(span_a, span_b)
+
+    now_c, prev_c = _cloud(len(c)), _cloud(len(c) - 1)
+    if not now_c or not prev_c:
+        return None
+    top, bot = now_c
+    top2, bot2 = prev_c
+    price, prev = c.iloc[-1], c.iloc[-2]
+    if price > top and prev <= top2:
+        return {"type": "cloud_up", "emoji": "☁️", "direction": "buy",
+                "label": "一目均衡表の雲を上抜け",
+                "desc": f"終値 {price:,.2f} が雲の上限 {top:,.2f} を突破。",
+                "meaning": "長く抵抗となっていた帯を抜けた。上昇の障害が減る形。",
+                "tip": "雲が下支えに変わるかを確認。押し目で拾う戦略が取りやすい。",
+                "priority": 2}
+    if price < bot and prev >= bot2:
+        return {"type": "cloud_down", "emoji": "🌫", "direction": "sell",
+                "label": "一目均衡表の雲を下抜け",
+                "desc": f"終値 {price:,.2f} が雲の下限 {bot:,.2f} を割れた。",
+                "meaning": "支えだった帯を割れた。上値が重くなりやすい形。",
+                "tip": "雲が抵抗に変わる。戻りは売られやすいので注意。",
+                "priority": 2}
+    return None
+
+
+def _volume_backing(v: pd.Series) -> float | None:
+    """出来高が20本平均の何倍か。ブレイクの裏付け確認に使う。"""
+    if v is None or len(v) < 21:
+        return None
+    avg = float(v.iloc[-21:-1].mean())
+    if avg <= 0:
+        return None
+    return float(v.iloc[-1]) / avg
+
+
 _DETECTORS = (
     _sig_ma_cross,
     _sig_ma200,
+    _sig_ma52w,
+    _sig_52w_range,
+    _sig_ichimoku,
     _sig_regular_divergence,
     _sig_macd,
     _sig_bollinger,
@@ -239,8 +373,11 @@ _TF_HIDDEN_WEIGHT = 0.5            # ヒドゥン（1時間足）は軽め
 
 # シグナル種別ごとの基礎スコア（重要度）
 _TYPE_SCORE = {
+    "ma52w_up":     3.5, "ma52w_down": 3.5,   # 年線＝最重要の長期線
+    "high52w":      3.5, "low52w":     3.5,   # 1年ぶりの新値＝需給の節目
     "golden_cross": 3.0, "dead_cross": 3.0,
     "ma200_up":     3.0, "ma200_down": 3.0,
+    "cloud_up":     2.5, "cloud_down": 2.5,
     "bullish_divergence": 2.0, "bearish_divergence": 2.0,
     "bullish_hidden":     2.0, "bearish_hidden":     2.0,
     "macd_gc": 1.5, "macd_dc": 1.5,
@@ -248,13 +385,22 @@ _TYPE_SCORE = {
     "rsi_recover": 1.0, "rsi_cooldown": 1.0,
 }
 
+# 出来高がこの倍率以上なら「ブレイクの裏付けあり」として加点する
+# （出来高なきブレイクはダマシ、というトレーダーの経験則）
+_VOL_SPIKE = 1.5
+_VOL_BONUS = 1.0
+
 # 信頼度のしきい値（合計スコア）
 _CONF_HIGH = 6.0
 _CONF_MID  = 3.5
 
 # 週足のときにラベルの「日」表記を「週」に直す
 _RELABEL = (("25日線", "25週線"), ("75日線", "75週線"),
-            ("200日移動平均線", "200週移動平均線"), ("200日線", "200週線"))
+            ("200日移動平均線", "200週移動平均線"), ("200日線", "200週線"),
+            ("52週移動平均（年線）", "260週移動平均（超長期線）"),
+            ("52週高値", "5年高値"), ("52週安値", "5年安値"),
+            ("1年間の高値", "5年間の高値"), ("1年間の安値", "5年間の安値"),
+            ("年線", "超長期線"))
 
 
 def _relabel(text: str, tf_name: str) -> str:
@@ -281,7 +427,11 @@ def _confluence(hits: list) -> list:
         d = h.get("direction")
         if d in ("buy", "sell"):
             base = h.get("base_type") or h.get("type", "")
-            g[d] += _TYPE_SCORE.get(base, 1.0) * h.get("tf_weight", 1.0)
+            sc = _TYPE_SCORE.get(base, 1.0)
+            # 出来高を伴うブレイクは裏付けありとして加点（ダマシとの選別）
+            if h.get("vol_ratio"):
+                sc += _VOL_BONUS
+            g[d] += sc * h.get("tf_weight", 1.0)
 
     groups = []
     for g in by_sym.values():
@@ -357,14 +507,21 @@ def detect() -> list:
                 if df is None or len(df) < 30:
                     continue
                 c = df["Close"]
+                # 一目均衡表は高値・安値を使う（無い系列では終値で代用）
+                hi = df["High"] if "High" in df else None
+                lo = df["Low"] if "Low" in df else None
+                vol_ratio = _volume_backing(df["Volume"]) if "Volume" in df else None
                 for fn in _DETECTORS:
                     try:
-                        r = fn(c)
+                        r = fn(c, hi, lo) if fn is _sig_ichimoku else fn(c)
                     except Exception:
                         logger.debug(traceback.format_exc())
                         continue
                     if not r:
                         continue
+                    # 出来高を伴うブレイクは信頼度を加点（ダマシの選別）
+                    if vol_ratio and vol_ratio >= _VOL_SPIKE:
+                        r["vol_ratio"] = round(vol_ratio, 1)
                     r["label"] = _relabel(r.get("label", ""), tf_name)
                     r["desc"]  = _relabel(r.get("desc", ""), tf_name)
                     r.update({
@@ -438,7 +595,8 @@ def build_message(hits: list) -> str:
 
         for s in g["signals"]:
             mark = "・" if s.get("direction") == g["direction"] else "※逆"
-            lines.append(f"{mark}【{s.get('tf','')}】{s['emoji']} {s['label']}")
+            vr = f"（出来高 平均の{s['vol_ratio']}倍）" if s.get("vol_ratio") else ""
+            lines.append(f"{mark}【{s.get('tf','')}】{s['emoji']} {s['label']}{vr}")
 
         # 重なりの意味づけ
         if len(same) >= 2:

@@ -64,26 +64,19 @@ def run():
     except Exception:
         logger.error("CFD/24時間アラートエラー"); logger.debug(traceback.format_exc())
 
-    # 高信頼テクニカルシグナル（ゴールデンクロス・200日線ブレイク等）
-    # 日足の確定が必要なため、東京の引け後〜夜間のみ判定する（ザラ場中の未確定足で誤発火させない）
+    # テクニカルシグナル検出アラート（tech_signals.py に一本化）
+    #   52週線(年線)・52週高値安値・GC/DC・200日線・一目の雲・出来高の裏付け・
+    #   通常/ヒドゥンダイバージェンス・MACDクロス・ボリンジャー±2σ・RSI30/70反転
+    #   週足＋日足の重なりを信頼度として評価し、複数出ても「1通にまとめて」送る。
+    #   同一銘柄＋同一種別は1セッション（JST6時始まり）に1回だけ。
+    # 日足・週足の確定が要るため、東京の引け後〜夜間のみ判定（未確定足での誤発火防止）
     if now.hour >= 15 or now.hour < 6:
         try:
-            from src.alert_monitor import run_technical_alert
-            if run_technical_alert():
+            from src.tech_signals import run_tech_alert
+            if run_tech_alert():
                 logger.info("✅ テクニカルシグナル通知送信完了")
         except Exception:
-            logger.error("テクニカルアラートエラー"); logger.debug(traceback.format_exc())
-
-    # 明確なテクニカルシグナル検出アラート
-    #   GC/DC・200日線・通常ダイバージェンス・ヒドゥンダイバージェンス・
-    #   MACDクロス・ボリンジャー±2σ・RSI30/70反転
-    #   複数出ても「1通にまとめて」送る。同一銘柄＋同一種別は1セッション1回だけ
-    try:
-        from src.tech_signals import run_tech_alert
-        if run_tech_alert():
-            logger.info("✅ テクニカルシグナル通知送信完了")
-    except Exception:
-        logger.error("テクニカルシグナル検出エラー"); logger.debug(traceback.format_exc())
+            logger.error("テクニカルシグナル検出エラー"); logger.debug(traceback.format_exc())
 
     logger.info("====== 監視完了 ======")
 
