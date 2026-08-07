@@ -394,6 +394,12 @@ _VOL_BONUS = 1.0
 _CONF_HIGH = 6.0
 _CONF_MID  = 3.5
 
+# 「重なり」の評価: これ以上の基礎スコアを持つものを“信頼性の高いシグナル”とみなし、
+# 同方向に _TRIPLE_MIN 個そろったら別格（最高信頼度）として扱う。
+# 根拠の異なる指標が同じ結論を指す状態＝コンフルエンスは、単発の強いシグナルより堅い。
+_STRONG_SCORE = 2.0
+_TRIPLE_MIN   = 3
+
 # 週足のときにラベルの「日」表記を「週」に直す
 _RELABEL = (("25日線", "25週線"), ("75日線", "75週線"),
             ("200日移動平均線", "200週移動平均線"), ("200日線", "200週線"),
@@ -442,7 +448,17 @@ def _confluence(hits: list) -> list:
             direction, score, opposite = "sell", g["sell"], g["buy"]
         net = score - opposite          # 逆方向のシグナルがあるほど信頼度は下がる
 
-        if net >= _CONF_HIGH:   stars, rank = "★★★", "高"
+        # 「信頼性の高いシグナル」が同方向にいくつ重なったかを数える。
+        # 重なりはスコアの合計以上に意味がある（別々の根拠が同じ結論を指す）ため、
+        # 3つ以上そろったら信頼度を最上位へ格上げする。
+        same_dir = [s for s in g["signals"] if s.get("direction") == direction]
+        strong = [s for s in same_dir
+                  if _TYPE_SCORE.get(s.get("base_type") or s.get("type", ""), 1.0) >= _STRONG_SCORE]
+        g["strong_count"] = len(strong)
+        g["triple"] = len(strong) >= _TRIPLE_MIN
+
+        if g["triple"]:         stars, rank = "★★★", "最高"
+        elif net >= _CONF_HIGH: stars, rank = "★★★", "高"
         elif net >= _CONF_MID:  stars, rank = "★★",  "中"
         else:                   stars, rank = "★",   "参考"
 
@@ -570,7 +586,12 @@ def build_message(hits: list) -> str:
     top = groups[0]
     n_top = len([s for s in top["signals"] if s.get("direction") == top["direction"]])
     if len(groups) == 1:
-        if n_top >= 2:
+        if top.get("triple"):
+            # 強いシグナルが3つ以上そろった＝最も見逃したくない状態。通知バーで即わかるように
+            title = (f"🎯 *{top['name']}（{top['ticker']}）* "
+                     f"強いシグナル{top['strong_count']}つが同時発生！"
+                     f"{_DIR_JA[top['direction']]}方向【信頼度{top['stars']}・最高】")
+        elif n_top >= 2:
             title = (f"🔥 *{top['name']}（{top['ticker']}）* "
                      f"{_DIR_JA[top['direction']]}シグナル{n_top}つ重複"
                      f"【信頼度{top['stars']}】")
@@ -580,18 +601,25 @@ def build_message(hits: list) -> str:
                      f"【{s0.get('tf','')}】{s0['label']}【{top['stars']}】")
     else:
         names = "・".join(f"{g['name']}({g['ticker']})" for g in groups)
-        title = (f"📊 *{names}* テクニカルシグナル"
-                 f"（最高信頼度 {top['stars']}）")
+        n_tri = sum(1 for g in groups if g.get("triple"))
+        head_icon = "🎯" if n_tri else "📊"
+        extra = f"・うち{n_tri}銘柄で強いシグナル3つ以上が一致" if n_tri else ""
+        title = (f"{head_icon} *{names}* テクニカルシグナル"
+                 f"（最高信頼度 {top['stars']}{extra}）")
 
     lines = [title, "━━━━━━━━━━━━━━"]
 
     for g in groups:
         same = [s for s in g["signals"] if s.get("direction") == g["direction"]]
-        head = (f"{'🔥' if len(same) >= 2 else same[0]['emoji'] if same else '📊'} "
-                f"*{g['name']}（{g['ticker']}）*　"
+        icon = "🎯" if g.get("triple") else ("🔥" if len(same) >= 2
+                                            else same[0]["emoji"] if same else "📊")
+        head = (f"{icon} *{g['name']}（{g['ticker']}）*　"
                 f"{_DIR_JA[g['direction']]}方向 {g['stars']}"
                 f"（信頼度{g['rank']}・スコア {g['net']:.1f}）")
         lines += ["", head]
+        if g.get("triple"):
+            lines.append(f"⭐ *強いシグナルが{g['strong_count']}つ同時に出ています*"
+                         f"（根拠の違う指標が同じ方向を示す＝最も確度が高い形）")
 
         for s in g["signals"]:
             mark = "・" if s.get("direction") == g["direction"] else "※逆"
@@ -617,7 +645,8 @@ def build_message(hits: list) -> str:
         if lead.get("tip"):
             lines.append(f"💡 {lead['tip']}")
 
-    lines.append("\n★★★=長い足を含む複数一致 ／ ★=単発。"
+    lines.append("\n🎯=強いシグナル3つ以上が一致（最高信頼度） ／ "
+                 "★★★=長い足を含む複数一致 ／ ★=単発。"
                  "教科書的なシグナルの発生を機械判定したものです。")
     text = "\n".join(l for l in lines if l)
     return text[:4000]
