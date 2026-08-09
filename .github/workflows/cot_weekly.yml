@@ -1,0 +1,44 @@
+# GitHub Actions - 投機筋ポジション週報（CFTC COT）
+#
+# CFTC は毎週金曜 15:30 ET にCOTレポートを公表する（基準日は前の火曜）。
+# 日本時間では土曜の早朝に出そろうため、土曜の朝に配信する。
+#   UTC 金 23:00 = JST 土 08:00
+
+name: 📡 投機筋ポジション週報（土曜 8:00 JST）
+
+on:
+  schedule:
+    - cron: "0 23 * * 5"     # UTC 金 23:00 = JST 土 08:00
+  workflow_dispatch:          # 手動実行ボタン
+
+jobs:
+  cot-weekly:
+    name: "CFTC投機筋ポジションを取得してTelegram配信"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: "📥 リポジトリをチェックアウト"
+        uses: actions/checkout@v4
+
+      - name: "🐍 Python 3.11 セットアップ"
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: "📦 依存ライブラリインストール"
+        run: |
+          pip install --upgrade pip --quiet
+          pip install pandas requests python-dotenv --quiet
+
+      - name: "📡 投機筋ポジション週報を送信"
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID:   ${{ secrets.TELEGRAM_CHAT_ID }}
+          PYTHONIOENCODING:   "utf-8"
+          PYTHONUTF8:         "1"
+        run: |
+          echo "🕑 実行開始: $(TZ='Asia/Tokyo' date '+%Y-%m-%d %H:%M:%S JST')"
+          python -c "from src.cot_weekly import run_weekly_report; run_weekly_report()"
+          echo "✅ 完了"
