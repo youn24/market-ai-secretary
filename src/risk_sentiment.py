@@ -55,6 +55,12 @@ def _save_state(st: dict) -> None:
         logger.debug(traceback.format_exc())
 
 
+def title_probe(direction: str) -> str:
+    """台帳のトピック判定に使うタイトル。"""
+    return ("極端なリスクオフ（資金が一斉に逃げている）" if direction == "risk_off"
+            else "極端なリスクオン（資金が一斉に戻っている）")
+
+
 def run(prices: dict = None) -> dict:
     prices = prices or {}
     off_score = on_score = 0.0
@@ -98,6 +104,17 @@ def run(prices: dict = None) -> dict:
         return {"available": False, "direction": direction,
                 "score": round(score, 1), "factors": factors, "continued": True}
 
+    # 共通台帳で重複を排除（同じ話題を他モジュールが伝えていれば出さない）
+    try:
+        from src.notify_ledger import filter_new
+        if not filter_new([{"key": f"risk_{direction}", "title": title_probe(direction)}],
+                          source="risk"):
+            logger.info("リスク選好: 同じ話題を通知済みのためスキップ")
+            return {"available": False, "direction": direction,
+                    "score": round(score, 1), "factors": factors, "duplicated": True}
+    except Exception:
+        logger.debug(traceback.format_exc())
+
     is_off = direction == "risk_off"
     title = "極端なリスクオフ（資金が一斉に逃げている）" if is_off \
             else "極端なリスクオン（資金が一斉に戻っている）"
@@ -120,6 +137,14 @@ def run(prices: dict = None) -> dict:
     lines += ["", f"　{meaning}", f"　💡 {tip}",
               "━━━━━━━━━━━━━━━",
               "複数の資産が同時に同じ方向を向いたときだけ通知しています。"]
+
+    # この通知は構成資産（VIX・株・為替・金・金利）をまとめて説明しているので、
+    # 同じ資産についての個別通知は後から出さない
+    try:
+        from src.notify_ledger import mark_topics, topic_of
+        mark_topics([topic_of(f["name"]) for f in factors])
+    except Exception:
+        logger.debug(traceback.format_exc())
 
     logger.info(f"🚨 極端な{direction}: スコア{score:.1f}（{len(factors)}資産一致）")
     return {"available": True, "direction": direction, "score": round(score, 1),

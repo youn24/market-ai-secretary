@@ -206,6 +206,13 @@ def run(nikkei_internals: dict = None) -> dict:
 
     _save_state(new_state)
 
+    # 同じ話題を他モジュールが既に通知していれば重ねて出さない
+    try:
+        from src.notify_ledger import filter_new
+        events = filter_new(events, source="val")
+    except Exception:
+        logger.debug(traceback.format_exc())
+
     if not events:
         logger.info(f"バリュエーション: ゾーン変化なし（{len(new_state)}指標を監視）")
         return {"available": False, "events": [], "current": new_state}

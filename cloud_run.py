@@ -781,6 +781,8 @@ def run(mode: str):
     except Exception:
         logger.error("マクロ監視エラー"); logger.debug(traceback.format_exc())
 
+    # 通知台帳: 同じ話題を1日に二度送らないための記録。セッション(JST6時始まり)が
+    # 変われば自動で空になるため、ここでは読み込むだけで初期化は不要。
     # Step RS: リスクオン/オフの複合判定（株・為替・金・債券・VIXの一致度）
     risk_sentiment = {"available": False}
     try:

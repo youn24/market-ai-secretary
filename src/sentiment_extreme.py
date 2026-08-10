@@ -209,6 +209,15 @@ def run(prices: dict = None, fear_greed: dict = None) -> dict:
 
     _save_state(new_state)
 
+    # 同じ話題を他モジュールが既に通知していれば重ねて出さない。
+    # 台帳に通す前に優先度順へ並べ替え、重要なシグナルを残す
+    events.sort(key=lambda e: e.get("priority", 9))
+    try:
+        from src.notify_ledger import filter_new
+        events = filter_new(events, source="sent")
+    except Exception:
+        logger.debug(traceback.format_exc())
+
     if not events:
         logger.info(f"市場心理: 極値・反転なし（F&G={fg_val} VIX={vix}）")
         return {"available": False, "events": [], "current": new_state}

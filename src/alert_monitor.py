@@ -37,8 +37,12 @@ def _session_key(now=None) -> str:
     return (now - timedelta(hours=6)).strftime("%Y-%m-%d")
 
 
-def _apply_cooldown(alerts: list) -> list:
-    """同一銘柄はこのセッションで既に通知済みなら送らない（1回だけ）。"""
+def _apply_cooldown(alerts: list, source: str = "alert") -> list:
+    """
+    同一銘柄はこのセッションで既に通知済みなら送らない（1回だけ）。
+    さらに共通の通知台帳を通し、他のモジュールが同じ話題を既に伝えていれば
+    重ねて送らない（VIX急騰が複数の入口から届くのを防ぐ）。
+    """
     now  = get_jst_now()
     skey = _session_key(now)
     try:
@@ -52,6 +56,14 @@ def _apply_cooldown(alerts: list) -> list:
             logger.info(f"通知済みのためスキップ: {a['name']} ({a['change']:+.2f}%)")
             continue
         kept.append(a)
+    # 共通台帳で他モジュールとの重複を排除
+    try:
+        from src.notify_ledger import filter_new
+        kept = filter_new(kept, key_func=lambda a: a["symbol"],
+                          topic_func=lambda a: None, source=source)
+    except Exception:
+        logger.debug(traceback.format_exc())
+
     if kept:
         for a in kept:
             st[a["symbol"]] = {"session": skey, "ts": now.isoformat(),
@@ -175,7 +187,7 @@ def run_cfd_alert() -> bool:
             return False
 
         hits.sort(key=lambda x: abs(x["change"]), reverse=True)
-        alerts = _apply_cooldown(hits)
+        alerts = _apply_cooldown(hits, source="cfd")
         if not alerts:
             return False
 
@@ -233,7 +245,7 @@ def run_afterhours_alert() -> bool:
             "change": m["chg_pct"],
             "direction": "急騰🔺" if m["chg_pct"] > 0 else "急落🔻",
         } for m in movers]
-        alerts = _apply_cooldown(alerts)
+        alerts = _apply_cooldown(alerts, source="afterhours")
         if not alerts:
             return False
 
@@ -283,7 +295,7 @@ def run_alert_check(prices: dict, fear_greed: dict, risk: dict) -> bool:
         syms = {a["symbol"] for a in alerts}
         if "NIY=F" in syms and "^N225" in syms:
             alerts = [a for a in alerts if a["symbol"] != "^N225"]
-        alerts = _apply_cooldown(alerts)
+        alerts = _apply_cooldown(alerts, source="crash")
         if not alerts:
             logger.info(f"アラートなし（{len(prices)}銘柄チェック済み）")
             return False
