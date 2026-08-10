@@ -4,7 +4,7 @@
 # 日本時間では土曜の早朝に出そろうため、土曜の朝に配信する。
 #   UTC 金 23:00 = JST 土 08:00
 
-name: 📡 投機筋ポジション週報（土曜 8:00 JST）
+name: 📡 投機筋ポジション＋介入レポート週報（土曜 8:00 JST）
 
 on:
   schedule:
@@ -30,7 +30,7 @@ jobs:
       - name: "📦 依存ライブラリインストール"
         run: |
           pip install --upgrade pip --quiet
-          pip install pandas requests python-dotenv --quiet
+          pip install pandas requests python-dotenv yfinance --quiet
 
       - name: "📡 投機筋ポジション週報を送信"
         env:
@@ -42,3 +42,15 @@ jobs:
           echo "🕑 実行開始: $(TZ='Asia/Tokyo' date '+%Y-%m-%d %H:%M:%S JST')"
           python -c "from src.cot_weekly import run_weekly_report; run_weekly_report()"
           echo "✅ 完了"
+
+      # 為替介入レポート（財務省の公式実績＋警戒度スコア）
+      - name: "💴 為替介入レポートを送信"
+        if: always()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID:   ${{ secrets.TELEGRAM_CHAT_ID }}
+          PYTHONIOENCODING:   "utf-8"
+          PYTHONUTF8:         "1"
+        run: |
+          python -c "from src.intervention_stats import run_report; run_report()"
+          echo "✅ 介入レポート完了"

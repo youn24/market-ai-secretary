@@ -150,7 +150,21 @@ def _intervention(uj, uj_chg=None) -> dict:
         return {}
 
     r["dir_note"] = ""
-    if uj_chg is not None and r.get("score", 0) >= 30:
+
+    # 直近に介入があった場合は「追撃介入」が続きやすいので方向補正をかけない。
+    # 実績: 2026年5月の2回は、初回介入で円高方向へ振れている最中に実施された。
+    recent_intervention = False
+    try:
+        from src.intervention_stats import analyze as _iv
+        _res = _iv()
+        if _res.get("available") and _res.get("current", {}).get("days_since", 999) <= 30:
+            recent_intervention = True
+            r["dir_note"] = (f"{_res['current']['days_since']}日前に介入済み"
+                             "→ 追撃介入が続きやすく、円高方向でも警戒は緩めない")
+    except Exception:
+        logger.debug(traceback.format_exc())
+
+    if (not recent_intervention) and uj_chg is not None and r.get("score", 0) >= 30:
         if uj_chg <= -0.8:
             r["score"] = max(0, r["score"] - 25)
             r["dir_note"] = f"本日は円高方向（{uj_chg:+.2f}%）→ 介入警戒は後退"
