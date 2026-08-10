@@ -90,6 +90,66 @@ _ZONES = {
 }
 
 
+_ZONES["margin_pl"] = {
+    "label": "信用評価損益率（個人投資家の含み損益）",
+    "what": "信用取引をしている個人が平均でどれだけ儲かっているか。常にマイナス圏で推移し、-20%前後まで沈むと追証（追加保証金）による投げ売りが起きて、そこが底になることが多い",
+    "unit": "%",
+    # 値が小さい（マイナスが深い）ほど売られ過ぎ＝底値圏。並び順に合わせて下から定義
+    "bands": [
+        (-20.0, "追証ゾーン（底値圏）", "🟢🟢",
+         "個人の含み損が極限。追証の強制売りが出やすく、過去はここが大底になってきた。",
+         "投げ売りが一巡すれば反発しやすい。長期の買い場になりやすいゾーン。"),
+        (-15.0, "悲観", "🟢",
+         "個人投資家の含み損がかなり大きい。売られ過ぎの領域。",
+         "反発を狙いやすいが、追証売りがもう一段出る可能性も。"),
+        (-8.0, "標準", "🟡",
+         "平常レンジ。信用取引の需給は特に偏っていない。",
+         "この指標からは判断材料にならない。"),
+        (-3.0, "楽観", "🟠",
+         "含み損が小さい＝個人が儲かっている状態。高値圏で出やすい。",
+         "利益確定売りが出やすく、上値が重くなりやすい。"),
+        (None, "過熱", "🔴",
+         "個人が大きく儲かっている異例の状態。相場の過熱を示す。",
+         "反落に注意。新規の追随買いは慎重に。"),
+    ],
+}
+
+# 週次データ（毎週金曜更新）の取得元。日足と同じ nikkei225jp.com の生JSON。
+_WEEKLY_URL = "https://nikkei225jp.com/_data/_nfsDATA/DAY/dailyweek2.json"
+_W_MARGIN_PL = 7        # 信用評価損益率(%)
+_W_MARGIN_RATIO = 8     # 信用倍率(倍)
+
+
+def _fetch_weekly():
+    """週次の信用データを取得。取れなければ None（他の指標は通常どおり動く）。"""
+    try:
+        import re
+        import requests
+        r = requests.get(_WEEKLY_URL, timeout=15, headers={
+            "User-Agent": "Mozilla/5.0", "Referer": "https://nikkei225jp.com/data/sinyou.php"})
+        r.raise_for_status()
+        m = re.search(r"=\s*(\[.*\])\s*;?\s*$", r.text, re.S)
+        if not m:
+            return None
+        rows = json.loads(m.group(1))
+        for row in reversed(rows):          # 直近で値が入っている週を探す
+            pl = row[_W_MARGIN_PL] if len(row) > _W_MARGIN_PL else ""
+            if pl in ("", None):
+                continue
+            pl = float(pl)
+            # 信用評価損益率は歴史的に -40〜+10% の範囲。外れたら列ズレとみなし破棄
+            if not (-40.0 <= pl <= 10.0):
+                logger.warning(f"信用評価損益率が想定外の値: {pl} → 破棄")
+                return None
+            ratio = row[_W_MARGIN_RATIO] if len(row) > _W_MARGIN_RATIO else ""
+            ratio = float(ratio) if ratio not in ("", None) and 0.3 <= float(ratio) <= 40 else None
+            return {"margin_pl": round(pl, 2), "margin_ratio": ratio}
+        return None
+    except Exception:
+        logger.debug(traceback.format_exc())
+        return None
+
+
 def _zone_of(key: str, value):
     if value is None:
         return None
@@ -157,6 +217,11 @@ def run(prices: dict = None) -> dict:
         "dxy":  _v("DX-Y.NYB"),
         "nt":   round(nikkei / topix, 2) if (nikkei and topix) else None,
     }
+
+    # 信用評価損益率（週次・毎週金曜更新）
+    weekly = _fetch_weekly()
+    if weekly:
+        values["margin_pl"] = weekly["margin_pl"]
 
     st = _load_state()
     events, new_state = [], {}

@@ -1650,17 +1650,20 @@ def _market_signals_section(market_signals, prices=None):
         "vvix": ("VVIX", "恐怖指数の荒れ具合", ""),
         "dxy":  ("ドル指数", "ドル自身の強さ", ""),
         "nt":   ("NT倍率", "相場の質（偏りの度合い）", "倍"),
+        "margin_pl": ("信用評価損益率", "個人の含み損。-20%で底値圏", "%"),
     }
     def _c(name):
         if any(k in name for k in ("強い警戒", "極端", "極めて")):
             return RED
-        if any(k in name for k in ("警戒", "不安定", "ドル高", "偏重")):
+        if any(k in name for k in ("警戒", "不安定", "ドル高", "偏重", "楽観")):
             return YELLOW
+        if "過熱" in name:
+            return RED
         return GREEN
 
     changed = {e["key"] for e in ms.get("events", [])}
     cards = []
-    for k in ("skew", "vvix", "dxy", "nt"):
+    for k in ("skew", "vvix", "dxy", "nt", "margin_pl"):
         d = cur.get(k)
         if not d or d.get("value") is None:
             continue
