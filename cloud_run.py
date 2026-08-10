@@ -781,6 +781,17 @@ def run(mode: str):
     except Exception:
         logger.error("マクロ監視エラー"); logger.debug(traceback.format_exc())
 
+    # Step RS: リスクオン/オフの複合判定（株・為替・金・債券・VIXの一致度）
+    risk_sentiment = {"available": False}
+    try:
+        logger.info("--- Step RS: リスクオン/オフ判定 ---")
+        from src.risk_sentiment import run as run_rs
+        risk_sentiment = run_rs(prices)
+        if risk_sentiment.get("available"):
+            logger.info(f"🚨 極端な{risk_sentiment['direction']}: スコア{risk_sentiment['score']}")
+    except Exception:
+        logger.error("リスク選好判定エラー"); logger.debug(traceback.format_exc())
+
     # Step SE: 市場心理の極値と反転（恐怖・強欲の底/天井で市場が反応した瞬間）
     sentiment = {"available": False}
     try:
@@ -996,6 +1007,7 @@ def run(mode: str):
             policy=policy,
             market_driver=market_driver,
             sentiment=sentiment,
+            risk_sentiment=risk_sentiment,
             mode=mode,
         )
         logger.info("✅ デザインAIレポート（docs/daily_report.html）生成")
@@ -1107,7 +1119,8 @@ def run(mode: str):
                   market_signals=market_signals,
                   policy=policy,
                   market_driver=market_driver,
-                  sentiment=sentiment)
+                  sentiment=sentiment,
+                  risk_sentiment=risk_sentiment)
     except Exception:
         logger.error("Telegram通知エラー"); logger.debug(traceback.format_exc())
 

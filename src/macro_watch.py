@@ -245,6 +245,59 @@ def _eps_trend(nd: dict):
             "state": state, "emoji": emoji, "meaning": meaning, "tip": tip}
 
 
+# 前回からの変化がこれを超えたら「急変」として、ゾーンが同じでも通知する。
+# 単位は指標により % か pt（絶対差）。信用スプレッドの急拡大は最も早い警報になる。
+_SPIKE_ABS = {
+    "hy_spread":   0.4,    # +0.4%の急拡大＝信用不安が一気に高まった
+    "yield_curve": 0.25,   # 長短金利差が1日で0.25%動くのは大きい
+    "sahm":        0.15,   # 雇用の悪化速度が跳ねた
+    "real_rate":   0.2,    # 実質金利の急変は株の評価を直撃する
+}
+_SPIKE_PCT_KEYS = {"buffett": 5.0, "cb_assets": 3.0, "m2": 2.0}
+
+
+def _spike_event(key: str, val, prev_val):
+    """ゾーン内でも大きく動いた場合のイベントを作る。"""
+    if val is None or prev_val is None:
+        return None
+    z = _ZONES.get(key)
+    if not z:
+        return None
+    diff = val - prev_val
+    if key in _SPIKE_ABS:
+        if abs(diff) < _SPIKE_ABS[key]:
+            return None
+        move = f"{diff:+.2f}{z['unit']}"
+    elif key in _SPIKE_PCT_KEYS:
+        if not prev_val:
+            return None
+        pct = diff / abs(prev_val) * 100
+        if abs(pct) < _SPIKE_PCT_KEYS[key]:
+            return None
+        move = f"{pct:+.1f}%"
+    else:
+        return None
+
+    worse_up = key in ("hy_spread", "real_rate", "buffett")   # 上昇が悪材料の指標
+    bad = (diff > 0) == worse_up
+    if key == "yield_curve":
+        bad = diff < 0        # 金利差の縮小＝景気減速方向
+    if key in ("cb_assets", "m2"):
+        bad = diff < 0        # 流動性の減少＝株に逆風
+
+    return {
+        "key": key, "label": z["label"], "what": z["what"], "unit": z["unit"],
+        "value": val, "prev_value": prev_val,
+        "zone": f"急変 {move}", "prev_zone": "同ゾーン内",
+        "emoji": "⚡🔴" if bad else "⚡🟢", "spike": True,
+        "meaning": (f"ゾーンは変わらないものの、前回から {move} と急に動きました。"
+                    + ("悪化方向への急変で、変化が続くと警戒ゾーンに入ります。" if bad
+                       else "改善方向への急変です。")),
+        "tip": ("ゾーンを跨ぐ前の“予兆”です。この方向が続くか次回の値で確認したい。"),
+        "worse": bad,
+    }
+
+
 def _load_state() -> dict:
     try:
         return json.loads(_STATE_FILE.read_text(encoding="utf-8"))
@@ -295,6 +348,11 @@ def run(nikkei_internals: dict = None) -> dict:
         if not isinstance(prev, dict) or "zone" not in prev:
             continue          # 初回は記録のみ（比較対象がないため通知しない）
         if prev["zone"] == idx:
+            # ゾーンが同じでも急激に動いた場合は知らせる。
+            # 特に信用スプレッドの急拡大は、ゾーンを跨ぐ前が最も早い警報になる。
+            spike = _spike_event(key, val, prev.get("value"))
+            if spike:
+                events.append(spike)
             continue
         events.append({
             "key": key, "label": _ZONES[key]["label"], "what": _ZONES[key]["what"],
@@ -338,7 +396,7 @@ def run(nikkei_internals: dict = None) -> dict:
             f"　💡 {e['tip']}",
         ]
     lines += ["━━━━━━━━━━━━━━━",
-              "景気や信用の「先行き」を示す指標です。意味が変わる節目を跨いだときだけ通知しています。"]
+              "景気や信用の「先行き」を示す指標です。節目を跨いだとき／急に動いたときだけ通知しています。"]
 
     logger.info(f"✅ マクロ節目通過: {len(events)}件")
     return {"available": True, "events": events, "current": new_state,

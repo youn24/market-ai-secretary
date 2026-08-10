@@ -98,6 +98,42 @@ def _zone_of(key: str, value) -> tuple | None:
     return None
 
 
+# 1日の変化率がこれを超えたら「急変」として、ゾーンが同じでも通知する（%）
+# バリュエーションは本来ゆっくり動くため、急変自体が異常のサイン。
+_SPIKE_PCT = {"per": 5.0, "pbr": 5.0, "dividend_yield": 8.0, "spread": 25.0}
+
+
+def _spike_event(key: str, val, prev_val):
+    """ゾーン内でも1日で大きく動いた場合のイベントを作る。"""
+    if val is None or prev_val in (None, 0):
+        return None
+    try:
+        chg = (val - prev_val) / abs(prev_val) * 100
+    except Exception:
+        return None
+    th = _SPIKE_PCT.get(key)
+    if th is None or abs(chg) < th:
+        return None
+    z = _ZONES[key]
+    up = chg > 0
+    if key in ("per", "pbr"):
+        meaning = (f"1日で{chg:+.1f}%と急上昇。株価の急騰か、企業業績の下方修正で"
+                   "割高化した可能性があります。" if up else
+                   f"1日で{chg:+.1f}%と急低下。株価の急落か、業績の上方修正で"
+                   "割安になった可能性があります。")
+    else:
+        meaning = (f"1日で{chg:+.1f}%と急上昇しました。" if up else
+                   f"1日で{chg:+.1f}%と急低下しました。")
+    return {
+        "key": key, "label": z["label"], "unit": z["unit"],
+        "value": val, "prev_value": prev_val,
+        "zone": f"急変 {chg:+.1f}%", "prev_zone": "同ゾーン内",
+        "emoji": "⚡", "spike": True, "change_pct": round(chg, 1),
+        "meaning": meaning,
+        "tip": "バリュエーションは通常ゆっくり動きます。急変時は原因（株価か業績か）の確認を。",
+    }
+
+
 def _load_state() -> dict:
     try:
         return json.loads(_STATE_FILE.read_text(encoding="utf-8"))
@@ -144,6 +180,11 @@ def run(nikkei_internals: dict = None) -> dict:
         if not isinstance(prev, dict) or "zone" not in prev:
             continue
         if prev["zone"] == idx:
+            # ゾーンは変わらなくても、1日での動きが異常に大きい場合は知らせる。
+            # （例: PBRが同じ「標準」でも1日で8%動いたなら普通ではない）
+            spike = _spike_event(key, val, prev.get("value"))
+            if spike:
+                events.append(spike)
             continue
         direction = "改善（割安方向）" if idx < prev["zone"] else "悪化（割高方向）"
         # PERとPBRは数値が小さいほど割安。配当利回り・スプレッドは逆。
@@ -179,7 +220,7 @@ def run(nikkei_internals: dict = None) -> dict:
         lines.append(f"　{e['meaning']}")
         lines.append(f"　💡 {e['tip']}")
     lines += ["━━━━━━━━━━━━━━━",
-              "日々の小さな上下は無視し、投資判断が変わる節目を跨いだときだけ通知しています。"]
+              "日々の小さな上下は無視し、判断が変わる節目を跨いだとき／1日で急変したときだけ通知しています。"]
 
     logger.info(f"✅ バリュエーション節目通過: {len(events)}件")
     return {"available": True, "events": events, "current": new_state,

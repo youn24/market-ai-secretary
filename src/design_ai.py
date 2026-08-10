@@ -1639,6 +1639,35 @@ def _pts_section(pts):
 </div>"""
 
 
+def _risk_sentiment_section(risk_sentiment):
+    """極端なリスクオフ/オン（複数資産の一致）"""
+    rs = risk_sentiment or {}
+    if not rs.get("available"):
+        return ""
+    off = rs["direction"] == "risk_off"
+    c = RED if off else GREEN
+    rows = []
+    for f in (rs.get("factors") or [])[:6]:
+        fc = _col(f["chg"])
+        rows.append(f"""<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid {BORDER}">
+  <span style="font-size:11.5px;font-weight:700;color:{TEXT};min-width:88px">{f['name']}</span>
+  <span class="num" style="font-size:12px;font-weight:800;color:{fc};min-width:62px">{f['chg']:+.2f}%</span>
+  <span style="font-size:10.5px;color:{MUTED}">{f['text']}</span>
+</div>""")
+    return f"""
+<div style="margin-bottom:12px">
+  <div class="label" style="padding:0 2px;margin-bottom:6px">🌊 市場全体の資金の向き</div>
+  <div class="glass-sm fade" style="padding:12px;border-left:3px solid {c}">
+    <div style="font-size:13.5px;font-weight:900;color:{c}">{'🔴' if off else '🟢'} {rs['title']}</div>
+    <div style="font-size:10.5px;color:{MUTED};margin:3px 0 6px">一致度スコア {rs['score']:.1f}（{len(rs.get('factors', []))}資産が同じ方向）</div>
+    {"".join(rows)}
+    <div style="font-size:10.5px;color:{TEXT};margin-top:7px">{rs.get('meaning','')}</div>
+    <div style="font-size:10.5px;color:{YELLOW};margin-top:3px">💡 {rs.get('tip','')}</div>
+  </div>
+  <div style="font-size:9px;color:{MUTED};margin-top:5px;padding:0 2px">株・為替・金・債券・VIXが同時に同じ方向を向いたときだけ表示されます。個別の材料ではなく市場全体の判断を示します。</div>
+</div>"""
+
+
 def _sentiment_extreme_section(sentiment):
     """市場心理の極値・反転（底や天井で市場が反応した瞬間）"""
     se = sentiment or {}
@@ -2046,6 +2075,7 @@ def generate(
     policy: dict = None,
     market_driver: dict = None,
     sentiment: dict = None,
+    risk_sentiment: dict = None,
     **_kwargs,
 ) -> str:
     prices      = prices      or {}
@@ -2085,6 +2115,7 @@ def generate(
     msignal_html = _market_signals_section(market_signals, prices)
     policy_html = _policy_driver_section(policy, market_driver)
     sent_html = _sentiment_extreme_section(sentiment)
+    risk_html = _risk_sentiment_section(risk_sentiment)
     pro_html     = _pro_cross(prices)
     news_html    = _news(news)
     cal_html     = _calendar(weekly_calendar)
@@ -2155,6 +2186,7 @@ def generate(
   {upcoming_html}
   {valuation_html}
   {macro_html}
+  {risk_html}
   {sent_html}
   {msignal_html}
   {policy_html}
@@ -2263,6 +2295,7 @@ def run(
     policy: dict             = None,
     market_driver: dict      = None,
     sentiment: dict          = None,
+    risk_sentiment: dict     = None,
     mode: str = "morning",
     **_kwargs,
 ) -> dict:
@@ -2279,6 +2312,7 @@ def run(
             pts=pts, us_afterhours=us_afterhours, adr=adr, cfd_sq=cfd_sq,
             upcoming=upcoming, valuation=valuation, macro_watch=macro_watch, market_signals=market_signals,
             policy=policy, market_driver=market_driver, sentiment=sentiment,
+            risk_sentiment=risk_sentiment,
         )
         logger.info(f"✅ デザインAIレポート生成: {path}")
         return {"available": True, "path": path}

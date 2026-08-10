@@ -556,7 +556,8 @@ def _build_unified_caption(risk, prices, fear_greed, ai_summary,
                            us_afterhours=None, pts=None, adr=None,
                            kabudragon=None, valuation=None, macro_watch=None,
                            market_signals=None, macro_regime=None,
-                           policy=None, market_driver=None, sentiment=None) -> str:
+                           policy=None, market_driver=None, sentiment=None,
+                           risk_sentiment=None) -> str:
     """
     朝レポートを1通に集約したときのキャプション（Telegram上限1024字）。
 
@@ -596,6 +597,13 @@ def _build_unified_caption(risk, prices, fear_greed, ai_summary,
             short = e["label"].split("（")[0]
             head.append(f"{e['emoji']} *{short} {e['value']:.2f}{e['unit']}*"
                         f"「{e['prev_zone']}」→「{e['zone']}」")
+
+    # ── 極端なリスクオフ/オン（市場全体の資金の向きが変わった日）──
+    rsx = risk_sentiment or {}
+    if rsx.get("available"):
+        icon = "🔴" if rsx["direction"] == "risk_off" else "🟢"
+        head += ["", f"{icon} *{rsx['title']}*",
+                 f"　{len(rsx.get('factors', []))}資産が同じ方向（一致度 {rsx['score']:.1f}）"]
 
     # ── 市場心理の極値・反転（底/天井のサインは最優先で伝える）──
     se = sentiment or {}
@@ -1028,7 +1036,7 @@ def run(risk, analysis, report_paths, mode,
         pts=None, us_afterhours=None, cfd_sq=None, upcoming=None,
         valuation=None, macro_watch=None, market_signals=None,
         macro_regime=None, policy=None, market_driver=None,
-        sentiment=None, video_path=None) -> bool:
+        sentiment=None, risk_sentiment=None, video_path=None) -> bool:
 
     if not _is_configured():
         logger.info("Telegram 設定なし。スキップします。")
@@ -1057,6 +1065,7 @@ def run(risk, analysis, report_paths, mode,
             kabudragon=kabudragon, valuation=valuation, macro_watch=macro_watch,
             market_signals=market_signals, macro_regime=macro_regime,
             policy=policy, market_driver=market_driver, sentiment=sentiment,
+            risk_sentiment=risk_sentiment,
         )
 
         report_url = report_paths.get("url", "").strip()
