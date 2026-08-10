@@ -596,6 +596,18 @@ def _build_unified_caption(risk, prices, fear_greed, ai_summary,
             head.append(f"{e['emoji']} *{short} {e['value']:.2f}{e['unit']}*"
                         f"「{e['prev_zone']}」→「{e['zone']}」")
 
+    # ── 相場を動かした要因（大きく動いた日だけ・最も知りたい情報なので最上部）──
+    md = market_driver or {}
+    if md.get("available") and md.get("summary"):
+        first = md["summary"].split(chr(10))[0][:60]
+        head += ["", f"🔍 *{first}*"]
+
+    # ── 政策金利に変更があった日 ──
+    pol = policy or {}
+    for e in (pol.get("events") or [])[:2]:
+        head.append(f"{e['emoji']} *{e['name']}が{e['direction']}* "
+                    f"{e['prev_rate']:.2f}% → {e['rate']:.2f}%")
+
     # ── 市場内部シグナル（SOXは寄り付きに直結するので上に出す）──
     ms = market_signals or {}
     if ms.get("available"):

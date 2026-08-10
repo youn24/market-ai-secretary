@@ -9,6 +9,8 @@ CFD/24時間先物 ＋ SQ情報（Step CFD・寄り付き先行ヒント）
 
 run(prices) → {"available", "futures":[...], "cme_gap_pct", "sq":{...}, "telegram_block"}
 """
+import json
+import traceback
 from datetime import date, timedelta
 from src.utils import setup_logger, get_jst_now
 
@@ -82,6 +84,62 @@ def next_sq(today: date) -> dict:
     return {}
 
 
+# SQ値（特別清算指数）の履歴。メジャーSQのSQ値はその後の相場の節目として意識される。
+_SQ_HISTORY_URL = "https://nikkei225jp.com/_data/_nfsDATA/HS_DATA_DAY/SQ_HISTORY.json"
+
+
+def fetch_sq_value(prices: dict = None):
+    """
+    直近のSQ値と、現在の日経平均がその上か下かを返す。
+
+    「SQ値を上回って推移していれば強い」というのは市場で広く意識される見方で、
+    特にメジャーSQのSQ値はその後1〜3か月の節目として機能することが多い。
+    """
+    try:
+        import re
+        import requests
+        from datetime import datetime, timezone, timedelta
+        r = requests.get(_SQ_HISTORY_URL, timeout=15, headers={
+            "User-Agent": "Mozilla/5.0", "Referer": "https://nikkei225jp.com/data/sq.php"})
+        r.raise_for_status()
+        m = re.search(r"var\s+SQ_HISTORY\s*=\s*(\[.*?\])\s*;", r.text, re.S)
+        if not m:
+            return None
+        rows = json.loads(m.group(1))
+        if not rows:
+            return None
+        JST = timezone(timedelta(hours=9))
+
+        def _d(ts):
+            return datetime.fromtimestamp(ts / 1000, JST).date()
+
+        # メジャーSQ＝3/6/9/12月の第2金曜。日付から自前で判定する（フラグに依存しない）
+        def _is_major(d):
+            return d.month in (3, 6, 9, 12) and d.weekday() == 4 and 8 <= d.day <= 14
+
+        last = rows[-1]
+        last_d, last_v = _d(last[0]), float(last[1])
+        majors = [(_d(x[0]), float(x[1])) for x in rows[-40:] if _is_major(_d(x[0]))]
+        major_d, major_v = majors[-1] if majors else (None, None)
+
+        # 値の妥当性（日経平均のレンジを大きく外れたら破棄）
+        if not (5000 <= last_v <= 200000):
+            return None
+
+        n225 = (prices or {}).get("^N225", {}).get("latest")
+        res = {"date": last_d.strftime("%m/%d"), "value": last_v,
+               "major_date": major_d.strftime("%m/%d") if major_d else None,
+               "major_value": major_v}
+        if n225 and major_v:
+            diff = (n225 - major_v) / major_v * 100
+            res["vs_major_pct"] = round(diff, 2)
+            res["above_major"] = diff > 0
+        return res
+    except Exception:
+        logger.debug(traceback.format_exc())
+        return None
+
+
 def run(prices: dict = None) -> dict:
     prices = prices or {}
     futures = []
@@ -116,6 +174,7 @@ def run(prices: dict = None) -> dict:
         cme_gap = round(g, 2) if abs(g) <= 5 else None
 
     sq = next_sq(get_jst_now().date())
+    sq_value = fetch_sq_value(prices)
 
     if not futures and not sq:
         return {"available": False}
@@ -134,6 +193,13 @@ def run(prices: dict = None) -> dict:
     if commodities:
         cm_parts = [f"{c['icon']}{c['name']} {c['change_pct']:+.1f}%" for c in commodities]
         lines.append("商品・欧州: " + " / ".join(cm_parts))
+    if sq_value and sq_value.get("major_value"):
+        if sq_value.get("vs_major_pct") is not None:
+            mark = "上" if sq_value["above_major"] else "下"
+            lines.append(f"🎯 メジャーSQ値 {sq_value['major_value']:,.0f}（{sq_value['major_date']}）"
+                         f" — 現在は{mark}回り {sq_value['vs_major_pct']:+.2f}%")
+        else:
+            lines.append(f"🎯 メジャーSQ値 {sq_value['major_value']:,.0f}（{sq_value['major_date']}）")
     if sq:
         sq_s = f"📅 {sq['type']}: {sq['date']}"
         sq_s += " ★本日SQ" if sq["is_today"] else f" (あと{sq['days_to']}日)"
@@ -144,6 +210,7 @@ def run(prices: dict = None) -> dict:
     result = {
         "available": True,
         "futures": futures,
+        "sq_value": sq_value,
         "commodities": commodities,
         "cme_gap_pct": cme_gap,
         "sq": sq,

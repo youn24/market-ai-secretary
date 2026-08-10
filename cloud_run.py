@@ -781,6 +781,28 @@ def run(mode: str):
     except Exception:
         logger.error("マクロ監視エラー"); logger.debug(traceback.format_exc())
 
+    # Step PW: 中央銀行の政策金利（前回の利上げ/利下げからの動き）
+    policy = {"available": False}
+    try:
+        logger.info("--- Step PW: 政策金利ウォッチ ---")
+        from src.policy_watch import run as run_pw
+        policy = run_pw()
+        if policy.get("available") and policy.get("events"):
+            logger.info(f"🚨 政策金利に変更: {len(policy['events'])}件")
+    except Exception:
+        logger.error("政策金利ウォッチエラー"); logger.debug(traceback.format_exc())
+
+    # Step MD: 相場を動かした要因分析（大きく動いた日のみAIが要約）
+    market_driver = {"available": False}
+    try:
+        logger.info("--- Step MD: 相場変動の要因分析 ---")
+        from src.market_driver import run as run_md
+        market_driver = run_md(prices, news, econ_analysis, macro_watch)
+        if market_driver.get("available"):
+            logger.info(f"✅ 要因分析: {len(market_driver.get('movers', []))}指標が大きく変動")
+    except Exception:
+        logger.error("要因分析エラー"); logger.debug(traceback.format_exc())
+
     # Step MS: 市場内部シグナル（SOX/SKEW/VVIX/ドル指数/NT倍率・取得済み価格から判定）
     market_signals = {"available": False}
     try:
@@ -960,6 +982,8 @@ def run(mode: str):
             valuation=valuation,
             macro_watch=macro_watch,
             market_signals=market_signals,
+            policy=policy,
+            market_driver=market_driver,
             mode=mode,
         )
         logger.info("✅ デザインAIレポート（docs/daily_report.html）生成")
@@ -1068,7 +1092,9 @@ def run(mode: str):
                   upcoming=upcoming,
                   valuation=valuation,
                   macro_watch=macro_watch,
-                  market_signals=market_signals)
+                  market_signals=market_signals,
+                  policy=policy,
+                  market_driver=market_driver)
     except Exception:
         logger.error("Telegram通知エラー"); logger.debug(traceback.format_exc())
 

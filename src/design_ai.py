@@ -1639,6 +1639,43 @@ def _pts_section(pts):
 </div>"""
 
 
+def _policy_driver_section(policy, market_driver):
+    """政策金利の推移＋相場を動かした要因"""
+    pol = policy or {}
+    md = market_driver or {}
+    blocks = []
+    for info in (pol.get("fed"), pol.get("boj")):
+        if not info:
+            continue
+        chg = info.get("change")
+        c = RED if info.get("direction") == "利上げ" else GREEN if info.get("direction") == "利下げ" else MUTED
+        sub = ""
+        if info.get("changed_on"):
+            days = f"・{info['days_since']}日据え置き" if info.get("days_since") else ""
+            sub = f"{info['changed_on']} に {info['prev_rate']:.2f}%→{info['rate']:.2f}%（{info['direction']}{chg:+.2f}%）{days}"
+        blocks.append(f"""<div style="background:{CARD2};border:1px solid {BORDER};border-left:3px solid {c};border-radius:8px;padding:9px 11px">
+  <div style="font-size:9.5px;color:{MUTED}">{info['name']} 政策金利</div>
+  <div class="num" style="font-size:19px;font-weight:900;color:{TEXT};margin:1px 0">{info['rate']:.2f}<span style="font-size:10px;color:{MUTED}">%</span></div>
+  <div style="font-size:9.5px;color:{c}">{sub}</div>
+</div>""")
+    driver_html = ""
+    if md.get("available") and md.get("summary"):
+        body = md["summary"].replace(chr(10), "<br>")
+        driver_html = f"""<div class="glass-sm fade" style="padding:11px 13px;margin-top:8px;border-left:3px solid {YELLOW}">
+  <div style="font-size:10px;color:{MUTED};margin-bottom:3px">🔍 相場を動かした要因（AI分析）</div>
+  <div style="font-size:11.5px;color:{TEXT};line-height:1.65">{body}</div>
+</div>"""
+    if not blocks and not driver_html:
+        return ""
+    grid = f'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">{"".join(blocks)}</div>' if blocks else ""
+    return f"""
+<div style="margin-bottom:12px">
+  <div class="label" style="padding:0 2px;margin-bottom:6px">🏛 政策金利と相場の要因</div>
+  {grid}{driver_html}
+  <div style="font-size:9px;color:{MUTED};margin-top:5px;padding:0 2px">金利は水準より「方向が変わった瞬間」が相場の転換点になります。要因分析は大きく動いた日のみ表示されます。</div>
+</div>"""
+
+
 def _market_signals_section(market_signals, prices=None):
     """市場内部シグナル（SOX/SKEW/VVIX/ドル指数/NT倍率）"""
     ms = market_signals or {}
@@ -1983,6 +2020,8 @@ def generate(
     valuation: dict = None,
     macro_watch: dict = None,
     market_signals: dict = None,
+    policy: dict = None,
+    market_driver: dict = None,
     **_kwargs,
 ) -> str:
     prices      = prices      or {}
@@ -2020,6 +2059,7 @@ def generate(
     valuation_html = _valuation_section(valuation)
     macro_html = _macro_section(macro_watch)
     msignal_html = _market_signals_section(market_signals, prices)
+    policy_html = _policy_driver_section(policy, market_driver)
     pro_html     = _pro_cross(prices)
     news_html    = _news(news)
     cal_html     = _calendar(weekly_calendar)
@@ -2091,6 +2131,7 @@ def generate(
   {valuation_html}
   {macro_html}
   {msignal_html}
+  {policy_html}
   {cfdsq_html}
   {usah_html}
   {adr_html}
@@ -2193,6 +2234,8 @@ def run(
     valuation: dict          = None,
     macro_watch: dict        = None,
     market_signals: dict     = None,
+    policy: dict             = None,
+    market_driver: dict      = None,
     mode: str = "morning",
     **_kwargs,
 ) -> dict:
@@ -2208,6 +2251,7 @@ def run(
             ensemble=ensemble, stock_dossier=stock_dossier, kabudragon=kabudragon,
             pts=pts, us_afterhours=us_afterhours, adr=adr, cfd_sq=cfd_sq,
             upcoming=upcoming, valuation=valuation, macro_watch=macro_watch, market_signals=market_signals,
+            policy=policy, market_driver=market_driver,
         )
         logger.info(f"✅ デザインAIレポート生成: {path}")
         return {"available": True, "path": path}
