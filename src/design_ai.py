@@ -1639,6 +1639,29 @@ def _pts_section(pts):
 </div>"""
 
 
+def _sentiment_extreme_section(sentiment):
+    """市場心理の極値・反転（底や天井で市場が反応した瞬間）"""
+    se = sentiment or {}
+    evs = se.get("events") or []
+    if not evs:
+        return ""
+    cards = []
+    for e in evs[:3]:
+        c = GREEN if any(k in e["title"] for k in ("底打ち", "落ち着き", "反発")) else RED
+        cards.append(f"""<div style="background:{CARD2};border:1px solid {BORDER};border-left:3px solid {c};border-radius:8px;padding:10px 12px;margin-bottom:8px">
+  <div style="font-size:12.5px;font-weight:900;color:{c}">{e['emoji']} {e['title']}</div>
+  <div style="font-size:11px;color:{TEXT};margin-top:3px">{e['detail']}</div>
+  <div style="font-size:10px;color:{MUTED};margin-top:3px">{e['meaning']}</div>
+  <div style="font-size:10px;color:{YELLOW};margin-top:3px">💡 {e['tip']}</div>
+</div>""")
+    return f"""
+<div style="margin-bottom:12px">
+  <div class="label" style="padding:0 2px;margin-bottom:6px">🎭 市場心理が節目に到達</div>
+  {"".join(cards)}
+  <div style="font-size:9px;color:{MUTED};padding:0 2px">恐怖・強欲が極端に振れた時と、そこから戻り始めた時だけ表示されます。極値からの反転は歴史的な底・天井になりやすい形です。</div>
+</div>"""
+
+
 def _policy_driver_section(policy, market_driver):
     """政策金利の推移＋相場を動かした要因"""
     pol = policy or {}
@@ -2022,6 +2045,7 @@ def generate(
     market_signals: dict = None,
     policy: dict = None,
     market_driver: dict = None,
+    sentiment: dict = None,
     **_kwargs,
 ) -> str:
     prices      = prices      or {}
@@ -2060,6 +2084,7 @@ def generate(
     macro_html = _macro_section(macro_watch)
     msignal_html = _market_signals_section(market_signals, prices)
     policy_html = _policy_driver_section(policy, market_driver)
+    sent_html = _sentiment_extreme_section(sentiment)
     pro_html     = _pro_cross(prices)
     news_html    = _news(news)
     cal_html     = _calendar(weekly_calendar)
@@ -2130,6 +2155,7 @@ def generate(
   {upcoming_html}
   {valuation_html}
   {macro_html}
+  {sent_html}
   {msignal_html}
   {policy_html}
   {cfdsq_html}
@@ -2236,6 +2262,7 @@ def run(
     market_signals: dict     = None,
     policy: dict             = None,
     market_driver: dict      = None,
+    sentiment: dict          = None,
     mode: str = "morning",
     **_kwargs,
 ) -> dict:
@@ -2251,7 +2278,7 @@ def run(
             ensemble=ensemble, stock_dossier=stock_dossier, kabudragon=kabudragon,
             pts=pts, us_afterhours=us_afterhours, adr=adr, cfd_sq=cfd_sq,
             upcoming=upcoming, valuation=valuation, macro_watch=macro_watch, market_signals=market_signals,
-            policy=policy, market_driver=market_driver,
+            policy=policy, market_driver=market_driver, sentiment=sentiment,
         )
         logger.info(f"✅ デザインAIレポート生成: {path}")
         return {"available": True, "path": path}

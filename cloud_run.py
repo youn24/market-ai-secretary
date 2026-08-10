@@ -781,6 +781,17 @@ def run(mode: str):
     except Exception:
         logger.error("マクロ監視エラー"); logger.debug(traceback.format_exc())
 
+    # Step SE: 市場心理の極値と反転（恐怖・強欲の底/天井で市場が反応した瞬間）
+    sentiment = {"available": False}
+    try:
+        logger.info("--- Step SE: 市場心理の極値・反転 ---")
+        from src.sentiment_extreme import run as run_se
+        sentiment = run_se(prices, fear_greed)
+        if sentiment.get("available"):
+            logger.info(f"🎭 市場心理シグナル: {len(sentiment.get('events', []))}件")
+    except Exception:
+        logger.error("市場心理シグナルエラー"); logger.debug(traceback.format_exc())
+
     # Step PW: 中央銀行の政策金利（前回の利上げ/利下げからの動き）
     policy = {"available": False}
     try:
@@ -797,7 +808,7 @@ def run(mode: str):
     try:
         logger.info("--- Step MD: 相場変動の要因分析 ---")
         from src.market_driver import run as run_md
-        market_driver = run_md(prices, news, econ_analysis, macro_watch)
+        market_driver = run_md(prices, news, econ_analysis, macro_watch, policy)
         if market_driver.get("available"):
             logger.info(f"✅ 要因分析: {len(market_driver.get('movers', []))}指標が大きく変動")
     except Exception:
@@ -984,6 +995,7 @@ def run(mode: str):
             market_signals=market_signals,
             policy=policy,
             market_driver=market_driver,
+            sentiment=sentiment,
             mode=mode,
         )
         logger.info("✅ デザインAIレポート（docs/daily_report.html）生成")
@@ -1094,7 +1106,8 @@ def run(mode: str):
                   macro_watch=macro_watch,
                   market_signals=market_signals,
                   policy=policy,
-                  market_driver=market_driver)
+                  market_driver=market_driver,
+                  sentiment=sentiment)
     except Exception:
         logger.error("Telegram通知エラー"); logger.debug(traceback.format_exc())
 

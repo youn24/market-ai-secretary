@@ -555,7 +555,8 @@ def _build_unified_caption(risk, prices, fear_greed, ai_summary,
                            setups=None, prediction_tracker=None,
                            us_afterhours=None, pts=None, adr=None,
                            kabudragon=None, valuation=None, macro_watch=None,
-                           market_signals=None, macro_regime=None) -> str:
+                           market_signals=None, macro_regime=None,
+                           policy=None, market_driver=None, sentiment=None) -> str:
     """
     朝レポートを1通に集約したときのキャプション（Telegram上限1024字）。
 
@@ -595,6 +596,11 @@ def _build_unified_caption(risk, prices, fear_greed, ai_summary,
             short = e["label"].split("（")[0]
             head.append(f"{e['emoji']} *{short} {e['value']:.2f}{e['unit']}*"
                         f"「{e['prev_zone']}」→「{e['zone']}」")
+
+    # ── 市場心理の極値・反転（底/天井のサインは最優先で伝える）──
+    se = sentiment or {}
+    for e in (se.get("events") or [])[:2]:
+        head += ["", f"{e['emoji']} *{e['title']}*", f"　{e['detail']}"]
 
     # ── 相場を動かした要因（大きく動いた日だけ・最も知りたい情報なので最上部）──
     md = market_driver or {}
@@ -1021,7 +1027,8 @@ def run(risk, analysis, report_paths, mode,
         stock_dossier=None, ensemble=None, kabudragon=None,
         pts=None, us_afterhours=None, cfd_sq=None, upcoming=None,
         valuation=None, macro_watch=None, market_signals=None,
-        macro_regime=None, video_path=None) -> bool:
+        macro_regime=None, policy=None, market_driver=None,
+        sentiment=None, video_path=None) -> bool:
 
     if not _is_configured():
         logger.info("Telegram 設定なし。スキップします。")
@@ -1049,6 +1056,7 @@ def run(risk, analysis, report_paths, mode,
             us_afterhours=us_afterhours, pts=pts, adr=adr,
             kabudragon=kabudragon, valuation=valuation, macro_watch=macro_watch,
             market_signals=market_signals, macro_regime=macro_regime,
+            policy=policy, market_driver=market_driver, sentiment=sentiment,
         )
 
         report_url = report_paths.get("url", "").strip()

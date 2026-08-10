@@ -68,8 +68,37 @@ def _key_events(news: list) -> list:
     return hits[:5]
 
 
+def _policy_impact(policy: dict, movers: list) -> dict | None:
+    """
+    中央銀行が金利を動かした日に、相場が実際どう反応したかを結びつける。
+    「利上げした」だけでなく「その結果マーケットがどう動いたか」まで示す。
+    """
+    events = (policy or {}).get("events") or []
+    if not events or not movers:
+        return None
+    e = events[0]
+    top = movers[0]
+    react = "大きく反応しました" if abs(top["chg"]) >= 1.5 else "反応しました"
+    updown = "上昇" if top["chg"] > 0 else "下落"
+    if e["direction"] == "利上げ":
+        read = ("利上げは通常は株の重荷ですが、想定内なら安心感から買われることもあります。"
+                if top["chg"] > 0 else "利上げを嫌気した売りが出たとみられます。")
+    else:
+        read = ("利下げは株の追い風。素直に好感されたとみられます。"
+                if top["chg"] > 0 else
+                "利下げにもかかわらず下落。景気悪化への懸念が勝った可能性があります。")
+    return {
+        "name": e["name"], "direction": e["direction"],
+        "prev_rate": e.get("prev_rate"), "rate": e.get("rate"),
+        "text": (f"{e['name']}が{e['direction']}"
+                 f"（{e.get('prev_rate'):.2f}%→{e.get('rate'):.2f}%）。"
+                 f"{top['name']}は{top['chg']:+.2f}%と{updown}して{react}。{read}"),
+    }
+
+
 def run(prices: dict = None, news: list = None,
-        econ: dict = None, macro_watch: dict = None) -> dict:
+        econ: dict = None, macro_watch: dict = None,
+        policy: dict = None) -> dict:
     movers = _movers(prices)
     if not movers:
         logger.info("市場要因分析: 大きな変動なし（分析はスキップ）")
@@ -77,6 +106,7 @@ def run(prices: dict = None, news: list = None,
 
     key_events = _key_events(news)
     headlines = _relevant_news(news)
+    pol_impact = _policy_impact(policy, movers)
 
     # ── AIに「なぜ動いたか」を要約させる ──
     summary = ""
@@ -135,6 +165,8 @@ def run(prices: dict = None, news: list = None,
         arrow = "🔺" if m["chg"] > 0 else "🔻"
         val = f"{m['value']:,.2f}" if m.get("value") else "—"
         lines.append(f"{arrow} *{m['name']}* {val}（{m['chg']:+.2f}%）")
+    if pol_impact:
+        lines += ["", f"🏛 *中央銀行の動き*", f"　{pol_impact['text']}"]
     if key_events:
         lines.append("")
         lines.append("📅 *注目された指標・イベント*")
@@ -147,6 +179,7 @@ def run(prices: dict = None, news: list = None,
 
     logger.info(f"✅ 要因分析: {len(movers)}指標が大きく変動")
     return {"available": True, "movers": movers, "key_events": key_events,
+            "policy_impact": pol_impact,
             "summary": summary, "drivers": movers,
             "telegram_block": "\n".join(lines)}
 
