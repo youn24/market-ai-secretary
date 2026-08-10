@@ -1,48 +1,48 @@
 {
-  "generated_at": "2026-07-26T23:43:20.762446+00:00",
+  "generated_at": "2026-08-09T23:12:22.728967+00:00",
   "target": "^N225",
   "method": "各指標の前営業日リターン と 日経翌日リターン のPearson相関を正規化",
   "weights": {
     "^GSPC": {
       "name": "S&P500",
-      "corr": 0.452,
-      "weight": 0.946,
+      "corr": 0.513,
+      "weight": 0.985,
       "n": 466
     },
     "^IXIC": {
       "name": "NASDAQ",
-      "corr": 0.455,
-      "weight": 0.952,
+      "corr": 0.515,
+      "weight": 0.988,
       "n": 466
     },
     "^SOX": {
       "name": "半導体SOX",
-      "corr": 0.478,
+      "corr": 0.521,
       "weight": 1.0,
       "n": 466
     },
     "^VIX": {
       "name": "VIX",
-      "corr": -0.369,
-      "weight": -0.772,
+      "corr": -0.465,
+      "weight": -0.893,
       "n": 468
     },
     "GC=F": {
       "name": "金",
-      "corr": 0.105,
-      "weight": 0.22,
+      "corr": 0.128,
+      "weight": 0.246,
       "n": 467
     },
     "USDJPY=X": {
       "name": "ドル円",
-      "corr": 0.142,
-      "weight": 0.297,
+      "corr": 0.115,
+      "weight": 0.221,
       "n": 423
     },
     "^N225": {
       "name": "日経(前日)",
-      "corr": -0.119,
-      "weight": -0.249,
+      "corr": -0.122,
+      "weight": -0.234,
       "n": 486
     }
   }
