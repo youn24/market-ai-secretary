@@ -2314,9 +2314,23 @@ def run(
             policy=policy, market_driver=market_driver, sentiment=sentiment,
             risk_sentiment=risk_sentiment,
         )
-        logger.info(f"✅ デザインAIレポート生成: {path}")
+        # 生成できたと言い切る前に、ファイルが実在し中身があるかを必ず確かめる。
+        # ここを検証していなかったため、本番で生成に失敗していたことに
+        # 長期間気づけなかった（公開ページが古いまま固定されていた）。
+        try:
+            from pathlib import Path as _P
+            f = _P(path)
+            size = f.stat().st_size if f.exists() else 0
+            if size < 5000:
+                logger.error(f"❌ デザインAIレポートが不完全です（{size}バイト）: {path}")
+                return {"available": False, "path": path, "size": size}
+            logger.info(f"✅ デザインAIレポート生成: {path}（{size:,}バイト）")
+        except Exception:
+            logger.info(f"✅ デザインAIレポート生成: {path}")
         return {"available": True, "path": path}
-    except Exception:
-        logger.error("デザインAI生成エラー")
-        logger.debug(traceback.format_exc())
-        return {"available": False}
+    except Exception as e:
+        # 例外の中身をerrorレベルで残す。debugだと本番ログに出ず、
+        # 「成功表示なのにレポートが更新されない」事故の原因が追えなくなる。
+        logger.error(f"❌ デザインAIレポート生成に失敗: {type(e).__name__}: {e}")
+        logger.error(traceback.format_exc())
+        return {"available": False, "error": f"{type(e).__name__}: {e}"}

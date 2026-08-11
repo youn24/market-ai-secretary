@@ -89,6 +89,22 @@ jobs:
           python generate_expanded_report.py || true
           python generate_mobile_report.py || true
 
+      - name: 公開レポートが今日の内容に更新されたか検証
+        if: always()
+        run: |
+          # 「Actionsは緑なのに公開ページが古いまま」を二度と見逃さないための検証。
+          # 実際にこの事故が長期間続いたため、ここで明示的に確認する。
+          REPORT=docs/daily_report.html
+          TODAY=$(TZ=Asia/Tokyo date +%Y-%m-%d)
+          if [ ! -f "$REPORT" ]; then
+            echo "::error::公開レポート $REPORT が生成されていません"
+          elif grep -q "$TODAY" "$REPORT"; then
+            echo "✅ 公開レポートは本日（$TODAY）の内容に更新されています（$(wc -c < "$REPORT") バイト）"
+          else
+            echo "::error::公開レポートに本日（$TODAY）の日付がありません。古い内容のままの可能性があります"
+            grep -o "<title>[^<]*</title>" "$REPORT" | head -1 || true
+          fi
+
       - name: モバイル版レポートを docs/mobile.html に公開用コピー
         if: always()
         run: |

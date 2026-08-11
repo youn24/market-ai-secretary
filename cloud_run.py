@@ -983,7 +983,7 @@ def run(mode: str):
     try:
         logger.info("--- Step 7a2: デザインAIレポート（リッチ公開版） ---")
         from src.design_ai import run as run_design
-        run_design(
+        _design_res = run_design(
             prices=prices, news=news, risk=risk, fear_greed=fear_greed,
             ai_summary=ai_summary, scenario=scenario, technical=technical,
             sector_analysis=sector_analysis, prediction_tracker=prediction_tracker,
@@ -1012,9 +1012,23 @@ def run(mode: str):
             risk_sentiment=risk_sentiment,
             mode=mode,
         )
-        logger.info("✅ デザインAIレポート（docs/daily_report.html）生成")
+        # 公開ページが更新されたことを必ず確認する。
+        # ここを検証していなかったため、生成失敗に長期間気づけず
+        # 公開レポートが古いまま固定される事故が起きた。
+        _p = Path(__file__).parent / "docs" / "daily_report.html"
+        if not (_design_res or {}).get("available"):
+            logger.error(f"❌ 公開レポートを更新できませんでした: "
+                         f"{(_design_res or {}).get('error', '原因不明')}")
+        elif not _p.exists():
+            logger.error(f"❌ 公開レポートのファイルが見つかりません: {_p}")
+        else:
+            _txt = _p.read_text(encoding="utf-8", errors="ignore")[:4000]
+            if get_today_str() in _txt:
+                logger.info(f"✅ 公開レポート更新済み（{_p.stat().st_size:,}バイト・本日の日付を確認）")
+            else:
+                logger.error("❌ 公開レポートに本日の日付がありません（古い内容のままの可能性）")
     except Exception:
-        logger.error("デザインAIレポートエラー"); logger.debug(traceback.format_exc())
+        logger.error("デザインAIレポートエラー"); logger.error(traceback.format_exc())
 
     # Step 7b: note記事生成
     note_article = {"available": False}
