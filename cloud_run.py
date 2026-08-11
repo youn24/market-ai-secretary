@@ -1202,8 +1202,20 @@ def run(mode: str):
         logger.info(f"📊 稼働: {len(ok)}/{len(_modules)} 機能")
         if ng:
             logger.warning(f"⚠️ データ取得できず: {', '.join(ng)}")
+        _module_status = _modules
     except Exception:
         logger.debug(traceback.format_exc())
+        _module_status = []
+
+    # Step DIAG: 自己診断（成果物が本当に届いているかをシステム自身が点検する）
+    try:
+        logger.info("--- Step DIAG: システム自己診断 ---")
+        from src.self_diagnosis import run as run_diag
+        diagnosis = run_diag(prices, _module_status)
+        if not diagnosis.get("healthy"):
+            logger.warning(f"🩺 健康度 {diagnosis['score']}点 — 要確認")
+    except Exception:
+        logger.error("自己診断エラー"); logger.error(traceback.format_exc())
 
     logger.info(f"====== クラウド実行完了 ======")
     print(f"\n✅ 完了 | 地合い: {risk.get('sentiment')} | "

@@ -127,7 +127,19 @@ jobs:
           # （これをしないと公開ページが更新されず古いまま固定される）
           git add docs data/predictions.json data/ai_memory.json data/theme_history.json data/weekly_calendar.json data/valuation_state.json data/macro_state.json data/market_signal_state.json data/policy_state.json data/sentiment_state.json data/risk_sentiment_state.json data/notify_ledger.json 2>/dev/null || true
           git diff --staged --quiet || git commit -m "📊 レポート更新 $(date '+%Y-%m-%d %H:%M JST')"
-          git push origin main || true
+          # 作業中の手動pushなどでリモートが進んでいると push が拒否される。
+          # 以前は `|| true` で握りつぶしていたため、予測記録などの学習データが
+          # 毎回失われ、正解率の計算が止まっていた（2026-08-12に発覚）。
+          # rebase して再試行し、それでも駄目なら必ずエラーとしてログに残す。
+          if ! git push origin main 2>&1; then
+            echo "pushが拒否されたため rebase して再試行します"
+            git pull --rebase --autostash origin main || true
+            if git push origin main 2>&1; then
+              echo "✅ rebase後のpushに成功しました"
+            else
+              echo "::error::学習データのpushに失敗しました。予測記録が保存されていません"
+            fi
+          fi
 
       - name: レポートをgh-pagesに公開
         if: always()
