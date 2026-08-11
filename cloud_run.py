@@ -1173,6 +1173,38 @@ def run(mode: str):
     except Exception:
         logger.error("X投稿エラー"); logger.debug(traceback.format_exc())
 
+    # ── 稼働状況の一覧（どの機能が動き、どれが取得できなかったかを毎回残す）──
+    # 個々のStepは try/except で継続するため、失敗しても実行は最後まで進む。
+    # そのぶん「静かに動かなくなった機能」を見逃しやすいので、ここで棚卸しする。
+    try:
+        _modules = [
+            ("価格取得", bool(prices)), ("ニュース", bool(news)),
+            ("AI3視点", (ai_summary or {}).get("available")),
+            ("3シナリオ", (scenario or {}).get("available")),
+            ("テクニカル", (technical or {}).get("available")),
+            ("日経内部データ", (nikkei_internals or {}).get("available")),
+            ("ADR", (adr or {}).get("available")),
+            ("PTS夜間", (pts or {}).get("available")),
+            ("米時間外", (us_ah or {}).get("available")),
+            ("株ドラゴン", (kabudragon or {}).get("available")),
+            ("CFD/SQ", (cfd_sq or {}).get("available")),
+            ("今後のイベント", (upcoming or {}).get("available")),
+            ("バリュエーション", bool((valuation or {}).get("current"))),
+            ("マクロ・信用", bool((macro_watch or {}).get("current"))),
+            ("市場内部シグナル", bool((market_signals or {}).get("current"))),
+            ("政策金利", (policy or {}).get("available")),
+            ("要因分析", (market_driver or {}).get("available")),
+            ("市場心理", bool((sentiment or {}).get("current"))),
+            ("リスク選好", (risk_sentiment or {}).get("direction") is not None),
+        ]
+        ok = [n for n, v in _modules if v]
+        ng = [n for n, v in _modules if not v]
+        logger.info(f"📊 稼働: {len(ok)}/{len(_modules)} 機能")
+        if ng:
+            logger.warning(f"⚠️ データ取得できず: {', '.join(ng)}")
+    except Exception:
+        logger.debug(traceback.format_exc())
+
     logger.info(f"====== クラウド実行完了 ======")
     print(f"\n✅ 完了 | 地合い: {risk.get('sentiment')} | "
           f"F&G: {fear_greed.get('score')} ({fear_greed.get('rating_ja')}) | "
