@@ -983,6 +983,8 @@ def run(mode: str):
     try:
         logger.info("--- Step 7a2: デザインAIレポート（リッチ公開版） ---")
         from src.design_ai import run as run_design
+        from src.run_recorder import record as _rec
+        _rec("Step 7a2 到達", ok=True)
         _design_res = run_design(
             prices=prices, news=news, risk=risk, fear_greed=fear_greed,
             ai_summary=ai_summary, scenario=scenario, technical=technical,
@@ -1017,18 +1019,31 @@ def run(mode: str):
         # 公開レポートが古いまま固定される事故が起きた。
         _p = Path(__file__).parent / "docs" / "daily_report.html"
         if not (_design_res or {}).get("available"):
-            logger.error(f"❌ 公開レポートを更新できませんでした: "
-                         f"{(_design_res or {}).get('error', '原因不明')}")
+            _err = (_design_res or {}).get("error", "原因不明")
+            logger.error(f"❌ 公開レポートを更新できませんでした: {_err}")
+            _rec("Step 7a2 レポート生成", ok=False, detail=_err)
         elif not _p.exists():
             logger.error(f"❌ 公開レポートのファイルが見つかりません: {_p}")
         else:
             _txt = _p.read_text(encoding="utf-8", errors="ignore")[:4000]
             if get_today_str() in _txt:
                 logger.info(f"✅ 公開レポート更新済み（{_p.stat().st_size:,}バイト・本日の日付を確認）")
+                _rec("Step 7a2 レポート生成", ok=True,
+                     extra={"size": _p.stat().st_size})
             else:
                 logger.error("❌ 公開レポートに本日の日付がありません（古い内容のままの可能性）")
-    except Exception:
+                import re as _re
+                _m = _re.search(r"20\d\d-\d\d-\d\d", _txt)
+                _rec("Step 7a2 レポート生成", ok=False,
+                     detail=f"生成は成功したがファイルが古い（{_m.group(0) if _m else '不明'}版）")
+    except Exception as _e:
         logger.error("デザインAIレポートエラー"); logger.error(traceback.format_exc())
+        try:
+            from src.run_recorder import record as _rec2
+            _rec2("Step 7a2 レポート生成", ok=False,
+                  detail=f"{type(_e).__name__}: {_e}")
+        except Exception:
+            pass
 
     # Step 7b: note記事生成
     note_article = {"available": False}
@@ -1138,7 +1153,12 @@ def run(mode: str):
                   sentiment=sentiment,
                   risk_sentiment=risk_sentiment)
     except Exception:
-        logger.error("Telegram通知エラー"); logger.debug(traceback.format_exc())
+        logger.error("Telegram通知エラー"); logger.error(traceback.format_exc())
+        try:
+            from src.run_recorder import record as _rec4
+            _rec4("Step 8 Telegram通知", ok=False, detail=traceback.format_exc().strip().splitlines()[-1][:200])
+        except Exception:
+            pass
 
     # Step 8b: note記事テキスト自動生成
     note_article = {"available": False}
@@ -1216,6 +1236,15 @@ def run(mode: str):
             logger.warning(f"🩺 健康度 {diagnosis['score']}点 — 要確認")
     except Exception:
         logger.error("自己診断エラー"); logger.error(traceback.format_exc())
+
+    # 実行記録を保存（ログが読めない環境でも次回 git から追跡できるようにする）
+    try:
+        from src.run_recorder import record as _rec3, save as _save_rec
+        for _n, _v in (_module_status or []):
+            _rec3(_n, ok=bool(_v))
+        _save_rec(mode=mode)
+    except Exception:
+        logger.debug(traceback.format_exc())
 
     logger.info(f"====== クラウド実行完了 ======")
     print(f"\n✅ 完了 | 地合い: {risk.get('sentiment')} | "
