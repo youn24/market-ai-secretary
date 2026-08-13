@@ -134,6 +134,41 @@ def build_alert_message(alerts: list, prices: dict, fear_greed: dict, risk: dict
 # 米国時間外の個別株アラート閾値（決算級の大きな反応のみ・スパム防止）
 AH_ALERT_PCT = 5.0
 
+# 日本市場への影響が直接的な銘柄は、より小さな動きでも知らせる。
+# 日本株ADR（ソニー・トヨタ等）は翌朝の同じ銘柄にほぼそのまま反映されるため
+# 3%でも十分大きい。半導体の主要株も日本の装置株・半導体株に直結する。
+AH_ALERT_PCT_JP_LINKED = 3.0
+
+# その銘柄が動いたとき、日本のどこに効くか（通知に添えて判断を助ける）
+_JP_IMPACT = {
+    "SONY": "ソニーG", "TM": "トヨタ", "HMC": "ホンダ",
+    "MUFG": "三菱UFJ", "SMFG": "三井住友FG", "MFG": "みずほFG",
+    "NVDA": "半導体株（東エレク・アドテスト・レーザーテック）",
+    "TSM": "半導体株", "AVGO": "半導体株", "MU": "半導体メモリ関連",
+    "ASML": "半導体装置（東エレク・レーザーテック）",
+    "AMAT": "半導体装置（東エレク・SCREEN）",
+    "LRCX": "半導体装置（東エレク・SCREEN）", "KLAC": "レーザーテック",
+    "ARM": "ソフトバンクG",
+    "AAPL": "部品株（村田・TDK・イビデン）",
+    "TSLA": "EV関連（パナソニック・デンソー）",
+    "GM": "自動車株", "F": "自動車株",
+    "CAT": "建機（コマツ・日立建機）", "DE": "クボタ",
+    "GE": "重工（三菱重工・IHI）", "BA": "重工・航空部品",
+    "FCX": "非鉄・商社", "XOM": "資源・商社", "CVX": "資源・商社",
+    "JPM": "メガバンク", "GS": "証券（野村・大和）", "C": "メガバンク",
+    "NKE": "アシックス・ゴールドウイン", "MCD": "日本マクドナルド",
+    "DIS": "オリエンタルランド", "COIN": "暗号資産関連", "MSTR": "暗号資産関連",
+    "FDX": "物流（景気の先行指標）", "UPS": "物流",
+}
+_JP_LINKED = {
+    # 日本株ADR＝米国市場で取引される日本企業そのもの
+    "SONY", "TM", "MUFG", "SMFG", "HMC", "MFG",
+    # 日本の半導体・装置株を直接動かす銘柄
+    "NVDA", "TSM", "ASML", "AMAT", "LRCX", "KLAC", "MU", "AVGO", "ARM",
+    # アップルは村田・TDK・日本電産など部品株のサプライチェーンに直結
+    "AAPL",
+}
+
 # ── CFD/24時間マーケット監視（株価指数先物・コモディティ・欧州指数）──────
 # CFD業者が24時間配信している価格の実体＝これらの先物/指数。
 # 日本の夜間に大きく動くとそのまま翌朝の寄り付きに影響するため上下どちらも通知。
@@ -232,10 +267,16 @@ def run_afterhours_alert() -> bool:
     try:
         from src.us_afterhours import run as run_us
         us = run_us()
+        # 日本市場に直結する銘柄は低い閾値（3%）、それ以外は決算級（5%）で判定する
+        def _threshold(sym: str) -> float:
+            return AH_ALERT_PCT_JP_LINKED if sym in _JP_LINKED else AH_ALERT_PCT
+
         movers = [m for m in us.get("movers", [])
-                  if abs(m.get("chg_pct") or 0) >= AH_ALERT_PCT]
+                  if abs(m.get("chg_pct") or 0) >= _threshold(m.get("symbol", ""))]
         if not movers:
-            logger.info(f"時間外±{AH_ALERT_PCT:.0f}%級の個別株変動なし")
+            logger.info(f"時間外の個別株変動なし"
+                        f"（日本連動銘柄±{AH_ALERT_PCT_JP_LINKED:.0f}% / "
+                        f"その他±{AH_ALERT_PCT:.0f}%）")
             return False
 
         alerts = [{
@@ -244,6 +285,7 @@ def run_afterhours_alert() -> bool:
             "value":  m.get("price"),
             "change": m["chg_pct"],
             "direction": "急騰🔺" if m["chg_pct"] > 0 else "急落🔻",
+            "jp": _JP_IMPACT.get(m["symbol"], ""),
         } for m in movers]
         alerts = _apply_cooldown(alerts, source="afterhours")
         if not alerts:
@@ -261,6 +303,8 @@ def run_afterhours_alert() -> bool:
             price_s = f"${a['value']:,.2f}" if a.get("value") else "—"
             s = "▲" if a["change"] > 0 else "▼"
             lines.append(f"{a['direction']} *{a['name']}*: {price_s} ({s}{abs(a['change']):.1f}%)")
+            if a.get("jp"):
+                lines.append(f"　→ 日本の{a['jp']}に波及しやすい")
         lines += [
             "━━━━━━━━━━━━━━━",
             "決算・材料への時間外反応。翌朝の東京市場の関連銘柄・セクターに波及しやすい動きです。",
