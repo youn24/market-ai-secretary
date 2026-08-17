@@ -102,11 +102,17 @@ def _extract_direction(ai_summary: dict, scenario: dict, risk: dict, fear_greed:
         elif fg >= 75: adjusted_score += 3.0   # 極度の強欲
         elif fg >= 65: adjusted_score += 1.5   # 強欲
 
-    # 閾値を6.0→9.0に再引き上げ（2026-07-12実績分析: bull的中率20%(2/10)で
-    # まだ強気過多。予測分布bull53%/bear26%/neutral21% vs 実際bear42%/neutral32%/bull26%）
-    # bear閾値は-4.0→-3.0に緩和（bear的中率40%で相対的に信頼度が高いため拾いやすく）
-    if adjusted_score >= 9.0:    base = "bull"
-    elif adjusted_score <= -3.0: base = "bear"
+    # 閾値は過去2年470件のバックテストで決定（2026-08-13・src/backtest_predictions.py）。
+    # それ以前は実運用の少ないサンプル（bull 11件で的中27%）から「強気過多」と判断し
+    # 9.0まで引き上げていたが、470件で検証すると逆の構造が見えた:
+    #   9.0/-3.0 … 全体41.3% / bull 76件72.4% / neutral 260件24.6%
+    #   予測のneutralが55%も出るのに、実際にneutral(±0.3%以内)だった日は22%しかない。
+    #   つまり閾値の幅が広すぎて、判断できるはずの日を取りこぼしていた。
+    # 7.0/-2.0 に緩和すると全体45.3%（+4.0pt）、bullは110件で的中70.0%を維持できる。
+    # さらに下げれば全体は47.9%まで伸びるが、bull的中率が57.9%まで落ちるため採らない
+    # （「強気」と言ったときの信頼性を優先する）。
+    if adjusted_score >= 7.0:    base = "bull"
+    elif adjusted_score <= -2.0: base = "bear"
     else:                        base = "neutral"
 
     # シナリオ確率で補正（確率差30%以上の場合のみ方向を変更）
