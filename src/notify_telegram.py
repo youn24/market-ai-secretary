@@ -873,18 +873,35 @@ def _build_detail_message(risk, prices, fear_greed, news,
         stats = pt.get("stats", {})
         r10   = stats.get("10d", {})
         rate  = r10.get("rate")
+        today_pred = pt.get("today_prediction", {})
+        dir_icon_map = {"bull":"📈 強気（上昇）","bear":"📉 弱気（下落）","neutral":"➡️ 中立（横ばい）"}
+        dir_str = dir_icon_map.get(today_pred.get("direction",""), "")
+
+        _blk = []
         if rate is not None:
             bar_e = "🎯" if rate >= 65 else "🔶" if rate >= 50 else "⚠️"
             bar_t = "█" * round(rate/10) + "░" * (10 - round(rate/10))
-            today_pred = pt.get("today_prediction", {})
-            dir_icon_map = {"bull":"📈 強気（上昇）","bear":"📉 弱気（下落）","neutral":"➡️ 中立（横ばい）"}
-            dir_str = dir_icon_map.get(today_pred.get("direction",""), "")
-            _blk = [
+            _blk += [
                 f"🧠 *AI予測精度* (直近10日)",
                 f"{bar_e} `{bar_t}` {rate}%  ({r10.get('correct',0)}/{r10.get('total',0)}日正解)",
-                f"🎯 今日の予測: {dir_str}" if dir_str else "",
             ]
-            lines += [""] + [l for l in _blk if l]
+        if dir_str:
+            _blk.append(f"🎯 今日の予測: {dir_str}")
+
+        # 信頼度ランク。同じ「下げ」でも過去の勝率が50%と83%では
+        # 受け取り方が変わるため、方向だけでなくクラスを必ず添える。
+        conf = today_pred.get("signal_confidence") or {}
+        if conf.get("available"):
+            _mark = {"S": "🟢", "A": "🔵", "B": "🟡", "C": "⚪"}.get(conf["rank"], "⚪")
+            _d = "上げ" if conf["direction"] == "bull" else "下げ"
+            _n = "参考値" if conf.get("estimated") else f"n={conf['sample_n']}"
+            _blk.append(f"{_mark} 信頼度 *{conf['rank']}ランク* {conf['stars']}")
+            _blk.append(f"　└ 同じ強さの{_d}予想は過去 *{conf['win_rate']}%* 的中 ({_n})")
+            if conf["rank"] == "C":
+                _blk.append("　└ ⚠️ ほぼコイン投げ。この日は当てにしないでください")
+
+        if _blk:
+            lines += [""] + _blk
 
     # ── カテゴリC: マクロ・市場内部データ ──
     lines += [_CAT + "1🏛 マクロ・市場内部データ"]

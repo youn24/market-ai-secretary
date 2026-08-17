@@ -54,7 +54,17 @@ def save_prediction(prices: dict, risk: dict, ai_summary: dict, scenario: dict,
     data  = _load()
 
     # AIの予測方向を判定（F&Gも渡してバイアス補正）
-    direction = _extract_direction(ai_summary, scenario, risk, fear_greed)
+    direction, adj_score = _direction_and_score(ai_summary, scenario, risk, fear_greed)
+
+    # そのサインがどのクラスかを添える。
+    # 同じ「下げ」でも過去の勝率が50%と83%では意味が違うため、
+    # 方向だけ記録しても後から読み返したときに判断できない。
+    sig_conf = {"available": False}
+    try:
+        from src.signal_confidence import evaluate as _sc_eval
+        sig_conf = _sc_eval(direction, adj_score)
+    except Exception:
+        logger.error("信頼度ランクの判定に失敗しました", exc_info=True)
 
     # 現在価格を記録
     def p(sym): return prices.get(sym, {}).get("latest")
@@ -63,6 +73,9 @@ def save_prediction(prices: dict, risk: dict, ai_summary: dict, scenario: dict,
         "date":         today,
         "direction":    direction,      # "bull" / "bear" / "neutral"
         "score":        risk.get("score", 0),
+        "adj_score":    round(adj_score, 2),   # F&G補正後。信頼度ランクの根拠
+        "conf_rank":    sig_conf.get("rank") if sig_conf.get("available") else None,
+        "conf_win_rate": sig_conf.get("win_rate") if sig_conf.get("available") else None,
         "fg":           (fear_greed or {}).get("score"),   # Fear&Greed スコア
         "nikkei":       p("^N225"),
         "sp500":        p("^GSPC"),
@@ -84,12 +97,28 @@ def save_prediction(prices: dict, risk: dict, ai_summary: dict, scenario: dict,
     )[-90:]
 
     _save(data)
-    logger.info(f"予測記録: {today} → {direction} (スコア:{risk.get('score',0):+.2f})")
-    return record
+    rank = f" / 信頼度{sig_conf['rank']}({sig_conf['win_rate']}%)" if sig_conf.get("available") else ""
+    logger.info(f"予測記録: {today} → {direction} (スコア:{risk.get('score',0):+.2f}"
+                f" 補正後{adj_score:+.2f}){rank}")
+    # 通知・レポート用に信頼度の詳細も返す。保存済みレコード本体は汚さない
+    # （同じオブジェクトを後から書き換えると、次の保存で意図せず混ざるため）
+    return {**record, "signal_confidence": sig_conf}
 
 
 def _extract_direction(ai_summary: dict, scenario: dict, risk: dict, fear_greed: dict = None) -> str:
     """AIの総合的な方向性を文字列で返す"""
+    return _direction_and_score(ai_summary, scenario, risk, fear_greed)[0]
+
+
+def _direction_and_score(ai_summary: dict, scenario: dict, risk: dict,
+                         fear_greed: dict = None) -> tuple:
+    """
+    方向と、判定に使った補正後スコアの両方を返す。
+
+    スコアを外に出しているのは、signal_confidence が
+    「そのサインがどれくらい強かったか」を必要とするため。
+    補正のかけ方を二重に実装すると必ずズレるので、判定と同じ値を渡す。
+    """
     score = risk.get("score", 0)
     fg = (fear_greed or {}).get("score")
 
@@ -128,7 +157,7 @@ def _extract_direction(ai_summary: dict, scenario: dict, risk: dict, fear_greed:
         if diff >= 30:    base = "bull"
         elif diff <= -30: base = "bear"
 
-    return base
+    return base, adjusted_score
 
 
 # ──────────────────────────────────────────────────────────────

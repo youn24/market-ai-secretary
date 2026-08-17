@@ -1121,6 +1121,50 @@ def _calendar(weekly_calendar):
 # セクション 12：AI予測精度
 # ──────────────────────────────────────────
 
+def _pred_confidence(pt):
+    """
+    今日のサインの信頼度ランクをカードにする。
+
+    なぜ独立させたか: 「今日は下げ」だけでは、それが過去83%当たった下げなのか
+    50%のコイン投げなのか読者に区別できない。方向と同じ大きさで信頼度を出す。
+    """
+    conf = (pt.get("today_prediction") or {}).get("signal_confidence") or {}
+    if not conf.get("available"):
+        return ""
+
+    rank = conf["rank"]
+    c = {"S": GREEN, "A": BLUE, "B": YELLOW, "C": MUTED}.get(rank, MUTED)
+    d_label = "上げ" if conf["direction"] == "bull" else "下げ"
+    src = "参考値（データ少）" if conf.get("estimated") else f"過去{conf['sample_n']}件"
+    warn = ""
+    if rank == "C":
+        warn = (f'<div style="font-size:10px;color:{ORANGE};margin-top:7px;'
+                f'padding-top:7px;border-top:1px solid {BORDER}">'
+                f'⚠️ このクラスはほぼ五分五分です。今日のサインは当てにしないでください</div>')
+
+    return f"""
+<div style="margin-bottom:12px">
+  <div class="label" style="padding:0 2px;margin-bottom:6px">🎖 今日のサインの信頼度</div>
+  <div class="glass" style="padding:14px">
+    <div style="display:flex;align-items:center;gap:14px">
+      <div style="text-align:center;min-width:74px">
+        <div style="font-size:30px;font-weight:900;color:{c};line-height:1;text-shadow:0 0 20px {c}55">{rank}</div>
+        <div style="font-size:13px;color:{c};letter-spacing:1px">{conf['stars']}</div>
+      </div>
+      <div style="flex:1">
+        <div style="font-size:15px;font-weight:800;color:{c};margin-bottom:4px">{conf['advice']}</div>
+        <div style="font-size:11px;color:{MUTED};line-height:1.6">
+          今日と同じ強さの<b style="color:{c}">{d_label}予想</b>は、
+          過去に <b style="color:{c};font-size:13px">{conf['win_rate']}%</b> の確率でその方向へ動きました
+          <span style="opacity:.7">（{src} / {conf['range']}）</span>
+        </div>
+      </div>
+    </div>{warn}
+    <div style="font-size:10px;color:{MUTED};margin-top:9px">📖 サインの強さごとに過去{conf.get('period','')}の実績を集計したランクです。強いサインほど当たりやすいことが検証で分かっています</div>
+  </div>
+</div>"""
+
+
 def _pred(prediction_tracker):
     pt = prediction_tracker or {}
     if not pt.get("available"): return ""
@@ -1129,7 +1173,13 @@ def _pred(prediction_tracker):
     d10   = stats.get("10d", {})
     n     = int(d10.get("total", 0) or 0)
     hits  = int(d10.get("correct", 0) or 0)
-    if not n: return ""
+
+    # 今日のサインの信頼度ランク。
+    # 直近10日の平均正解率より「今日のサインがどのクラスか」の方が
+    # 判断材料になるため、答え合わせがまだ無い日でも単独で表示する。
+    conf_html = _pred_confidence(pt)
+    if not n:
+        return conf_html
 
     acc   = float(d10.get("rate") or 0)
     miss  = n - hits
@@ -1153,7 +1203,7 @@ def _pred(prediction_tracker):
       <span style="font-size:9px;color:{MUTED};margin-left:auto">0=完璧 / 0.25=勘 / 大=過信</span>
     </div>"""
 
-    return f"""
+    return conf_html + f"""
 <div style="margin-bottom:12px">
   <div class="label" style="padding:0 2px;margin-bottom:6px">🎯 AIの予測精度（直近10日）</div>
   <div class="glass" style="padding:14px">

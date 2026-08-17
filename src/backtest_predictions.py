@@ -225,6 +225,15 @@ def run(years: int = 2, calib_end: str = None) -> dict:
     except Exception:
         logger.debug(traceback.format_exc())
 
+    # 信頼度ランク表を作り直す。
+    # ここで一緒に更新しないと、表だけ古いデータのまま残って
+    # 「過去83%的中」と嘘の数字を出し続けることになる。
+    try:
+        from src.signal_confidence import calibrate
+        calibrate()
+    except Exception:
+        logger.error("信頼度表の再較正に失敗しました", exc_info=True)
+
     t = result["total"]
     logger.info(f"✅ バックテスト完了: {t['n']}件 / 全体的中率 {t['accuracy']}%")
     return result
