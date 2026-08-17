@@ -1043,11 +1043,22 @@ def _news(news_list):
         title = str(n.get("title", ""))[:70]
         url   = n.get("url", n.get("link", "#"))
         src   = n.get("source", "")
-        imp   = n.get("importance", n.get("score", 0))
+        # importance は fetch_news / fetch_extra_news が "A"/"B"/"C" の文字グレードで返す。
+        # ここで数値と比較していたため TypeError となり、ニュースがある日（＝ほぼ毎日）
+        # 公開レポートの生成が失敗し続けていた（2026-08-17修正）。
+        # 文字グレードと数値スコアの両方を受け取れるようにする。
+        imp = n.get("importance", n.get("score", 0))
+        if isinstance(imp, str):
+            level = {"A": 3, "B": 2, "C": 1}.get(imp.strip().upper()[:1], 0)
+        else:
+            try:
+                level = float(imp)
+            except (TypeError, ValueError):
+                level = 0
 
-        if imp >= 3 or n.get("high_impact"):
+        if level >= 3 or n.get("high_impact"):
             bc, bb, bt = RED,    f"rgba(255,61,90,.15)",  "高"
-        elif imp >= 1:
+        elif level >= 1:
             bc, bb, bt = YELLOW, f"rgba(255,200,55,.12)", "中"
         else:
             bc, bb, bt = MUTED,  f"rgba(90,106,133,.15)", "低"

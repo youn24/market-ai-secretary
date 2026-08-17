@@ -206,7 +206,12 @@ def analyze_company(symbol: str, name: str = "") -> dict:
             genai.configure(api_key=api_key)
             model  = genai.GenerativeModel(os.getenv("GEMINI_MODEL", "gemini-2.5-flash"))
             prompt = _build_prompt(d, display_name)
-            resp   = model.generate_content(prompt)
+            # 無料枠を使い切ると429が返り、ライブラリ既定では長時間リトライを続ける。
+            # 実際にこれで朝の実行が30分のジョブ上限に達して打ち切られ、
+            # 公開レポートの生成（Step 7a2）まで到達しなかった日があった。
+            # 1銘柄あたり60秒で見切りをつけ、後続のStepを必ず動かす。
+            resp = model.generate_content(
+                prompt, request_options={"timeout": 60})
             result["ai_analysis"] = resp.text.strip()
             result["available"]   = True
         except Exception as e:
