@@ -136,6 +136,7 @@ cloud_run.py（メインスクリプト）
 | `src/failure_analysis.py` | 予測のクセ分析（強さ別・環境別の勝率、ギャップ分解、連敗分布） |
 | `src/signal_confidence.py` | 信頼度ランク（S/A/B/C）。`config/confidence_tiers.json` を読む |
 | `src/publish_check.py` | 公開ページをHTTPで外から点検（毎朝8:30・異常時のみTelegram通知＋exit 1） |
+| `src/risk_gauges.py` | リスク計器盤（恐怖指数10種・日米金利・ドル指数・暗号資産F&G。統計しきい値で大きな動きを検知） |
 | `src/fx_signals.py` | 為替シグナル（8通貨ペア・強いサイン3つ以上一致でFX専用グループへ通知） |
 | `scripts/lint_workflows.py` | ワークフローの「静かに壊れる書き方」を機械検出。`# lint:allow-fail 理由` で除外可 |
 | `src/note_article.py` | note記事生成（Step 7b） |
@@ -478,6 +479,36 @@ python -c "from src.prediction_tracker import calc_accuracy; print(calc_accuracy
 大きな流れに逆らう形なので警告付きで通知される。
 
 ⚠️ yfinanceは4時間足に対応している（`interval="4h"`）。1時間足からの合成は不要。
+
+## 🌡 リスク計器盤（risk_gauges.py・2026-08-18追加）
+
+恐怖指数を横並びで一覧し、「その指標にとって普段より大きく動いた」ものを通知する。
+
+**既存2モジュールとの役割分担（重複させないこと）**
+| モジュール | 見るもの |
+|---|---|
+| `sentiment_extreme.py` | VIXとF&Gが極値ゾーンに入った/戻った瞬間（水準） |
+| `risk_sentiment.py` | 複数資産が同時に同じ方向を向いたか（リスクオン/オフ） |
+| `risk_gauges.py` | 各指標が普段と比べてどれだけ動いたか（変化の大きさ） |
+
+**しきい値の決め方が肝**: 固定%は使わない。VIXは平常時でも日々5〜10%動くが、
+MOVE指数やドル指数が5%動くのは異常事態で、同じ数字では意味が違う。
+各指標の過去1年の「1日の変化率の絶対値」の**90パーセンタイル**を基準にする
+（＝年に約25日しか起きない大きさ）。最低1.5%の下限も設け、凪の期間に
+基準が下がりすぎて些細な動きで鳴るのを防ぐ。
+
+**データ入手先（Yahooに無いものが多い）**
+| 指標 | 入手先 |
+|---|---|
+| VIX/VIX1D/VIX9D/VIX3M/VVIX/VXN/VXD/SKEW/MOVE/OVX/GVZ | yfinance（全て取得可） |
+| 日経VI | 日経公式CSV `indexes.nikkei.co.jp/nkave/historical/nikkei_stock_average_vi_daily_jp.csv`（**各値が引用符で囲まれている**ので strip('"') 必須） |
+| 日本国債利回り | 財務省CSV。**2種類を使い分ける**: `jgbcm.csv`=直近10日（最新値用）／`data/jgbcm_all.csv`=全期間1.1MB（しきい値の母数用）。和暦(R8.8.3)・Shift-JIS |
+| 暗号資産F&G | `api.alternative.me/fng/?limit=365`（キー不要。**新しい順**で返るので反転が必要） |
+
+⚠️ **取得できないもの**: VSTOXX（^V2TX/V2TX.DE とも不可）、RVX、日本国債VIX。
+
+⚠️ `up_is_bad` を計器ごとに持たせている。VIXは上昇＝危険、F&Gは上昇＝安心で
+色の意味が逆になるため。ここを取り違えると危険な状態が緑で表示される（過去に一度やらかしている）。
 
 ## 💱 為替シグナル（fx_signals.py）
 

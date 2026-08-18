@@ -51,7 +51,8 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           for f in data/alert_state.json data/tech_signal_state.json \
-                   data/fx_signal_state.json data/divergence_state.json; do
+                   data/fx_signal_state.json data/divergence_state.json \
+                   data/risk_gauge_state.json; do
             [ -f "$f" ] && git add -f "$f"
           done
           if ! git diff --staged --quiet; then

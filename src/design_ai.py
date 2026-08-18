@@ -2137,6 +2137,7 @@ def generate(
     market_driver: dict = None,
     sentiment: dict = None,
     risk_sentiment: dict = None,
+    risk_gauges: dict = None,
     **_kwargs,
 ) -> str:
     prices      = prices      or {}
@@ -2177,6 +2178,7 @@ def generate(
     policy_html = _policy_driver_section(policy, market_driver)
     sent_html = _sentiment_extreme_section(sentiment)
     risk_html = _risk_sentiment_section(risk_sentiment)
+    gauge_html = _risk_gauge_section(risk_gauges)
     pro_html     = _pro_cross(prices)
     news_html    = _news(news)
     cal_html     = _calendar(weekly_calendar)
@@ -2249,6 +2251,7 @@ def generate(
   {macro_html}
   {risk_html}
   {sent_html}
+  {gauge_html}
   {msignal_html}
   {policy_html}
   {cfdsq_html}
@@ -2357,6 +2360,7 @@ def run(
     market_driver: dict      = None,
     sentiment: dict          = None,
     risk_sentiment: dict     = None,
+    risk_gauges: dict        = None,
     mode: str = "morning",
     **_kwargs,
 ) -> dict:
@@ -2373,7 +2377,7 @@ def run(
             pts=pts, us_afterhours=us_afterhours, adr=adr, cfd_sq=cfd_sq,
             upcoming=upcoming, valuation=valuation, macro_watch=macro_watch, market_signals=market_signals,
             policy=policy, market_driver=market_driver, sentiment=sentiment,
-            risk_sentiment=risk_sentiment,
+            risk_sentiment=risk_sentiment, risk_gauges=risk_gauges,
         )
         # 生成できたと言い切る前に、ファイルが実在し中身があるかを必ず確かめる。
         # ここを検証していなかったため、本番で生成に失敗していたことに
@@ -2395,3 +2399,95 @@ def run(
         logger.error(f"❌ デザインAIレポート生成に失敗: {type(e).__name__}: {e}")
         logger.error(traceback.format_exc())
         return {"available": False, "error": f"{type(e).__name__}: {e}"}
+
+
+# ── セクション：リスク計器盤（恐怖指数・金利・通貨の一覧）────────────────
+def _risk_gauge_section(risk_gauges):
+    """
+    恐怖指数・金利・ドルを横並びで見せる。
+
+    数字の羅列にしないため、各行に「普段の値動き」との比較を添える。
+    VIXが+11%と言われても、それが普通なのか異常なのかは初心者には分からない。
+    その指標にとって大きいのかどうかを、その場で判断できるようにするのが狙い。
+    """
+    rg = risk_gauges or {}
+    if not rg.get("available"):
+        return ""
+    gauges = rg.get("gauges") or []
+    if not gauges:
+        return ""
+
+    order = [("vol",  "😱 恐怖指数（株式）"),
+             ("vol2", "📉 債券・商品のボラティリティ"),
+             ("rate", "🏦 米国の金利"),
+             ("jgb",  "🇯🇵 日本国債の利回り"),
+             ("fx",   "💵 通貨"),
+             ("misc", "🧭 その他の温度計")]
+
+    blocks = []
+    for key, title in order:
+        rows = [g for g in gauges if g.get("group") == key]
+        if not rows:
+            continue
+        cells = []
+        for g in rows:
+            pct = g.get("change_pct")
+            up = (pct or 0) > 0
+            bad = g.get("up_is_bad")
+            # 上昇が危険な指標（VIX等）と安心な指標（F&G等）で色の意味が逆になる。
+            # ここを取り違えると、危険な状態が緑で表示されて誤解を生む。
+            if bad is None:
+                col = GREEN if up else RED
+            elif bad:
+                col = RED if up else GREEN
+            else:
+                col = GREEN if up else RED
+            if pct is None:
+                col = MUTED
+
+            big = g.get("big")
+            th, typ = g.get("threshold"), g.get("typical")
+            note = ""
+            if big:
+                note = f'<span style="color:{ORANGE};font-weight:700">⚡いつもより大きい</span>'
+            elif th and typ is not None:
+                note = f'<span style="color:{MUTED}">普段{typ:.1f}%程度</span>'
+
+            bp = ""
+            if g.get("change_bp") is not None:
+                bp = f'<span style="color:{MUTED};font-size:9px"> ({g["change_bp"]:+.1f}bp)</span>'
+
+            cells.append(f"""
+      <div style="display:flex;align-items:baseline;gap:8px;padding:5px 0;border-bottom:1px solid {BORDER}">
+        <span style="flex:1;font-size:11px;color:{TEXT}">{g['name']}</span>
+        <span style="font-size:13px;font-weight:800;color:{TEXT}">{g['value']}{g.get('unit','')}</span>
+        <span style="font-size:11px;font-weight:700;color:{col};min-width:62px;text-align:right">
+          {'—' if pct is None else f'{pct:+.2f}%'}</span>{bp}
+        <span style="font-size:9px;min-width:104px;text-align:right">{note}</span>
+      </div>""")
+
+        blocks.append(f"""
+    <div style="margin-bottom:10px">
+      <div style="font-size:10px;color:{MUTED};font-weight:700;margin-bottom:3px">{title}</div>
+      {''.join(cells)}
+    </div>""")
+
+    big_n = len(rg.get("big_moves") or [])
+    head_note = (f'<span style="color:{ORANGE};font-weight:700">⚡ {big_n}件がいつもより大きく動きました</span>'
+                 if big_n else f'<span style="color:{MUTED}">大きく動いた指標はありません</span>')
+    jgb_date = rg.get("jgb_date")
+    src_note = f"　日本国債は財務省公表値（{jgb_date}）" if jgb_date else ""
+
+    return f"""
+<div style="margin-bottom:12px">
+  <div class="label" style="padding:0 2px;margin-bottom:6px">🌡 リスク計器盤（恐怖指数・金利・通貨）</div>
+  <div class="glass" style="padding:14px">
+    <div style="font-size:11px;margin-bottom:9px">{head_note}</div>
+    {''.join(blocks)}
+    <div style="font-size:9px;color:{MUTED};margin-top:8px">
+      📖 「⚡いつもより大きい」は、その指標の過去1年の値動きから自動計算した目安
+      （年に約25日しか起きない大きさ）を超えたという意味です。
+      VIXは普段から日々5〜10%動くので、指標ごとに基準を変えています。{src_note}
+    </div>
+  </div>
+</div>"""

@@ -91,6 +91,17 @@ def run():
     except Exception:
         logger.error("為替シグナル検出エラー", exc_info=True)
 
+    # リスク計器盤（risk_gauges.py）
+    #   恐怖指数10種・債券/商品ボラ3種・日米金利・ドル指数・暗号資産F&Gを一覧し、
+    #   「その指標にとって普段より大きい」動きが出たものだけ通知する。
+    #   しきい値は各指標の過去1年から自動計算（固定%だと指標ごとの性格差を吸収できない）。
+    try:
+        from src.risk_gauges import run_gauge_alert
+        if run_gauge_alert():
+            logger.info("✅ 大きく動いた指標の通知送信完了")
+    except Exception:
+        logger.error("リスク計器盤エラー", exc_info=True)
+
     # マクロ（ファンダメンタル）レジーム変化アラート
     #   逆イールド・サームルール・信用スプレッド・実質金利。
     #   月次/週次データなので判定は1日1回だけ（内部でセッションガード）。

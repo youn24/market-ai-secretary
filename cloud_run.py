@@ -783,6 +783,20 @@ def run(mode: str):
 
     # 通知台帳: 同じ話題を1日に二度送らないための記録。セッション(JST6時始まり)が
     # 変われば自動で空になるため、ここでは読み込むだけで初期化は不要。
+    # Step RG: リスク計器盤（恐怖指数10種・日米金利・ドル指数・暗号資産F&G）
+    # 水準ではなく「その指標にとって普段より大きく動いたか」を見る。
+    # しきい値は各指標の過去1年から自動計算するため、指標ごとの性格差を吸収できる。
+    risk_gauges = {"available": False}
+    try:
+        logger.info("--- Step RG: リスク計器盤 ---")
+        from src.risk_gauges import run as run_rg
+        risk_gauges = run_rg()
+        if risk_gauges.get("available"):
+            n = len(risk_gauges.get("big_moves") or [])
+            logger.info(f"✅ 計器{len(risk_gauges['gauges'])}件 / 大きく動いた{n}件")
+    except Exception:
+        logger.error("リスク計器盤エラー", exc_info=True)
+
     # Step RS: リスクオン/オフの複合判定（株・為替・金・債券・VIXの一致度）
     risk_sentiment = {"available": False}
     try:
@@ -1012,6 +1026,7 @@ def run(mode: str):
             market_driver=market_driver,
             sentiment=sentiment,
             risk_sentiment=risk_sentiment,
+            risk_gauges=risk_gauges,
             mode=mode,
         )
         # 公開ページが更新されたことを必ず確認する。
