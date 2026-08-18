@@ -60,8 +60,11 @@ jobs:
             git fetch origin gh-pages 2>/dev/null || true
             git checkout gh-pages 2>/dev/null || git checkout --orphan gh-pages
             git checkout main -- reports/ 2>/dev/null || true
-            cp -r reports/* . 2>/dev/null || true
-            git add *.html *.md 2>/dev/null || true
+            cp -r reports/* . 2>/dev/null || true  # lint:allow-fail 直前のifでreportsに中身があることを確認済み
+            # *.md が1つも無いと git add 全体が失敗し、htmlごと publish されない
+            for pat in "*.html" "*.md"; do
+              ls $pat >/dev/null 2>&1 && git add $pat
+            done
             git commit -m "weekly: $(date +'%Y-%m-%d') 週次レポート自動更新" 2>/dev/null || echo "コミットなし"
             git push origin gh-pages --force || echo "プッシュエラー（無視）"
           else

@@ -75,6 +75,40 @@ def _check_report_freshness() -> dict | None:
                       "design_ai の生成失敗をログで確認してください。"}
 
 
+def _check_published_site() -> dict | None:
+    """
+    公開サイトの実物を外から見る。
+
+    他の点検がすべて「リポジトリ内のファイル」を見ているのに対し、
+    ここだけはHTTPで取りに行く。2026-08-18の事故は、ファイルは正しいのに
+    公開サイトへ届いていないという形だった。ローカルを見る限り健全なので、
+    どの点検も異常を出せず1週間気づけなかった。
+    利用者の目に映るものだけが最終的な真実なので、それを直接確認する。
+
+    注意: 朝の実行中はまだ今日の分がpushされていないため、
+    ここで見えるのは「前回の配信が届いたか」である。
+    当日ではなく前日を検品していることになるが、
+    無期限に気づけないよりは1日で気づける方がはるかに良い。
+    """
+    try:
+        from src.publish_check import run as run_pc
+    except Exception:
+        return None                      # 点検モジュールが無ければ黙って飛ばす
+    try:
+        r = run_pc(notify=False)         # 通知はself_diagnosis側で一括して出す
+    except Exception:
+        logger.error("公開ページの確認に失敗しました", exc_info=True)
+        return None
+    bad = [x for x in r.get("results", []) if not x.get("ok") and x.get("required")]
+    if not bad:
+        return None
+    b = bad[0]
+    return {"level": _CRITICAL, "key": "site_stale",
+            "msg": f"公開ページに届いていません: {b['reason']}",
+            "detail": f"{b['url']} — 生成は成功していても公開できていない状態です。"
+                      f"ワークフローのコミット/push段階を確認してください。"}
+
+
 def _check_learning_data() -> dict | None:
     """予測記録が増え続けているか。学習が止まると精度改善も止まる。"""
     f = BASE_DIR / "data" / "predictions.json"
@@ -115,8 +149,13 @@ def _check_learning_data() -> dict | None:
 
 def _check_price_coverage(prices: dict) -> dict | None:
     """主要な価格が取れているか。欠損だらけでは分析そのものが成り立たない。"""
+    if not prices:
+        # 価格を渡されていない＝この点検の対象外。
+        # 「未指定」を「全部欠損」と読むと、単体テストや部分実行のたびに
+        # 誤報を出すことになり、本物の障害通知まで信用されなくなる。
+        return None
     core = ["^N225", "^GSPC", "USDJPY=X", "^VIX"]
-    got = [s for s in core if (prices or {}).get(s, {}).get("latest") is not None]
+    got = [s for s in core if prices.get(s, {}).get("latest") is not None]
     if len(got) == len(core):
         return None
     missing = [s for s in core if s not in got]
@@ -144,7 +183,8 @@ def _check_module_health(module_status: list) -> dict | None:
             "detail": f"停止中: {', '.join(ng[:8])}"}
 
 
-def run(prices: dict = None, module_status: list = None) -> dict:
+def run(prices: dict = None, module_status: list = None,
+        notify: bool = True) -> dict:
     """
     システムの健康診断を行う。
     module_status は [(機能名, 生きているか), ...] の形（cloud_run が集計したもの）。
@@ -152,6 +192,7 @@ def run(prices: dict = None, module_status: list = None) -> dict:
     issues = []
     for check in (
         lambda: _check_report_freshness(),
+        lambda: _check_published_site(),
         lambda: _check_learning_data(),
         lambda: _check_price_coverage(prices),
         lambda: _check_module_health(module_status),
@@ -161,7 +202,9 @@ def run(prices: dict = None, module_status: list = None) -> dict:
             if r:
                 issues.append(r)
         except Exception:
-            logger.debug(traceback.format_exc())
+            # 点検が例外で死んだことを debug に捨てると、
+            # 「点検が動いていないこと」に気づけなくなる（事故の元凶と同じ形）
+            logger.error("点検の一項目が失敗しました", exc_info=True)
 
     criticals = [i for i in issues if i["level"] == _CRITICAL]
     warnings = [i for i in issues if i["level"] == _WARNING]
@@ -185,7 +228,7 @@ def run(prices: dict = None, module_status: list = None) -> dict:
     # 重大な障害（＝利用者に何も届いていない状態）は、その場で知らせる。
     # ログに書くだけでは今回のように長期間気づけないため。
     # 同じ障害で毎日鳴らないよう、通知台帳で1セッション1回に制限する。
-    if criticals:
+    if criticals and notify:
         try:
             from src.notify_ledger import filter_new
             fresh = filter_new([{"key": f"diag_{c['key']}", "title": c["msg"]}

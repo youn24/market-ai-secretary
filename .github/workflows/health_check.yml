@@ -1,0 +1,44 @@
+name: 点検（公開物とワークフローの健全性）
+
+on:
+  schedule:
+    # UTC 23:30 = JST 8:30。朝のレポート(7:30)が公開され切った頃に外から確認する。
+    - cron: "30 23 * * 0-4"
+  workflow_dispatch:
+  push:
+    # ワークフローを書き換えたときは、その場で検査する。
+    # 事故はいつも「変更した直後」に仕込まれ、気づくのは数日後だったため。
+    paths:
+      - ".github/workflows/**"
+      - "scripts/lint_workflows.py"
+
+permissions:
+  contents: read
+
+jobs:
+  health-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: ワークフローの静かに壊れる書き方を検査
+        run: python -m scripts.lint_workflows
+
+      - name: 公開ページが実際に更新されているか外から確認
+        # 定期実行のときだけ。ワークフロー編集のpushでは公開状況は変わらないため。
+        if: github.event_name != 'push'
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          GITHUB_PAGES_URL: ${{ secrets.GITHUB_PAGES_URL }}
+        run: |
+          pip install requests --quiet
+          # 異常なら publish_check が exit 1 で落ち、Telegramにも通知が飛ぶ。
+          # ここを `|| true` にすると点検そのものが無意味になるので絶対に付けない。
+          python -m src.publish_check

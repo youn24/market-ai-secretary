@@ -86,8 +86,8 @@ jobs:
           # 通知が来ない事故を「緑表示」で見逃さないため、失敗時はこのジョブを赤にする。
           python cloud_run.py --mode morning
           # 拡張版・モバイル版は任意（失敗しても続行）
-          python generate_expanded_report.py || true
-          python generate_mobile_report.py || true
+          python generate_expanded_report.py || true  # lint:allow-fail 拡張版は任意。失敗しても本編の配信を止めない
+          python generate_mobile_report.py || true  # lint:allow-fail モバイル版は任意。失敗しても本編の配信を止めない
 
       - name: 公開レポートが今日の内容に更新されたか検証
         if: always()
@@ -106,7 +106,7 @@ jobs:
           fi
           # 実行記録を要約表示（ログを開かずに失敗Stepが分かるようにする）
           if [ -f data/last_run_report.json ]; then
-            python -m src.run_recorder || true
+            python -m src.run_recorder || true  # lint:allow-fail 実行記録の表示のみ。失敗しても成果物に影響しない
           fi
 
       - name: モバイル版レポートを docs/mobile.html に公開用コピー
@@ -174,9 +174,15 @@ jobs:
           git rm -rf . --quiet 2>/dev/null || true
           cp -r /tmp/reports_backup/* .
           # インデックスページ作成
-          ls *.html 2>/dev/null | sort -r | head -1 | xargs -I{} cp {} index.html 2>/dev/null || true
+          ls *.html 2>/dev/null | sort -r | head -1 | xargs -I{} cp {} index.html 2>/dev/null || true  # lint:allow-fail htmlが無い日はindex作成をスキップしてよい
           git add -A
-          git commit -m "レポート更新 $(date '+%Y-%m-%d %H:%M JST')" || true
+          # `|| true` だと commit の失敗と「変更なし」を区別できない。
+          # 変更が無いのは正常、commit が落ちるのは異常なので分けて扱う。
+          if git diff --staged --quiet; then
+            echo "gh-pagesに公開する変更はありません"
+          else
+            git commit -m "レポート更新 $(date '+%Y-%m-%d %H:%M JST')"
+          fi
           git push origin gh-pages-temp:gh-pages --force
           git checkout main
 

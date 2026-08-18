@@ -49,9 +49,20 @@ jobs:
         run: |
           git config --global user.email "actions@github.com"
           git config --global user.name "Autonomous Team Bot"
-          git add data/team_verification_*.json logs/autonomous_team.log || true
-          git diff --staged --quiet || git commit -m "🔬 自動検証: 前日の予測検証結果を記録" || true
-          git push origin main || echo "プッシュスキップ（変更なし）"
+          # git add に存在しないパスを渡すと何もステージされない（2026-08-18の事故）。
+          # ワイルドカードもログファイルも「無いことがある」ので個別に確認する。
+          for f in data/team_verification_*.json logs/autonomous_team.log; do
+            [ -f "$f" ] && git add -f "$f"
+          done
+          if git diff --staged --quiet; then
+            echo "記録する変更はありません"
+          else
+            git commit -m "🔬 自動検証: 前日の予測検証結果を記録"
+            if ! git push origin main; then
+              git pull --rebase --autostash origin main || true
+              git push origin main || { echo "::error::検証結果のpushに失敗しました"; exit 1; }
+            fi
+          fi
 
       - name: 検証結果をTelegramに通知
         env:

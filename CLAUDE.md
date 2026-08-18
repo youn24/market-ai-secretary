@@ -135,6 +135,8 @@ cloud_run.py（メインスクリプト）
 | `src/backtest_predictions.py` | 予測ロジックの過去検証（470件生成）＋信頼度表の再較正 |
 | `src/failure_analysis.py` | 予測のクセ分析（強さ別・環境別の勝率、ギャップ分解、連敗分布） |
 | `src/signal_confidence.py` | 信頼度ランク（S/A/B/C）。`config/confidence_tiers.json` を読む |
+| `src/publish_check.py` | 公開ページをHTTPで外から点検（毎朝8:30・異常時のみTelegram通知＋exit 1） |
+| `scripts/lint_workflows.py` | ワークフローの「静かに壊れる書き方」を機械検出。`# lint:allow-fail 理由` で除外可 |
 | `src/note_article.py` | note記事生成（Step 7b） |
 | `src/note_article_generator.py` | note記事テキスト自動生成（Step 8b） |
 | `src/fx_visual_report.py` | FX専用ビジュアルダッシュボード（13パネル・matplotlib） |
@@ -155,6 +157,7 @@ cloud_run.py（メインスクリプト）
 | `.github/workflows/weekly_report.yml` | UTC 23:00 土曜 = JST 8:00 日曜 |
 | `.github/workflows/monitor.yml` | 平日15分ごと急変アラート |
 | `.github/workflows/fx_noon.yml` | UTC 05:00 = JST 14:00（毎日・FX専用午後レポート） |
+| `.github/workflows/health_check.yml` | UTC 23:30 = JST 8:30（平日）＋ワークフロー変更時の自動検査 |
 
 ---
 
@@ -263,12 +266,26 @@ response = model.generate_content(prompt)
 | 予測正解率が26.3%(5/19)に再低下（2026-07-12時点） | bull閾値6.0でも強気過多継続（bull的中率20%、予測分布bull53%が実際26%を大幅超過）、シナリオ差分25%オーバーライドが低スコア(2.5点)でもbullに上書き | 2026-07-12: bull閾値9.0・bear閾値-3.0・シナリオ差分30%に再調整、git push済み |
 | **公開レポートが1.5ヶ月更新されず（2026-06-26で停止・8/11発覚）** | design_ai.run()が例外を`logger.debug`で握りつぶし、cloud_run Step 7a2も戻り値を確認せず「✅生成」と無条件でログ出力。Actionsは緑・ログも成功表示のため誰も気づけなかった。自動コミットにも daily_report.html が一度も含まれていなかった | 2026-08-11修正: ①例外を`logger.error`で型とメッセージごと出力 ②生成後にファイル実在とサイズ(5KB未満は不完全)を検証 ③cloud_run側で「本日の日付が含まれるか」を確認 ④workflowに検証ステップ追加（古ければ`::error::`） |
 
+| **公開レポートが1週間更新されず（2026-08-18発覚）** | `git add docs data/A.json data/B.json ...` の形で複数パスを一度に渡していた。git add は**存在しないパスが1つでもあるとエラー終了し、何もステージしない**。状態ファイル(policy_state等)はgitignore対象で毎回チェックアウトされず、モジュール未生成なら存在しない。その1つのせいで docs/ ごと巻き添えになり、毎日「変更なし」でコミットされなかった。`2>/dev/null \|\| true` が出力もexit codeも消していたため完全に無音 | ①docsは単独add、状態ファイルは`[ -f ]`で1つずつ ②ステージが空なら`::error::` ③状態ファイルを.gitignoreでホワイトリスト化（重複防止台帳が毎回リセットされる問題も同時に解消） ④`scripts/lint_workflows.py`で同型を機械検出 ⑤`src/publish_check.py`で公開ページを外から実地点検 |
+
 ### ⚠️ この事故から得た原則（新規実装時に必ず守る）
 **「成功ログを無条件で出さない」** — 戻り値と生成物を検証してから成功と報告する。
 `try/except`で握りつぶす場合も、例外の内容は必ず`logger.error`で残す
 （`logger.debug`は本番ログに出ないため、事実上の握りつぶしになる）。
 外部に公開・配信される成果物（HTML・通知・画像）は、生成後に
 「実在するか」「中身が今日のものか」まで確認する。
+
+**「生成できた」と「利用者に届いた」は別物** — 2026-08-18の事故は、
+生成物はすべて正しいのに公開サイトへ届いていない、という形だった。
+リポジトリ内のファイルを見る点検はすべて正常と判定し、1週間気づけなかった。
+最終確認は必ず**外からHTTPで実物を取りに行く**こと（`src/publish_check.py`）。
+
+**`git add` に複数パスを一度に渡さない** — 存在しないパスが1つでもあると
+git add はエラー終了し、他の正しいパスも含めて何もステージしない。
+必ず `[ -f "$f" ]` で確認して1つずつ add する。
+
+**点検の例外を `logger.debug` で捨てない** — 点検自体が死んでいることに
+気づけなくなり、事故そのものと同じ構図になる。
 
 ---
 

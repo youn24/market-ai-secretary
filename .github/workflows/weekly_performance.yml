@@ -22,12 +22,22 @@ jobs:
       - name: シグナル重みを実績で再較正してコミット
         run: |
           # 「どの指標が実際に翌日の日経を当てたか」で重みを更新
-          python -m src.calibrate_weights || true
+          # 失敗しても後続の報告送信は続けたいが、無音にはしない。
+          # 較正が落ちたまま気づかないと、重みが古いまま固定される。
+          python -m src.calibrate_weights || echo "::error::重みの再較正に失敗しました（重みは更新されていません）"
           git config --global user.email "actions@github.com"
           git config --global user.name "GitHub Actions Bot"
-          git add config/signal_weights.json 2>/dev/null || true
-          git diff --staged --quiet || git commit -m "🎯 シグナル重み再較正 $(date '+%Y-%m-%d')"
-          git push origin main || true
+          git add config/signal_weights.json
+          if git diff --staged --quiet; then
+            echo "重みに変更はありません"
+          else
+            git commit -m "🎯 シグナル重み再較正 $(date '+%Y-%m-%d')"
+            # `|| true` だと較正結果が毎回消え、重みが永久に更新されない
+            if ! git push origin main; then
+              git pull --rebase --autostash origin main || true
+              git push origin main || { echo "::error::重みのpushに失敗しました"; exit 1; }
+            fi
+          fi
 
       - name: 週次パフォーマンス報告送信
         env:

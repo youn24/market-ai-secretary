@@ -47,6 +47,8 @@ jobs:
             git config user.email "github-actions[bot]@users.noreply.github.com"
             git add data/alert_state.json
             git commit -m "chore: アラート状態更新 [skip ci]"
-            git pull --rebase origin main || true
-            git push || true
+            # この状態ファイルが保存されないと「同じアラートを何度も送らない」が
+            # 毎回リセットされ、重複通知が発生する。握りつぶしてはいけない。
+            git pull --rebase --autostash origin main || true
+            git push || { echo "::error::アラート状態のpushに失敗しました（重複通知の原因になります）"; exit 1; }
           fi
