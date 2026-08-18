@@ -129,8 +129,25 @@ jobs:
           git config --global user.name "GitHub Actions Bot"
           # GitHub Pages は main/docs を公開するため、生成した docs/ を必ずpushする
           # （これをしないと公開ページが更新されず古いまま固定される）
-          git add docs data/predictions.json data/ai_memory.json data/theme_history.json data/weekly_calendar.json data/valuation_state.json data/macro_state.json data/market_signal_state.json data/policy_state.json data/sentiment_state.json data/risk_sentiment_state.json data/notify_ledger.json data/last_run_report.json 2>/dev/null || true
-          git diff --staged --quiet || git commit -m "📊 レポート更新 $(date '+%Y-%m-%d %H:%M JST')"
+          # ⚠️ git add に「存在しないパス」を1つでも渡すと、git add は
+          # エラー終了し **何もステージしない**。状態ファイルは初回や未生成時に
+          # 存在しないため、これで毎日 docs/ ごと巻き添えになり、公開レポートが
+          # 1週間更新されなかった（2026-08-18発覚）。2>/dev/null || true が
+          # 失敗を完全に隠し、Actionsは緑のままだった。
+          # 対策: docs は単独で add し、状態ファイルは存在確認して1つずつ add する。
+          git add docs
+          for f in data/predictions.json data/ai_memory.json data/theme_history.json                    data/weekly_calendar.json data/valuation_state.json data/macro_state.json                    data/market_signal_state.json data/policy_state.json                    data/sentiment_state.json data/risk_sentiment_state.json                    data/notify_ledger.json data/last_run_report.json; do
+            if [ -f "$f" ]; then
+              git add -f "$f"
+            else
+              echo "（未生成のためスキップ: $f）"
+            fi
+          done
+          if git diff --staged --quiet; then
+            echo "::error::コミット対象がありません。公開レポートが更新されていない可能性があります"
+          else
+            git commit -m "📊 レポート更新 $(date '+%Y-%m-%d %H:%M JST')"
+          fi
           # 作業中の手動pushなどでリモートが進んでいると push が拒否される。
           # 以前は `|| true` で握りつぶしていたため、予測記録などの学習データが
           # 毎回失われ、正解率の計算が止まっていた（2026-08-12に発覚）。

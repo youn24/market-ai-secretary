@@ -7,5 +7,16 @@ data/*
 !data/ai_memory.json
 !data/portfolio.json
 !data/last_run_report.json
+# 状態ファイル: 前回との差分を見るのが役目なので、永続化しないと機能しない。
+# （通知の重複防止・ゾーン跨ぎ検知は「前回どうだったか」が無いと判定できない）
+!data/notify_ledger.json
+!data/theme_history.json
+!data/weekly_calendar.json
+!data/valuation_state.json
+!data/macro_state.json
+!data/market_signal_state.json
+!data/policy_state.json
+!data/sentiment_state.json
+!data/risk_sentiment_state.json
 reports/charts/
 logs/
