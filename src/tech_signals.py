@@ -507,6 +507,41 @@ _MTF_ICON = {"up": "🔼", "down": "🔽", "flat": "➖"}
 _MTF_JA   = {"up": "上", "down": "下", "flat": "横ばい"}
 
 
+def _overall_summary(groups: list) -> list:
+    """
+    複数銘柄のシグナルを1〜2行に集約する。
+
+    「日経は売り、S&P500は買い」と個別に並べられても、結局どう見ればいいのか
+    分からない。方向が揃っているのか割れているのか、時間軸の裏付けがあるのかを
+    先に言い切ることで、詳細を読む前に構えが決まる。
+    """
+    if not groups:
+        return []
+    buy  = [g for g in groups if g["direction"] == "buy"]
+    sell = [g for g in groups if g["direction"] == "sell"]
+    full = [g for g in groups if g.get("mtf_full")]
+    against = [g for g in groups if g.get("mtf_against")]
+
+    out = []
+    if buy and not sell:
+        out.append(f"🟢 検出された{len(buy)}件はすべて *買い方向* で揃っています。")
+    elif sell and not buy:
+        out.append(f"🔴 検出された{len(sell)}件はすべて *売り方向* で揃っています。")
+    else:
+        out.append(f"⚖️ 買い{len(buy)}件・売り{len(sell)}件で *方向が割れています*。"
+                   f"市場全体というより、銘柄ごとの事情で動いている可能性があります。")
+
+    if full:
+        names = "・".join(g["name"] for g in full)
+        out.append(f"⭐ *{names}* は週足・日足・4時間足がすべて同じ向きで、"
+                   f"最も信頼できる形です。")
+    if against:
+        names = "・".join(g["name"] for g in against)
+        out.append(f"⚠️ *{names}* のサインは大きな時間軸に逆らっています。"
+                   f"押し目・戻りの途中である可能性があり、信頼度を下げてあります。")
+    return out
+
+
 def _mtf_text(m: dict) -> list:
     """時間軸の並びを、初心者でも一目で分かる形にする。"""
     if not m:
@@ -737,6 +772,12 @@ def build_message(hits: list) -> str:
                  f"（最高信頼度 {top['stars']}{extra}）")
 
     lines = [title, "━━━━━━━━━━━━━━"]
+
+    # 個々のシグナルを並べる前に、全体で何が起きているかを一言でまとめる。
+    # 銘柄ごとの詳細から読者が自力で総合するのは負担が大きいため。
+    summary = _overall_summary(groups)
+    if summary:
+        lines += ["", "📖 *ひとことで言うと*"] + summary
 
     for g in groups:
         same = [s for s in g["signals"] if s.get("direction") == g["direction"]]

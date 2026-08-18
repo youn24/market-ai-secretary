@@ -146,6 +146,43 @@ def detect() -> list:
     return strong
 
 
+def _currency_read(groups: list) -> list:
+    """
+    通貨ペアの並びから「どの通貨が強い/弱い」を読む。
+
+    ペアごとに「ユーロ円が上」「ポンド円が上」と個別に言われても、
+    それが円安なのか欧州通貨高なのかは初心者には分からない。
+    クロス円が揃って上なら円が全面安、ドルストレートが揃って下ならドル高、
+    というように、共通している通貨を見つけて言葉にする。
+    """
+    jpy_up = [g for g in groups if g["symbol"].endswith("JPY=X") and g["direction"] == "buy"]
+    jpy_dn = [g for g in groups if g["symbol"].endswith("JPY=X") and g["direction"] == "sell"]
+    usd_up = [g for g in groups if g["symbol"].endswith("USD=X") and g["direction"] == "sell"]
+    usd_dn = [g for g in groups if g["symbol"].endswith("USD=X") and g["direction"] == "buy"]
+
+    out = []
+    if len(jpy_up) >= 2:
+        out.append(f"🇯🇵 *円が全面安*（{len(jpy_up)}通貨に対して円売り）"
+                   "。日本株の輸出企業には追い風になりやすい形です。")
+    elif len(jpy_dn) >= 2:
+        out.append(f"🇯🇵 *円が全面高*（{len(jpy_dn)}通貨に対して円買い）"
+                   "。リスクを避ける動きが出ている可能性があり、日本株には重荷です。")
+
+    # ドルストレートは「ドルが分母」なので、ペアの下落＝ドル高になる
+    if len(usd_up) >= 2:
+        out.append(f"💵 *ドルが全面高*（{len(usd_up)}通貨に対してドル買い）"
+                   "。新興国や商品市況には逆風になりやすい形です。")
+    elif len(usd_dn) >= 2:
+        out.append(f"💵 *ドルが全面安*（{len(usd_dn)}通貨に対してドル売り）。")
+
+    if not out and len(groups) == 1:
+        g = groups[0]
+        arrow = "上昇" if g["direction"] == "buy" else "下落"
+        out.append(f"📖 いまのところ *{g['name']}単独* の{arrow}サインです。"
+                   "他の通貨ペアには広がっていないため、この通貨固有の材料の可能性があります。")
+    return out
+
+
 def build_message(groups: list) -> str:
     from src import tech_signals as ts
 
@@ -153,6 +190,11 @@ def build_message(groups: list) -> str:
     lines = [f"💱 *為替シグナル｜{names}*",
              f"強いサインが{_MIN_STRONG}つ以上重なった通貨ペアです",
              "━━━━━━━━━━━━━━"]
+
+    # 個々のペアを見る前に、通貨全体で何が起きているかを先に言う
+    read = _currency_read(groups)
+    if read:
+        lines += ["", "📖 *ひとことで言うと*"] + read
 
     for g in groups:
         same = [s for s in g["signals"] if s.get("direction") == g["direction"]]

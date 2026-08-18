@@ -437,36 +437,236 @@ def _arrow(g: dict) -> str:
     return "🟢↑" if up else "🔴↓"
 
 
-def build_message(big: list, all_gauges: list = None) -> str:
-    lines = ["⚡ *大きく動いた指標*",
-             "いつもの値動きの幅を超えたものだけを出しています",
-             "━━━━━━━━━━━━━━", ""]
+# ── 意味づけ ───────────────────────────────────────────────────
+# 数字だけ出しても「で、どういうこと？」で終わってしまう。
+# 各指標が何を測っていて、上がった/下がったが何を意味するかを言葉にする。
+# (指標: (何を測るか, 上がった時の意味, 下がった時の意味))
+_MEANING = {
+    "^VIX":   ("米国株の今後30日の荒れ具合の予想",
+               "投資家の不安が増えた。株が下げやすい空気",
+               "不安が和らいだ。落ち着きを取り戻しつつある"),
+    "^VIX1D": ("今日1日のうちの急変への警戒度",
+               "今日中に大きく動くと身構えている。指標発表や要人発言の直前に上がりやすい",
+               "今日は大きな波乱を想定していない"),
+    "^VIX9D": ("目先2週間ほどの荒れ具合の予想",
+               "近いうちの波乱を警戒している",
+               "目先の警戒が解けてきた"),
+    "^VIX3M": ("3ヶ月先までの荒れ具合の予想",
+               "もっと先まで不安が続くと見ている",
+               "中期的な不安が薄れてきた"),
+    "^VVIX":  ("恐怖指数そのものの不安定さ",
+               "先行きが読めない状態。相場観が定まっていない",
+               "見通しが落ち着いてきた"),
+    "^VXN":   ("ハイテク株(NASDAQ)の荒れ具合",
+               "ハイテク株中心に不安が強まった",
+               "ハイテク株の不安が和らいだ"),
+    "^VXD":   ("ダウ(大型株)の荒れ具合",
+               "大型株にも不安が広がった",
+               "大型株の不安が和らいだ"),
+    "^SKEW":  ("暴落に備えた保険がどれだけ買われているか",
+               "急落への備えが増えた。プロが万一に保険をかけている",
+               "急落への警戒が薄れた"),
+    "NIKKEI_VI": ("日本株の今後30日の荒れ具合の予想",
+                  "日本株への不安が増えた",
+                  "日本株の不安が和らいだ"),
+    "^MOVE":  ("米国債市場の荒れ具合",
+               "金融政策の見通しが揺れている。株にも波及しやすい",
+               "金利の見通しが落ち着いてきた"),
+    "^OVX":   ("原油価格の荒れ具合",
+               "エネルギー情勢への警戒。地政学リスクが意識されやすい",
+               "エネルギー面の警戒が和らいだ"),
+    "^GVZ":   ("金価格の荒れ具合",
+               "安全資産の金にも値動きの荒さが出てきた",
+               "金相場が落ち着いてきた"),
+    "^IRX":   ("米国の3ヶ月金利（政策金利に近い）",
+               "利下げ観測が後退した", "利下げ観測が強まった"),
+    "2YY=F":  ("米国の2年金利（政策金利の見通しを映す）",
+               "利下げ観測が後退した", "利下げ観測が強まった"),
+    "^FVX":   ("米国の5年金利", "金利上昇。株の重荷になりやすい", "金利低下。株の支えになりやすい"),
+    "^TNX":   ("米国の10年金利（世界の金利の基準）",
+               "金利上昇。ハイテク株や高PER銘柄には逆風。円安要因にもなる",
+               "金利低下。株の支えになるが、景気後退懸念が理由なら注意"),
+    "^TYX":   ("米国の30年金利（長期の期待を映す）",
+               "長期の金利上昇。財政やインフレへの懸念が背景にあることも",
+               "長期の金利低下"),
+    "DX-Y.NYB": ("ドルの総合的な強さ",
+                 "ドル高。新興国や商品市況には逆風、円安方向に効きやすい",
+                 "ドル安。新興国や商品市況には追い風"),
+    "USDJPY=X": ("ドル円の為替レート",
+                 "円安。輸出企業の追い風で日経平均にはプラスになりやすい",
+                 "円高。輸出企業には逆風で日経平均にはマイナスになりやすい"),
+    "CRYPTO_FNG": ("暗号資産市場の投資家心理",
+                   "強気に傾いた。リスクを取る動きが戻っている",
+                   "弱気に傾いた。リスクを避ける動きが強い"),
+}
 
-    for g in sorted(big, key=lambda x: -abs(x.get("change_pct") or 0)):
-        pct = g.get("change_pct")
-        th = g.get("threshold")
-        typ = g.get("typical")
-        head = (f"{_arrow(g)} *{g['name']}*　{g['value']}{g.get('unit','')}"
-                f"（{pct:+.2f}%）")
-        lines.append(head)
-        if th and typ is not None:
-            lines.append(f"　└ 普段の値動きは{typ:.1f}%程度、"
-                         f"目安の{th:.1f}%を超えました")
+
+def _meaning(g: dict) -> str:
+    """その計器が動いたことの意味を1行で返す。"""
+    sym = g.get("symbol", "")
+    if sym.startswith("JGB"):
+        up = (g.get("change_pct") or 0) > 0
+        return ("日本の金利上昇。日銀の政策変更が意識されると円高・株安に効きやすい"
+                if up else "日本の金利低下。円安方向に効きやすい")
+    m = _MEANING.get(sym)
+    if not m:
+        return ""
+    return m[1] if (g.get("change_pct") or 0) > 0 else m[2]
+
+
+def _what_is(g: dict) -> str:
+    sym = g.get("symbol", "")
+    if sym.startswith("JGB"):
+        return "日本国債の利回り"
+    m = _MEANING.get(sym)
+    return m[0] if m else ""
+
+
+def _term_structure(gauges: list) -> str | None:
+    """
+    VIXの期間構造を読む。
+
+    通常は先の方が不透明なので VIX9D < VIX < VIX3M と右肩上がりになる。
+    これが逆転して目先(VIX9D)が3ヶ月先(VIX3M)を上回るのは、
+    「今まさに何かが起きている」状態で、歴史的に相場の急変局面で現れる。
+    数字を並べるだけでは見えない情報なので、明示的に判定する。
+    """
+    def val(sym):
+        g = next((x for x in gauges if x["symbol"] == sym), None)
+        return g["value"] if g else None
+
+    s, m, l = val("^VIX9D"), val("^VIX"), val("^VIX3M")
+    if s is None or m is None or l is None:
+        return None
+    if s > l:
+        return ("⚠️ 目先の警戒が先々より強い状態（期間構造の逆転）。"
+                "相場が荒れている時に現れる形で、当面は値動きが大きくなりやすい。")
+    if s < m < l:
+        return "✅ 恐怖指数は通常の並び（目先＜先々）。相場は平常運転の範囲。"
+    return None
+
+
+def _overall_read(gauges: list) -> list:
+    """
+    計器全体から今の相場の傾きを読む。
+
+    1つの指標だけでは個別の材料かもしれないが、
+    「不安↑ × 金利↓ × 円高」のように複数が同じ話をしているなら、
+    市場全体の資金の向きが変わったと読める。
+    ここでは数を数えて、どちらに傾いているかだけを述べる。
+    断定を避けるのは、この判定が相関の観察であって予測ではないため。
+    """
+    def g(sym):
+        return next((x for x in gauges if x["symbol"] == sym), None)
+
+    risk_off, risk_on = [], []
+
+    vix = g("^VIX")
+    if vix and vix.get("change_pct") is not None:
+        (risk_off if vix["change_pct"] > 0 else risk_on).append(
+            f"恐怖指数{'上昇' if vix['change_pct'] > 0 else '低下'}")
+
+    tnx = g("^TNX")
+    if tnx and tnx.get("change_pct") is not None:
+        # 金利低下は「安全資産の債券が買われた」＝リスクオフの目印になりやすい
+        (risk_off if tnx["change_pct"] < 0 else risk_on).append(
+            f"米長期金利{'低下' if tnx['change_pct'] < 0 else '上昇'}")
+
+    fx = g("USDJPY=X")
+    if fx and fx.get("change_pct") is not None:
+        # 円は有事に買われやすい。円高＝リスクオフの目印
+        (risk_off if fx["change_pct"] < 0 else risk_on).append(
+            f"{'円高' if fx['change_pct'] < 0 else '円安'}")
+
+    skew = g("^SKEW")
+    if skew and skew.get("change_pct") is not None and abs(skew["change_pct"]) > 1:
+        if skew["change_pct"] > 0:
+            risk_off.append("暴落への備え増加")
+
+    out = []
+    if len(risk_off) >= 3:
+        out.append(f"🔴 *全体としてはリスクを避ける動き*（{'・'.join(risk_off)}）")
+    elif len(risk_on) >= 3:
+        out.append(f"🟢 *全体としてはリスクを取る動き*（{'・'.join(risk_on)}）")
+    elif risk_off or risk_on:
+        parts = []
+        if risk_off:
+            parts.append("慎重: " + "・".join(risk_off))
+        if risk_on:
+            parts.append("前向き: " + "・".join(risk_on))
+        out.append(f"⚖️ *方向感は割れています*（{' ／ '.join(parts)}）")
+
+    ts = _term_structure(gauges)
+    if ts:
+        out.append(ts)
+    return out
+
+
+def _headline(big: list, gauges: list) -> str:
+    """
+    最初の1行で「今日は何が起きたのか」を言い切る。
+    数字を読む前に結論が分かる形にしないと、通知を開いた瞬間に読む気が失せる。
+    """
+    if not big:
+        return "⚡ *大きく動いた指標*"
+    lead = max(big, key=lambda x: abs(x.get("change_pct") or 0))
+    up = (lead.get("change_pct") or 0) > 0
+    name = lead["name"].split("（")[0]
+    verb = "急上昇" if up else "急低下"
+    return f"⚡ *{name}が{verb}* — いつもより大きな動きが{len(big)}件"
+
+
+def build_message(big: list, all_gauges: list = None) -> str:
+    gauges = all_gauges or big
+    lines = [_headline(big, gauges), "━━━━━━━━━━━━━━", ""]
+
+    # ── ① まず全体像（個々の数字より先に結論を置く）──────────────
+    read = _overall_read(gauges)
+    if read:
+        lines.append("📖 *ひとことで言うと*")
+        lines += read
         lines.append("")
 
-    # 参考として主要な計器の現在値も添える（動いた指標だけだと状況が分からない）
+    # ── ② 動いた指標を、意味とセットで ────────────────────────
+    lines.append("🔍 *大きく動いた指標*")
+    lines.append("")
+    for g in sorted(big, key=lambda x: -abs(x.get("change_pct") or 0)):
+        pct = g.get("change_pct")
+        typ = g.get("typical")
+        th = g.get("threshold")
+        lines.append(f"{_arrow(g)} *{g['name']}*　{g['value']}{g.get('unit','')}"
+                     f"（{pct:+.2f}%）")
+
+        what = _what_is(g)
+        if what:
+            lines.append(f"　📌 これは何？　{what}")
+        mean = _meaning(g)
+        if mean:
+            lines.append(f"　💭 どういうこと？　{mean}")
+        if th and typ is not None:
+            lines.append(f"　📊 どれくらい大きい？　普段は{typ:.1f}%程度の動き"
+                         f"（目安{th:.1f}%を超えました）")
+        if g.get("change_bp") is not None:
+            lines.append(f"　（{g['change_bp']:+.1f}ベーシスポイント）")
+        lines.append("")
+
+    # ── ③ 主要な指標の現在地（動いた指標だけでは状況が分からない）──
     if all_gauges:
         ref = [g for g in all_gauges
-               if g["symbol"] in ("^VIX", "^TNX", "DX-Y.NYB", "USDJPY=X")]
+               if g["symbol"] in ("^VIX", "^TNX", "DX-Y.NYB", "USDJPY=X", "NIKKEI_VI")]
         if ref:
-            lines.append("📊 *参考*")
+            lines.append("📊 *いまの主要指標*")
             for g in ref:
-                lines.append(f"　{g['name']}: {g['value']}{g.get('unit','')}"
-                             f"（{g.get('change_pct', 0):+.2f}%）")
+                pct = g.get("change_pct")
+                lines.append(f"　{g['name'].split('（')[0]}: "
+                             f"{g['value']}{g.get('unit','')}"
+                             f"（{pct:+.2f}%）" if pct is not None
+                             else f"　{g['name']}: {g['value']}")
             lines.append("")
 
-    lines.append("しきい値は各指標の過去1年の値動きから自動計算しています"
-                 "（年に約25日しか起きない大きさ）。")
+    lines.append("ℹ️ 「大きく動いた」の基準は、各指標の過去1年の値動きから"
+                 "自動計算しています（年に約25日しか起きない大きさ）。"
+                 "指標ごとに普段の動き幅が違うため、同じ%では比べられません。")
     return "\n".join(lines).strip()[:4000]
 
 
