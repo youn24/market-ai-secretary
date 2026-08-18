@@ -209,6 +209,19 @@ def run(years: int = 5) -> dict:
         dates = [d for d, _ in series]
         vals = [v for _, v in series]
 
+        # その銘柄が「何もしなくても」得られたリターンを先に測る。
+        #
+        # なぜ必要か: 2022〜2026は多くの資産が上昇した期間で、
+        # 全銘柄の20日平均は +1.51% だった。この期間に買いシグナルの成績が
+        # +1.50% でも、それは相場が上がっただけで、シグナルの実力ではない。
+        # エヌビディアは20日で+6.05%、ドル円は+0.35%と銘柄差も大きいため、
+        # 銘柄ごとの基準線を引いて差し引かないと比較にならない。
+        drift = {}
+        for h in _HORIZONS:
+            ds = [(vals[i + h] - vals[i]) / vals[i] * 100
+                  for i in range(220, len(vals) - max(_HORIZONS) - 1)]
+            drift[h] = sum(ds) / len(ds) if ds else 0.0
+
         ema12, ema26 = _ema_series(vals, 12), _ema_series(vals, 26)
         for i in range(220, len(vals) - max(_HORIZONS) - 1):
             sigs = _signals_at(vals, i, ema12, ema26)
@@ -235,6 +248,10 @@ def run(years: int = 5) -> dict:
                     "signal": kind, "direction": direction,
                     "align": align, "weekly": mtf["weekly"], "daily": mtf["daily"],
                     **{f"fwd{h}": round(fwd[h], 2) for h in _HORIZONS},
+                    # 基準線を差し引いた「実力」。プラスなら持ち続けるより良い
+                    **{f"edge{h}": round(
+                        fwd[h] - (drift[h] if direction == "buy" else -drift[h]), 2)
+                       for h in _HORIZONS},
                 })
 
     if len(rows) < 30:
@@ -246,10 +263,13 @@ def run(years: int = 5) -> dict:
         out = {"n": len(subset)}
         for h in _HORIZONS:
             vals_h = [r[f"fwd{h}"] for r in subset]
+            edge_h = [r[f"edge{h}"] for r in subset if f"edge{h}" in r]
             wins = sum(1 for v in vals_h if v > 0)
             out[f"{h}日後"] = {
                 "勝率": round(wins / len(vals_h) * 100, 1),
                 "平均": round(statistics.mean(vals_h), 2),
+                # 相場のドリフトを差し引いた実力。これが本当に見るべき数字
+                "実力": round(statistics.mean(edge_h), 2) if edge_h else None,
                 "中央値": round(statistics.median(vals_h), 2),
                 # 外したときの平均。当てることより「大きく外さない」が重要なため
                 "負け時平均": round(statistics.mean([v for v in vals_h if v <= 0]), 2)
