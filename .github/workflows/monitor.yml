@@ -36,17 +36,26 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          # 為替シグナルはFX専用グループへ送る。未設定ならメイン側に落ちる
+          TELEGRAM_FX_CHAT_ID: ${{ secrets.TELEGRAM_FX_CHAT_ID }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           python monitor_run.py
 
-      - name: アラート状態を保存（クールダウン連発防止用）
+      - name: シグナルの通知済み記録を保存（重複通知の防止用）
         run: |
-          if [ -n "$(git status --porcelain data/alert_state.json)" ]; then
-            git config user.name "github-actions[bot]"
-            git config user.email "github-actions[bot]@users.noreply.github.com"
-            git add data/alert_state.json
-            git commit -m "chore: アラート状態更新 [skip ci]"
+          # これらが保存されないと「同じサインは1日1回」が毎回リセットされる。
+          # 以前は alert_state.json だけを見ていたうえ、そのファイルが
+          # gitignore対象だったため `git status --porcelain` が常に空を返し、
+          # このブロック自体が一度も実行されていなかった（2026-08-18発覚）。
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          for f in data/alert_state.json data/tech_signal_state.json \
+                   data/fx_signal_state.json data/divergence_state.json; do
+            [ -f "$f" ] && git add -f "$f"
+          done
+          if ! git diff --staged --quiet; then
+            git commit -m "chore: シグナル通知済み記録の更新 [skip ci]"
             # この状態ファイルが保存されないと「同じアラートを何度も送らない」が
             # 毎回リセットされ、重複通知が発生する。握りつぶしてはいけない。
             git pull --rebase --autostash origin main || true

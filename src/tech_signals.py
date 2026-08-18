@@ -365,11 +365,28 @@ _DETECTORS = (
 
 # ── 時間軸（長い足ほど重い）────────────────────────────────────
 # (yfinance interval, 表示名, 取得期間, 重み)
+# 4時間足を入れたのは、週足・日足だけだと「大きな流れは分かるが、今どこか」が
+# 見えないため。長い足で方向、短い足でタイミングを見るのがマルチタイムフレームの型。
 _TF_SPECS = [
-    ("1wk", "週足", "10y", 2.0),   # 長期＝最も重い
-    ("1d",  "日足", "2y",  1.0),
+    ("1wk", "週足",   "10y", 2.0),   # 長期＝最も重い
+    ("1d",  "日足",   "2y",  1.0),
+    ("4h",  "4時間足", "6mo", 0.6),   # 短期＝軽い。タイミング判断用
 ]
 _TF_HIDDEN_WEIGHT = 0.5            # ヒドゥン（1時間足）は軽め
+
+# ── マルチタイムフレーム（時間軸の一致）────────────────────────
+# 個々のシグナルとは別に「各時間軸の地合いが揃っているか」を独立に測る。
+# シグナルの重なりは“同じ瞬間に何が起きたか”だが、時間軸の一致は
+# “そもそも今どちらへ傾いた相場か”を見る。この2つは別の情報なので分けて出す。
+# 週足が上・日足が上・4時間足が上、と全部揃った状態は最も逆らいにくい。
+_MTF_SPECS = [
+    ("1wk", "週足",   "3y",  3),   # (interval, 表示名, 期間, 重み)
+    ("1d",  "日足",   "1y",  2),
+    ("4h",  "4時間足", "3mo", 1),
+]
+# 移動平均からこの割合以内は「どちらでもない」とみなす。
+# 線に張り付いた横ばいを方向ありと読むと、毎日“一致”が出て意味を失う。
+_MTF_FLAT_PCT = 0.3
 
 # シグナル種別ごとの基礎スコア（重要度）
 _TYPE_SCORE = {
@@ -415,6 +432,97 @@ def _relabel(text: str, tf_name: str) -> str:
     for a, b in _RELABEL:
         text = text.replace(a, b)
     return text
+
+
+def _tf_trend(c) -> str:
+    """
+    1本の時間軸の地合いを up / down / flat で返す。
+
+    判定は「25本移動平均に対する位置」と「その線が向いている方向」の2つ。
+    片方だけだと、下降トレンド中の一時的な戻りを上昇と誤読する。
+    位置と傾きの両方が揃ったときだけ方向ありとみなす。
+    """
+    if c is None or len(c) < 30:
+        return "flat"
+    ma = c.rolling(25).mean()
+    px, m = float(c.iloc[-1]), float(ma.iloc[-1])
+    if not m:
+        return "flat"
+    gap = (px - m) / m * 100
+    if abs(gap) < _MTF_FLAT_PCT:
+        return "flat"                     # 線に張り付いた横ばい
+    prev = float(ma.iloc[-6]) if len(ma) >= 6 else m
+    slope = m - prev
+    if gap > 0 and slope > 0:
+        return "up"
+    if gap < 0 and slope < 0:
+        return "down"
+    return "flat"                         # 位置と傾きが食い違う＝方向感なし
+
+
+def _mtf_align(sym: str) -> dict | None:
+    """
+    週足・日足・4時間足の地合いを調べ、どれだけ揃っているかを返す。
+
+    全部揃った状態（＝全時間軸一致）は、長い足の流れに短い足が乗った形で、
+    最も逆らいにくい。逆に週足と4時間足が反対を向いていれば、
+    どれだけシグナルが出ていても押し目/戻りの範囲かもしれない。
+    その区別を通知で伝えるためにスコア化する。
+    """
+    trends, weights = {}, {}
+    for interval, tf_name, period, w in _MTF_SPECS:
+        try:
+            df = _fetch(sym, period, interval)
+            trends[tf_name] = _tf_trend(df["Close"]) if df is not None and len(df) else "flat"
+        except Exception:
+            logger.debug(traceback.format_exc())
+            trends[tf_name] = "flat"
+        weights[tf_name] = w
+
+    up   = sum(weights[k] for k, v in trends.items() if v == "up")
+    down = sum(weights[k] for k, v in trends.items() if v == "down")
+    total = sum(weights.values())
+    if up == down:
+        direction, agree = "flat", 0.0
+    elif up > down:
+        direction, agree = "up", up / total
+    else:
+        direction, agree = "down", down / total
+
+    n_same = sum(1 for v in trends.values() if v == ("up" if direction == "up" else "down"))         if direction != "flat" else 0
+    n_opp = sum(1 for v in trends.values()
+                if v == ("down" if direction == "up" else "up")) if direction != "flat" else 0
+
+    return {
+        "trends": trends,                       # {"週足":"up", ...}
+        "direction": direction,                 # up / down / flat
+        "agree": round(agree, 2),               # 0.0〜1.0（重み付き一致度）
+        "n_same": n_same, "n_opp": n_opp,
+        "full": n_same == len(_MTF_SPECS),      # 全時間軸が同じ方向
+        "conflict": n_opp > 0,                  # 逆を向いた足がある
+    }
+
+
+_MTF_ICON = {"up": "🔼", "down": "🔽", "flat": "➖"}
+_MTF_JA   = {"up": "上", "down": "下", "flat": "横ばい"}
+
+
+def _mtf_text(m: dict) -> list:
+    """時間軸の並びを、初心者でも一目で分かる形にする。"""
+    if not m:
+        return []
+    row = "　".join(f"{tf}{_MTF_ICON[v]}{_MTF_JA[v]}" for tf, v in m["trends"].items())
+    out = [f"🕐 *時間軸*: {row}"]
+    if m["full"]:
+        out.append(f"→ ⭐ *全時間軸が{_MTF_JA[m['direction']]}向き*。"
+                   f"大きな流れと目先が揃った、最も逆らいにくい形。")
+    elif m["conflict"]:
+        out.append(f"→ ⚠️ 時間軸で向きが割れています。"
+                   f"押し目・戻りの途中の可能性があり、様子見が無難な場面。")
+    elif m["direction"] != "flat":
+        out.append(f"→ {_MTF_JA[m['direction']]}向きが優勢ですが、"
+                   f"横ばいの足もあり全体一致には至っていません。")
+    return out
 
 
 def _confluence(hits: list) -> list:
@@ -465,9 +573,30 @@ def _confluence(hits: list) -> list:
         # 長い足のシグナルを先に見せる
         g["signals"].sort(key=lambda x: (-x.get("tf_weight", 1.0),
                                          x.get("priority", 9)))
+        # 時間軸の一致を調べ、信頼度に反映する。
+        # シグナルが3つ重なっていても週足が逆を向いていれば戻り売り/押し目買いの
+        # 範囲かもしれない。逆に全時間軸が揃っていれば単発でも重い。
+        mtf = None
+        try:
+            mtf = _mtf_align(g["symbol"])
+        except Exception:
+            logger.error("時間軸分析に失敗しました", exc_info=True)
+
+        if mtf:
+            want = "up" if direction == "buy" else "down"
+            if mtf["full"] and mtf["direction"] == want:
+                stars, rank = "★★★", "最高"        # 全時間軸一致は別格
+                g["mtf_full"] = True
+            elif mtf["direction"] != "flat" and mtf["direction"] != want:
+                # 地合いに逆らうシグナルは、重なっていても格下げする
+                if rank == "最高":  stars, rank = "★★", "中"
+                elif rank == "高":  stars, rank = "★★", "中"
+                elif rank == "中":  stars, rank = "★",  "参考"
+                g["mtf_against"] = True
+
         groups.append({**g, "direction": direction, "score": score,
                        "net": net, "stars": stars, "rank": rank,
-                       "conflict": opposite > 0})
+                       "mtf": mtf, "conflict": opposite > 0})
     groups.sort(key=lambda x: -x["net"])
     return groups
 
@@ -617,9 +746,16 @@ def build_message(hits: list) -> str:
                 f"{_DIR_JA[g['direction']]}方向 {g['stars']}"
                 f"（信頼度{g['rank']}・スコア {g['net']:.1f}）")
         lines += ["", head]
+
+        # 時間軸の並びを先に出す。個々のシグナルより前に「今どういう相場か」を
+        # 見せた方が、その後のシグナル一覧の意味が読み取りやすい。
+        lines += _mtf_text(g.get("mtf"))
+
         if g.get("triple"):
             lines.append(f"⭐ *強いシグナルが{g['strong_count']}つ同時に出ています*"
                          f"（根拠の違う指標が同じ方向を示す＝最も確度が高い形）")
+        if g.get("mtf_against"):
+            lines.append("⚠️ ただし大きな時間軸は逆を向いているため、信頼度を下げています。")
 
         for s in g["signals"]:
             mark = "・" if s.get("direction") == g["direction"] else "※逆"
@@ -646,7 +782,8 @@ def build_message(hits: list) -> str:
             lines.append(f"💡 {lead['tip']}")
 
     lines.append("\n🎯=強いシグナル3つ以上が一致（最高信頼度） ／ "
-                 "★★★=長い足を含む複数一致 ／ ★=単発。"
+                 "⭐=全時間軸が同じ向き ／ ★★★=長い足を含む複数一致 ／ ★=単発。"
+                 "🕐は週足・日足・4時間足それぞれの地合いです。"
                  "教科書的なシグナルの発生を機械判定したものです。")
     text = "\n".join(l for l in lines if l)
     return text[:4000]

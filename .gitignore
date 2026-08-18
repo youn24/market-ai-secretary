@@ -18,5 +18,11 @@ data/*
 !data/policy_state.json
 !data/sentiment_state.json
 !data/risk_sentiment_state.json
+# シグナルの「通知済み」記録。保存されないと重複防止が毎回リセットされ、
+# 同じサインが何度も届く（2026-08-18まで実際にそうなっていた）。
+!data/alert_state.json
+!data/tech_signal_state.json
+!data/fx_signal_state.json
+!data/divergence_state.json
 reports/charts/
 logs/

@@ -78,6 +78,19 @@ def run():
         except Exception:
             logger.error("テクニカルシグナル検出エラー"); logger.debug(traceback.format_exc())
 
+    # 為替シグナル（fx_signals.py）
+    #   クロス円5組＋ドルストレート3組を週足・日足・4時間足で検査し、
+    #   信頼度の高いサインが同方向に3つ以上そろった通貨ペアだけ通知する。
+    #   為替は24時間動くため時間帯で絞らない（株と違い引け後の確定を待つ必要がない）。
+    #   条件を緩めると毎日鳴って読み飛ばされるので、3つ以上は動かさないこと。
+    #   配信先はFX専用グループ（TELEGRAM_FX_CHAT_ID）。
+    try:
+        from src.fx_signals import run_fx_alert
+        if run_fx_alert():
+            logger.info("✅ 為替シグナル通知送信完了")
+    except Exception:
+        logger.error("為替シグナル検出エラー", exc_info=True)
+
     # マクロ（ファンダメンタル）レジーム変化アラート
     #   逆イールド・サームルール・信用スプレッド・実質金利。
     #   月次/週次データなので判定は1日1回だけ（内部でセッションガード）。
