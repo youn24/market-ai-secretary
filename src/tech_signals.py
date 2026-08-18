@@ -538,7 +538,12 @@ def _overall_summary(groups: list) -> list:
     if against:
         names = "・".join(g["name"] for g in against)
         out.append(f"⚠️ *{names}* のサインは大きな時間軸に逆らっています。"
-                   f"押し目・戻りの途中である可能性があり、信頼度を下げてあります。")
+                   f"短期なら差はありませんが、長めに持つ想定なら分が悪い形です。")
+    flat = [g for g in groups if g.get("mtf_flat")]
+    if flat:
+        names = "・".join(g["name"] for g in flat)
+        out.append(f"⚠️ *{names}* は時間軸に方向感がありません。"
+                   f"過去3,855件の検証で最も成績が悪かった状態です。")
     return out
 
 
@@ -550,11 +555,16 @@ def _mtf_text(m: dict) -> list:
     out = [f"🕐 *時間軸*: {row}"]
     if m["full"]:
         out.append(f"→ ⭐ *全時間軸が{_MTF_JA[m['direction']]}向き*。"
-                   f"大きな流れと目先が揃った、最も逆らいにくい形。")
+                   f"過去3,855件の検証で最も成績が良かった形です"
+                   f"（20日後の平均が他より+1.05%）。")
+    elif m["direction"] == "flat":
+        out.append("→ ⚠️ *どの時間軸も方向が定まっていません*。"
+                   "検証ではこの状態が最も成績が悪く（20日後 -1.92%）、"
+                   "サインが続かないことが多い場面です。")
     elif m["conflict"]:
-        out.append(f"→ ⚠️ 時間軸で向きが割れています。"
-                   f"押し目・戻りの途中の可能性があり、様子見が無難な場面。")
-    elif m["direction"] != "flat":
+        out.append(f"→ 時間軸で向きが割れています。"
+                   f"押し目・戻りの途中の可能性があります。")
+    else:
         out.append(f"→ {_MTF_JA[m['direction']]}向きが優勢ですが、"
                    f"横ばいの足もあり全体一致には至っていません。")
     return out
@@ -617,16 +627,32 @@ def _confluence(hits: list) -> list:
         except Exception:
             logger.error("時間軸分析に失敗しました", exc_info=True)
 
+        # 反映の仕方は過去3,855件の検証結果に基づく（src/mtf_validation.py・2026-08-18）。
+        # 当初は「逆行なら格下げ」としていたが、検証すると逆行は5日・10日では
+        # 有意な差が無く（p=0.89 / 0.36）、むしろ地合いに方向感が無い「中立」が
+        # 全期間で最も成績が悪かった（-0.72% / -1.03% / -1.92%、いずれもp<0.01）。
+        # 理論だけで格下げ先を決めていたのを、実測に合わせて置き換えた。
+        def _demote(s, r):
+            if r == "最高":  return "★★", "中"
+            if r == "高":    return "★★", "中"
+            if r == "中":    return "★",  "参考"
+            return s, r
+
         if mtf:
             want = "up" if direction == "buy" else "down"
             if mtf["full"] and mtf["direction"] == want:
-                stars, rank = "★★★", "最高"        # 全時間軸一致は別格
+                # 全時間軸一致は全期間で有意に良い（+0.28%/+0.43%/+1.05%）
+                stars, rank = "★★★", "最高"
                 g["mtf_full"] = True
-            elif mtf["direction"] != "flat" and mtf["direction"] != want:
-                # 地合いに逆らうシグナルは、重なっていても格下げする
-                if rank == "最高":  stars, rank = "★★", "中"
-                elif rank == "高":  stars, rank = "★★", "中"
-                elif rank == "中":  stars, rank = "★",  "参考"
+            elif mtf["direction"] == "flat":
+                # 検証で最も成績が悪かった状態。どの時間軸も方向を決めかねており、
+                # そこで出たシグナルは続かないことが多い。
+                stars, rank = _demote(stars, rank)
+                g["mtf_flat"] = True
+            elif mtf["direction"] != want:
+                # 逆行は短期では悪くないが、1ヶ月スパンでは劣る（-0.81%・p=0.036）。
+                # 短期の成績に差が無い以上、強く下げる根拠は無いので1段だけ。
+                stars, rank = _demote(stars, rank)
                 g["mtf_against"] = True
 
         groups.append({**g, "direction": direction, "score": score,
@@ -796,7 +822,11 @@ def build_message(hits: list) -> str:
             lines.append(f"⭐ *強いシグナルが{g['strong_count']}つ同時に出ています*"
                          f"（根拠の違う指標が同じ方向を示す＝最も確度が高い形）")
         if g.get("mtf_against"):
-            lines.append("⚠️ ただし大きな時間軸は逆を向いているため、信頼度を下げています。")
+            lines.append("⚠️ 大きな時間軸は逆向きです。数日単位なら成績に差はありませんが、"
+                         "1ヶ月ほど持つ想定なら分が悪い形です（検証で -0.81%）。")
+        if g.get("mtf_flat"):
+            lines.append("⚠️ どの時間軸も方向感がありません。"
+                         "検証で最も成績が悪かった状態のため、信頼度を下げています。")
 
         for s in g["signals"]:
             mark = "・" if s.get("direction") == g["direction"] else "※逆"
