@@ -505,6 +505,23 @@
       "verified": false,
       "correct": null,
       "actual_move": null
+    },
+    {
+      "date": "2026-08-19",
+      "direction": "bear",
+      "score": -11.06,
+      "adj_score": -11.06,
+      "conf_rank": "B",
+      "conf_win_rate": 69.2,
+      "fg": 54.4,
+      "nikkei": 69220.25,
+      "sp500": 7691.7598,
+      "usdjpy": 159.585,
+      "vix": 15.84,
+      "confidence": null,
+      "verified": false,
+      "correct": null,
+      "actual_move": null
     }
   ],
   "accuracy": {}

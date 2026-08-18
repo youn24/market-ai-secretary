@@ -1,14 +1,14 @@
 {
  "fg": {
-  "idx": 3,
-  "name": "強欲",
-  "value": 62.2,
+  "idx": 2,
+  "name": "中立",
+  "value": 54.4,
   "streak": 0
  },
  "vix": {
-  "idx": 0,
-  "name": "平穏",
-  "value": 14.62,
+  "idx": 1,
+  "name": "標準",
+  "value": 15.84,
   "streak": 0
  }
 }
