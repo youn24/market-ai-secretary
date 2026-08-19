@@ -153,8 +153,20 @@ def run(years: int = 5) -> dict:
                 "勝率": round(sum(1 for e in edges if e > 0) / len(edges) * 100, 1),
                 "p値": _sign_test(edges),
             }
-        entry["有効"] = any(entry[f"{h}日後"]["p値"] < 0.05 for h in _HORIZONS)
+        entry["最小p値"] = min(entry[f"{h}日後"]["p値"] for h in _HORIZONS)
         by_pat[p] = entry
+
+    # 多重比較の補正。
+    # 16種類のパターンを検定すれば、まったく効果が無くても平均0.8個は
+    # p<0.05 になる（0.05×16）。個別のp値だけを見て「有意なパターンを
+    # 3つ発見」と言うのは、宝くじを16枚買って当たった1枚だけを見せるのと同じ。
+    # Bonferroni補正（0.05 ÷ 検定数）を通ったものだけを「有効」とする。
+    n_tests = len(by_pat)
+    threshold = 0.05 / n_tests if n_tests else 0.05
+    for v in by_pat.values():
+        v["補正後の基準"] = round(threshold, 5)
+        v["有効"] = v["最小p値"] < threshold
+        v["補正前は有意"] = v["最小p値"] < 0.05
 
     result = {
         "available": True,
@@ -162,6 +174,11 @@ def run(years: int = 5) -> dict:
         "total": len(rows),
         "period": f'{min(r["date"] for r in rows)} 〜 {max(r["date"] for r in rows)}',
         "symbols": len(set(r["symbol"] for r in rows)),
+        "検定数": n_tests,
+        "補正後の基準": round(threshold, 5),
+        "補正前に有意": sum(1 for v in by_pat.values() if v["補正前は有意"]),
+        "補正後に有意": sum(1 for v in by_pat.values() if v["有効"]),
+        "偶然の期待値": round(0.05 * n_tests, 1),
         "patterns": by_pat,
         "confluence": _confluence_effect(rows),
     }
@@ -172,8 +189,10 @@ def run(years: int = 5) -> dict:
     except Exception:
         logger.error("保存に失敗", exc_info=True)
 
-    ok = [k for k, v in by_pat.items() if v["有効"]]
-    logger.info(f"✅ 検証完了: {len(rows)}件 / 有効なパターン {len(ok)}種")
+    logger.info(f"✅ 検証完了: {len(rows)}件 / "
+                f"補正前に有意 {result['補正前に有意']}種 → "
+                f"補正後 {result['補正後に有意']}種 "
+                f"（効果ゼロでも{result['偶然の期待値']}種は p<0.05 になる計算）")
     return result
 
 
@@ -220,9 +239,13 @@ if __name__ == "__main__":
                     key=lambda x: -x[1]["5日後"]["実力"])
     for name, v in ranked:
         d = v["5日後"]
-        mark = "✅" if d["p値"] < 0.05 else "　"
+        mark = "✅" if v.get("有効") else ("△" if d["p値"] < 0.05 else "　")
         print(f"{mark} {name:26} n={v['n']:>5}  生{d['生']:+6.2f}%  "
               f"実力{d['実力']:+6.2f}%  勝率{d['勝率']:5.1f}%  p={d['p値']}")
+    print(f"\n※ ✅=多重比較の補正後も有意（p<{r['補正後の基準']}）／ "
+          f"△=補正前だけ有意（偶然の可能性あり）")
+    print(f"※ {r['検定数']}種を検定したため、効果がゼロでも"
+          f"{r['偶然の期待値']}種は p<0.05 になる計算です")
     print("\n" + "=" * 74)
     print("形がいくつ重なったかで変わるか")
     print("=" * 74)
