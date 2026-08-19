@@ -27,7 +27,9 @@ THRESHOLDS = {
 
 # 連発防止: 同じ銘柄のアラートは1セッションにつき「一度だけ」送る。
 # セッション = JST 6:00 〜 翌 5:59（夜間の暴落が日付をまたいでも1回に保たれる）。
-# 値がさらに悪化しても追撃通知はしない（オーナー指示: 何度も通知しない）。
+# 例外はエスカレーションのみ: 1回目より1.5倍以上悪化したときだけ、
+# セッション中に1度だけ追加で知らせる（2026-08-19にオーナー了承）。
+# それ以外は追撃しない（オーナー指示: 何度も通知しない）。
 _STATE_FILE = BASE_DIR / "data" / "alert_state.json"
 
 
@@ -37,9 +39,22 @@ def _session_key(now=None) -> str:
     return (now - timedelta(hours=6)).strftime("%Y-%m-%d")
 
 
+# 1回目の通知からこの倍率を超えて悪化したら、もう一度だけ知らせる。
+# 例: -2.6%で通知したあと -3.9%（1.5倍）まで進んだら再通知。
+#
+# なぜ必要か: 2026-08-18に日経先物が -2.6% で発報したあと -4.0% まで悪化したが、
+# 「1日1回」の決まりで2回目が出せず、事態の悪化が伝わらなかった。
+# かといって毎回鳴らすと読み飛ばされるので、
+# 「最初の警報が霞むほど状況が変わったときだけ」に限って1度だけ許す。
+_ESCALATE_FACTOR = 1.5
+# 何度も段階的に鳴るのを防ぐため、1セッションでの再通知はこの回数まで
+_ESCALATE_MAX = 1
+
+
 def _apply_cooldown(alerts: list, source: str = "alert") -> list:
     """
     同一銘柄はこのセッションで既に通知済みなら送らない（1回だけ）。
+    ただし1回目より大きく悪化した場合に限り、もう一度だけ通す（エスカレーション）。
     さらに共通の通知台帳を通し、他のモジュールが同じ話題を既に伝えていれば
     重ねて送らない（VIX急騰が複数の入口から届くのを防ぐ）。
     """
@@ -53,21 +68,58 @@ def _apply_cooldown(alerts: list, source: str = "alert") -> list:
     for a in alerts:
         rec = st.get(a["symbol"])
         if isinstance(rec, dict) and rec.get("session") == skey:
+            prev = rec.get("chg")
+            sent = int(rec.get("escalated", 0))
+            # ちょうど1.5倍のときに取りこぼさないよう、わずかな誤差を許す。
+            # 2.6*1.5 は 3.9000000000000004 になり、素直に比べると
+            # -3.9% が「まだ1.5倍未満」と判定されてしまう。
+            worse = (prev is not None
+                     and abs(a["change"]) >= abs(prev) * _ESCALATE_FACTOR - 1e-9
+                     # 反対方向に振れただけの場合は「悪化」ではないので除外する
+                     and (a["change"] > 0) == (prev > 0))
+            if worse and sent < _ESCALATE_MAX:
+                a["escalated"] = True
+                a["prev_change"] = prev
+                logger.info(f"悪化のため再通知: {a['name']} "
+                            f"({prev:+.2f}% → {a['change']:+.2f}%)")
+                kept.append(a)
+                continue
             logger.info(f"通知済みのためスキップ: {a['name']} ({a['change']:+.2f}%)")
             continue
         kept.append(a)
-    # 共通台帳で他モジュールとの重複を排除
+    # 共通台帳で他モジュールとの重複を排除。
+    # ただしエスカレーション（悪化による再通知）は台帳を通さない。
+    # 台帳は「同じ話題を二度送らない」ための仕組みなので、
+    # ここを通すと意図した再通知まで確実に消される（実際に消えていた）。
+    escalated = [a for a in kept if a.get("escalated")]
+    normal    = [a for a in kept if not a.get("escalated")]
     try:
         from src.notify_ledger import filter_new
-        kept = filter_new(kept, key_func=lambda a: a["symbol"],
-                          topic_func=lambda a: None, source=source)
+        normal = filter_new(normal, key_func=lambda a: a["symbol"],
+                            topic_func=lambda a: None, source=source)
     except Exception:
-        logger.debug(traceback.format_exc())
+        logger.error("通知台帳の照会に失敗しました", exc_info=True)
+    kept = normal + escalated
 
     if kept:
         for a in kept:
-            st[a["symbol"]] = {"session": skey, "ts": now.isoformat(),
-                               "chg": a["change"]}
+            prev_rec = st.get(a["symbol"]) or {}
+            # 前日以前の記録は引き継がない。
+            # セッションを見ずに引き継ぐと、昨日1回使った再通知枠が今日も
+            # 埋まったままになり、翌日の悪化を知らせられなくなる。
+            if prev_rec.get("session") != skey:
+                prev_rec = {}
+            escalated = int(prev_rec.get("escalated", 0))
+            if a.get("escalated"):
+                escalated += 1
+            st[a["symbol"]] = {
+                "session": skey, "ts": now.isoformat(),
+                # 記録する変化率は、そのセッション中で最も大きかった値にする。
+                # 直近値で上書きすると、いったん戻したときに基準が下がり、
+                # 同じ水準まで再び悪化しただけで再通知が出てしまう。
+                "chg": max([a["change"], prev_rec.get("chg", a["change"])], key=abs),
+                "escalated": escalated,
+            }
         # 古い記録を掃除（当日セッション分のみ残す＝ファイルの肥大化防止）
         st = {k: v for k, v in st.items()
               if isinstance(v, dict) and v.get("session") == skey}
@@ -104,6 +156,19 @@ def check_alerts(prices: dict) -> list:
     return alerts
 
 
+def _esc_tag(a: dict) -> str:
+    """
+    再通知の行に付ける印。
+    「また同じ通知が来た」と誤解されないよう、1回目からどれだけ進んだかを必ず書く。
+    """
+    if not a.get("escalated"):
+        return ""
+    prev = a.get("prev_change")
+    if prev is None:
+        return "　⚠️ *さらに悪化*"
+    return f"　⚠️ *さらに悪化*（1回目 {prev:+.2f}% → 今 {a['change']:+.2f}%）"
+
+
 def build_alert_message(alerts: list, prices: dict, fear_greed: dict, risk: dict) -> str:
     """アラートメッセージを生成"""
     now = get_jst_now().strftime("%Y-%m-%d %H:%M JST")
@@ -121,6 +186,8 @@ def build_alert_message(alerts: list, prices: dict, fear_greed: dict, risk: dict
         chg = a["change"]
         s   = "▲" if chg > 0 else "▼"
         lines.append(f"{a['direction']} *{a['name']}*: {a['value']:,.2f} ({s}{abs(chg):.2f}%)")
+        if _esc_tag(a):
+            lines.append(_esc_tag(a))
 
     lines += [
         f"━━━━━━━━━━━━━━━",
@@ -242,6 +309,8 @@ def run_cfd_alert() -> bool:
                 v_s = f"{v:,.2f}" if v and v < 1000 else f"{v:,.0f}" if v else "—"
                 s = "▲" if a["change"] > 0 else "▼"
                 lines.append(f"　{a['direction']} {a['name']}: {v_s} ({s}{abs(a['change']):.2f}%)")
+                if _esc_tag(a):
+                    lines.append(_esc_tag(a))
         lines += [
             "━━━━━━━━━━━━━━━",
             "CFDで24時間動く先物・商品の急変です。翌朝の東京市場や関連セクターに波及しやすい動きです。",
@@ -303,6 +372,8 @@ def run_afterhours_alert() -> bool:
             price_s = f"${a['value']:,.2f}" if a.get("value") else "—"
             s = "▲" if a["change"] > 0 else "▼"
             lines.append(f"{a['direction']} *{a['name']}*: {price_s} ({s}{abs(a['change']):.1f}%)")
+            if _esc_tag(a):
+                lines.append(_esc_tag(a))
             if a.get("jp"):
                 lines.append(f"　→ 日本の{a['jp']}に波及しやすい")
         lines += [
