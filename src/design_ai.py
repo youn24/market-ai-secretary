@@ -2138,6 +2138,8 @@ def generate(
     sentiment: dict = None,
     risk_sentiment: dict = None,
     risk_gauges: dict = None,
+    kabutan_warning: dict = None,
+    gap_scan: dict = None,
     **_kwargs,
 ) -> str:
     prices      = prices      or {}
@@ -2179,6 +2181,8 @@ def generate(
     sent_html = _sentiment_extreme_section(sentiment)
     risk_html = _risk_sentiment_section(risk_sentiment)
     gauge_html = _risk_gauge_section(risk_gauges)
+    gap_html = _gap_section(gap_scan)
+    warn_html = _warning_section(kabutan_warning)
     pro_html     = _pro_cross(prices)
     news_html    = _news(news)
     cal_html     = _calendar(weekly_calendar)
@@ -2252,6 +2256,8 @@ def generate(
   {risk_html}
   {sent_html}
   {gauge_html}
+  {gap_html}
+  {warn_html}
   {msignal_html}
   {policy_html}
   {cfdsq_html}
@@ -2361,6 +2367,8 @@ def run(
     sentiment: dict          = None,
     risk_sentiment: dict     = None,
     risk_gauges: dict        = None,
+    kabutan_warning: dict    = None,
+    gap_scan: dict           = None,
     mode: str = "morning",
     **_kwargs,
 ) -> dict:
@@ -2378,6 +2386,7 @@ def run(
             upcoming=upcoming, valuation=valuation, macro_watch=macro_watch, market_signals=market_signals,
             policy=policy, market_driver=market_driver, sentiment=sentiment,
             risk_sentiment=risk_sentiment, risk_gauges=risk_gauges,
+            kabutan_warning=kabutan_warning, gap_scan=gap_scan,
         )
         # 生成できたと言い切る前に、ファイルが実在し中身があるかを必ず確かめる。
         # ここを検証していなかったため、本番で生成に失敗していたことに
@@ -2488,6 +2497,124 @@ def _risk_gauge_section(risk_gauges):
       📖 「⚡いつもより大きい」は、その指標の過去1年の値動きから自動計算した目安
       （年に約25日しか起きない大きさ）を超えたという意味です。
       VIXは普段から日々5〜10%動くので、指標ごとに基準を変えています。{src_note}
+    </div>
+  </div>
+</div>"""
+
+
+# ── セクション：窓開け（ギャップ）────────────────────────────────
+def _gap_section(gap_scan):
+    """
+    寄り付きの窓と、その埋め具合。
+
+    「開けた」事実だけでなく「その後どうなったか」まで出すのは、
+    窓を維持した銘柄と埋め戻した銘柄では 読み方が正反対になるため。
+    """
+    g = gap_scan or {}
+    if not g.get("available"):
+        return ""
+    gaps = g.get("gaps") or []
+    if not gaps:
+        return ""
+
+    rows = []
+    for r in gaps[:10]:
+        up = r["gap_pct"] > 0
+        col = GREEN if up else RED
+        if r["filled"]:
+            state, scol = "窓を埋め戻し", YELLOW
+        elif r["held"]:
+            state, scol = "窓を維持", col
+        else:
+            state, scol = f"{r['filled_ratio']*100:.0f}%埋め", MUTED
+        rows.append(f"""
+      <div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid {BORDER}">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:11px;color:{TEXT};font-weight:700">{r['name']}</div>
+          <div style="font-size:9px;color:{MUTED}">{r['prev_close']:,.0f} → {r['open']:,.0f}
+            <span style="opacity:.7">（普段の窓 {r.get('typical','—')}%）</span></div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:13px;font-weight:800;color:{col}">{r['gap_pct']:+.2f}%</div>
+          <div style="font-size:9px;color:{scol}">{state}</div>
+        </div>
+        <div style="width:64px;text-align:right">
+          <div style="font-size:11px;color:{TEXT}">{r['current']:,.0f}</div>
+          <div style="font-size:9px;color:{GREEN if r['day_change_pct']>0 else RED}">{r['day_change_pct']:+.2f}%</div>
+        </div>
+      </div>""")
+
+    summary = "".join(
+        f'<div style="font-size:11px;color:{TEXT};margin-bottom:4px">{s}</div>'
+        for s in (g.get("summary") or []))
+
+    return f"""
+<div style="margin-bottom:12px">
+  <div class="label" style="padding:0 2px;margin-bottom:6px">🪟 窓開け（ギャップ）</div>
+  <div class="glass" style="padding:14px">
+    <div style="margin-bottom:9px">{summary}</div>
+    {''.join(rows)}
+    <div style="font-size:10px;color:{MUTED};margin-top:9px">
+      📖 前日終値と当日始値の差です。夜のうちに前提が変わった証拠で、
+      窓を維持すれば新しい水準が受け入れられた形、埋め戻せば行き過ぎだった形と読みます。
+      「大きな窓」の基準は銘柄ごとに過去1年から自動計算しています。
+    </div>
+  </div>
+</div>"""
+
+
+# ── セクション：株価注意報（株探）──────────────────────────────
+def _warning_section(kabutan_warning):
+    """
+    信用の偏り・年初来更新・日経寄与度。
+    値動きの順位（株ドラゴン）とは別に、その裏側の需給を見るための区画。
+    """
+    w = kabutan_warning or {}
+    if not w.get("available"):
+        return ""
+    cats = w.get("categories") or {}
+    if not cats:
+        return ""
+
+    hl = "".join(
+        f'<div style="font-size:11px;color:{TEXT};margin-bottom:4px">・{h}</div>'
+        for h in (w.get("highlights") or []))
+
+    blocks = []
+    for label, c in cats.items():
+        items = []
+        for r in c["rows"][:5]:
+            pct = r.get("change_pct")
+            col = GREEN if (pct or 0) > 0 else RED if (pct or 0) < 0 else MUTED
+            note = ""
+            if r.get("margin_note"):
+                # 信用倍率の偏りは色を変えて目立たせる（需給の重さの手がかり）
+                ncol = ORANGE if (r.get("margin_ratio") or 0) >= 10 else BLUE
+                note = (f'<span style="font-size:9px;color:{ncol};margin-left:6px">'
+                        f'{r["margin_note"]}</span>')
+            items.append(f"""
+        <div style="display:flex;align-items:baseline;gap:6px;padding:4px 0">
+          <span style="flex:1;font-size:10.5px;color:{TEXT}">{r['name']}
+            <span style="color:{MUTED};font-size:9px">({r['code']})</span>{note}</span>
+          <span style="font-size:11px;font-weight:700;color:{col}">
+            {f"{pct:+.2f}%" if pct is not None else "—"}</span>
+        </div>""")
+        blocks.append(f"""
+      <div style="margin-bottom:11px">
+        <div style="font-size:10px;color:{MUTED};font-weight:700;margin-bottom:2px">{label}</div>
+        <div style="font-size:9px;color:{MUTED};margin-bottom:3px">{c['meaning']}</div>
+        {''.join(items)}
+      </div>""")
+
+    return f"""
+<div style="margin-bottom:12px">
+  <div class="label" style="padding:0 2px;margin-bottom:6px">📋 株価注意報（需給と節目）</div>
+  <div class="glass" style="padding:14px">
+    {f'<div style="margin-bottom:10px">{hl}</div>' if hl else ''}
+    {''.join(blocks)}
+    <div style="font-size:10px;color:{MUTED};margin-top:6px">
+      📖 信用倍率＝買い残÷売り残。10倍を超えると買い方に偏っており上値が重くなりやすく、
+      1倍未満は売り方が多く、上昇時に踏み上げが起きやすい状態です。出所: 株探
     </div>
   </div>
 </div>"""

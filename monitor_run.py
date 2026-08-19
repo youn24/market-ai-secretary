@@ -91,6 +91,19 @@ def run():
     except Exception:
         logger.error("為替シグナル検出エラー", exc_info=True)
 
+    # 窓開け（gap_scanner.py）
+    #   前日終値と当日始値の差＝夜のうちに前提が変わった証拠。
+    #   寄り付き後でないと始値が確定しないため 9:15〜11:30 の間だけ動かす。
+    #   （9:00ちょうどだと気配値を拾うことがあるので少し待つ）
+    #   埋め具合まで見るので、前場のうちに一度流せば十分。1日1回。
+    if 9 <= now.hour < 12 and not (now.hour == 9 and now.minute < 15):
+        try:
+            from src.gap_scanner import run_gap_alert
+            if run_gap_alert():
+                logger.info("✅ 窓開け通知送信完了")
+        except Exception:
+            logger.error("窓開けスキャンエラー", exc_info=True)
+
     # リスク計器盤（risk_gauges.py）
     #   恐怖指数10種・債券/商品ボラ3種・日米金利・ドル指数・暗号資産F&Gを一覧し、
     #   「その指標にとって普段より大きい」動きが出たものだけ通知する。

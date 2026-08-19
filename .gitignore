@@ -25,5 +25,6 @@ data/*
 !data/fx_signal_state.json
 !data/divergence_state.json
 !data/risk_gauge_state.json
+!data/gap_state.json
 reports/charts/
 logs/

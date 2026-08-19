@@ -783,6 +783,31 @@ def run(mode: str):
 
     # 通知台帳: 同じ話題を1日に二度送らないための記録。セッション(JST6時始まり)が
     # 変われば自動で空になるため、ここでは読み込むだけで初期化は不要。
+    # Step KW: 株探・株価注意報（信用の偏り・年初来更新・日経寄与度）
+    # 株ドラゴンが「どれだけ動いたか」を扱うのに対し、こちらは需給の裏側を見る。
+    kabutan_warning = {"available": False}
+    try:
+        logger.info("--- Step KW: 株価注意報 ---")
+        from src.kabutan_warning import run as run_kw
+        kabutan_warning = run_kw()
+        if kabutan_warning.get("available"):
+            logger.info(f"✅ 注意報 {len(kabutan_warning['categories'])}カテゴリ")
+    except Exception:
+        logger.error("株価注意報エラー", exc_info=True)
+
+    # Step GAP: 窓開け（前日終値と始値の差）
+    # 朝7:30時点では当日の始値が無いので、ここで得られるのは前営業日の窓。
+    # 「昨日どう始まってどう終わったか」は当日の地合いを読む材料になる。
+    gap_scan = {"available": False}
+    try:
+        logger.info("--- Step GAP: 窓開けスキャン ---")
+        from src.gap_scanner import run as run_gap
+        gap_scan = run_gap()
+        if gap_scan.get("available"):
+            logger.info(f"✅ 窓開け {len(gap_scan.get('gaps') or [])}件")
+    except Exception:
+        logger.error("窓開けスキャンエラー", exc_info=True)
+
     # Step RG: リスク計器盤（恐怖指数10種・日米金利・ドル指数・暗号資産F&G）
     # 水準ではなく「その指標にとって普段より大きく動いたか」を見る。
     # しきい値は各指標の過去1年から自動計算するため、指標ごとの性格差を吸収できる。
@@ -1027,6 +1052,8 @@ def run(mode: str):
             sentiment=sentiment,
             risk_sentiment=risk_sentiment,
             risk_gauges=risk_gauges,
+            kabutan_warning=kabutan_warning,
+            gap_scan=gap_scan,
             mode=mode,
         )
         # 公開ページが更新されたことを必ず確認する。
