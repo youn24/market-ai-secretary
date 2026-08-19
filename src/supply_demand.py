@@ -16,6 +16,7 @@
    信用買い残・売り残（銘柄別）は無料での確実な取得が難しいため未使用。
 """
 import os
+import math
 import time
 
 import numpy as np
@@ -149,28 +150,73 @@ def detect_patterns(m: dict) -> list[dict]:
     return pats
 
 
-def score_supply_demand(m: dict) -> int:
-    """需給の総合スコア（0〜100。高いほど上がりやすい需給）"""
-    s = 50
-    s += 12 if m["obv_rising"] else -12
-    if m["vol_ratio"] >= 1.3: s += 12
-    elif m["vol_ratio"] < 0.7: s -= 6
-    if m["cmf"] >= 0.1: s += 14
-    elif m["cmf"] <= -0.1: s -= 14
-    if m["above_poc"]: s += 8
-    if m["above_ma25"]: s += 6
-    # MFI：健全な流入は加点、過熱は減点、売られすぎは反発期待で小加点
-    if 45 <= m["mfi"] <= 70: s += 10
-    elif m["mfi"] >= 85: s -= 10
-    elif m["mfi"] <= 25: s += 4
-    # 空売り残高：踏み上げ余地（買い戻し進行）は加点、売り増しは減点
-    sr = m.get("short_ratio", 0)
+def _clamp(x: float, lo: float, hi: float) -> float:
+    return max(lo, min(hi, x))
+
+
+def score_supply_demand(m: dict) -> float:
+    """
+    需給の総合スコア（0〜100。高いほど上がりやすい需給）。
+
+    旧版は「閾値を超えたら固定点を加算」する離散方式だったため、
+    ボーナス合計が100を大きく超えて多くの銘柄が100点に貼り付き、
+    ランキングとして機能しなかった（＝「100点はおかしい」問題）。
+
+    新版は各指標を強さに応じて -1〜+1 に正規化し、重み付き合算して
+    50を中心に ±49 へマップする「連続スコア」方式。
+    指標の大きさがそのまま順位差に反映され、満点(100)は理論上の上限として
+    実際にはほぼ到達しない。小数第1位まで返して同点を避ける。
+    """
+    # ① OBVの傾き(%)：買い圧力の蓄積。tanhで圧縮（±30%でほぼ飽和）
+    obv_s = math.tanh(m["obv_slope"] / 30.0)
+
+    # ② 出来高比率：1.0=平常。1.6倍で+1、薄商いはマイナス
+    vol_s = _clamp((m["vol_ratio"] - 1.0) / 0.6, -1.0, 1.2)
+
+    # ③ CMF：資金の流出入。±0.25でフルスケール
+    cmf_s = _clamp(m["cmf"] / 0.25, -1.0, 1.0)
+
+    # ④ MFI：50付近が健全。過熱(>85)は減点、売られすぎ(<25)は反発期待で小プラス
+    mfi = m["mfi"]
+    if mfi <= 25:
+        mfi_s = 0.3
+    elif mfi >= 85:
+        mfi_s = -0.8
+    else:
+        base = _clamp((mfi - 35) / 30.0, -0.3, 1.0)
+        # 70超は過熱寄りに減衰
+        if mfi > 70:
+            base *= 1.0 - _clamp((mfi - 70) / 15.0, 0.0, 1.0) * 0.5
+        mfi_s = base
+
+    # ⑤ トレンド位置：25日線・POCに対する位置
+    trend_s = (0.5 if m["above_ma25"] else -0.5) + (0.4 if m["above_poc"] else -0.2)
+
+    # ⑥ 価格モメンタム：短期(5日)＋中期(25日)
+    mom_s = (_clamp(m["chg5"] / 6.0, -1.0, 1.0) * 0.5
+             + _clamp(m["chg25"] / 15.0, -1.0, 1.0) * 0.5)
+
+    # ⑦ 空売り残高：踏み上げ余地（買い戻し進行）は加点、売り増しは減点
+    sr = m.get("short_ratio", 0) or 0
     st = m.get("short_trend", "")
     if sr >= 1.5:
-        if st == "decreasing": s += 12   # 踏み上げ進行＝買い戻しの燃料
-        elif st == "increasing": s -= 10  # 機関が売り増し＝弱気
-        else: s += 6                      # 高水準で踏み上げ余地
-    return int(max(0, min(100, s)))
+        short_s = 0.8 if st == "decreasing" else -0.6 if st == "increasing" else 0.4
+    elif sr >= 0.8:
+        short_s = 0.4 if st == "decreasing" else -0.3 if st == "increasing" else 0.0
+    else:
+        short_s = 0.0
+
+    # 重み付き合算（重み合計≒1.0）。raw はおおむね -1.0〜+1.1
+    raw = (obv_s   * 0.20 +
+           vol_s   * 0.14 +
+           cmf_s   * 0.22 +
+           mfi_s   * 0.13 +
+           trend_s * 0.12 +
+           mom_s   * 0.11 +
+           short_s * 0.08)
+
+    score = 50.0 + raw * 45.0
+    return round(_clamp(score, 1.0, 99.0), 1)
 
 
 # ── Gemini 総評 ──────────────────────────────────────────────
@@ -274,7 +320,7 @@ def build_telegram_message(result: dict) -> str:
     for i, r in enumerate(result["top"]):
         medal = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣"][i]
         p = r["patterns"][0]
-        lines.append(f"{medal} *[{r['code']}] {r['name']}*  需給{r['score']}点")
+        lines.append(f"{medal} *[{r['code']}] {r['name']}*  需給{r['score']:.1f}点")
         lines.append(f"　{p['emoji']} {p['name']}")
     if result.get("ai_comment"):
         lines.append("")
@@ -305,7 +351,7 @@ def get_html(result: dict) -> str:
     <div style="width:26px;text-align:center;font-weight:700;color:#7a8fa8;">{i+1}</div>
     <div style="flex:1;font-weight:700;font-size:0.9em;">[{r["code"]}] {r["name"]}</div>
     <div style="text-align:right;">
-      <div style="font-weight:900;color:{bar_c};">{sc}<span style="font-size:0.6em;color:#7a8fa8;">点</span></div>
+      <div style="font-weight:900;color:{bar_c};">{sc:.1f}<span style="font-size:0.6em;color:#7a8fa8;">点</span></div>
     </div>
   </div>
   <div style="margin-left:36px;">
@@ -338,7 +384,7 @@ if __name__ == "__main__":
         out.append(f"=== 需給分析ランキング（{r['count']}銘柄）===\n")
         for i, x in enumerate(r["ranked"]):
             m = x["metrics"]
-            out.append(f"{i+1}位 [{x['code']}] {x['name']}  需給{x['score']}点")
+            out.append(f"{i+1}位 [{x['code']}] {x['name']}  需給{x['score']:.1f}点")
             out.append(f"   出来高{m['vol_ratio']}倍 MFI{m['mfi']:.0f} CMF{m['cmf']:+.2f} OBV{'↑' if m['obv_rising'] else '↓'} {'POC上' if m['above_poc'] else 'POC下'}")
             for p in x["patterns"]:
                 out.append(f"   {p['emoji']} {p['name']}: {p['desc']}")

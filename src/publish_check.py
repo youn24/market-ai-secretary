@@ -107,9 +107,32 @@ def _check_one(t: dict) -> dict:
     return out
 
 
-def run(notify: bool = True) -> dict:
+# 古い内容を掴んだときに、何回まで待って再確認するか。
+# GitHub Actionsの実行開始はcronから10〜20分ずれ、そこからPagesの再ビルドにも
+# 数分かかる。1回見ただけで判定すると、単に「まだ配信中」なだけで異常と叫ぶ。
+# 2026-08-19に実際にこれで誤検知した。誤報が続くと点検が信用されなくなる。
+_RETRY = 3
+_RETRY_WAIT = 90        # 秒
+
+
+def run(notify: bool = True, retry: int = _RETRY) -> dict:
+    import time
+
     logger.info(f"=== 公開物の実地点検 ({_BASE}) ===")
     results = [_check_one(t) for t in _TARGETS]
+
+    # 鮮度だけが理由で落ちた場合に限って待って再確認する。
+    # 404や中身の破損は待っても直らないので、その場で異常と判定する。
+    for attempt in range(1, retry + 1):
+        stale = [r for r in results
+                 if not r.get("ok") and r.get("required")
+                 and "止まっています" in (r.get("reason") or "")]
+        if not stale:
+            break
+        logger.info(f"古い内容のため {_RETRY_WAIT}秒 待って再確認します "
+                    f"（{attempt}/{retry}）— 配信途中の可能性")
+        time.sleep(_RETRY_WAIT)
+        results = [_check_one(t) for t in _TARGETS]
     failures = [r for r in results if not r.get("ok")]
     critical = [r for r in failures if r.get("required")]
 

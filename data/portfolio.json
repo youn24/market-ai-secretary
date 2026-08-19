@@ -1,7 +1,17 @@
 {
   "holdings": [
-    {"symbol": "7203.T", "name": "トヨタ自動車", "shares": 100, "avg_cost": 2800},
-    {"symbol": "9432.T", "name": "NTT", "shares": 500, "avg_cost": 180}
+    {
+      "symbol": "7203.T",
+      "name": "トヨタ自動車",
+      "shares": 100,
+      "avg_cost": 2800
+    },
+    {
+      "symbol": "9432.T",
+      "name": "NTT",
+      "shares": 500,
+      "avg_cost": 180
+    }
   ],
   "watchlist": [
     {
@@ -25,5 +35,11 @@
     "loss_pct": -5.0,
     "gain_pct": 10.0
   },
-  "history": []
+  "history": [
+    {
+      "date": "2026-08-13",
+      "pnl_pct": 0,
+      "holdings": []
+    }
+  ]
 }
