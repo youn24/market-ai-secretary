@@ -78,6 +78,21 @@ def run():
         except Exception:
             logger.error("テクニカルシグナル検出エラー"); logger.debug(traceback.format_exc())
 
+    # チャートの形（candlestick.py）
+    #   ローソク足7種＋プライスアクション3種を検出し、同じ方向の「出来事」が
+    #   2つ以上重なった銘柄（年2回ほどの稀な場面）か、
+    #   出来事1つ＋トレンド構造が一致した銘柄（月1回ほど）だけを通知する。
+    #   高値安値の切り上げ等は数週間続く「状態」なので出来事として数えない
+    #   （数えると毎週鳴って重なりの意味が失われる）。
+    #   日足の確定が要るため、東京の引け後〜夜間のみ判定する。
+    if now.hour >= 15 or now.hour < 6:
+        try:
+            from src.candlestick import run_pattern_alert
+            if run_pattern_alert():
+                logger.info("✅ チャートの形の通知送信完了")
+        except Exception:
+            logger.error("チャートの形の検出エラー", exc_info=True)
+
     # 為替シグナル（fx_signals.py）
     #   クロス円5組＋ドルストレート3組を週足・日足・4時間足で検査し、
     #   信頼度の高いサインが同方向に3つ以上そろった通貨ペアだけ通知する。

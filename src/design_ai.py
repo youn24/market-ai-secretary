@@ -2139,6 +2139,7 @@ def generate(
     risk_sentiment: dict = None,
     risk_gauges: dict = None,
     kabutan_warning: dict = None,
+    chart_patterns: list = None,
     gap_scan: dict = None,
     **_kwargs,
 ) -> str:
@@ -2183,6 +2184,7 @@ def generate(
     gauge_html = _risk_gauge_section(risk_gauges)
     gap_html = _gap_section(gap_scan)
     warn_html = _warning_section(kabutan_warning)
+    pat_html = _pattern_section(chart_patterns)
     pro_html     = _pro_cross(prices)
     news_html    = _news(news)
     cal_html     = _calendar(weekly_calendar)
@@ -2257,6 +2259,7 @@ def generate(
   {sent_html}
   {gauge_html}
   {gap_html}
+  {pat_html}
   {warn_html}
   {msignal_html}
   {policy_html}
@@ -2368,6 +2371,7 @@ def run(
     risk_sentiment: dict     = None,
     risk_gauges: dict        = None,
     kabutan_warning: dict    = None,
+    chart_patterns: list     = None,
     gap_scan: dict           = None,
     mode: str = "morning",
     **_kwargs,
@@ -2387,6 +2391,7 @@ def run(
             policy=policy, market_driver=market_driver, sentiment=sentiment,
             risk_sentiment=risk_sentiment, risk_gauges=risk_gauges,
             kabutan_warning=kabutan_warning, gap_scan=gap_scan,
+            chart_patterns=chart_patterns,
         )
         # 生成できたと言い切る前に、ファイルが実在し中身があるかを必ず確かめる。
         # ここを検証していなかったため、本番で生成に失敗していたことに
@@ -2615,6 +2620,78 @@ def _warning_section(kabutan_warning):
     <div style="font-size:10px;color:{MUTED};margin-top:6px">
       📖 信用倍率＝買い残÷売り残。10倍を超えると買い方に偏っており上値が重くなりやすく、
       1倍未満は売り方が多く、上昇時に踏み上げが起きやすい状態です。出所: 株探
+    </div>
+  </div>
+</div>"""
+
+
+# ── セクション：チャートの形（ローソク足・プライスアクション）──────────
+def _pattern_section(patterns):
+    """
+    形が重なった銘柄を見せる。
+
+    形の名前だけでは初心者に意味が伝わらないため、
+    「何を表す形か」と「過去にどうだったか（検証値）」を必ず添える。
+    実績が確認できていない形は、その旨をはっきり書く。
+    """
+    ps = patterns or []
+    if not ps:
+        return ""
+
+    cards = []
+    for g in ps[:6]:
+        buy = g["direction"] == "buy"
+        col = GREEN if buy else RED
+        arrow = "🔺 上昇方向" if buy else "🔻 下落方向"
+        star = ('<span style="color:{};font-size:10px">⭐稀な重なり</span>'.format(YELLOW)
+                if g.get("tier") == "A" else "")
+
+        items = []
+        if g.get("structure"):
+            s = g["structure"]
+            items.append(f"""
+        <div style="padding:5px 0;border-bottom:1px solid {BORDER}">
+          <div style="font-size:10.5px;color:{MUTED}">📐 {s['name']}</div>
+          <div style="font-size:9.5px;color:{MUTED};opacity:.85">{s['desc']}</div>
+        </div>""")
+        for p in g["patterns"]:
+            tag = "🕯" if p["kind"] == "candle" else "📐"
+            rec = (f'<div style="font-size:9px;color:{BLUE};margin-top:2px">'
+                   f'📊 {p["record"]}</div>') if p.get("record") else ""
+            items.append(f"""
+        <div style="padding:5px 0;border-bottom:1px solid {BORDER}">
+          <div style="font-size:11px;color:{TEXT};font-weight:700">{tag} {p['name']}</div>
+          <div style="font-size:9.5px;color:{MUTED}">{p['desc']}</div>
+          {rec}
+        </div>""")
+
+        warn = ""
+        if g.get("conflict"):
+            warn = (f'<div style="font-size:9.5px;color:{ORANGE};margin-top:6px">'
+                    f'⚠️ 逆方向の形も出ています。判断は慎重に。</div>')
+
+        cards.append(f"""
+      <div style="margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid {BORDER}">
+        <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:5px">
+          <span style="font-size:12.5px;font-weight:800;color:{TEXT}">{g['name']}</span>
+          <span style="font-size:11px;font-weight:700;color:{col}">{arrow}</span>
+          <span style="font-size:10px;color:{MUTED};margin-left:auto">
+            {g['price']:,.2f}（{g['change_pct']:+.2f}%）</span>
+        </div>
+        <div style="font-size:10px;color:{MUTED};margin-bottom:4px">{g.get('tier_label','')} {star}</div>
+        {''.join(items)}{warn}
+      </div>""")
+
+    return f"""
+<div style="margin-bottom:12px">
+  <div class="label" style="padding:0 2px;margin-bottom:6px">🕯 チャートの形</div>
+  <div class="glass" style="padding:14px">
+    {''.join(cards)}
+    <div style="font-size:10px;color:{MUTED};margin-top:4px">
+      📖 🕯はローソク足の形、📐は値動きの構造です。反転の形は「その前に反対の動きがあった」
+      ときだけ数えています（下げのあとのハンマーは意味がありますが、上げの途中では
+      ただの陽線のため）。📊の実績は過去5年30銘柄で検証し、相場全体の上昇分を
+      差し引いた「実力」を載せています。
     </div>
   </div>
 </div>"""

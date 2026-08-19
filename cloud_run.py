@@ -808,6 +808,18 @@ def run(mode: str):
     except Exception:
         logger.error("窓開けスキャンエラー", exc_info=True)
 
+    # Step CS: チャートの形（ローソク足・プライスアクション）
+    # 形が重なった銘柄だけを拾う。単独の形は当たり外れが大きいため主役にしない。
+    chart_patterns = []
+    try:
+        logger.info("--- Step CS: チャートの形 ---")
+        from src.candlestick import detect as detect_pat
+        chart_patterns = detect_pat()
+        if chart_patterns:
+            logger.info(f"✅ 形の重なり {len(chart_patterns)}件")
+    except Exception:
+        logger.error("チャートの形の検出エラー", exc_info=True)
+
     # Step RG: リスク計器盤（恐怖指数10種・日米金利・ドル指数・暗号資産F&G）
     # 水準ではなく「その指標にとって普段より大きく動いたか」を見る。
     # しきい値は各指標の過去1年から自動計算するため、指標ごとの性格差を吸収できる。
@@ -1054,6 +1066,7 @@ def run(mode: str):
             risk_gauges=risk_gauges,
             kabutan_warning=kabutan_warning,
             gap_scan=gap_scan,
+            chart_patterns=chart_patterns,
             mode=mode,
         )
         # 公開ページが更新されたことを必ず確認する。

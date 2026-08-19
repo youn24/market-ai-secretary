@@ -26,5 +26,6 @@ data/*
 !data/divergence_state.json
 !data/risk_gauge_state.json
 !data/gap_state.json
+!data/pattern_state.json
 reports/charts/
 logs/
