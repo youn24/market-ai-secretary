@@ -4,8 +4,8 @@
 扱うもの:
   ローソク足   … 包み足・はらみ足・ハンマー・流れ星・明けの明星/宵の明星・
                   毛抜き天井/底・十字線
-  プライスアクション … 高値安値の切り上げ/切り下げ（トレンド構造）・
-                  ダブルトップ/ボトム・レンジブレイク・ブレイク後の押し目
+  （プライスアクションは src/price_action.py、酒田五法は src/sakata.py に分離。
+    通知の組み立てと配信はこのモジュールが3系統をまとめて担当する）
 
 設計の考え方:
   1. **文脈のない形は数えない。**
@@ -197,96 +197,10 @@ _CANDLES = (_pat_engulfing, _pat_harami, _pat_hammer, _pat_shooting_star,
             _pat_star, _pat_tweezer, _pat_doji)
 
 
-# ── プライスアクション ─────────────────────────────────────────
-def _swings(df, lr: int = 3) -> tuple:
-    """前後 lr 本より高い/安い点をスイング高値・安値とする。"""
-    h, l = df["High"].tolist(), df["Low"].tolist()
-    highs, lows = [], []
-    for i in range(lr, len(h) - lr):
-        if h[i] == max(h[i - lr:i + lr + 1]):
-            highs.append(i)
-        if l[i] == min(l[i - lr:i + lr + 1]):
-            lows.append(i)
-    return highs, lows
-
-
-def _pa_structure(df) -> dict | None:
-    """
-    高値・安値の切り上げ/切り下げ＝トレンドの骨格。
-
-    移動平均より素直にトレンドを表す。
-    高値も安値も切り上がっていれば上昇トレンド、両方切り下がれば下降トレンド。
-    片方だけなら構造が崩れかけている＝転換の前触れになりうる。
-    """
-    highs, lows = _swings(df)
-    if len(highs) < 2 or len(lows) < 2:
-        return None
-    h1, h2 = df["High"].iloc[highs[-2]], df["High"].iloc[highs[-1]]
-    l1, l2 = df["Low"].iloc[lows[-2]], df["Low"].iloc[lows[-1]]
-    hh, hl = h2 > h1, l2 > l1
-    if hh and hl:
-        return {"name": "高値・安値ともに切り上げ", "dir": "buy", "need": "any",
-                "desc": "上昇トレンドの骨格が保たれている形。"}
-    if not hh and not hl:
-        return {"name": "高値・安値ともに切り下げ", "dir": "sell", "need": "any",
-                "desc": "下降トレンドの骨格が保たれている形。"}
-    if hh and not hl:
-        return {"name": "高値は更新も安値を切り下げ", "dir": "neutral", "need": "any",
-                "desc": "値動きが荒くなり、方向が定まらなくなっている形。"}
-    return None
-
-
-def _pa_double(df) -> dict | None:
-    """ダブルトップ / ダブルボトム: 同じ水準で2度跳ね返された跡。"""
-    highs, lows = _swings(df)
-    atr = float(_atr(df).iloc[-1] or 0)
-    if atr <= 0:
-        return None
-    n = len(df)
-    if len(highs) >= 2:
-        a, b = highs[-2], highs[-1]
-        if 5 <= b - a <= 40 and n - b <= 5:
-            ha, hb = float(df["High"].iloc[a]), float(df["High"].iloc[b])
-            if abs(ha - hb) <= atr * 0.5 and float(df["Close"].iloc[-1]) < min(ha, hb):
-                return {"name": "ダブルトップ", "dir": "sell", "need": "up",
-                        "desc": f"{ha:,.0f}付近で2度跳ね返された。上値の重さを示す形。"}
-    if len(lows) >= 2:
-        a, b = lows[-2], lows[-1]
-        if 5 <= b - a <= 40 and n - b <= 5:
-            la, lb = float(df["Low"].iloc[a]), float(df["Low"].iloc[b])
-            if abs(la - lb) <= atr * 0.5 and float(df["Close"].iloc[-1]) > max(la, lb):
-                return {"name": "ダブルボトム", "dir": "buy", "need": "down",
-                        "desc": f"{la:,.0f}付近で2度下げ止まった。下値の堅さを示す形。"}
-    return None
-
-
-def _pa_range_break(df, look: int = 20) -> dict | None:
-    """
-    レンジ抜け: 一定期間もみ合った幅を抜けた瞬間。
-    もみ合いが狭いほど、抜けたあとの動きが大きくなりやすいとされる。
-    """
-    if len(df) < look + 5:
-        return None
-    seg = df.iloc[-(look + 1):-1]
-    hi, lo = float(seg["High"].max()), float(seg["Low"].min())
-    if hi <= lo:
-        return None
-    width = (hi - lo) / lo * 100
-    atr = float(_atr(df).iloc[-1] or 0)
-    c = float(df["Close"].iloc[-1])
-    # 値幅が広すぎるものは「もみ合い」とは言えないので除外する
-    if width > 15:
-        return None
-    if c > hi and (c - hi) >= atr * 0.2:
-        return {"name": f"{look}日のもみ合いを上抜け", "dir": "buy", "need": "any",
-                "desc": f"{hi:,.0f}を上抜け（もみ合い幅{width:.1f}%）。"}
-    if c < lo and (lo - c) >= atr * 0.2:
-        return {"name": f"{look}日のもみ合いを下抜け", "dir": "sell", "need": "any",
-                "desc": f"{lo:,.0f}を下抜け（もみ合い幅{width:.1f}%）。"}
-    return None
-
-
-_PRICE_ACTION = (_pa_structure, _pa_double, _pa_range_break)
+# ── プライスアクションは src/price_action.py へ移設 ───────────────
+# 1〜3本の「形」と、数十本の「構造」を同じ場所に置くと、
+# どちらの粒度で判断しているのか読めなくなるため分離した。
+# 移設であって複製ではない（同じ判定を二重に持たない）。
 
 
 def analyze(df: pd.DataFrame) -> list:
@@ -322,21 +236,6 @@ def analyze(df: pd.DataFrame) -> list:
         if need in ("up", "down") and trend != need:
             continue
         r["kind"] = "candle"
-        r["prior_trend"] = trend
-        found.append(r)
-
-    for fn in _PRICE_ACTION:
-        try:
-            r = fn(df)
-        except Exception:
-            logger.debug(traceback.format_exc())
-            continue
-        if not r:
-            continue
-        need = r.get("need")
-        if need in ("up", "down") and trend != need:
-            continue
-        r["kind"] = "price_action"
         r["prior_trend"] = trend
         found.append(r)
 
@@ -461,8 +360,8 @@ def detect(targets: list = None) -> list:
             # 酒田五法も同じ土俵で扱う。五法は「三」を単位とする体系で
             # 判定の粒度が違うが、利用者にとっては同じ「チャートの形」なので
             # 別々の通知にせず1通にまとめる（通知が増えると読み飛ばされる）。
-            from src import sakata
-            pats = analyze(df) + sakata.analyze(df)
+            from src import sakata, price_action
+            pats = analyze(df) + sakata.analyze(df) + price_action.analyze(df)
         except Exception:
             logger.error(f"{name} の解析に失敗しました", exc_info=True)
             continue

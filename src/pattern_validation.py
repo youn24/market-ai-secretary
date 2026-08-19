@@ -93,6 +93,7 @@ def _sign_test(vals: list, trials: int = 4000, seed: int = 3) -> float:
 def run(years: int = 5) -> dict:
     from src import candlestick as cs
     from src import sakata as sk
+    from src import price_action as pa
 
     rows = []
     for sym, name in _SYMBOLS:
@@ -119,7 +120,8 @@ def run(years: int = 5) -> dict:
                 # 西洋のローソク足パターンと酒田五法をまとめて検証する。
                 # 同じ基準（ドリフト調整＋多重比較補正）で並べないと、
                 # どちらが効くのかを比べられない。
-                pats = cs.analyze(window) + sk.analyze(window)
+                pats = (cs.analyze(window) + sk.analyze(window)
+                        + pa.analyze(window))
             except Exception:
                 logger.debug(traceback.format_exc())
                 continue
