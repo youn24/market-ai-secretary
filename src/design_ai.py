@@ -2655,7 +2655,8 @@ def _pattern_section(patterns):
           <div style="font-size:9.5px;color:{MUTED};opacity:.85">{s['desc']}</div>
         </div>""")
         for p in g["patterns"]:
-            tag = "🕯" if p["kind"] == "candle" else "📐"
+            tag = {"candle": "🕯", "sakata": "🎌",
+                   "price_action": "📐"}.get(p.get("kind"), "📐")
             rec = (f'<div style="font-size:9px;color:{BLUE};margin-top:2px">'
                    f'📊 {p["record"]}</div>') if p.get("record") else ""
             items.append(f"""
@@ -2688,7 +2689,8 @@ def _pattern_section(patterns):
   <div class="glass" style="padding:14px">
     {''.join(cards)}
     <div style="font-size:10px;color:{MUTED};margin-top:4px">
-      📖 🕯はローソク足の形、📐は値動きの構造です。反転の形は「その前に反対の動きがあった」
+      📖 🕯はローソク足の形、🎌は酒田五法（三山・三川・三空・三兵・三法）、
+      📐は値動きの構造です。反転の形は「その前に反対の動きがあった」
       ときだけ数えています（下げのあとのハンマーは意味がありますが、上げの途中では
       ただの陽線のため）。📊の実績は過去5年30銘柄で検証し、相場全体の上昇分を
       差し引いた「実力」を載せています。

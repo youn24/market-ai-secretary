@@ -396,6 +396,26 @@ def _load_validation() -> dict:
         return {}
 
 
+def _honest_note() -> str:
+    """
+    重なりの効果について、検証結果から文章を作る。
+    件数を固定で書くと再検証のたびに嘘になるので、必ずファイルから読む。
+    """
+    try:
+        d = json.loads(_VALIDATION.read_text(encoding="utf-8"))
+        c = (d.get("confluence") or {}).get("2つ重なり") or {}
+        e = (c.get("5日後") or {}).get("実力")
+        n = c.get("n")
+        if e is None or not n:
+            raise ValueError
+        return (f"過去5年・{d.get('symbols', 30)}銘柄・{d.get('total', 0):,}件で検証したところ、"
+                f"*形が重なっても成績が上がるとは確認できませんでした*"
+                f"（2つ重なり n={n:,} で {e:+.2f}%）。")
+    except Exception:
+        return ("形が重なると当たりやすくなる、という効果は"
+                "過去データでは確認できていません。")
+
+
 def _track_record(pat_name: str, val: dict) -> str:
     """
     1つの形について、過去の実績を1行にする。
@@ -438,7 +458,11 @@ def detect(targets: list = None) -> list:
     for sym, name in targets:
         try:
             df = yf.Ticker(sym).history(period="6mo")
-            pats = analyze(df)
+            # 酒田五法も同じ土俵で扱う。五法は「三」を単位とする体系で
+            # 判定の粒度が違うが、利用者にとっては同じ「チャートの形」なので
+            # 別々の通知にせず1通にまとめる（通知が増えると読み飛ばされる）。
+            from src import sakata
+            pats = analyze(df) + sakata.analyze(df)
         except Exception:
             logger.error(f"{name} の解析に失敗しました", exc_info=True)
             continue
@@ -451,10 +475,17 @@ def detect(targets: list = None) -> list:
             states = [p for p in pats if p["name"] in _STATE_PATTERNS]
             aligned = [s for s in states if s["dir"] == direction]
 
+            sakata_hits = [p for p in events if p.get("kind") == "sakata"]
+
             if len(events) >= _MIN_EVENTS:
-                tier, tier_label = "A", f"出来事が{len(events)}つ重なり"
+                tier, tier_label = "A", f"形が{len(events)}つ重なり"
+            elif sakata_hits:
+                # 酒田五法は年に数回しか出ない稀な形なので、単独でも知らせる。
+                # 三尊天井などは「重なり」を待っていると手遅れになる。
+                tier = "A" if len(sakata_hits) >= 2 else "B"
+                tier_label = f"酒田五法：{sakata_hits[0]['name']}"
             elif len(events) == 1 and aligned:
-                tier, tier_label = "B", "出来事＋トレンド構造が一致"
+                tier, tier_label = "B", "形＋トレンド構造が一致"
             else:
                 continue
 
@@ -500,7 +531,8 @@ def build_message(groups: list) -> str:
             lines.append(f"　{g['structure']['desc']}")
 
         for p in g["patterns"]:
-            tag = "🕯" if p["kind"] == "candle" else "📐"
+            tag = {"candle": "🕯", "sakata": "🎌", "price_action": "📐"}.get(
+                p.get("kind"), "📐")
             lines.append(f"{tag} *{p['name']}*")
             lines.append(f"　{p['desc']}")
             if p.get("record"):
@@ -512,13 +544,11 @@ def build_message(groups: list) -> str:
             lines.append("　⚠️ 逆方向の形も出ています。判断は慎重に。")
 
     lines += ["",
-              "🕯=ローソク足の形 ／ 📐=値動きの構造（プライスアクション）",
+              "🕯=ローソク足の形 ／ 🎌=酒田五法 ／ 📐=値動きの構造",
               "⭐=形が2つ以上重なった場面（1銘柄あたり年2回ほどしか出ません）",
               "",
               "ℹ️ *正直にお伝えします*",
-              "過去5年・30銘柄・27,994件で検証したところ、"
-              "*形が重なっても成績が上がるとは確認できませんでした*"
-              "（2つ重なり n=1,827 で +0.01%）。",
+              _honest_note(),
               "この通知は「いま何が起きているか」を知らせるもので、"
               "先を当てる道具としてはお使いにならないでください。"]
     return "\n".join(lines)[:4000]

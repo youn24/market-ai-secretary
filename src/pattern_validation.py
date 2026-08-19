@@ -92,6 +92,7 @@ def _sign_test(vals: list, trials: int = 4000, seed: int = 3) -> float:
 
 def run(years: int = 5) -> dict:
     from src import candlestick as cs
+    from src import sakata as sk
 
     rows = []
     for sym, name in _SYMBOLS:
@@ -113,8 +114,12 @@ def run(years: int = 5) -> dict:
             # 直近150本に絞るのは計算量のため。全期間を毎回渡すとO(n^2)になり
             # 30銘柄×1250日では終わらない。判定に使うのは最大でも直近40本程度
             # （スイング検出とレンジ判定）なので、150本あれば結果は変わらない。
+            window = df.iloc[max(0, i - 149): i + 1]
             try:
-                pats = cs.analyze(df.iloc[max(0, i - 149): i + 1])
+                # 西洋のローソク足パターンと酒田五法をまとめて検証する。
+                # 同じ基準（ドリフト調整＋多重比較補正）で並べないと、
+                # どちらが効くのかを比べられない。
+                pats = cs.analyze(window) + sk.analyze(window)
             except Exception:
                 logger.debug(traceback.format_exc())
                 continue
