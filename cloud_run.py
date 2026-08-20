@@ -1067,6 +1067,8 @@ def run(mode: str):
             kabutan_warning=kabutan_warning,
             gap_scan=gap_scan,
             chart_patterns=chart_patterns,
+            theme_ranking=theme_ranking,
+            nikkei_internals=nikkei_internals,
             mode=mode,
         )
         # 公開ページが更新されたことを必ず確認する。

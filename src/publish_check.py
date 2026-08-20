@@ -112,7 +112,8 @@ def _check_one(t: dict) -> dict:
 # 数分かかる。1回見ただけで判定すると、単に「まだ配信中」なだけで異常と叫ぶ。
 # 2026-08-19に実際にこれで誤検知した。誤報が続くと点検が信用されなくなる。
 _RETRY = 3
-_RETRY_WAIT = 90        # 秒
+_RETRY_WAIT = 90        # 秒（配信待ちの可能性があるとき）
+_RETRY_WAIT_SHORT = 20  # 秒（通信の一時的な失敗を想定するとき）
 
 
 def run(notify: bool = True, retry: int = _RETRY) -> dict:
@@ -121,17 +122,23 @@ def run(notify: bool = True, retry: int = _RETRY) -> dict:
     logger.info(f"=== 公開物の実地点検 ({_BASE}) ===")
     results = [_check_one(t) for t in _TARGETS]
 
-    # 鮮度だけが理由で落ちた場合に限って待って再確認する。
-    # 404や中身の破損は待っても直らないので、その場で異常と判定する。
+    # 失敗したら待って再確認する。
+    #
+    # 当初は「古い内容」のときだけ再試行していたが、2026-08-20に
+    # 1分未満で失敗した。つまり鮮度以外の理由（通信の失敗やHTTPエラー）で
+    # 即座に落ちていた。実行環境から一度取りに行って駄目でも、
+    # 単なる一時的な失敗であることが多い。
+    # 鮮度以外の理由なら短く、鮮度なら配信待ちなので長く待つ。
     for attempt in range(1, retry + 1):
-        stale = [r for r in results
-                 if not r.get("ok") and r.get("required")
-                 and "止まっています" in (r.get("reason") or "")]
-        if not stale:
+        bad = [r for r in results if not r.get("ok") and r.get("required")]
+        if not bad:
             break
-        logger.info(f"古い内容のため {_RETRY_WAIT}秒 待って再確認します "
-                    f"（{attempt}/{retry}）— 配信途中の可能性")
-        time.sleep(_RETRY_WAIT)
+        stale = any("止まっています" in (r.get("reason") or "") for r in bad)
+        wait = _RETRY_WAIT if stale else _RETRY_WAIT_SHORT
+        reasons = " / ".join(r.get("reason", "?") for r in bad)
+        logger.warning(f"点検に失敗（{attempt}/{retry}）: {reasons} "
+                       f"→ {wait}秒待って再確認します")
+        time.sleep(wait)
         results = [_check_one(t) for t in _TARGETS]
     failures = [r for r in results if not r.get("ok")]
     critical = [r for r in failures if r.get("required")]
@@ -148,6 +155,10 @@ def run(notify: bool = True, retry: int = _RETRY) -> dict:
               "checked_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
               "base": _BASE, "results": results}
 
+    if critical:
+        # 何が理由で落ちたかを必ず残す。今回、理由が分からず調査に時間がかかった。
+        for c in critical:
+            logger.error(f"最終判定: 異常 — {c['name']}: {c['reason']} [{c['url']}]")
     if critical and notify:
         _notify(critical)
     return result

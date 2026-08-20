@@ -2139,6 +2139,8 @@ def generate(
     risk_sentiment: dict = None,
     risk_gauges: dict = None,
     kabutan_warning: dict = None,
+    theme_ranking: dict = None,
+    nikkei_internals: dict = None,
     chart_patterns: list = None,
     gap_scan: dict = None,
     **_kwargs,
@@ -2185,6 +2187,8 @@ def generate(
     gap_html = _gap_section(gap_scan)
     warn_html = _warning_section(kabutan_warning)
     pat_html = _pattern_section(chart_patterns)
+    theme_html = _theme_section(theme_ranking)
+    internals_html = _internals_section(nikkei_internals)
     pro_html     = _pro_cross(prices)
     news_html    = _news(news)
     cal_html     = _calendar(weekly_calendar)
@@ -2260,6 +2264,8 @@ def generate(
   {gauge_html}
   {gap_html}
   {pat_html}
+  {internals_html}
+  {theme_html}
   {warn_html}
   {msignal_html}
   {policy_html}
@@ -2371,6 +2377,8 @@ def run(
     risk_sentiment: dict     = None,
     risk_gauges: dict        = None,
     kabutan_warning: dict    = None,
+    theme_ranking: dict      = None,
+    nikkei_internals: dict   = None,
     chart_patterns: list     = None,
     gap_scan: dict           = None,
     mode: str = "morning",
@@ -2392,6 +2400,7 @@ def run(
             risk_sentiment=risk_sentiment, risk_gauges=risk_gauges,
             kabutan_warning=kabutan_warning, gap_scan=gap_scan,
             chart_patterns=chart_patterns,
+            theme_ranking=theme_ranking, nikkei_internals=nikkei_internals,
         )
         # 生成できたと言い切る前に、ファイルが実在し中身があるかを必ず確かめる。
         # ここを検証していなかったため、本番で生成に失敗していたことに
@@ -2694,6 +2703,120 @@ def _pattern_section(patterns):
       ときだけ数えています（下げのあとのハンマーは意味がありますが、上げの途中では
       ただの陽線のため）。📊の実績は過去5年30銘柄で検証し、相場全体の上昇分を
       差し引いた「実力」を載せています。
+    </div>
+  </div>
+</div>"""
+
+
+# ── セクション：テーマ株ランキング・日経内部データ ──────────────────
+def _theme_section(theme_ranking):
+    """
+    いま資金が向かっているテーマ。
+    個別銘柄の値動きだけでは「何が買われているのか」の輪郭が見えないため、
+    テーマ単位でまとめて示す。
+    """
+    tr = theme_ranking or {}
+    if not tr.get("available"):
+        return ""
+    # theme_ranker の戻り値は rankings（theme / score / news_count / perf_5d）。
+    # キー名を推測で書くと空表示になるため、実際の形に合わせている。
+    rows = tr.get("rankings") or []
+    if not rows:
+        return ""
+
+    items = []
+    for i, r in enumerate(rows[:8], 1):
+        name = r.get("theme") or "―"
+        chg = r.get("perf_5d")
+        chg = float(chg) if chg is not None else None
+        col = GREEN if (chg or 0) > 0 else RED if (chg or 0) < 0 else MUTED
+        nc = r.get("news_count") or 0
+        # ニュース件数は「話題になっているか」の目安。値動きと別の情報なので併記する
+        note = f"ニュース{nc}件" if nc else ""
+        if r.get("external_hit"):
+            note += "　🔥株探でも話題" if note else "🔥株探でも話題"
+        items.append(f"""
+      <div style="display:flex;align-items:baseline;gap:8px;padding:5px 0;border-bottom:1px solid {BORDER}">
+        <span style="font-size:10px;color:{MUTED};min-width:16px">{i}</span>
+        <span style="flex:1;font-size:11px;color:{TEXT}">{name}
+          <span style="font-size:9px;color:{MUTED};margin-left:6px">{note}</span></span>
+        <span style="font-size:11.5px;font-weight:700;color:{col}">
+          {f"{chg:+.2f}%" if chg is not None else "—"}</span>
+      </div>""")
+
+    return f"""
+<div style="margin-bottom:12px">
+  <div class="label" style="padding:0 2px;margin-bottom:6px">🔥 テーマ株ランキング</div>
+  <div class="glass" style="padding:14px">
+    {''.join(items)}
+    <div style="font-size:10px;color:{MUTED};margin-top:8px">
+      📖 いま市場の関心が集まっているテーマです。%は構成銘柄の5日間の平均騰落率で、
+      ニュース件数が多いテーマほど話題になっています。
+    </div>
+  </div>
+</div>"""
+
+
+def _internals_section(nikkei_internals):
+    """
+    日経平均の中身（騰落レシオ・空売り比率・PER・配当利回り）。
+
+    指数の値段だけでは「買われすぎか」「売り方が多いか」は分からない。
+    過熱と冷え込みの目安を数字で添えることで、水準の判断材料にする。
+    """
+    d = nikkei_internals or {}
+    if not d.get("available"):
+        return ""
+
+    def _row(label, val, unit, judge, col):
+        if val is None:
+            return ""
+        return f"""
+      <div style="display:flex;align-items:baseline;gap:8px;padding:6px 0;border-bottom:1px solid {BORDER}">
+        <span style="flex:1;font-size:11px;color:{TEXT}">{label}</span>
+        <span style="font-size:14px;font-weight:800;color:{col}">{val}{unit}</span>
+        <span style="font-size:9.5px;color:{col};min-width:96px;text-align:right">{judge}</span>
+      </div>"""
+
+    rows = []
+    trk = d.get("trk25")
+    if trk is not None:
+        # 騰落レシオは120超で過熱、70割れで底値圏、というのが一般的な目安
+        if trk >= 120:   j, c = "過熱ぎみ", ORANGE
+        elif trk <= 70:  j, c = "売られすぎの水準", BLUE
+        else:            j, c = "中立の範囲", MUTED
+        rows.append(_row("騰落レシオ（25日）", f"{trk:.1f}", "", j, c))
+
+    sr = d.get("short_ratio")
+    if sr is not None:
+        if sr >= 45:  j, c = "売り方が多い", BLUE
+        elif sr <= 35: j, c = "売り方が少ない", ORANGE
+        else:          j, c = "平常の範囲", MUTED
+        rows.append(_row("空売り比率", f"{sr:.1f}", "%", j, c))
+
+    per = d.get("per")
+    if per is not None:
+        if per >= 18:   j, c = "割高ぎみ", ORANGE
+        elif per <= 13: j, c = "割安ぎみ", GREEN
+        else:           j, c = "妥当な範囲", MUTED
+        rows.append(_row("日経平均のPER", f"{per:.2f}", "倍", j, c))
+
+    dy = d.get("dividend_yield")
+    if dy is not None:
+        rows.append(_row("配当利回り", f"{dy:.2f}", "%", "", MUTED))
+
+    if not rows:
+        return ""
+
+    return f"""
+<div style="margin-bottom:12px">
+  <div class="label" style="padding:0 2px;margin-bottom:6px">📊 日経平均の中身</div>
+  <div class="glass" style="padding:14px">
+    {''.join(rows)}
+    <div style="font-size:10px;color:{MUTED};margin-top:8px">
+      📖 騰落レシオは値上がり銘柄と値下がり銘柄の比率で、120を超えると買われすぎ、
+      70を割ると売られすぎの目安とされます。空売り比率が高いほど、
+      上昇に転じたとき買い戻しが入りやすくなります。
     </div>
   </div>
 </div>"""
