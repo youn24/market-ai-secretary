@@ -56,6 +56,32 @@ def run():
     except Exception:
         logger.error("時間外アラートエラー"); logger.debug(traceback.format_exc())
 
+    # 米国ザラ場ムーバー（us_movers.py）
+    #   これまで米国株は時間外しか見ていなかったが、2026-08-18の半導体安のように
+    #   通常取引の最中に崩れる日がある。日本時間の深夜に進むため、
+    #   朝には終わっていて備える時間が無かった。
+    #   しきい値は銘柄ごとに過去1年から自動計算（テスラの4%と別銘柄の4%は別物）。
+    #   セクター単位の動きも見る（同業が揃えば翌日の日本株にほぼ波及する）。
+    #   通常取引の時間帯かどうかはモジュール側で判定するので時間指定は不要。
+    try:
+        from src.us_movers import run_movers_alert
+        if run_movers_alert():
+            logger.info("✅ 米国ザラ場ムーバー通知送信完了")
+    except Exception:
+        logger.error("米国ザラ場ムーバーエラー", exc_info=True)
+
+    # 日経平均への寄与度（nikkei_impact.py）
+    #   日経は株価の平均なので、値がさ株ほど指数を動かす力が強い。
+    #   「日経が下げた」が1銘柄のせいか全体かで意味が変わるため、
+    #   寄与度と偏りを数字で出す。東京の引け後に1日1回。
+    if 15 <= now.hour < 20:
+        try:
+            from src.nikkei_impact import run_impact_alert
+            if run_impact_alert():
+                logger.info("✅ 日経寄与度の通知送信完了")
+        except Exception:
+            logger.error("日経寄与度エラー", exc_info=True)
+
     # CFD/24時間マーケット（指数先物・欧州指数・コモディティ）の急変アラート
     try:
         from src.alert_monitor import run_cfd_alert

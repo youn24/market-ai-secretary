@@ -27,5 +27,7 @@ data/*
 !data/risk_gauge_state.json
 !data/gap_state.json
 !data/pattern_state.json
+!data/us_movers_state.json
+!data/nikkei_impact_state.json
 reports/charts/
 logs/

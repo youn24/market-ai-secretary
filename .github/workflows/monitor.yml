@@ -53,7 +53,8 @@ jobs:
           for f in data/alert_state.json data/tech_signal_state.json \
                    data/fx_signal_state.json data/divergence_state.json \
                    data/risk_gauge_state.json data/gap_state.json \
-                   data/pattern_state.json; do
+                   data/pattern_state.json data/us_movers_state.json \
+                   data/nikkei_impact_state.json; do
             [ -f "$f" ] && git add -f "$f"
           done
           if ! git diff --staged --quiet; then

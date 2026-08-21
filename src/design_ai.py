@@ -2140,6 +2140,8 @@ def generate(
     risk_gauges: dict = None,
     kabutan_warning: dict = None,
     theme_ranking: dict = None,
+    nikkei_impact: dict = None,
+    us_movers: dict = None,
     nikkei_internals: dict = None,
     chart_patterns: list = None,
     gap_scan: dict = None,
@@ -2189,6 +2191,8 @@ def generate(
     pat_html = _pattern_section(chart_patterns)
     theme_html = _theme_section(theme_ranking)
     internals_html = _internals_section(nikkei_internals)
+    nimpact_html = _nikkei_impact_section(nikkei_impact)
+    usmv_html = _us_movers_section(us_movers)
     pro_html     = _pro_cross(prices)
     news_html    = _news(news)
     cal_html     = _calendar(weekly_calendar)
@@ -2264,6 +2268,8 @@ def generate(
   {gauge_html}
   {gap_html}
   {pat_html}
+  {usmv_html}
+  {nimpact_html}
   {internals_html}
   {theme_html}
   {warn_html}
@@ -2378,6 +2384,8 @@ def run(
     risk_gauges: dict        = None,
     kabutan_warning: dict    = None,
     theme_ranking: dict      = None,
+    nikkei_impact: dict      = None,
+    us_movers: dict          = None,
     nikkei_internals: dict   = None,
     chart_patterns: list     = None,
     gap_scan: dict           = None,
@@ -2401,6 +2409,7 @@ def run(
             kabutan_warning=kabutan_warning, gap_scan=gap_scan,
             chart_patterns=chart_patterns,
             theme_ranking=theme_ranking, nikkei_internals=nikkei_internals,
+            nikkei_impact=nikkei_impact, us_movers=us_movers,
         )
         # 生成できたと言い切る前に、ファイルが実在し中身があるかを必ず確かめる。
         # ここを検証していなかったため、本番で生成に失敗していたことに
@@ -2817,6 +2826,133 @@ def _internals_section(nikkei_internals):
       📖 騰落レシオは値上がり銘柄と値下がり銘柄の比率で、120を超えると買われすぎ、
       70を割ると売られすぎの目安とされます。空売り比率が高いほど、
       上昇に転じたとき買い戻しが入りやすくなります。
+    </div>
+  </div>
+</div>"""
+
+
+# ── セクション：日経平均を動かした銘柄 ─────────────────────────────
+def _nikkei_impact_section(nikkei_impact):
+    """
+    寄与度＝その銘柄が指数を何円動かしたか。
+
+    「日経が下げた」だけでは、1銘柄のせいなのか全体なのか分からない。
+    偏りの有無で翌日への持ち越し方が変わるため、そこを最初に伝える。
+    """
+    d = nikkei_impact or {}
+    if not d.get("available"):
+        return ""
+    rows = d.get("rows") or []
+    if not rows:
+        return ""
+
+    items = []
+    for r in rows[:10]:
+        up = r["impact_yen"] > 0
+        col = GREEN if up else RED
+        items.append(f"""
+      <div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid {BORDER}">
+        <span style="flex:1;font-size:11px;color:{TEXT}">{r['name']}</span>
+        <span style="font-size:9.5px;color:{MUTED};width:96px;text-align:right">
+          {r['price']:,.0f}　{r['chg_pct']:+.2f}%</span>
+        <span style="font-size:13px;font-weight:800;color:{col};width:64px;text-align:right">
+          {r['impact_yen']:+.0f}円</span>
+      </div>""")
+
+    summary = "".join(
+        f'<div style="font-size:11px;color:{TEXT};margin-bottom:4px">{s}</div>'
+        for s in (d.get("summary") or []))
+
+    net = d.get("net_yen", 0)
+    ncol = GREEN if net > 0 else RED
+    return f"""
+<div style="margin-bottom:12px">
+  <div class="label" style="padding:0 2px;margin-bottom:6px">🎯 日経平均を動かした銘柄</div>
+  <div class="glass" style="padding:14px">
+    <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:9px">
+      <span style="font-size:24px;font-weight:900;color:{ncol}">{net:+.0f}円</span>
+      <span style="font-size:10px;color:{MUTED}">主要30銘柄の寄与（差し引き）</span>
+      <span style="font-size:10px;color:{MUTED};margin-left:auto">
+        上げ {d.get('up_yen',0):+.0f}円 / 下げ {d.get('down_yen',0):+.0f}円</span>
+    </div>
+    <div style="margin-bottom:9px">{summary}</div>
+    {''.join(items)}
+    <div style="font-size:10px;color:{MUTED};margin-top:9px">
+      📖 日経平均は株価の平均なので、株価の高い銘柄ほど指数を動かす力が強くなります。
+      同じ1%でもファーストリテイリングと低位株では指数への影響がまるで違います。
+      ※主要30銘柄からの概算値です。
+    </div>
+  </div>
+</div>"""
+
+
+# ── セクション：米国ザラ場ムーバー ──────────────────────────────
+def _us_movers_section(us_movers):
+    """
+    米国の通常取引で大きく動いた銘柄と、日本への波及先。
+
+    米国の銘柄名だけ並べても「明日どこを見ればいいか」が分からないため、
+    日本の該当銘柄名を最初に置く。
+    """
+    d = us_movers or {}
+    if not d.get("available"):
+        return ""
+    movers = d.get("movers") or []
+    sectors = d.get("sectors") or []
+    if not movers and not sectors:
+        return ""
+
+    jp = "".join(
+        f'<div style="font-size:11px;color:{TEXT};margin-bottom:5px">'
+        f'{"🔺" if x["direction"] == "up" else "🔻"} {x["text"].replace("**", "")}</div>'
+        for x in (d.get("jp_impact") or [])[:4])
+
+    sec_html = ""
+    if sectors:
+        cells = []
+        for s in sectors[:3]:
+            up = s["direction"] == "up"
+            col = GREEN if up else RED
+            names = "・".join(m["name"] for m in s["leaders"])
+            cells.append(f"""
+        <div style="padding:5px 0;border-bottom:1px solid {BORDER}">
+          <div style="display:flex;align-items:baseline;gap:8px">
+            <span style="font-size:11px;font-weight:700;color:{TEXT}">{s['sector']}</span>
+            <span style="font-size:9.5px;color:{MUTED}">{s['count']}/{s['total']}銘柄が同じ方向</span>
+            <span style="font-size:12px;font-weight:800;color:{col};margin-left:auto">
+              {s['avg_pct']:+.2f}%</span>
+          </div>
+          <div style="font-size:9px;color:{MUTED}">{names}</div>
+        </div>""")
+        sec_html = (f'<div style="font-size:10px;color:{MUTED};font-weight:700;'
+                    f'margin:8px 0 3px">🏭 業界単位の動き</div>' + "".join(cells))
+
+    rows = []
+    for m in movers[:8]:
+        up = m["chg_pct"] > 0
+        col = GREEN if up else RED
+        typ = (f'<span style="font-size:9px;color:{MUTED}">普段{m["typical"]:.1f}%</span>'
+               if m.get("typical") is not None else "")
+        rows.append(f"""
+      <div style="display:flex;align-items:baseline;gap:8px;padding:4px 0;border-bottom:1px solid {BORDER}">
+        <span style="flex:1;font-size:11px;color:{TEXT}">{m['name']}</span>
+        {typ}
+        <span style="font-size:12px;font-weight:800;color:{col};width:62px;text-align:right">
+          {m['chg_pct']:+.2f}%</span>
+      </div>""")
+
+    return f"""
+<div style="margin-bottom:12px">
+  <div class="label" style="padding:0 2px;margin-bottom:6px">🇺🇸 米国株の大きな動き</div>
+  <div class="glass" style="padding:14px">
+    {f'<div style="margin-bottom:9px">{jp}</div>' if jp else ''}
+    {sec_html}
+    {f'<div style="font-size:10px;color:{MUTED};font-weight:700;margin:8px 0 3px">📊 個別銘柄</div>' if rows else ''}
+    {''.join(rows)}
+    <div style="font-size:10px;color:{MUTED};margin-top:9px">
+      📖 「大きく動いた」の基準は銘柄ごとに過去1年から自動計算しています。
+      テスラのように普段から動く銘柄と、そうでない銘柄では同じ%でも意味が違うためです。
+      同業が揃って動いたときは、翌日の日本株に波及しやすくなります。
     </div>
   </div>
 </div>"""

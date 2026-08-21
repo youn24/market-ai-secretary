@@ -808,6 +808,29 @@ def run(mode: str):
     except Exception:
         logger.error("窓開けスキャンエラー", exc_info=True)
 
+    # Step UM: 米国ザラ場ムーバー（通常取引で大きく動いた銘柄と日本への波及）
+    us_movers = {"available": False}
+    try:
+        logger.info("--- Step UM: 米国ザラ場ムーバー ---")
+        from src.us_movers import run as run_um
+        us_movers = run_um()
+        if us_movers.get("available"):
+            logger.info(f"✅ 米国ムーバー {len(us_movers.get('movers') or [])}件 / "
+                        f"業界 {len(us_movers.get('sectors') or [])}件")
+    except Exception:
+        logger.error("米国ザラ場ムーバーエラー", exc_info=True)
+
+    # Step NI: 日経平均への寄与度（どの銘柄が指数を動かしたか）
+    nikkei_impact = {"available": False}
+    try:
+        logger.info("--- Step NI: 日経寄与度 ---")
+        from src.nikkei_impact import run as run_ni
+        nikkei_impact = run_ni()
+        if nikkei_impact.get("available"):
+            logger.info(f"✅ 日経寄与度: 差し引き {nikkei_impact.get('net_yen')}円")
+    except Exception:
+        logger.error("日経寄与度エラー", exc_info=True)
+
     # Step CS: チャートの形（ローソク足・プライスアクション）
     # 形が重なった銘柄だけを拾う。単独の形は当たり外れが大きいため主役にしない。
     chart_patterns = []
@@ -1069,6 +1092,8 @@ def run(mode: str):
             chart_patterns=chart_patterns,
             theme_ranking=theme_ranking,
             nikkei_internals=nikkei_internals,
+            nikkei_impact=nikkei_impact,
+            us_movers=us_movers,
             mode=mode,
         )
         # 公開ページが更新されたことを必ず確認する。
