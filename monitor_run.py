@@ -36,6 +36,30 @@ def run():
     except Exception:
         logger.error("リスク計算エラー")
 
+    # ── 緊急アラート ────────────────────────────────────────
+    # 他の何より先に実行する。後ろに置くと、途中の処理が失敗したときに
+    # 緊急の連絡だけ届かないという最悪の事態になりうる。
+    #
+    # 判定基準は過去2年の実測で年5〜15回に収まる水準に設定してある。
+    # 「1銘柄が急落した」は緊急にしない。73銘柄も見ていればどれかは毎日動く。
+    # 市場全体が壊れているかどうかだけを見る。
+    try:
+        from src.us_movers import run_emergency_alert as us_em
+        if us_em():
+            logger.warning("🚨 米国市場の緊急アラートを送信しました")
+    except Exception:
+        logger.error("米国緊急アラートエラー", exc_info=True)
+
+    # 日経側は「偏った急変」を緊急とする。指数の値幅そのものは
+    # 下の暴落級アラートが見ているので、ここでは中身の偏りだけを扱う。
+    if 15 <= now.hour < 20:
+        try:
+            from src.nikkei_impact import run_emergency_alert as nk_em
+            if nk_em():
+                logger.warning("🚨 日経の偏った急変を通知しました")
+        except Exception:
+            logger.error("日経緊急アラートエラー", exc_info=True)
+
     # 暴落級アラートチェック（安全網）
     # ※通常の細かい急変通知は廃止。本当に大きな暴落のときだけ通知する。
     try:

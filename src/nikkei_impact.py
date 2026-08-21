@@ -85,6 +85,17 @@ _CONCENTRATION = 0.7
 # 寄与度がこの円数を超えたら「指数を動かした」として個別に取り上げる
 _BIG_YEN = 30.0
 
+# ── 緊急アラートの基準 ───────────────────────────────────────
+# 過去1年（243営業日）で実測し、年6回ほどに収まる水準にした。
+#
+# 「指数が大きく動いた」だけでは緊急にしない。それは alert_monitor が
+# 日経先物−3%として既に見ており、二重に鳴らす意味がない。
+# ここで緊急と呼ぶのは **動きが特定銘柄に偏っている場合**。
+# 指数は大きく動いたのに中身は数銘柄だけ、という状態は
+# 「市場全体が崩れた」のとは意味が違い、翌日の戻り方も変わる。
+_EM_NIKKEI_PCT = 1.5     # 指数がこれ以上動き
+_EM_TOP_SHARE = 0.70     # 上位3銘柄で7割以上を説明できる … 年約6回
+
 
 def _fetch(sym: str) -> dict | None:
     ctx = ssl.create_default_context()
@@ -203,6 +214,24 @@ def run(*_args, **_kwargs) -> dict:
         "top_share": round(top_share, 3),
         "concentrated": concentrated,
         "summary": _summary(rows, up, down, top, top_share, concentrated),
+        "emergency": _emergency(nk_chg, top_share, top),
+    }
+
+
+def _emergency(nk_chg, share, top) -> dict | None:
+    """
+    指数が大きく動き、かつ その動きが数銘柄に偏っているときだけ緊急とする。
+    指数の値幅そのものは alert_monitor が見ているので、ここでは扱わない。
+    """
+    if nk_chg is None or abs(nk_chg) < _EM_NIKKEI_PCT:
+        return None
+    if share < _EM_TOP_SHARE:
+        return None
+    return {
+        "nikkei_chg": round(nk_chg, 2),
+        "share": round(share, 3),
+        "leaders": [{"name": r["name"], "impact_yen": r["impact_yen"],
+                     "chg_pct": r["chg_pct"]} for r in top],
     }
 
 
@@ -234,6 +263,63 @@ def _summary(rows, up, down, top, share, concentrated) -> list:
         elif dns >= ups * 3:
             out.append(f"値上がり{ups}／値下がり{dns}と、下げが広く波及しています。")
     return out
+
+
+def build_emergency_message(r: dict) -> str:
+    em = r["emergency"]
+    d = "上昇" if em["nikkei_chg"] > 0 else "下落"
+    lines = [f"🚨 *緊急：日経の{d}が数銘柄に偏っています*",
+             f"⏰ {get_jst_now().strftime('%m/%d %H:%M JST')}",
+             "━━━━━━━━━━━━━━", "",
+             f"日経平均は {em['nikkei_chg']:+.2f}% と大きく動きましたが、"
+             f"その *{em['share']*100:.0f}% が上位3銘柄* によるものです。", ""]
+    for x in em["leaders"]:
+        arrow = "🔺" if x["impact_yen"] > 0 else "🔻"
+        lines.append(f"{arrow} *{x['name']}* {x['impact_yen']:+.0f}円"
+                     f"（{x['chg_pct']:+.2f}%）")
+    lines += ["",
+              "📖 *これが意味すること*",
+              "　市場全体が動いたのではなく、特定の銘柄の事情で指数が動いた形です。",
+              "　指数の数字ほど地合いは悪く（良く）ない可能性があります。",
+              "　保有していない銘柄が原因なら、影響は限定的かもしれません。",
+              "",
+              "この通知は年6回ほどしか出ない水準で設定しています。"]
+    return "\n".join(lines)[:4000]
+
+
+def run_emergency_alert() -> bool:
+    """偏った急変のときだけ即座に知らせる。1セッション1回。"""
+    try:
+        r = run()
+        if not r.get("available") or not r.get("emergency"):
+            return False
+        skey = _session_key()
+        try:
+            st = json.loads(_STATE_FILE.read_text(encoding="utf-8"))
+        except Exception:
+            st = {}
+        if st.get("emergency_session") == skey:
+            logger.info("緊急アラートは通知済みのためスキップ")
+            return False
+
+        from src.notify_telegram import send_message
+        ok = send_message(build_emergency_message(r))
+        if ok:
+            st["emergency_session"] = skey
+            st["emergency_ts"] = datetime.now().isoformat()
+            try:
+                _STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
+                _STATE_FILE.write_text(json.dumps(st, ensure_ascii=False),
+                                       encoding="utf-8")
+            except Exception:
+                logger.error("状態の保存に失敗しました", exc_info=True)
+            logger.warning(f"🚨 日経の偏った急変を通知"
+                           f"（{r['emergency']['nikkei_chg']:+.2f}% / "
+                           f"上位3銘柄で{r['emergency']['share']*100:.0f}%）")
+        return bool(ok)
+    except Exception:
+        logger.error("緊急アラートの処理に失敗しました", exc_info=True)
+        return False
 
 
 def build_block(r: dict, limit: int = 8) -> str:

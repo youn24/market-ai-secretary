@@ -40,6 +40,20 @@
       "date": "2026-08-13",
       "pnl_pct": 0,
       "holdings": []
+    },
+    {
+      "date": "2026-08-20",
+      "pnl_pct": 0,
+      "holdings": [
+        {
+          "symbol": "7203.T",
+          "pnl_pct": 0
+        },
+        {
+          "symbol": "9432.T",
+          "pnl_pct": 0
+        }
+      ]
     }
   ]
 }

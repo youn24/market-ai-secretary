@@ -51,6 +51,22 @@ _SECTOR_MIN = 3
 # 通知に載せる上限（多すぎると読まれない）
 _TOP_N = 10
 
+# ── 緊急アラートの基準 ───────────────────────────────────────
+# 過去2年（501営業日）で実測し、年5〜15回に収まる水準に設定した。
+#
+# 個別銘柄は基準にしない。73銘柄も見ていれば、どれか1つは毎日大きく動く
+# （しきい値の3倍でも17.9%の日に発生した）。決算での1銘柄の急落は
+# 「緊急」ではなく、市場全体が壊れているかどうかが知りたいことである。
+#
+# そこで「広がり」で測る。多くの銘柄が同時に下げた日だけを緊急とする。
+_EM_AVG_DOWN = -2.5      # 全銘柄の平均がこれ以下 … 年約9回
+_EM_AVG_UP = 3.0         # 全銘柄の平均がこれ以上 … 年約5回
+_EM_BREADTH_PCT = -2.0   # この下落率を
+_EM_BREADTH_RATIO = 0.5  # 半数以上の銘柄が記録した … 年約10回
+# 半導体は日経への影響が桁違いに大きいので単独で見る … 年約15回
+_EM_SEMI_AVG = -4.0
+_EM_SEMI_SECTORS = ("半導体", "半導体装置")
+
 
 def _fetch_chart(sym: str, rng: str = "1d", interval: str = "1d") -> dict | None:
     ctx = ssl.create_default_context()
@@ -197,6 +213,49 @@ def run(only_big: bool = True) -> dict:
         "movers": big if only_big else rows,
         "sectors": sectors,
         "jp_impact": _jp_impact(big, sectors),
+        "emergency": _emergency(rows),
+    }
+
+
+def _emergency(rows: list) -> dict | None:
+    """
+    市場全体が壊れているかを判定する。
+
+    1銘柄の急落は決算などの個別事情で、翌日の日本市場への影響は限定的。
+    しかし多くの銘柄が同時に下げた日は地合いそのものが変わっており、
+    翌朝の東京がそのまま影響を受ける。緊急と呼ぶべきはこちら。
+    """
+    if len(rows) < 20:
+        return None
+    vals = [r["chg_pct"] for r in rows]
+    avg = statistics.mean(vals)
+    down = sum(1 for v in vals if v <= _EM_BREADTH_PCT)
+    ratio = down / len(vals)
+
+    semis = [r["chg_pct"] for r in rows if r["sector"] in _EM_SEMI_SECTORS]
+    semi_avg = statistics.mean(semis) if len(semis) >= 8 else None
+
+    reasons = []
+    if avg <= _EM_AVG_DOWN:
+        reasons.append(f"監視{len(rows)}銘柄の平均が {avg:+.2f}%（全面安）")
+    if ratio >= _EM_BREADTH_RATIO:
+        reasons.append(f"{down}/{len(rows)}銘柄（{ratio*100:.0f}%）が"
+                       f"{abs(_EM_BREADTH_PCT):.0f}%以上の下落")
+    if semi_avg is not None and semi_avg <= _EM_SEMI_AVG:
+        reasons.append(f"半導体{len(semis)}銘柄の平均が {semi_avg:+.2f}%"
+                       f"（日経への影響が大きい）")
+    direction = "down"
+
+    if not reasons and avg >= _EM_AVG_UP:
+        reasons.append(f"監視{len(rows)}銘柄の平均が {avg:+.2f}%（全面高）")
+        direction = "up"
+
+    if not reasons:
+        return None
+    return {
+        "direction": direction, "reasons": reasons,
+        "avg": round(avg, 2), "down_ratio": round(ratio, 2),
+        "semi_avg": round(semi_avg, 2) if semi_avg is not None else None,
     }
 
 
@@ -373,6 +432,90 @@ def build_message(r: dict) -> str:
                  "テスラのように普段から動く銘柄と、そうでない銘柄では"
                  "同じ%でも意味が違うためです。")
     return "\n".join(lines)[:4000]
+
+
+def build_emergency_message(r: dict) -> str:
+    """
+    緊急アラートの本文。通常の通知とは見た目から変える。
+    平常時の通知と同じ体裁だと、緊急であることが伝わらない。
+    """
+    em = r["emergency"]
+    up = em["direction"] == "up"
+    head = "🚨🚨 *緊急：米国市場が全面高です* 🚨🚨" if up else            "🚨🚨 *緊急：米国市場が全面安です* 🚨🚨"
+
+    lines = [head, f"⏰ {get_jst_now().strftime('%m/%d %H:%M JST')}",
+             "━━━━━━━━━━━━━━", "",
+             "*なぜ緊急か*"]
+    for x in em["reasons"]:
+        lines.append(f"　・{x}")
+    lines.append("")
+
+    jp = r.get("jp_impact") or []
+    if jp:
+        lines.append("📖 *明日の東京への影響*")
+        for x in jp[:3]:
+            lines.append(f"　{x['text'].replace('**', '')}")
+        lines.append("")
+
+    movers = (r.get("movers") or [])[:6]
+    if movers:
+        lines.append("📊 *特に大きく動いた銘柄*")
+        for m in movers:
+            arrow = "🔺" if m["chg_pct"] > 0 else "🔻"
+            lines.append(f"{arrow} {m['name']} {m['chg_pct']:+.2f}%")
+        lines.append("")
+
+    if up:
+        lines.append("ℹ️ 個別の材料ではなく市場全体が動いています。")
+    else:
+        lines.append("ℹ️ 1銘柄の問題ではなく市場全体が下げています。"
+                     "翌朝の東京もそのまま影響を受けやすい状況です。")
+    lines.append("この通知は年に5〜15回程度しか出ない水準で設定しています。")
+    return "\n".join(lines)[:4000]
+
+
+def run_emergency_alert() -> bool:
+    """
+    市場全体が壊れたときだけ、即座に知らせる。
+
+    通常のムーバー通知とは別枠にしているのは、
+    「1日1回」の制限で緊急の連絡が止まってしまっては意味がないため。
+    ただし緊急も1セッション1回に留める（連呼すると麻痺する）。
+    """
+    try:
+        r = run()
+        if not r.get("available"):
+            return False
+        em = r.get("emergency")
+        if not em:
+            return False
+
+        skey = _session_key()
+        key = f"EM:{em['direction']}"
+        try:
+            st = json.loads(_STATE_FILE.read_text(encoding="utf-8"))
+        except Exception:
+            st = {}
+        if st.get(key, {}).get("session") == skey:
+            logger.info("緊急アラートは通知済みのためスキップ")
+            return False
+
+        from src.notify_telegram import send_message
+        ok = send_message(build_emergency_message(r))
+        if ok:
+            st[key] = {"session": skey, "ts": datetime.now().isoformat(),
+                       "avg": em["avg"]}
+            try:
+                _STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
+                _STATE_FILE.write_text(json.dumps(st, ensure_ascii=False, indent=2),
+                                       encoding="utf-8")
+            except Exception:
+                logger.error("状態の保存に失敗しました", exc_info=True)
+            logger.warning(f"🚨 緊急アラートを送信: {' / '.join(em['reasons'])}")
+        return bool(ok)
+    except Exception:
+        logger.error("緊急アラートの処理に失敗しました", exc_info=True)
+        return False
 
 
 def run_movers_alert() -> bool:
