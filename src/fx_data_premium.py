@@ -15,7 +15,7 @@ src/fx_data_premium.py
 import io
 import warnings
 import zipfile
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone, timedelta, date
 from typing import Optional
 
 import pandas as pd
@@ -289,19 +289,27 @@ def calc_fedwatch_implied(fred_data: dict, treasury_curve: dict) -> dict:
         # FRED が取れない場合は T-bill 1M を代替 (1M T-bill ≈ FFR + 6bp)
         fred_ffr = fred_data.get("FEDFUNDS", {}).get("value")
         if fred_ffr is not None:
-            ffr = fred_ffr
+            ffr, ffr_src = fred_ffr, "FRED実績"
         elif "1M" in treasury_curve:
-            ffr = treasury_curve["1M"] - 0.06
+            # FRED取得失敗時の代替。近似値であることを呼び出し側に伝える
+            ffr, ffr_src = treasury_curve["1M"] - 0.06, "1M T-bill近似"
         else:
-            ffr = 4.33  # 最終フォールバック
+            ffr, ffr_src = 4.33, "固定フォールバック"
 
         # 各 FOMC 対応 T-bill 期間マッピング
-        meetings_map = [
-            ("7月(7/29)",  "3M"),
-            ("9月(9/16)",  "6M"),
-            ("11月(11/4)", "1Y"),
-            ("12月(12/9)", "1Y"),
+        # ※開催日を持たせ、過ぎた会合は自動で落とす（過去の会合を
+        #   「次回」として表示してしまう事故を防ぐ）
+        _today = datetime.now(JST).date()
+        _schedule = [
+            (date(2026, 7, 29), "7月(7/29)",   "3M"),
+            (date(2026, 9, 16), "9月(9/16)",   "6M"),
+            (date(2026, 11, 4), "11月(11/4)",  "1Y"),
+            (date(2026, 12, 9), "12月(12/9)",  "1Y"),
         ]
+        meetings_map = [(lbl, mat) for d, lbl, mat in _schedule if d >= _today]
+        if not meetings_map:
+            # 予定表を使い切った場合は年をまたいだ想定で最長期を1件だけ返す
+            meetings_map = [("次回会合", "1Y")]
 
         cut_p, hold_p, hike_p = [], [], []
         meetings = []
@@ -340,6 +348,7 @@ def calc_fedwatch_implied(fred_data: dict, treasury_curve: dict) -> dict:
             "hold_prob":   hold_p,
             "hike_prob":   hike_p,
             "current_ffr": ffr,
+            "ffr_source":  ffr_src,
             "note":        "T-bill implied (CME FedWatch 近似)",
         }
     except Exception:
