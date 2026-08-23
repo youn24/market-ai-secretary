@@ -808,6 +808,30 @@ def run(mode: str):
     except Exception:
         logger.error("窓開けスキャンエラー", exc_info=True)
 
+    # Step MB: 朝の3分ブリーフ（レポート冒頭に置く要約）
+    # 30以上の区画を全部見るのは現実的でないため、
+    # 「今日が普通の日か特別な日か」だけ分かる一枚を最初に用意する。
+    morning_brief = {"available": False}
+    try:
+        logger.info("--- Step MB: 朝の3分ブリーフ ---")
+        from src.morning_brief import run as run_mb
+        morning_brief = run_mb()
+        if morning_brief.get("available"):
+            logger.info(f"✅ {morning_brief.get('headline','')}")
+    except Exception:
+        logger.error("朝のブリーフ生成エラー", exc_info=True)
+
+    # Step AUDIT: 表示する数字の検算
+    # 「壊れて止まる」バグは検知できるが「もっともらしい嘘の数字」は気づけない。
+    # 別経路で取り直して突き合わせる。2026-08-23の業種ランキング誤りの再発防止。
+    try:
+        logger.info("--- Step AUDIT: データ正確性の監査 ---")
+        from src.data_audit import run_audit_alert
+        if run_audit_alert():
+            logger.warning("⚠️ データの不一致を通知しました")
+    except Exception:
+        logger.error("データ監査エラー", exc_info=True)
+
     # Step UM: 米国ザラ場ムーバー（通常取引で大きく動いた銘柄と日本への波及）
     us_movers = {"available": False}
     try:
@@ -1094,6 +1118,7 @@ def run(mode: str):
             nikkei_internals=nikkei_internals,
             nikkei_impact=nikkei_impact,
             us_movers=us_movers,
+            morning_brief=morning_brief,
             mode=mode,
         )
         # 公開ページが更新されたことを必ず確認する。

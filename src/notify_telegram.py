@@ -580,6 +580,25 @@ def _build_unified_caption(risk, prices, fear_greed, ai_summary,
         f"{tl} *{mood}*　スコア `{score_s}`",
     ]
 
+    # ── 寄り付きの見当と緊張度（最優先）──────────────────────
+    # 朝いちばんに知りたいのは「今日どう始まるか」と「警戒すべきか」。
+    # スコアの次、他のどのブロックより前に置く。
+    # 1024字の制限があるため2行に抑え、詳細はレポート本編へ譲る。
+    try:
+        from src.morning_brief import run as _mb
+        _b = _mb()
+        _o, _r = _b.get("outlook") or {}, _b.get("risk") or {}
+        if _o.get("available"):
+            _ar = "🔺" if _o["diff_yen"] > 0 else "🔻"
+            head.append(f"{_ar} 寄り付き目安 *{_o['diff_yen']:+,}円*（{_o['band']}）")
+        if _r.get("available"):
+            _ic = {"警戒": "🔴", "やや警戒": "🟡"}.get(_r["level"], "🟢")
+            head.append(f"{_ic} 緊張度 *{_r['level']}*"
+                        f"（VIX {_r['vix']:.1f} / ドル円 {_r['fx']:.2f}）")
+    except Exception:
+        # ここで落ちても朝の通知そのものは止めない
+        logger.error("寄り付き目安を通知に載せられませんでした", exc_info=True)
+
     # ── バリュエーション節目（滅多に出ないが出たら最重要なので先頭付近に置く）──
     vw = valuation or {}
     if vw.get("available"):

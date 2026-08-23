@@ -2142,6 +2142,7 @@ def generate(
     theme_ranking: dict = None,
     nikkei_impact: dict = None,
     us_movers: dict = None,
+    morning_brief: dict = None,
     nikkei_internals: dict = None,
     chart_patterns: list = None,
     gap_scan: dict = None,
@@ -2193,6 +2194,7 @@ def generate(
     internals_html = _internals_section(nikkei_internals)
     nimpact_html = _nikkei_impact_section(nikkei_impact)
     usmv_html = _us_movers_section(us_movers)
+    brief_html = _brief_section(morning_brief)
     pro_html     = _pro_cross(prices)
     news_html    = _news(news)
     cal_html     = _calendar(weekly_calendar)
@@ -2246,6 +2248,7 @@ def generate(
 <div class="wrap" style="padding:12px 13px 36px" id="main">
 
   {hero_html}
+  {brief_html}
   {q4_html}
   {strip_html}
   {charts_html}
@@ -2386,6 +2389,7 @@ def run(
     theme_ranking: dict      = None,
     nikkei_impact: dict      = None,
     us_movers: dict          = None,
+    morning_brief: dict      = None,
     nikkei_internals: dict   = None,
     chart_patterns: list     = None,
     gap_scan: dict           = None,
@@ -2410,6 +2414,7 @@ def run(
             chart_patterns=chart_patterns,
             theme_ranking=theme_ranking, nikkei_internals=nikkei_internals,
             nikkei_impact=nikkei_impact, us_movers=us_movers,
+            morning_brief=morning_brief,
         )
         # 生成できたと言い切る前に、ファイルが実在し中身があるかを必ず確かめる。
         # ここを検証していなかったため、本番で生成に失敗していたことに
@@ -2953,6 +2958,92 @@ def _us_movers_section(us_movers):
       📖 「大きく動いた」の基準は銘柄ごとに過去1年から自動計算しています。
       テスラのように普段から動く銘柄と、そうでない銘柄では同じ%でも意味が違うためです。
       同業が揃って動いたときは、翌日の日本株に波及しやすくなります。
+    </div>
+  </div>
+</div>"""
+
+
+# ── セクション：朝の3分ブリーフ（レポート最上部）────────────────────
+def _brief_section(morning_brief):
+    """
+    起きて最初に見る一枚。レポートの一番上に置く。
+
+    30以上の区画を上から順に見るのは現実的でない。
+    「今日が普通の日か、特別な日か」だけ先に分かれば、
+    詳細を読むかどうかを自分で決められる。
+    """
+    d = morning_brief or {}
+    if not d.get("available"):
+        return ""
+
+    o = d.get("outlook") or {}
+    r = d.get("risk") or {}
+    ov = d.get("overnight") or {}
+
+    cards = []
+    if o.get("available"):
+        up = o["diff_yen"] > 0
+        col = GREEN if up else RED
+        cards.append(f"""
+      <div style="flex:1;min-width:180px;padding:12px 14px;background:rgba(255,255,255,.03);
+                  border-radius:8px;border:1px solid {BORDER}">
+        <div style="font-size:10px;color:{MUTED};margin-bottom:4px">① 寄り付きの見当</div>
+        <div style="font-size:26px;font-weight:900;color:{col};line-height:1.1">
+          {o['diff_yen']:+,}円</div>
+        <div style="font-size:10px;color:{MUTED};margin-top:3px">
+          {o['band']}（{o['diff_pct']:+.2f}%）</div>
+        <div style="font-size:10.5px;color:{TEXT};margin-top:6px">{o['advice']}</div>
+        <div style="font-size:9px;color:{MUTED};margin-top:5px">
+          昨日終値 {o['cash']:,.0f} → 先物 {o['future']:,.0f}</div>
+      </div>""")
+
+    if r.get("available"):
+        col = {"警戒": RED, "やや警戒": ORANGE}.get(r["level"], GREEN)
+        cards.append(f"""
+      <div style="flex:1;min-width:180px;padding:12px 14px;background:rgba(255,255,255,.03);
+                  border-radius:8px;border:1px solid {BORDER}">
+        <div style="font-size:10px;color:{MUTED};margin-bottom:4px">② 世界の緊張度</div>
+        <div style="font-size:26px;font-weight:900;color:{col};line-height:1.1">
+          {r['level']}</div>
+        <div style="font-size:10px;color:{MUTED};margin-top:3px">
+          VIX {r['vix']:.1f}（{r['vix_chg']:+.1f}%）／
+          ドル円 {r['fx']:.2f}（{r['fx_chg']:+.2f}%）</div>
+        <div style="font-size:10.5px;color:{TEXT};margin-top:6px">{r['message']}</div>
+      </div>""")
+
+    night = ""
+    if ov.get("available"):
+        chips = "".join(
+            f'<span style="font-size:10px;color:{GREEN if x["chg"]>0 else RED};'
+            f'margin-right:12px">{x["name"]} {x["chg"]:+.2f}%</span>'
+            for x in ov["items"])
+        us = ov.get("us") or {}
+        extra = ""
+        if us.get("emergency"):
+            extra = (f'<div style="font-size:10.5px;color:{RED};margin-top:4px">'
+                     f'🚨 米国市場は全面的に動いています</div>')
+        elif us.get("movers"):
+            extra = (f'<div style="font-size:10px;color:{MUTED};margin-top:4px">'
+                     f'大きく動いた: '
+                     + "・".join(f"{n} {c:+.1f}%" for n, c in us["movers"]) + '</div>')
+        night = f"""
+    <div style="margin-top:10px;padding:10px 14px;background:rgba(255,255,255,.03);
+                border-radius:8px;border:1px solid {BORDER}">
+      <div style="font-size:10px;color:{MUTED};margin-bottom:4px">③ 夜のうちの動き</div>
+      <div>{chips}</div>{extra}
+    </div>"""
+
+    return f"""
+<div style="margin-bottom:14px">
+  <div class="label" style="padding:0 2px;margin-bottom:6px">☀️ 今日の3分ブリーフ</div>
+  <div class="glass" style="padding:14px">
+    <div style="font-size:14px;font-weight:800;color:{TEXT};margin-bottom:10px">
+      {d.get('headline','')}</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">{''.join(cards)}</div>
+    {night}
+    <div style="font-size:10px;color:{MUTED};margin-top:9px">
+      📖 ①と②だけで「今日が普通の日か特別な日か」はほぼ判断できます。
+      気になったときだけ、下の詳細へお進みください。
     </div>
   </div>
 </div>"""
