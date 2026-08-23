@@ -242,6 +242,16 @@ def send_message(text: str, chat_id: str = None, bot_token: str = None) -> bool:
     if not _tok or not _cid or _tok in {"ここにBotFatherのトークン", ""} or _cid in {"ここにあなたのChat ID", ""}:
         logger.info("Telegram 未設定スキップ")
         return False
+
+    # 全通知はここを通る。通数の記録と暴走の安全弁をここ1か所で行う
+    # （各所に入れて回ると必ず付け忘れが出る）。
+    try:
+        from src.notify_meter import allow as _allow, record as _rec
+    except Exception:
+        _allow, _rec = (lambda *a, **k: True), (lambda *a, **k: None)
+    if not _allow("text"):
+        return False
+
     url = f"https://api.telegram.org/bot{_tok}/sendMessage"
 
     # ① まず Markdown で送信
@@ -253,6 +263,7 @@ def send_message(text: str, chat_id: str = None, bot_token: str = None) -> bool:
         )
         if r.status_code == 200:
             logger.info("Telegram テキスト送信 ✅")
+            _rec("text", True)
             return True
         # Markdown構文エラー(400)等 → プレーンで再送して"1通消える"のを防ぐ
         logger.warning(f"Markdown送信失敗(status={r.status_code}): "
@@ -265,9 +276,11 @@ def send_message(text: str, chat_id: str = None, bot_token: str = None) -> bool:
         r = requests.post(url, json={"chat_id": _cid, "text": text}, timeout=15)
         r.raise_for_status()
         logger.info("Telegram テキスト送信 ✅（プレーン）")
+        _rec("text", True)
         return True
     except Exception as e:
         logger.error(f"Telegram 送信失敗（プレーンも不可）: {e}")
+        _rec("text", False)
         return False
 
 
