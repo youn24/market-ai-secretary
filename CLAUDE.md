@@ -136,6 +136,7 @@ cloud_run.py（メインスクリプト）
 | `src/failure_analysis.py` | 予測のクセ分析（強さ別・環境別の勝率、ギャップ分解、連敗分布） |
 | `src/signal_confidence.py` | 信頼度ランク（S/A/B/C）。`config/confidence_tiers.json` を読む |
 | `src/publish_check.py` | 公開ページをHTTPで外から点検（毎朝8:30・異常時のみTelegram通知＋exit 1） |
+| `src/quote_util.py` | **前日終値の取得はここに一本化**。Yahooの chartPreviousClose を直接使わない |
 | `src/us_movers.py` | 米国**通常取引**のムーバー（銘柄別統計しきい値＋業界単位＋日本への波及先） |
 | `src/nikkei_impact.py` | 日経平均への寄与度（どの銘柄が指数を何円動かしたか・偏りの判定） |
 | `src/price_action.py` | プライスアクション9種（支持抵抗・リテスト・押し目・ダマシ・三角・フラッグ等） |
@@ -539,6 +540,31 @@ MOVE指数やドル指数が5%動くのは異常事態で、同じ数字では�
 **正しくは「当日より前の最後の終値」を、取引所の日付で特定する。**
 `meta.gmtoffset` からタイムゾーンを作り、`regularMarketTime` の日付と比較する。
 `nikkei_impact.py` でも同じ方式を使っている。
+
+### 🚨🚨 最重要: Yahoo の `chartPreviousClose` を前日終値に使わない
+
+**これは「レンジの直前の終値」であって前日終値ではない。** 実測した対応表:
+
+| range | chartPreviousClose が指すもの |
+|---|---|
+| **1d** | 前日の終値（**正しい・ここだけ使ってよい**） |
+| 5d | 約6日前の終値（誤り） |
+| 1y | 1年前の終値（大きく誤る） |
+
+さらに `previousClose` はチャートAPIの meta には基本入っていない（None）。
+`meta.get("previousClose", 0)` と書くと0になり、変化率が常に0になる。
+
+**この仕様で2026-08-22までに3件の実害が出ていた:**
+1. `us_movers` … range=1y でサンディスクの前日比が **+3505%** と表示
+2. `sector_ranking_jp` … range=5d で**17業種すべての前日比が誤り**。
+   医薬品は「+3.80%」と表示していたが実際は **−1.47%**（符号まで逆）
+3. `jquants_screener` / `earnings_preview` … previousClose が None →
+   既定値0で受けて**変化率が常に0**
+
+**対策**: `src/quote_util.py` に一本化した。新しくYahooから価格を取るときは
+必ず `quote()` か `previous_close()` を使うこと。
+正しい求め方は「取引所の現地日付が当日より前の、最後の終値」。
+UTCや日本時間で比較すると米国株で日付が1日ずれる。
 
 ### 🚨 緊急アラート（2026-08-22追加）
 `monitor_run.py` の**最初**に置いてある。後ろに置くと、途中の処理が失敗したときに

@@ -37,6 +37,17 @@ MAJOR_COMPANIES = {
 }
 
 
+
+def _prev_close_safe(result: dict, meta: dict) -> float:
+    """前日終値。判定は src/quote_util.py に一本化してある。"""
+    try:
+        from src.quote_util import previous_close
+        closes = result.get("indicators", {}).get("quote", [{}])[0].get("close", [])
+        ts = result.get("timestamp") or []
+        return float(previous_close([(t, c) for t, c in zip(ts, closes) if c], meta) or 0)
+    except Exception:
+        return 0.0
+
 def _get(url: str, timeout: int = 15) -> bytes | None:
     req = urllib.request.Request(
         url,
@@ -111,7 +122,9 @@ def _get_price_context(symbol: str) -> dict:
         meta = result.get("meta", {})
         return {
             "current_price": round(meta.get("regularMarketPrice", 0), 2),
-            "prev_close": round(meta.get("previousClose", 0), 2),
+            # meta の previousClose はチャートAPIでは基本 None。
+            # quote_util 経由で当日より前の終値を求める
+            "prev_close": round(_prev_close_safe(result, meta), 2),
             "52w_high": round(meta.get("fiftyTwoWeekHigh", 0), 2),
             "52w_low": round(meta.get("fiftyTwoWeekLow", 0), 2),
         }

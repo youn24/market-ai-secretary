@@ -178,7 +178,21 @@ def _watchlist() -> list:
         return []
 
 
-def run(only_big: bool = True) -> dict:
+# 同じ監視サイクル内で run() が複数回呼ばれる（緊急判定と通常通知）。
+# 73銘柄×2回の取得は無駄なうえ、Yahooへの負荷にもなるため短時間だけ結果を持つ。
+# 90秒にしているのは、監視の1サイクルが十数秒で終わる一方、
+# 15分後の次サイクルでは必ず取り直したいため。
+_CACHE = {"at": None, "data": None}
+_CACHE_SEC = 90
+
+
+def run(only_big: bool = True, use_cache: bool = True) -> dict:
+    if use_cache and _CACHE["data"] is not None and _CACHE["at"]:
+        age = (datetime.now(timezone.utc) - _CACHE["at"]).total_seconds()
+        if age < _CACHE_SEC:
+            logger.info(f"取得結果を再利用（{age:.0f}秒前）")
+            return _CACHE["data"]
+
     phase = market_phase()
     logger.info(f"=== 米国ザラ場ムーバー（市場は {phase}）===")
 
@@ -205,7 +219,7 @@ def run(only_big: bool = True) -> dict:
     logger.info(f"✅ {len(rows)}銘柄 / 大きく動いた {len(big)}件 / "
                 f"セクター単位 {len(sectors)}件")
 
-    return {
+    result = {
         "available": True,
         "phase": phase,
         "scanned_at": get_jst_now().strftime("%Y-%m-%d %H:%M"),
@@ -215,6 +229,9 @@ def run(only_big: bool = True) -> dict:
         "jp_impact": _jp_impact(big, sectors),
         "emergency": _emergency(rows),
     }
+    _CACHE["at"] = datetime.now(timezone.utc)
+    _CACHE["data"] = result
+    return result
 
 
 def _emergency(rows: list) -> dict | None:

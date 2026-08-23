@@ -134,8 +134,18 @@ def _fetch_yahoo_jp(code: str, name: str) -> dict:
         meta = result.get("meta", {})
         closes = result.get("indicators", {}).get("quote", [{}])[0].get("close", [])
 
+        # ⚠️ meta の previousClose はチャートAPIでは基本 None が返る。
+        # 既定値0で受けると変化率が常に0になり、実際そうなっていた。
+        # 前日終値の判定は src/quote_util.py に一本化してある。
         current = meta.get("regularMarketPrice", 0)
-        prev = meta.get("previousClose", 0)
+        prev = 0
+        try:
+            from src.quote_util import previous_close
+            ts = result.get("timestamp") or []
+            pairs = [(t, c) for t, c in zip(ts, closes) if c]
+            prev = previous_close(pairs, meta) or 0
+        except Exception:
+            pass
         chg_pct = ((current - prev) / prev * 100) if prev else 0
 
         return {

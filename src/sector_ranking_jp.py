@@ -38,18 +38,17 @@ _ABNORMAL_PCT = 18.0
 
 def _fetch_one(sym: str) -> dict | None:
     """1銘柄の現在値・前日終値を取得"""
-    url = f"https://query1.finance.yahoo.com/v8/finance/chart/{sym}?interval=1d&range=5d"
+    # ⚠️ chartPreviousClose を前日終値に使わないこと。
+    # range=5d でも「5日前の直前」を指すため、実測で17業種すべての前日比が
+    # 誤っていた（医薬品は +3.80% と表示していたが実際は -1.47% で符号まで逆）。
+    # 前日終値の判定は src/quote_util.py に一本化してある。
     try:
-        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-        with urllib.request.urlopen(req, timeout=10) as resp:
-            d = json.load(resp)
-        m = d["chart"]["result"][0]["meta"]
-        cur  = m.get("regularMarketPrice")
-        prev = m.get("chartPreviousClose") or m.get("previousClose")
-        state = m.get("marketState", "")
-        if cur is None or prev is None or prev == 0:
+        from src.quote_util import quote
+        q = quote(sym, rng="5d")
+        if not q:
             return None
-        return {"price": float(cur), "prev": float(prev), "state": state}
+        return {"price": q["price"], "prev": q["prev"],
+                "state": q["meta"].get("marketState", "")}
     except Exception as e:
         logger.debug(f"{sym} 取得失敗: {e}")
         return None
