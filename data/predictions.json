@@ -558,6 +558,23 @@
       "verified": false,
       "correct": null,
       "actual_move": null
+    },
+    {
+      "date": "2026-08-24",
+      "direction": "neutral",
+      "score": 5.53,
+      "adj_score": 5.53,
+      "conf_rank": null,
+      "conf_win_rate": null,
+      "fg": 55.2,
+      "nikkei": 66016.3594,
+      "sp500": 7674.3701,
+      "usdjpy": 158.953,
+      "vix": 15.13,
+      "confidence": null,
+      "verified": false,
+      "correct": null,
+      "actual_move": null
     }
   ],
   "accuracy": {}
