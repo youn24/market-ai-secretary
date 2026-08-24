@@ -31,3 +31,9 @@ data/*
 !data/nikkei_impact_state.json
 reports/charts/
 logs/
+
+# .env の控え・派生ファイルも必ず除外する。
+# 2026-08-24: .env.backup_… が無視対象外で、コミットできる状態だった。
+# 本体だけ守っても、控えから漏れたら同じこと。
+.env.*
+!.env.example
