@@ -54,3 +54,20 @@ jobs:
         run: |
           python -c "from src.intervention_stats import run_report; run_report()"
           echo "✅ 介入レポート完了"
+
+      # シグナル実績（過去10年のバックテスト勝率）
+      - name: "📊 シグナル実績レポートを送信"
+        if: always()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID:   ${{ secrets.TELEGRAM_CHAT_ID }}
+          PYTHONIOENCODING:   "utf-8"
+          PYTHONUTF8:         "1"
+        run: |
+          python -c "
+          from src.signal_reliability import build_report
+          from src.notify_telegram import send_message
+          m = build_report()
+          if m: send_message(m)
+          "
+          echo "✅ シグナル実績レポート完了"

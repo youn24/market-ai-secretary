@@ -159,15 +159,21 @@ def score(hits: list) -> dict:
     net       = gross - min(buy, sell)
     same      = [h for h in hits if h.get("direction") == direction]
 
-    if net >= _EMERGENCY_HIGH and len(same) >= _MIN_SIGNALS:
+    # 実データ検証（2016-2026）で、売りシグナルは買いより明確に実績が低い。
+    #   ゴールデンクロス59% / デッドクロス38%、MACD上抜け55% / 下抜け42%
+    # 同じスコアでも売りは信頼度を1段下げて扱う（過大評価を防ぐ）。
+    eff_net = net * (0.75 if direction == "sell" else 1.0)
+
+    if eff_net >= _EMERGENCY_HIGH and len(same) >= _MIN_SIGNALS:
         rank, stars, mark = "最重要", "★★★", "🚨"
-    elif net >= _EMERGENCY_MID and len(same) >= _MIN_SIGNALS:
+    elif eff_net >= _EMERGENCY_MID and len(same) >= _MIN_SIGNALS:
         rank, stars, mark = "重要", "★★", "⚠️"
     else:
         rank, stars, mark = None, "★", ""
 
     return {"direction": direction, "buy": buy, "sell": sell,
-            "net": net, "same": same, "rank": rank, "stars": stars,
+            "net": net, "eff_net": eff_net, "same": same,
+            "rank": rank, "stars": stars,
             "mark": mark, "conflict": min(buy, sell) > 0,
             "is_emergency": rank is not None}
 
@@ -261,6 +267,36 @@ def build_message(hits: list, sc: dict, price: float | None) -> str:
 
     if sc["conflict"]:
         lines.append("⚠️ 逆方向のシグナルも出ており、勢いはやや不透明。")
+
+    # ── 実績とだましリスク（過去10年の検証にもとづく）──
+    try:
+        from src.signal_reliability import (
+            win_rate_text, fakeout_risk, detect_failed_break,
+        )
+        lead_type = sc["same"][0].get("base_type") if sc["same"] else None
+        wt = win_rate_text(lead_type) if lead_type else ""
+        if wt:
+            lines += ["", wt]
+
+        # 週足トレンドを取得してだましリスクを評価
+        wk = "range"
+        try:
+            from src.setup_scanner import _weekly_trend
+            wk = (_weekly_trend(SYMBOL) or {}).get("trend", "range")
+        except Exception:
+            pass
+        d1 = _fetch("1d", "1y")
+        fr = fakeout_risk(sc["direction"], weekly_trend=wk, df=d1)
+        lines.append(f"{fr['emoji']} *だましリスク: {fr['level']}*（{fr['score']}/100）")
+        for r in fr["reasons"][:3]:
+            lines.append(f"　・{r}")
+
+        # ブレイク失敗（＝だまし確定）が出ていれば警告
+        fb = detect_failed_break(d1) if d1 is not None else None
+        if fb:
+            lines.append(f"🪤 *{fb['label']}* — {fb['desc']}")
+    except Exception:
+        logger.debug(traceback.format_exc())
 
     ctx = _context()
     if ctx:
