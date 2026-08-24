@@ -1098,11 +1098,22 @@ def _calendar(weekly_calendar):
         if not isinstance(ev, dict): continue
         date = str(ev.get("date", ev.get("day", "")))[:5]
         name = str(ev.get("name", ev.get("event", ev.get("title", ""))))[:48]
-        imp  = ev.get("importance", ev.get("impact", 0))
-        c    = RED if imp >= 3 else (YELLOW if imp >= 1 else MUTED)
+        # importance は economic_calendar.py が "high"/"medium"/"low" の文字列で返す。
+        # ここで数値と比較していたため TypeError となり、週次カレンダーがある週
+        # （＝月曜）だけ公開レポートの生成が失敗し続けていた（2026-08-24修正）。
+        # _news() で同種のバグを直した際と同じ変換を行う。
+        imp = ev.get("importance", ev.get("impact", 0))
+        if isinstance(imp, str):
+            level = {"high": 3, "medium": 2, "low": 1}.get(imp.strip().lower(), 0)
+        else:
+            try:
+                level = float(imp)
+            except (TypeError, ValueError):
+                level = 0
+        c    = RED if level >= 3 else (YELLOW if level >= 1 else MUTED)
         rows.append(f"""<div class="cal-row">
   <span style="font-size:10px;font-weight:700;color:{c};background:rgba(0,0,0,.3);padding:2px 8px;border-radius:5px;min-width:46px;text-align:center;flex-shrink:0">{date}</span>
-  <span style="font-size:11px;line-height:1.5;color:{c if imp>=3 else TEXT}">{name}</span>
+  <span style="font-size:11px;line-height:1.5;color:{c if level>=3 else TEXT}">{name}</span>
 </div>""")
 
     if not rows: return ""
