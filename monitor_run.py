@@ -114,6 +114,18 @@ def run():
     except Exception:
         logger.error("CFD/24時間アラートエラー"); logger.debug(traceback.format_exc())
 
+    # ── ドル円 緊急シグナルアラート（最優先・時間ガードなし）──
+    #   ドル円で信頼度の高いシグナルが「複数の時間軸で重なった」瞬間だけ鳴らす。
+    #   ドル円は24時間動くため、日足確定を待つ時間ガードはかけない。
+    #   他銘柄とまとめると埋もれるので tech_signals とは独立して送る。
+    #   連発防止: 同方向は4hクールダウン。方向反転・スコア急伸なら即再通知。
+    try:
+        from src.usdjpy_alert import run_usdjpy_emergency
+        if run_usdjpy_emergency():
+            logger.info("🚨 ドル円 緊急アラート送信完了")
+    except Exception:
+        logger.error("ドル円緊急アラートエラー"); logger.debug(traceback.format_exc())
+
     # テクニカルシグナル検出アラート（tech_signals.py に一本化）
     #   52週線(年線)・52週高値安値・GC/DC・200日線・一目の雲・出来高の裏付け・
     #   通常/ヒドゥンダイバージェンス・MACDクロス・ボリンジャー±2σ・RSI30/70反転
