@@ -939,6 +939,19 @@ def run(mode: str):
     except Exception:
         logger.error("株ドラゴンエラー"); logger.debug(traceback.format_exc())
 
+    # Step HOT: 話題株ウォッチ（株ドラゴンの上位銘柄 × 株クラの声）
+    #   「数字（実際に資金が集まった）」と「人の声（Xの株クラ）」を突き合わせる。
+    #   感情判定は辞書ベースのため Gemini のトークンは一切消費しない。
+    hot_stocks = {"available": False}
+    try:
+        logger.info("--- Step HOT: 話題株ウォッチ（数字×株クラ） ---")
+        from src.hot_stocks import run as run_hot
+        hot_stocks = run_hot()
+        if hot_stocks.get("available"):
+            logger.info(f"✅ 話題株ウォッチ: {len(hot_stocks.get('stocks', []))}銘柄")
+    except Exception:
+        logger.error("話題株ウォッチエラー"); logger.debug(traceback.format_exc())
+
     # Step PTS: PTS夜間取引の急騰・急落銘柄（株探・寄り付き先行ヒント・毎日）
     pts = {"available": False}
     try:
@@ -1077,6 +1090,7 @@ def run(mode: str):
             ensemble=ensemble,
             stock_dossier=stock_dossier,
             kabudragon=kabudragon,
+            hot_stocks=hot_stocks,
             pts=pts,
             us_afterhours=us_ah,
             adr=adr,
@@ -1227,6 +1241,7 @@ def run(mode: str):
                   stock_dossier=stock_dossier,
                   ensemble=ensemble,
                   kabudragon=kabudragon,
+                  hot_stocks=hot_stocks,
                   pts=pts,
                   us_afterhours=us_ah,
                   macro_regime=macro_regime,
