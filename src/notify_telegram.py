@@ -606,8 +606,12 @@ def _build_unified_caption(risk, prices, fear_greed, ai_summary,
             head.append(f"{_ar} 寄り付き目安 *{_o['diff_yen']:+,}円*（{_o['band']}）")
         if _r.get("available"):
             _ic = {"警戒": "🔴", "やや警戒": "🟡"}.get(_r["level"], "🟢")
+            # 日本株を見ているのだから日本の計器を先に出す。
+            # VIXだけで判定していた頃、日経が週-4.6%下げた5日間ずっと
+            # 「平常」を出し続けていた（2026-08-25に判明）。
+            _g = (f"日経VI {_r['nvi']:.1f} / " if _r.get("nvi") is not None else "")
             head.append(f"{_ic} 緊張度 *{_r['level']}*"
-                        f"（VIX {_r['vix']:.1f} / ドル円 {_r['fx']:.2f}）")
+                        f"（{_g}VIX {_r['vix']:.1f} / 円 {_r['fx']:.2f}）")
     except Exception:
         # ここで落ちても朝の通知そのものは止めない
         logger.error("寄り付き目安を通知に載せられませんでした", exc_info=True)
@@ -710,15 +714,51 @@ def _build_unified_caption(risk, prices, fear_greed, ai_summary,
             line += f"（{s0['mtf_note']}）"
         sig.append(line)
 
-    # ── 予測精度 ──
+    # ── 予測の実績と、今日の信頼度 ──
+    # この案件で唯一、検証で裏が取れているのが |score| 別の信頼度ランク
+    # （|score|3-6で勝率50.0% → 15+で85.1%。src/failure_analysis.py）。
+    # 検証済みのものは、検証していない観測より前に出す（src/priority.py）。
     acc = []
     ptk = prediction_tracker or {}
     if ptk.get("available"):
-        r10 = (ptk.get("stats") or {}).get("10d", {})
-        rate = r10.get("rate")
-        if rate is not None:
-            mark = "🎯" if rate >= 65 else "🔶" if rate >= 50 else "⚠️"
-            acc.append(f"🧠 AI直近10日の的中率 {mark} {rate}%")
+        st = ptk.get("stats") or {}
+
+        # ①昨日の予測が当たったか。率より「直近の1件」の方が実感しやすい
+        recent = st.get("recent5") or []
+        if recent:
+            last = recent[0]
+            ok = last.get("correct")
+            if ok is not None:
+                dj = {"bull": "上げ", "bear": "下げ",
+                      "neutral": "横ばい"}.get(last.get("direction"), "—")
+                acc.append(f"{'⭕' if ok else '❌'} 前回の予測「{dj}」は"
+                           f"{'当たり' if ok else 'はずれ'}（{last.get('date','')}）")
+
+        # ②方向別の的中率。
+        #   ⚠️ 全体の的中率（41%前後）は出さない。中立予測は相場が凪いだ日
+        #   （実測22.8%）しか正解にならず、構造的に低く出る数字で、
+        #   実力の指標として読むと誤解する（CLAUDE.md 2026-08-17の分析）。
+        #   「上げと言ったとき/下げと言ったときに当たるか」の方が判断に効く。
+        r90 = st.get("90d") or {}
+        if r90.get("total", 0) >= 20:
+            ba, be = r90.get("bull_acc"), r90.get("bear_acc")
+            parts = []
+            if ba is not None:
+                parts.append(f"上げ予想 {ba:.0f}%")
+            if be is not None:
+                parts.append(f"下げ予想 {be:.0f}%")
+            if parts:
+                acc.append(f"🧠 直近90日 " + " / ".join(parts))
+
+        # ③今日の信頼度ランク。「当てにしてよい日か」が一目で分かる
+        try:
+            from src.signal_confidence import evaluate
+            c = evaluate(ptk.get("direction", ""), ptk.get("adjusted_score", 0))
+            if c.get("available"):
+                acc.append(f"{c['stars']} 今日の信頼度 *{c['rank']}* "
+                           f"— {c['advice']}")
+        except Exception:
+            logger.error("信頼度ランクを出せませんでした", exc_info=True)
 
     # ── マクロ環境（歴史的に実績のあるファンダ指標） ──
     mac = []

@@ -35,6 +35,11 @@ _GAP_BANDS = [
 # VIXの水準。20未満は平常、25超で警戒というのが一般的な目安。
 _VIX_CALM, _VIX_ALERT = 20.0, 25.0
 
+# 日経VIの警戒水準。VIXと同じ数字は使えない。
+# 直近1年の日経VIは平均31.1・最低18.8・最高57.0で、VIX(平均18.1)より構造的に高い。
+# 日本株の方がもともと揺れやすいだけで、28は「異常」ではなく平常運転。
+_NVI_ALERT = 38.0
+
 
 def _band(diff_yen: float) -> tuple:
     a = abs(diff_yen)
@@ -82,11 +87,25 @@ def _nikkei_outlook() -> dict:
 
 def _risk_temp() -> dict:
     """
-    ②世界が怖がっているか。VIXとドル円を組で見る。
+    ②怖がられているか。**日経VI・VIX・ドル円の3つ**を組で見る。
 
-    片方だけでは判断できない。VIXが上がっても円安なら
-    「株の話」で済むが、VIXが上がって同時に円高なら本物の逃避になる。
-    この2つを必ずセットで出すのはそのため。
+    ⚠️ 2026-08-25に判明した重大な穴:
+      当初はVIXとドル円だけで判定していた。しかし2026年8月17〜21日の週、
+      日経平均は−4.63%下げたのに、VIXは−0.39%（1年で下から12%）、
+      ドル円も−0.21%でほとんど動かなかった。
+      結果、**日経が4.6%下げている5日間ずっと「平常」を出し続けていた**。
+
+      原因は明快で、VIXは米国株にかかる保険料であって日本株のものではない。
+      下げたのが日本の半導体・AI関連に集中していたため、米国の計器は動かなかった。
+      同じ週、日本側の日経VIは水曜に+10%跳ねており、拾えたはずの信号だった。
+
+      そこで日経VIを判定の中心に据える。日本株を見ている以上、
+      日本の計器を最初に見るのが筋である。
+
+    3つを組で見る理由:
+      ・日経VI … 日本株そのものの警戒度。**これが主**
+      ・VIX    … 世界共通の話かどうかの切り分け
+      ・ドル円 … 円高を伴えば本物の逃避。伴わなければ株の中の話
     """
     out = {"available": False}
     try:
@@ -100,19 +119,41 @@ def _risk_temp() -> dict:
         fx, fx_chg = f["price"], f["change_pct"]
         yen_strong = fx_chg < -0.3        # 円高＝逃避の目印
 
-        if vix >= _VIX_ALERT and yen_strong:
+        # 日本側の計器。取れなくても止めない（米国側だけで従来通り判定する）
+        nvi = nvi_chg = None
+        try:
+            from src.fetch_prices import _fetch_nikkei_vi
+            d = _fetch_nikkei_vi() or {}
+            nvi, nvi_chg = d.get("latest"), d.get("change_pct")
+        except Exception:
+            logger.error("日経VIを取得できませんでした", exc_info=True)
+
+        # 日経VIは平常時でもVIXの倍近い（日本の方がもともと揺れやすい）。
+        # 水準ではなく「普段からどれだけ跳ねたか」で見る。
+        jp_jump = nvi_chg is not None and nvi_chg >= 8
+        jp_high = nvi is not None and nvi >= _NVI_ALERT
+
+        if jp_jump and (yen_strong or vix_chg > 8):
+            level, msg = "警戒", ("日本の恐怖指数が跳ね、円高か世界の不安も伴っています。"
+                                  "本物のリスク回避です")
+        elif jp_jump:
+            level, msg = "やや警戒", ("日本の恐怖指数が跳ねています。"
+                                      "米国は静かなので、日本side固有の材料の可能性")
+        elif vix >= _VIX_ALERT and yen_strong:
             level, msg = "警戒", "恐怖指数が高く、同時に円高。本物のリスク回避が出ています"
-        elif vix >= _VIX_ALERT:
-            level, msg = "やや警戒", "恐怖指数は高めですが、円高は伴っていません"
+        elif jp_high or vix >= _VIX_ALERT:
+            level, msg = "やや警戒", "恐怖指数が高めの水準にあります"
         elif yen_strong and vix_chg > 5:
             level, msg = "やや警戒", "円高と恐怖指数の上昇が同時に出ています"
-        elif vix < _VIX_CALM:
+        elif vix < _VIX_CALM and (nvi is None or nvi < _NVI_ALERT):
             level, msg = "平常", "市場は落ち着いています"
         else:
             level, msg = "普通", "特に警戒すべき水準ではありません"
 
         return {"available": True, "vix": vix, "vix_chg": vix_chg,
-                "fx": fx, "fx_chg": fx_chg, "level": level, "message": msg}
+                "fx": fx, "fx_chg": fx_chg,
+                "nvi": nvi, "nvi_chg": nvi_chg,
+                "level": level, "message": msg}
     except Exception:
         logger.error("リスク温度を出せませんでした", exc_info=True)
         return out
@@ -214,8 +255,12 @@ def build_message(d: dict) -> str:
     r = d.get("risk") or {}
     if r.get("available"):
         icon = {"警戒": "🔴", "やや警戒": "🟡"}.get(r["level"], "🟢")
-        lines += [f"② *世界の緊張度*　{icon} {r['level']}",
-                  f"　VIX（恐怖指数）　{r['vix']:.2f}（{r['vix_chg']:+.2f}%）",
+        lines.append(f"② *市場の緊張度*　{icon} {r['level']}")
+        # 日本株を見ているのだから、日本の計器を先に出す
+        if r.get("nvi") is not None:
+            lines.append(f"　日経VI（日本）　　{r['nvi']:.2f}"
+                         + (f"（{r['nvi_chg']:+.2f}%）" if r.get("nvi_chg") is not None else ""))
+        lines += [f"　VIX（米国）　　　{r['vix']:.2f}（{r['vix_chg']:+.2f}%）",
                   f"　ドル円　　　　　　{r['fx']:.2f}（{r['fx_chg']:+.2f}%）",
                   f"　→ {r['message']}", ""]
 
