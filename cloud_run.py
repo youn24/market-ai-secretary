@@ -424,17 +424,9 @@ def run(mode: str):
     # ── Level 5 ─────────────────────────────────────────────
 
     # Step L5e: 自己批判エンジン（過去予測の反省学習）
+    # Step L5e: 自己批判エンジン → 2026-08-25 廃止
+    # prediction_tracker の「過去の予測を振り返る」と役割が重複していた。
     self_critique = {"available": False}
-    try:
-        logger.info("--- Step L5e: 自己批判エンジン ---")
-        from src.self_critique import run as run_sc
-        self_critique = run_sc(prices=prices, risk=risk)
-        if self_critique.get("available"):
-            logger.info(f"✅ 自己批判: 正解率{self_critique.get('accuracy','---')}% 教訓{len(self_critique.get('lessons',[]))}件")
-        else:
-            logger.info(f"自己批判: {self_critique.get('reason','データ不足')}")
-    except Exception:
-        logger.error("自己批判エンジンエラー"); logger.debug(traceback.format_exc())
 
     # Step L5f: Redditソーシャル感情分析（APIキー不要）
     reddit_sentiment = {"available": False}
@@ -487,17 +479,10 @@ def run(mode: str):
         logger.error("J-Quantsエラー"); logger.debug(traceback.format_exc())
 
     # Step L5a: マルチエージェント合議（4AI多数決）
+    # Step L5a: マルチエージェント合議 → 2026-08-25 廃止
+    # ai_debate と同じ「複数のAIに意見を出させて多数決」で、Geminiを二重に払っていた。
+    # 出力は公開レポートにも朝の通知にも渡っておらず、消費だけしていた。
     multi_consensus = {"available": False}
-    try:
-        logger.info("--- Step L5a: マルチエージェント合議 ---")
-        from src.multi_agent_consensus import run as run_mac
-        multi_consensus = run_mac(prices, risk, fear_greed, news,
-                                  technical=technical, fred_data=fred_data)
-        if multi_consensus.get("available"):
-            v = multi_consensus.get("verdict", {})
-            logger.info(f"✅ 合議: {v.get('direction','---')} {v.get('consensus_level','')} 確信度{v.get('consensus_confidence','?')}")
-    except Exception:
-        logger.error("マルチエージェント合議エラー"); logger.debug(traceback.format_exc())
 
     # Step L5a.5: 合議の確信度を予測レコードへ書き戻す（Brierスコア計算のため）
     try:
@@ -540,22 +525,9 @@ def run(mode: str):
         logger.error("アンサンブルエラー（スキップ）"); logger.debug(traceback.format_exc())
 
     # Step L5b: 完全自律エージェント（今日のミッション決定）
+    # Step L5b: 完全自律エージェント → 2026-08-25 廃止
+    # 「今日のミッションを自分で決める」内部処理で、利用者に届く出力がなかった。
     autonomous_plan = {"available": False}
-    try:
-        logger.info("--- Step L5b: 完全自律エージェント ---")
-        from src.autonomous_orchestrator import run as run_auto
-        autonomous_plan = run_auto(
-            prices, risk, fear_greed, news,
-            technical=technical,
-            historical_analysis=historical_analysis,
-            fred_data=fred_data,
-            fomc_sentiment=fomc_sentiment,
-            multi_consensus=multi_consensus,
-        )
-        if autonomous_plan.get("available"):
-            logger.info(f"✅ 自律エージェント: {autonomous_plan.get('todays_mission','')[:50]}")
-    except Exception:
-        logger.error("自律エージェントエラー"); logger.debug(traceback.format_exc())
 
     # Step L5c: 強化学習ループ（予測パターン学習・ML予測）
     rl_result = {"available": False}
@@ -589,11 +561,13 @@ def run(mode: str):
     memory_analysis = ""
     try:
         logger.info("--- Step 5e: AI記憶更新 ---")
-        from src.ai_memory import update_memory, analyze_with_memory
+        # 2026-08-25: Geminiでの「記憶分析」は廃止した。
+        # 出力先がバックアップ版HTMLだけで、公開レポートにも通知にも出ていなかった。
+        # ただし update_memory は予測学習データ(data/ai_memory.json)の記録も
+        # 担っているため、こちらは残す（CLAUDE.md のルール5）。
+        from src.ai_memory import update_memory
         update_memory(prices, risk, fear_greed, ai_summary)
-        memory_analysis = analyze_with_memory(prices, risk, fear_greed)
-        if memory_analysis:
-            logger.info("✅ AI記憶分析完了")
+        logger.info("✅ AI記憶を更新")
     except Exception:
         logger.error("AI記憶エラー"); logger.debug(traceback.format_exc())
 
@@ -611,16 +585,9 @@ def run(mode: str):
     character_comments = {"available": False, "ganesha": "", "otter": ""}
 
     # Step L5d: マルチモーダル分析（チャート画像をVisionで解析・Step6後に実行）
+    # Step L5d: マルチモーダル Vision分析 → 2026-08-25 廃止
+    # チャート画像の解釈。効果を検証しておらず、消費だけが確実だった。
     multimodal = {"available": False}
-    try:
-        if chart_paths:
-            logger.info("--- Step L5d: マルチモーダル Vision分析 ---")
-            from src.multimodal_analysis import run as run_mm
-            multimodal = run_mm(chart_paths, prices, technical=technical)
-            if multimodal.get("available"):
-                logger.info(f"✅ Vision分析: direction={multimodal.get('direction','---')}")
-    except Exception:
-        logger.error("マルチモーダル分析エラー"); logger.debug(traceback.format_exc())
 
     # Step L5i: LINE通知（Telegramと並行送信）
     try:
@@ -641,18 +608,10 @@ def run(mode: str):
     _is_monday = (_wd == 0 or mode == "test")
 
     # Step MA: マクロ要約（ファンダ＋金融政策・毎日）
+    # Step MA: マクロ要約 → 2026-08-25 廃止
+    # market_driver がニュースとマクロを併せて見るため重複。
+    # 公開レポートの「マクロ」表示は macro_watch（Gemini不使用）が担っている。
     macro = {"available": False}
-    try:
-        logger.info("--- Step MA: マクロ要約（ファンダ＋金融政策） ---")
-        from src.macro_summary import run as run_ma
-        macro = run_ma(prices=prices, news=news, fear_greed=fear_greed, risk=risk,
-                       fred_data=fred_data, fomc_sentiment=fomc_sentiment,
-                       econ_analysis=econ_analysis, sector_analysis=sector_analysis,
-                       congress_trades=congress_trades)
-        if macro.get("available"):
-            logger.info(f"✅ マクロ要約: {'AI生成' if macro.get('ai_generated') else '簡易'}")
-    except Exception:
-        logger.error("マクロ要約エラー"); logger.debug(traceback.format_exc())
 
     # Step TD: TDnet適時開示ウォッチャー（毎日・ウォッチリスト銘柄のみ）
     tdnet = {"available": False}

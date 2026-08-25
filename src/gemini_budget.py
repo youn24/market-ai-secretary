@@ -73,17 +73,25 @@ BY_WEEKDAY = {
 
 # ── 止めるもの ────────────────────────────────────
 # 「動かない」のではなく「Geminiを使わない」。理由を必ず書く。
+# 2026-08-25に**コードごと削除**したもの（記録として残す）:
+#   multi_agent_consensus … ai_debate と同じ「複数AIで多数決」。二重払い
+#   self_critique         … prediction_tracker の振り返りと重複
+#   macro_summary         … market_driver と重複
+#   autonomous_orchestrator … 内部処理で、利用者に届く出力が無かった
+#   multimodal_analysis   … チャート画像の解釈。効果未検証
+#   ai_memory の Gemini分析 … 出力先がバックアップHTMLのみ
+#     （update_memory による学習データの記録は残してある）
+#   ai_gemini / investment_tutor / news_bias_detector / weekly_performance
+#     … どこからも呼ばれていなかった
+# いずれも git 履歴には残っているので、必要になれば復元できる。
+
+# ── 残してあるが今は呼ばないもの ────────────────────
+# 消していないのは「時期が来れば価値がある」ため。
 OFF = {
-    "multi_agent_consensus": "ai_debate と同じ『複数のAIに意見を出させて多数決』。二重に払う意味がない",
-    "self_critique":         "prediction_tracker の『過去の予測を振り返る』と重複",
-    "macro_summary":         "market_driver がニュースとマクロを併せて見るため重複",
-    "economic_indicators":   "market_driver の入力用。market_driver 自身がニュースを読むので無くても成立",
-    "ai_memory":             "出力先がバックアップ版HTMLのみ。公開レポートにも通知にも出ていない",
-    "multimodal_analysis":   "チャート画像の解釈。効果を検証しておらず、消費だけ確実",
-    "autonomous_orchestrator": "『今日のミッションを自分で決める』内部処理。利用者に届く出力がない",
-    "youtube_summary":       "動画要約。最大10回使うわりに、朝の判断に効かない",
-    "earnings_brief":        "決算PDF要約。決算期以外は対象がなく、あっても catalyst_analyzer と重なる",
-    "earnings_preview":      "同上",
+    "economic_indicators": "market_driver の入力用。market_driver 自身がニュースを読むので無くても成立",
+    "youtube_summary":     "動画要約。最大10回使うわりに、朝の判断に効かない",
+    "earnings_brief":      "決算PDF要約。**決算期には価値があるので消していない**",
+    "earnings_preview":    "同上。決算シーズンに戻す場合はこの2行を消す",
 }
 
 
