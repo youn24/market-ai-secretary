@@ -11,6 +11,7 @@ data/*
 # （通知の重複防止・ゾーン跨ぎ検知は「前回どうだったか」が無いと判定できない）
 !data/notify_ledger.json
 !data/notify_history.json
+!data/gemini_budget.json
 !data/audit_state.json
 !data/theme_history.json
 !data/weekly_calendar.json

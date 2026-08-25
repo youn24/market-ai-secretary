@@ -544,6 +544,44 @@ MOVE指数やドル指数が5%動くのは異常事態で、同じ数字では�
 `meta.gmtoffset` からタイムゾーンを作り、`regularMarketTime` の日付と比較する。
 `nikkei_impact.py` でも同じ方式を使っている。
 
+## 🤖 Geminiの無料枠は1日20回（2026-08-25・src/gemini_budget.py）
+
+本番ログで判明した実測値: `limit: 20, model: gemini-2.5-flash`。
+**250回ではなく20回**。一方でGeminiを呼ぶモジュールは35個に増えていた。
+
+結果、朝8:05に枠が尽き、それ以降のAI機能が全滅していた。
+本当の問題は枠の少なさより、**cloud_run での記述順だけで勝ち負けが
+決まっていた**こと。材料分析や予測の学習が、価値ではなく順番のせいで毎日落ちていた。
+
+### 方式
+`generate_content` の呼び出し口を1か所で包む（`install()`）。
+35モジュール50箇所以上に判定を書き足すと必ず書き忘れが出て、
+その1つが枠を食い切れば元の状態に戻るため。
+呼び出し元は stack から特定するので、各所への引数追加も不要。
+
+**コードは消さない。呼ぶかどうかだけを表で決める。** 消すと戻せない。
+
+| 区分 | 回数 | 中身 |
+|---|---|---|
+| 中核（毎日） | 7 | ai_debate 3 / scenario / market_driver / technical_ai / prediction_tracker |
+| 任意（毎日） | 6 | character_commentary 2 / catalyst_analyzer 3 / sector_analysis |
+| 曜日当番 | 2〜3 | 月theme_ranker 火supply_demand 水financial_analyzer 木jquants_screener 金economic_calendar 土fomc_sentiment 日note_article |
+| **予備** | **4** | 急変アラート・14時FX用。朝で使い切ると肝心な急変時に何も出せない |
+
+合計16回/20回。月曜に5つ重なって全滅していたものを曜日で1つずつに分けた。
+
+### 停止した10件（重複または利用者に届いていない）
+multi_agent_consensus（ai_debateと重複）/ self_critique（prediction_trackerと重複）/
+macro_summary・economic_indicators（market_driverと重複）/ ai_memory（バックアップHTMLのみ）/
+multimodal_analysis（効果未検証）/ autonomous_orchestrator（出力が届かない）/
+youtube_summary（最大10回で朝の判断に効かない）/ earnings_brief・earnings_preview
+
+⚠️ `data/gemini_budget.json` は**gitignoreのホワイトリストと自動コミット対象の両方**に
+入れること。Actionsは実行ごとに使い捨てなので、片方でも漏れると
+毎回0にリセットされ、朝・監視・FXの合計が数えられない。
+
+    python -m src.gemini_budget    # 今日の割り当てと使用量を見る
+
 ## 🔑 鍵の取り扱い（2026-08-24・重大）
 
 **公開リポジトリの履歴に残ったTelegramボットトークンが、今も有効だった。**

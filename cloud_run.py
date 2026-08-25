@@ -21,6 +21,15 @@ PAGES_URL = os.getenv("GITHUB_PAGES_URL", "https://youn24.github.io/market-ai-se
 
 
 def run(mode: str):
+    # Gemini の無料枠は1日20回しかない（2026-08-25にログで判明）。
+    # 呼び出し口を1か所で押さえ、価値の高い順に配る。
+    # ここを通さないと、記述順が後ろのモジュールが毎日必ず落ちる。
+    try:
+        from src.gemini_budget import install as _install_budget
+        _install_budget()
+    except Exception:
+        logger.error("Gemini予算管理の有効化に失敗", exc_info=True)
+
     ensure_dirs()
     logger.info(f"====== クラウド実行開始 [mode={mode}] ======")
     logger.info(f"実行時刻(JST): {get_jst_now().strftime('%Y-%m-%d %H:%M:%S')}")

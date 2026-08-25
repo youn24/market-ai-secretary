@@ -136,7 +136,7 @@ jobs:
           # 失敗を完全に隠し、Actionsは緑のままだった。
           # 対策: docs は単独で add し、状態ファイルは存在確認して1つずつ add する。
           git add docs
-          for f in data/predictions.json data/ai_memory.json data/theme_history.json                    data/weekly_calendar.json data/valuation_state.json data/macro_state.json                    data/market_signal_state.json data/policy_state.json                    data/sentiment_state.json data/risk_sentiment_state.json                    data/notify_ledger.json data/notify_history.json data/audit_state.json data/last_run_report.json; do
+          for f in data/predictions.json data/ai_memory.json data/theme_history.json                    data/weekly_calendar.json data/valuation_state.json data/macro_state.json                    data/market_signal_state.json data/policy_state.json                    data/sentiment_state.json data/risk_sentiment_state.json                    data/notify_ledger.json data/notify_history.json data/gemini_budget.json data/audit_state.json data/last_run_report.json; do
             if [ -f "$f" ]; then
               git add -f "$f"
             else

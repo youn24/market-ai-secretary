@@ -13,6 +13,15 @@ logger = setup_logger("monitor_run")
 
 
 def run():
+    # Gemini の無料枠は1日20回しかない（2026-08-25にログで判明）。
+    # 呼び出し口を1か所で押さえ、価値の高い順に配る。
+    # ここを通さないと、記述順が後ろのモジュールが毎日必ず落ちる。
+    try:
+        from src.gemini_budget import install as _install_budget
+        _install_budget()
+    except Exception:
+        logger.error("Gemini予算管理の有効化に失敗", exc_info=True)
+
     ensure_dirs()
     now = get_jst_now()
     logger.info(f"====== 監視実行開始 {now.strftime('%H:%M JST')} ======")
