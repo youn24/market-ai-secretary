@@ -83,7 +83,8 @@ def analyze_with_memory(prices: dict, risk: dict, fear_greed: dict) -> str:
         recent = memory["history"][-14:]  # 直近2週間
         history_text = "\n".join(
             f"{h['date']}: 地合い={h['sentiment']}(スコア:{h['score']:+.1f}) "
-            f"日経={h['nikkei']:,.0f if h['nikkei'] else '---'} "
+            # 書式指定(:,.0f)の中に条件式は書けない。値の有無は外側で分ける。
+            f"日経={format(h['nikkei'], ',.0f') if h['nikkei'] else '---'} "
             f"F&G={h['fg_score'] or '---'}"
             for h in recent
         )

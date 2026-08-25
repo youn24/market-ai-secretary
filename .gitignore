@@ -10,6 +10,8 @@ data/*
 # 状態ファイル: 前回との差分を見るのが役目なので、永続化しないと機能しない。
 # （通知の重複防止・ゾーン跨ぎ検知は「前回どうだったか」が無いと判定できない）
 !data/notify_ledger.json
+!data/notify_history.json
+!data/audit_state.json
 !data/theme_history.json
 !data/weekly_calendar.json
 !data/valuation_state.json

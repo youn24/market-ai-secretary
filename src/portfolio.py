@@ -7,7 +7,7 @@ import os
 import json
 import traceback
 from pathlib import Path
-from src.utils import setup_logger, get_today_str, get_jst_now
+from src.utils import setup_logger, get_today_str, get_jst_now, get_dirs
 
 logger = setup_logger("portfolio")
 
