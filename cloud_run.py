@@ -154,18 +154,23 @@ def run(mode: str):
     except Exception:
         logger.error("分析エラー"); logger.debug(traceback.format_exc())
 
-    # Step 5b: AI議論分析（強気・弱気・中立）
+    # Step AIB: 統合AI解釈（3視点＋シナリオ＋変動要因を1回で取る）
+    # 無料枠が1日20回しかないため、同じ材料を見て解釈するだけの
+    # 5回ぶん（ai_debate 3・scenario 1・market_driver 1）を1回にまとめた。
+    # 内容は落とさず、4回ぶんが他のモジュールに回る（2026-08-25）。
+    ai_brief = {"available": False}
     ai_summary = {"available": False}
     try:
-        logger.info("--- Step 5b: AI議論分析 ---")
-        from src.ai_debate import run_ai_debate
-        ai_summary = run_ai_debate(prices, news, risk, fear_greed)
+        logger.info("--- Step AIB: 統合AI解釈（3視点＋シナリオ＋要因）---")
+        from src.ai_brief import run as run_brief, to_ai_summary
+        ai_brief = run_brief(prices, news, risk, fear_greed)
+        ai_summary = to_ai_summary(ai_brief)
         if ai_summary.get("available"):
-            logger.info("✅ AI議論分析完了")
+            logger.info("✅ 統合AI解釈完了")
         else:
-            logger.info("AI議論スキップ")
+            logger.info("統合AI解釈スキップ")
     except Exception:
-        logger.error("AI議論エラー"); logger.debug(traceback.format_exc())
+        logger.error("統合AI解釈エラー"); logger.debug(traceback.format_exc())
 
     # Step 5b.5: 校閲ループ（断定軟化・空セクション除去・捏造数字検出）
     try:
@@ -264,10 +269,16 @@ def run(mode: str):
     scenario = {"available": False}
     try:
         logger.info("--- Step L3d: シナリオ分析 ---")
-        from src.scenario import run as run_scen
-        scenario = run_scen(prices, risk, fear_greed, news)
+        # 統合AI解釈で既に生成済みならそれを使う（Geminiを二度払わない）
+        from src.ai_brief import to_scenario
+        scenario = to_scenario(ai_brief)
         if scenario.get("available"):
-            logger.info("✅ シナリオ分析完了")
+            logger.info("✅ シナリオ分析完了（統合AI解釈から取得）")
+        else:
+            from src.scenario import run as run_scen
+            scenario = run_scen(prices, risk, fear_greed, news)
+            if scenario.get("available"):
+                logger.info("✅ シナリオ分析完了（個別生成）")
     except Exception:
         logger.error("シナリオ分析エラー"); logger.debug(traceback.format_exc())
 
@@ -887,7 +898,8 @@ def run(mode: str):
     try:
         logger.info("--- Step MD: 相場変動の要因分析 ---")
         from src.market_driver import run as run_md
-        market_driver = run_md(prices, news, econ_analysis, macro_watch, policy)
+        market_driver = run_md(prices, news, econ_analysis, macro_watch, policy,
+                               ai_summary_text=(ai_brief or {}).get("driver", ""))
         if market_driver.get("available"):
             logger.info(f"✅ 要因分析: {len(market_driver.get('movers', []))}指標が大きく変動")
     except Exception:

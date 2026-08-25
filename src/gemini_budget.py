@@ -41,14 +41,35 @@ DAILY_LIMIT = int(os.getenv("GEMINI_DAILY_LIMIT", "20"))
 # 朝の実行で使い切ると、いちばん知らせてほしい急変時に何も出せなくなる。
 RESERVE = int(os.getenv("GEMINI_RESERVE", "4"))
 
+# 出力トークンの上限。実測(scripts/measure_prompts.py)では入力は
+# 全モジュール合計で2,798トークンしかなく、入力側は問題ではなかった。
+# 一方 max_output_tokens はどこにも設定されておらず伸び放題だった。
+# 各プロンプトは「150文字以内」等と指示しているので、日本語500字＝約280トークン。
+# 2048は十分な余裕がありつつ、暴走を止められる高さ。
+# ⚠️ 下げすぎると出力が途中で切れ、JSONの解析失敗などの
+#    「静かに壊れる」形になるので、切り詰めすぎないこと。
+MAX_OUTPUT = int(os.getenv("GEMINI_MAX_OUTPUT", "2048"))
+
 # ── 毎日動かすもの（届いていて、かつ中身が重ならないもの）──────
 # 数字は「1回の実行で使う想定の回数」。実測に合わせて調整する。
 CORE = {
-    "ai_debate":          3,   # AI3視点。Telegram通知②の中身そのもの
-    "scenario":           1,   # 3シナリオ。レポートと通知の両方に出る
-    "market_driver":      1,   # なぜ動いたか。レポートと通知の両方に出る
-    "technical_ai":       1,   # テクニカル解釈。レポートと通知の両方に出る
-    "prediction_tracker": 1,   # 予測の検証。この案件で唯一、効果を実測した仕組み
+    # 2026-08-25: ai_debate(3)・scenario(1)・market_driver(1) の計5回を
+    # ai_brief の1回に統合した。同じ材料を見て解釈を書く仕事が5回に
+    # 分かれていただけで、まとめても内容は落ちない。
+    # 実測: 6回2,798トークン → 1回537トークン。
+    "ai_brief":           1,   # 3視点＋3シナリオ＋変動要因を1回で
+    "technical_ai":       1,   # テクニカル解釈（入力が別系統なので分けたまま）
+    "prediction_tracker": 1,   # 予測の検証。唯一、効果を実測した仕組み
+}
+
+# ── 統合が失敗したときの受け皿 ───────────────────────
+# 通常は呼ばれない。ai_brief が応答を返せなかった日だけ、
+# cloud_run が個別版へ落ちる。**予定回数には数えない**
+# （数えると毎日「17回使う予定」と見えてしまい、実態とずれる）。
+FALLBACK = {
+    "ai_debate":     3,
+    "scenario":      1,
+    "market_driver": 1,
 }
 
 # ── 余裕があれば動かすもの ────────────────────────────
@@ -140,6 +161,8 @@ def should_run(module: str, now=None) -> bool:
 
     if module in CORE:
         need = CORE[module]
+    elif module in FALLBACK:
+        need = FALLBACK[module]
     elif module in NICE:
         need = NICE[module]
     else:
@@ -161,8 +184,10 @@ def should_run(module: str, now=None) -> bool:
     st = _load()
     used = st.get("used", 0)
 
-    # 中核以外は予備枠に手を付けさせない
-    cap = DAILY_LIMIT if module in CORE else DAILY_LIMIT - RESERVE
+    # 中核と受け皿だけが予備枠まで使える。
+    # 統合が失敗した日に受け皿まで止めると、朝の中身が丸ごと消えてしまう。
+    cap = (DAILY_LIMIT if module in CORE or module in FALLBACK
+           else DAILY_LIMIT - RESERVE)
     if used + need > cap:
         logger.warning(f"⏭ {module}: 予算不足でスキップ"
                        f"（使用{used}/{DAILY_LIMIT}・必要{need}・上限{cap}）")
@@ -173,8 +198,8 @@ def should_run(module: str, now=None) -> bool:
 def spend(module: str, n: int = None) -> None:
     """実際に呼んだぶんを計上する。モジュールの実行直後に呼ぶ。"""
     if n is None:
-        n = CORE.get(module) or NICE.get(module) or \
-            dict(BY_WEEKDAY.values()).get(module, 1)
+        n = (CORE.get(module) or FALLBACK.get(module) or NICE.get(module)
+             or dict(BY_WEEKDAY.values()).get(module, 1))
     st = _load()
     st["used"] = st.get("used", 0) + int(n)
     st.setdefault("by", {})[module] = st["by"].get(module, 0) + int(n)
@@ -219,6 +244,16 @@ def install() -> bool:
         st = _load()
         if st.get("used", 0) >= DAILY_LIMIT:
             raise BudgetExceeded(f"本日のGemini枠を使い切りました（{DAILY_LIMIT}回）")
+
+        # 出力の上限を全呼び出しに一律でかける。
+        # 2026-08-25時点で max_output_tokens はどのモジュールにも
+        # 設定されておらず、出力が伸び放題だった。
+        # プロンプトは「150文字以内で」等と指示しているので実際は短いが、
+        # 指示が無視された1回で無駄に使うのを防ぐ意味がある。
+        # 呼び出し側が自分で指定している場合は尊重する（上書きしない）。
+        if kw.get("generation_config") is None:
+            kw["generation_config"] = {"max_output_tokens": MAX_OUTPUT}
+
         try:
             return orig(self, *a, **kw)
         finally:

@@ -98,7 +98,15 @@ def _policy_impact(policy: dict, movers: list) -> dict | None:
 
 def run(prices: dict = None, news: list = None,
         econ: dict = None, macro_watch: dict = None,
-        policy: dict = None) -> dict:
+        policy: dict = None, ai_summary_text: str = "") -> dict:
+    """
+    ai_summary_text を渡すと、このモジュール自身はGeminiを呼ばない。
+
+    このモジュールの本体は変動要因・イベント・政策の抽出という
+    ルールベースの処理で、Geminiを使うのは要約1行だけだった。
+    無料枠が1日20回しかないため、その1行は src/ai_brief.py が
+    まとめて生成したものを受け取る（2026-08-25）。
+    """
     movers = _movers(prices)
     if not movers:
         logger.info("市場要因分析: 大きな変動なし（分析はスキップ）")
@@ -108,11 +116,12 @@ def run(prices: dict = None, news: list = None,
     headlines = _relevant_news(news)
     pol_impact = _policy_impact(policy, movers)
 
-    # ── AIに「なぜ動いたか」を要約させる ──
-    summary = ""
+    # ── 「なぜ動いたか」の要約 ──
+    # 統合側(ai_brief)から渡っていれば、そちらを使ってGeminiは呼ばない。
+    summary = (ai_summary_text or "").strip()[:400]
     try:
         api_key = os.getenv("GEMINI_API_KEY", "").strip()
-        if api_key and headlines:
+        if not summary and api_key and headlines:
             import google.generativeai as genai
             genai.configure(api_key=api_key)
             model = genai.GenerativeModel(os.getenv("GEMINI_MODEL", "gemini-2.5-flash"))
