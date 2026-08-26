@@ -150,6 +150,9 @@ cloud_run.py（メインスクリプト）
 | `src/kabutan_warning.py` | 株探・株価注意報（信用倍率/信用残増減・年初来更新・日経寄与度） |
 | `src/risk_gauges.py` | リスク計器盤（恐怖指数10種・日米金利・ドル指数・暗号資産F&G。統計しきい値で大きな動きを検知） |
 | `src/fx_signals.py` | 為替シグナル（8通貨ペア・強いサイン3つ以上一致でFX専用グループへ通知） |
+| `scripts/check_order.py` | cloud_run で「代入前に使っている変数」を静的検出。Stepの移動事故を防ぐ |
+| `scripts/measure_prompts.py` | Geminiのプロンプト実サイズをAPIを呼ばずに測る（枠を消費しない） |
+| `scripts/check_secrets.py` | 鍵の混入をコミット前に止める（pre-commitフックに接続済み） |
 | `scripts/lint_workflows.py` | ワークフローの「静かに壊れる書き方」を機械検出。`# lint:allow-fail 理由` で除外可 |
 | `src/note_article.py` | note記事生成（Step 7b） |
 | `src/note_article_generator.py` | note記事テキスト自動生成（Step 8b） |
