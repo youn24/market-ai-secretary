@@ -92,6 +92,60 @@ def _market_text(prices: dict, risk: dict, fear_greed: dict) -> str:
     return out
 
 
+def _overnight_text(us_ah: dict, adr: dict, us_movers: dict) -> str:
+    """
+    夜のうちの動き。**朝7:30の判断ではここが中心になる。**
+
+    東京はまだ開いていないので、前日の東京終値より
+    「夜に何が起きたか」の方が寄り付きを決める。
+    2026-08-25まで、この情報はAIに渡っていなかった
+    （3つのStepが統合AI解釈より後に置かれていたため）。
+
+    3つは見ているものが違うので、まとめずに分けて渡す:
+      ・米国の通常取引 … 何が崩れたか/伸びたか（業界単位）
+      ・米国の時間外   … 引け後に出た材料への反応
+      ・ADR           … 日本株そのものが夜間にどう値付けされたか
+    """
+    parts = []
+
+    um = us_movers or {}
+    if um.get("available"):
+        secs = [s.get("sector", "") for s in (um.get("sectors") or [])[:2]]
+        if secs:
+            parts.append(f"・米国通常取引で動いた業界: {'、'.join(secs)}")
+        mv = [f"{m.get('name','')} {m.get('chg_pct',0):+.1f}%"
+              for m in (um.get("movers") or [])[:4]]
+        if mv:
+            parts.append(f"・米国の主な値動き: {' / '.join(mv)}")
+        if um.get("emergency"):
+            parts.append("・米国市場は全面的に動いています（広がりのある動き）")
+
+    # ⚠️ キー名は実データで確認すること。us_afterhours は change_pct ではなく
+    #    **chg_pct**。間違えても例外にならず「全部 +0.0%」という
+    #    もっともらしい嘘が並ぶだけで気づけない（実際に一度やらかした）。
+    ah = us_ah or {}
+    if ah.get("available"):
+        mv = [f"{m.get('name') or m.get('symbol','')} {m['chg_pct']:+.1f}%"
+              for m in (ah.get("movers") or [])[:4]
+              if m.get("chg_pct") is not None]
+        if mv:
+            parts.append(f"・米国時間外（引け後）: {' / '.join(mv)}")
+
+    # ADR は stocks ではなく **top / majors**、値は divergence（東京終値との差）
+    ad = adr or {}
+    if ad.get("available"):
+        d = ad.get("major_avg_divergence")
+        if d is not None:
+            parts.append(f"・日本株ADR（夜間NYでの日本株）: 東京終値との差 平均{d:+.2f}%")
+        rows = (ad.get("top") or []) + (ad.get("bottom") or [])
+        top = [f"{a.get('name','')} {a['divergence']:+.1f}%"
+               for a in rows[:4] if a.get("divergence") is not None]
+        if top:
+            parts.append(f"　うち目立つもの: {' / '.join(top)}")
+
+    return "\n".join(parts) if parts else "（夜間に目立った動きなし）"
+
+
 def _news_text(news: list, limit: int = 6) -> str:
     if not news:
         return "（主要ニュースなし）"
@@ -123,9 +177,14 @@ def _parse(text: str) -> dict:
     return {}
 
 
-def run(prices: dict, news: list, risk: dict, fear_greed: dict) -> dict:
+def run(prices: dict, news: list, risk: dict, fear_greed: dict,
+        us_ah: dict = None, adr: dict = None, us_movers: dict = None) -> dict:
     """
     1回の呼び出しで、強気/弱気/中立の見方・変動要因・3シナリオを得る。
+
+    us_ah / adr / us_movers は夜のうちの動き。
+    朝7:30は東京が開く前なので、**判断材料の中心はここ**になる。
+    渡されなければ従来どおり前日終値だけで書くが、精度は落ちる。
 
     戻り値は既存のモジュールと同じ形に整えて返すので、
     受け取り側（design_ai・notify_telegram）は変更しなくてよい。
@@ -144,14 +203,19 @@ def run(prices: dict, news: list, risk: dict, fear_greed: dict) -> dict:
 
         prompt = f"""あなたは日本の個人投資家向けの市場アナリストです。
 読者は投資初心者なので、中学生にも分かる言葉で書いてください。
+今は日本時間の早朝で、東京市場はまだ開いていません。
 
-【市場データ】
+【前日までの終値】
 {_market_text(prices, risk, fear_greed)}
+
+【夜のうちの動き（東京の寄り付きに直接効く）】
+{_overnight_text(us_ah, adr, us_movers)}
 
 【主なニュース】
 {_news_text(news)}
 
 次の5つを一度に、JSONで答えてください。
+判断は「夜のうちの動き」を主に、終値は背景として使ってください。
 
 1. bull_view … 強気派ならこの相場をどう見るか（120字以内）
 2. bear_view … 弱気派ならどこを警戒するか（120字以内）

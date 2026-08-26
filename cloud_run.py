@@ -154,6 +154,45 @@ def run(mode: str):
     except Exception:
         logger.error("分析エラー"); logger.debug(traceback.format_exc())
 
+    # ── 夜のうちの動きを先に集める ─────────────────────
+    # 朝7:30の時点で、東京はまだ開いていない。判断材料の中心は
+    # 「夜のうちに何が起きたか」であって、前日の東京終値ではない。
+    # 2026-08-25まで、この3つは統合AI解釈より**後**に動いていたため、
+    # AIは米国の時間外もADRも知らないまま3視点とシナリオを書いていた。
+    # データ取得なので依存はなく、前に出しても他のStepに影響しない。
+
+    # Step UM: 米国ザラ場ムーバー（通常取引で大きく動いた銘柄と日本への波及）
+    us_movers = {"available": False}
+    try:
+        logger.info("--- Step UM: 米国ザラ場ムーバー ---")
+        from src.us_movers import run as run_um
+        us_movers = run_um()
+        if us_movers.get("available"):
+            logger.info(f"✅ 米国ムーバー {len(us_movers.get('movers') or [])}件 / "
+                        f"業界 {len(us_movers.get('sectors') or [])}件")
+    except Exception:
+        logger.error("米国ザラ場ムーバーエラー", exc_info=True)
+    # Step ADR: 日本株ADR（夜間NYの値動き・寄り付き先行ヒント・毎日）
+    adr = {"available": False}
+    try:
+        logger.info("--- Step ADR: 日本株ADR（夜間NY） ---")
+        from src.adr_data import run as run_adr
+        adr = run_adr(prices, risk, fear_greed)
+        if adr.get("available"):
+            logger.info(f"✅ ADR: {adr.get('count',0)}銘柄 主要平均乖離={adr.get('major_avg_divergence')}%")
+    except Exception:
+        logger.error("ADRエラー"); logger.debug(traceback.format_exc())
+    # Step US: 米国主要株の時間外ムーバー（アフターアワーズ・ザラ場先行シグナル・毎日）
+    us_ah = {"available": False}
+    try:
+        logger.info("--- Step US: 米国時間外ムーバー ---")
+        from src.us_afterhours import run as run_us_ah
+        us_ah = run_us_ah()
+        if us_ah.get("available"):
+            logger.info(f"✅ 米国時間外: {len(us_ah.get('movers',[]))}銘柄が大きく変動")
+    except Exception:
+        logger.error("米国時間外エラー"); logger.debug(traceback.format_exc())
+
     # Step AIB: 統合AI解釈（3視点＋シナリオ＋変動要因を1回で取る）
     # 無料枠が1日20回しかないため、同じ材料を見て解釈するだけの
     # 5回ぶん（ai_debate 3・scenario 1・market_driver 1）を1回にまとめた。
@@ -163,7 +202,10 @@ def run(mode: str):
     try:
         logger.info("--- Step AIB: 統合AI解釈（3視点＋シナリオ＋要因）---")
         from src.ai_brief import run as run_brief, to_ai_summary
-        ai_brief = run_brief(prices, news, risk, fear_greed)
+        # 夜のうちの動きを渡す。朝7:30は東京が開く前なので、
+        # 前日終値よりここが判断の中心になる。
+        ai_brief = run_brief(prices, news, risk, fear_greed,
+                             us_ah=us_ah, adr=adr, us_movers=us_movers)
         ai_summary = to_ai_summary(ai_brief)
         if ai_summary.get("available"):
             logger.info("✅ 統合AI解釈完了")
@@ -811,17 +853,6 @@ def run(mode: str):
     except Exception:
         logger.error("データ監査エラー", exc_info=True)
 
-    # Step UM: 米国ザラ場ムーバー（通常取引で大きく動いた銘柄と日本への波及）
-    us_movers = {"available": False}
-    try:
-        logger.info("--- Step UM: 米国ザラ場ムーバー ---")
-        from src.us_movers import run as run_um
-        us_movers = run_um()
-        if us_movers.get("available"):
-            logger.info(f"✅ 米国ムーバー {len(us_movers.get('movers') or [])}件 / "
-                        f"業界 {len(us_movers.get('sectors') or [])}件")
-    except Exception:
-        logger.error("米国ザラ場ムーバーエラー", exc_info=True)
 
     # Step NI: 日経平均への寄与度（どの銘柄が指数を動かしたか）
     nikkei_impact = {"available": False}
@@ -916,16 +947,6 @@ def run(mode: str):
     except Exception:
         logger.error("市場内部シグナルエラー"); logger.debug(traceback.format_exc())
 
-    # Step ADR: 日本株ADR（夜間NYの値動き・寄り付き先行ヒント・毎日）
-    adr = {"available": False}
-    try:
-        logger.info("--- Step ADR: 日本株ADR（夜間NY） ---")
-        from src.adr_data import run as run_adr
-        adr = run_adr(prices, risk, fear_greed)
-        if adr.get("available"):
-            logger.info(f"✅ ADR: {adr.get('count',0)}銘柄 主要平均乖離={adr.get('major_avg_divergence')}%")
-    except Exception:
-        logger.error("ADRエラー"); logger.debug(traceback.format_exc())
 
     # Step KD: 株ドラゴン デイトレランキング（値上がり/S高/出来高急増/値下がり・毎日）
     kabudragon = {"available": False}
@@ -988,16 +1009,6 @@ def run(mode: str):
     except Exception:
         logger.error("PTSエラー"); logger.debug(traceback.format_exc())
 
-    # Step US: 米国主要株の時間外ムーバー（アフターアワーズ・ザラ場先行シグナル・毎日）
-    us_ah = {"available": False}
-    try:
-        logger.info("--- Step US: 米国時間外ムーバー ---")
-        from src.us_afterhours import run as run_us_ah
-        us_ah = run_us_ah()
-        if us_ah.get("available"):
-            logger.info(f"✅ 米国時間外: {len(us_ah.get('movers',[]))}銘柄が大きく変動")
-    except Exception:
-        logger.error("米国時間外エラー"); logger.debug(traceback.format_exc())
 
     # Step MACRO: マクロ（ファンダメンタル）レジーム判定
     #   逆イールド・サームルール・信用スプレッド・実質金利（歴史的に実績のある指標）
