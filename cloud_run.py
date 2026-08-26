@@ -939,6 +939,31 @@ def run(mode: str):
     except Exception:
         logger.error("株ドラゴンエラー"); logger.debug(traceback.format_exc())
 
+    # Step STW: 米国個人投資家の感情（Stocktwits・Gemini不使用）
+    #   投稿者自身がBullish/Bearishタグを付けるため推測不要。
+    #   SNSは構造的に強気へ偏るので、銘柄間の相対評価で判定する。
+    stocktwits = {"available": False}
+    try:
+        logger.info("--- Step STW: 米国個人投資家の感情 ---")
+        from src.stocktwits import run as run_stw
+        stocktwits = run_stw()
+        if stocktwits.get("available"):
+            logger.info(f"✅ Stocktwits: {len(stocktwits.get('stocks', []))}銘柄")
+    except Exception:
+        logger.error("Stocktwitsエラー"); logger.debug(traceback.format_exc())
+
+    # Step HEAT: 個人投資家の過熱度（既存の内部データから算出・Gemini不使用）
+    #   騰落レシオ・空売り比率・新高値安値など「実際の売買結果」を統合した逆張り指標。
+    retail_heat = {"available": False}
+    try:
+        logger.info("--- Step HEAT: 個人投資家の過熱度 ---")
+        from src.retail_heat import run as run_heat
+        retail_heat = run_heat(nikkei_internals)
+        if retail_heat.get("available"):
+            logger.info(f"✅ 過熱度: {retail_heat.get('score')}（{retail_heat.get('label')}）")
+    except Exception:
+        logger.error("過熱度エラー"); logger.debug(traceback.format_exc())
+
     # Step HOT: 話題株ウォッチ（株ドラゴンの上位銘柄 × 株クラの声）
     #   「数字（実際に資金が集まった）」と「人の声（Xの株クラ）」を突き合わせる。
     #   感情判定は辞書ベースのため Gemini のトークンは一切消費しない。
@@ -1091,6 +1116,8 @@ def run(mode: str):
             stock_dossier=stock_dossier,
             kabudragon=kabudragon,
             hot_stocks=hot_stocks,
+            stocktwits=stocktwits,
+            retail_heat=retail_heat,
             pts=pts,
             us_afterhours=us_ah,
             adr=adr,
@@ -1242,6 +1269,8 @@ def run(mode: str):
                   ensemble=ensemble,
                   kabudragon=kabudragon,
                   hot_stocks=hot_stocks,
+                  stocktwits=stocktwits,
+                  retail_heat=retail_heat,
                   pts=pts,
                   us_afterhours=us_ah,
                   macro_regime=macro_regime,

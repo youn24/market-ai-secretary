@@ -570,7 +570,8 @@ def _build_unified_caption(risk, prices, fear_greed, ai_summary,
                            kabudragon=None, valuation=None, macro_watch=None,
                            market_signals=None, macro_regime=None,
                            policy=None, market_driver=None, sentiment=None,
-                           risk_sentiment=None, hot_stocks=None) -> str:
+                           risk_sentiment=None, hot_stocks=None,
+                           stocktwits=None, retail_heat=None) -> str:
     """
     朝レポートを1通に集約したときのキャプション（Telegram上限1024字）。
 
@@ -771,6 +772,20 @@ def _build_unified_caption(risk, prices, fear_greed, ai_summary,
                    f"{arrow}{abs(s['chg_pct']):.0f}% — {s['verdict']}"
                    f"（株クラ強気{s['sentiment']['bull_ratio']:.0f}%）")
 
+    # ── 個人投資家の過熱度＋米国SNS感情（いずれもGemini不使用） ──
+    ret = []
+    rh = retail_heat or {}
+    if rh.get("available"):
+        ret.append(f"🌡 個人の過熱度 {rh['emoji']} *{rh['label']}*（{rh['score']:.0f}/100）")
+    stw = stocktwits or {}
+    if stw.get("available"):
+        # 平均から大きく外れた銘柄だけ（＝情報価値がある方）
+        odd = [s for s in stw.get("stocks", []) if abs(s.get("diff", 0)) >= 15]
+        if odd:
+            s = odd[0]
+            ret.append(f"🇺🇸 米SNS: {s['emoji']} {s['name']} {s['label']}"
+                       f"（基準比{s['diff']:+.0f}pt）")
+
     # ── マクロ環境（歴史的に実績のあるファンダ指標） ──
     mac = []
     mr = macro_regime or {}
@@ -787,7 +802,7 @@ def _build_unified_caption(risk, prices, fear_greed, ai_summary,
     foot = ["👇 3シナリオ・チャート・全データはレポートへ"]
 
     # 優先度の低い順に落として1024字に収める
-    blocks = [pre, sig, hot, acc, mac, ai_blk]
+    blocks = [pre, sig, hot, ret, acc, mac, ai_blk]
     while True:
         parts = [head]
         parts += [b for b in blocks if b]
@@ -1137,7 +1152,8 @@ def run(risk, analysis, report_paths, mode,
         valuation=None, macro_watch=None, market_signals=None,
         macro_regime=None, policy=None, market_driver=None,
         sentiment=None, risk_sentiment=None,
-        hot_stocks=None, video_path=None) -> bool:
+        hot_stocks=None, stocktwits=None, retail_heat=None,
+        video_path=None) -> bool:
 
     if not _is_configured():
         logger.info("Telegram 設定なし。スキップします。")
@@ -1167,6 +1183,7 @@ def run(risk, analysis, report_paths, mode,
             market_signals=market_signals, macro_regime=macro_regime,
             policy=policy, market_driver=market_driver, sentiment=sentiment,
             risk_sentiment=risk_sentiment, hot_stocks=hot_stocks,
+            stocktwits=stocktwits, retail_heat=retail_heat,
         )
 
         report_url = report_paths.get("url", "").strip()
