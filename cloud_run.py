@@ -1151,6 +1151,11 @@ def run(mode: str):
             nikkei_impact=nikkei_impact,
             us_movers=us_movers,
             morning_brief=morning_brief,
+            # 2026-08-26: この4つはどこにも表示されていなかった。
+            # 計算して notify_telegram.run() に渡してはいたが、run() は
+            # 引数で受け取るだけで使っておらず、design_ai には引数自体が無かった。
+            earnings_brief=earnings_brief, earnings_preview=earnings_preview,
+            tdnet=tdnet, catalyst=catalyst,
             mode=mode,
         )
         # 公開ページが更新されたことを必ず確認する。

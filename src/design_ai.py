@@ -2154,6 +2154,10 @@ def generate(
     nikkei_impact: dict = None,
     us_movers: dict = None,
     morning_brief: dict = None,
+    earnings_brief: dict = None,
+    earnings_preview: dict = None,
+    tdnet: dict = None,
+    catalyst: dict = None,
     nikkei_internals: dict = None,
     chart_patterns: list = None,
     gap_scan: dict = None,
@@ -2206,6 +2210,8 @@ def generate(
     nimpact_html = _nikkei_impact_section(nikkei_impact)
     usmv_html = _us_movers_section(us_movers)
     brief_html = _brief_section(morning_brief)
+    earn_html  = _earnings_section(earnings_brief, earnings_preview,
+                                   tdnet, catalyst)
     pro_html     = _pro_cross(prices)
     news_html    = _news(news)
     cal_html     = _calendar(weekly_calendar)
@@ -2284,6 +2290,7 @@ def generate(
   {pat_html}
   {usmv_html}
   {nimpact_html}
+  {earn_html}
   {internals_html}
   {theme_html}
   {warn_html}
@@ -2401,6 +2408,10 @@ def run(
     nikkei_impact: dict      = None,
     us_movers: dict          = None,
     morning_brief: dict      = None,
+    earnings_brief: dict     = None,
+    earnings_preview: dict   = None,
+    tdnet: dict              = None,
+    catalyst: dict           = None,
     nikkei_internals: dict   = None,
     chart_patterns: list     = None,
     gap_scan: dict           = None,
@@ -2426,6 +2437,8 @@ def run(
             theme_ranking=theme_ranking, nikkei_internals=nikkei_internals,
             nikkei_impact=nikkei_impact, us_movers=us_movers,
             morning_brief=morning_brief,
+            earnings_brief=earnings_brief, earnings_preview=earnings_preview,
+            tdnet=tdnet, catalyst=catalyst,
         )
         # 生成できたと言い切る前に、ファイルが実在し中身があるかを必ず確かめる。
         # ここを検証していなかったため、本番で生成に失敗していたことに
@@ -2969,6 +2982,112 @@ def _us_movers_section(us_movers):
       📖 「大きく動いた」の基準は銘柄ごとに過去1年から自動計算しています。
       テスラのように普段から動く銘柄と、そうでない銘柄では同じ%でも意味が違うためです。
       同業が揃って動いたときは、翌日の日本株に波及しやすくなります。
+    </div>
+  </div>
+</div>"""
+
+
+# ── セクション：決算と適時開示 ─────────────────────────────
+def _earnings_section(earnings_brief, earnings_preview, tdnet, catalyst):
+    """
+    決算の結果・これから出る決算・材料をまとめる。
+
+    ⚠️ 2026-08-26まで、この4つはどこにも表示されていなかった。
+       cloud_run は計算して notify_telegram.run() に渡していたが、
+       run() は引数で受け取るだけで一度も使っておらず、
+       design_ai には引数自体が無かった。
+       毎朝、決算PDFをGeminiで要約しては捨てていたことになる。
+
+       「朝の詳細は通知に並べず公開レポートへ集約する」方針に変えた際、
+       レポート側へ繋ぐのを忘れた形。生成は成功しログも緑なので
+       誰も気づけない、この案件で繰り返している構図だった。
+
+    決算は時期によって有無が大きく変わるので、
+    **何も無い日はセクションごと出さない**（空欄が並ぶと読む気が失せる）。
+    """
+    eb = earnings_brief or {}
+    ep = earnings_preview or {}
+    td = tdnet or {}
+    ca = catalyst or {}
+
+    blocks = []
+
+    # ① 出た決算の要約（いちばん知りたいのは「結果どうだったか」）
+    briefs = eb.get("briefs") or []
+    if eb.get("available") and briefs:
+        rows = []
+        for b in briefs[:5]:
+            rows.append(f"""
+      <div style="padding:7px 0;border-bottom:1px solid {BORDER}">
+        <div style="display:flex;align-items:baseline;gap:7px">
+          <span style="font-size:11px;font-weight:700;color:{TEXT}">
+            {b.get('emoji','📄')} {b.get('name','')}</span>
+          <span style="font-size:9px;color:{MUTED}">{b.get('code','')}</span>
+          <span style="font-size:9px;color:{MUTED}">{b.get('category','')}</span>
+        </div>
+        <div style="font-size:10.5px;color:{TEXT};opacity:.85;margin-top:3px;line-height:1.6">
+          {b.get('summary','')}</div>
+      </div>""")
+        blocks.append(f'<div style="font-size:10px;color:{MUTED};font-weight:700;'
+                      f'margin:2px 0 3px">📑 出た決算の要約</div>' + "".join(rows))
+
+    # ② これから出る決算（身構える時間が分かる）
+    upcoming = ep.get("upcoming") or []
+    previews = ep.get("previews") or []
+    if ep.get("available") and (upcoming or previews):
+        rows = []
+        for u in (previews or upcoming)[:4]:
+            days = u.get("days_until")
+            when = ("今日" if days == 0 else f"あと{days}日"
+                    if isinstance(days, int) else u.get("earnings_date", ""))
+            pv = (u.get("preview") or "")[:120]
+            rows.append(f"""
+      <div style="padding:6px 0;border-bottom:1px solid {BORDER}">
+        <div style="display:flex;align-items:baseline;gap:7px">
+          <span style="font-size:11px;font-weight:700;color:{TEXT}">{u.get('name','')}</span>
+          <span style="font-size:9.5px;color:{YELLOW};margin-left:auto">{when}</span>
+        </div>
+        {f'<div style="font-size:10px;color:{MUTED};margin-top:3px;line-height:1.6">{pv}</div>' if pv else ''}
+      </div>""")
+        blocks.append(f'<div style="font-size:10px;color:{MUTED};font-weight:700;'
+                      f'margin:9px 0 3px">📅 これから出る決算</div>' + "".join(rows))
+
+    # ③ 材料の評価（catalyst_analyzer の5軸）
+    cats = ca.get("catalysts") or ca.get("items") or []
+    if ca.get("available") and cats:
+        rows = []
+        for c in cats[:4]:
+            rows.append(f"""
+      <div style="padding:6px 0;border-bottom:1px solid {BORDER}">
+        <div style="display:flex;align-items:baseline;gap:7px">
+          <span style="font-size:11px;font-weight:700;color:{TEXT}">{c.get('name','')}</span>
+          <span style="font-size:9px;color:{MUTED}">{c.get('code','')}</span>
+        </div>
+        <div style="font-size:10px;color:{TEXT};opacity:.8;margin-top:3px;line-height:1.6">
+          {(c.get('summary') or c.get('title') or '')[:110]}</div>
+      </div>""")
+        blocks.append(f'<div style="font-size:10px;color:{MUTED};font-weight:700;'
+                      f'margin:9px 0 3px">🔬 材料の評価</div>' + "".join(rows))
+
+    # ④ 適時開示の件数（中身は①③に出ているので数だけ）
+    if td.get("available") and td.get("count"):
+        blocks.append(
+            f'<div style="font-size:10px;color:{MUTED};margin-top:9px">'
+            f'📋 ウォッチ銘柄の適時開示 {td["count"]}件'
+            + (f'（うち重要 {td["high_count"]}件）' if td.get("high_count") else '')
+            + '</div>')
+
+    if not blocks:
+        return ""     # 決算の無い時期は丸ごと出さない
+
+    return f"""
+<div style="margin-bottom:12px">
+  <div class="label" style="padding:0 2px;margin-bottom:6px">📑 決算と開示</div>
+  <div class="glass" style="padding:14px">
+    {''.join(blocks)}
+    <div style="font-size:10px;color:{MUTED};margin-top:9px">
+      📖 決算の要約はPDFの原文をAIが読んで短くしたものです。
+      数字そのものは原資料をご確認ください。
     </div>
   </div>
 </div>"""

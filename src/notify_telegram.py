@@ -571,7 +571,8 @@ def _build_unified_caption(risk, prices, fear_greed, ai_summary,
                            market_signals=None, macro_regime=None,
                            policy=None, market_driver=None, sentiment=None,
                            risk_sentiment=None, hot_stocks=None,
-                           stocktwits=None, retail_heat=None) -> str:
+                           stocktwits=None, retail_heat=None,
+                           earnings_brief=None, earnings_preview=None) -> str:
     """
     朝レポートを1通に集約したときのキャプション（Telegram上限1024字）。
 
@@ -799,10 +800,34 @@ def _build_unified_caption(risk, prices, fear_greed, ai_summary,
         ai_one = ((ai_summary.get("neutral_view") or "")[:110]).strip()
     ai_blk = [f"⚖️ {ai_one}"] if ai_one else []
 
+    # ── 決算（出た結果と、これから出るもの）──
+    # 2026-08-26まで、決算の分析はどこにも表示されていなかった。
+    # ここには件数と銘柄名だけを置き、中身は公開レポートへ誘導する
+    # （1024字の制約があるうえ、決算の要約は数行では収まらない）。
+    # 優先順位は参考の観測帯（src/priority.py の42番）。
+    earn = []
+    eb, ep = earnings_brief or {}, earnings_preview or {}
+    briefs = eb.get("briefs") or []
+    if eb.get("available") and briefs:
+        names = "・".join(b.get("name", "") for b in briefs[:3])
+        more = f" 他{len(briefs)-3}件" if len(briefs) > 3 else ""
+        earn.append(f"📑 *決算が出ました*: {names}{more}")
+    ups = ep.get("previews") or ep.get("upcoming") or []
+    if ep.get("available") and ups:
+        today = [u for u in ups if u.get("days_until") == 0]
+        if today:
+            earn.append(f"📅 *今日の決算*: "
+                        + "・".join(u.get("name", "") for u in today[:3]))
+        elif ups:
+            u = ups[0]
+            d = u.get("days_until")
+            when = f"あと{d}日" if isinstance(d, int) else u.get("earnings_date", "")
+            earn.append(f"📅 次の決算 {u.get('name','')}（{when}）")
+
     foot = ["👇 3シナリオ・チャート・全データはレポートへ"]
 
     # 優先度の低い順に落として1024字に収める
-    blocks = [pre, sig, hot, ret, acc, mac, ai_blk]
+    blocks = [pre, sig, hot, ret, acc, earn, mac, ai_blk]
     while True:
         parts = [head]
         parts += [b for b in blocks if b]
@@ -1184,6 +1209,9 @@ def run(risk, analysis, report_paths, mode,
             policy=policy, market_driver=market_driver, sentiment=sentiment,
             risk_sentiment=risk_sentiment, hot_stocks=hot_stocks,
             stocktwits=stocktwits, retail_heat=retail_heat,
+            # 2026-08-26: この2つは引数で受け取るだけで一度も使っていなかった。
+            # 決算PDFをGeminiで要約しては捨てていたことになる。
+            earnings_brief=earnings_brief, earnings_preview=earnings_preview,
         )
 
         report_url = report_paths.get("url", "").strip()

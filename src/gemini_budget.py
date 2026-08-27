@@ -77,6 +77,11 @@ NICE = {
     "character_commentary": 2,  # キャラクター会話。オーナーが気に入っている表示
     "catalyst_analyzer":    3,  # 材料分析。銘柄数ぶん使うので上限を切る
     "sector_analysis":      1,  # セクターローテーション
+    # 2026-08-26: 出口（公開レポート・通知）を繋いだのでOFFから戻した。
+    # 開示や決算が無い日はモジュール自身が early return するので、
+    # 決算期以外はここに枠を取っても実際には使われない。
+    "earnings_brief":       2,  # 決算PDFの要約（TDnetに開示があった日だけ）
+    "earnings_preview":     2,  # これから出る決算の事前分析
 }
 
 # ── 曜日で散らすもの（重い分析。1日1つだけ順番が来る）──────────
@@ -111,8 +116,6 @@ BY_WEEKDAY = {
 OFF = {
     "economic_indicators": "market_driver の入力用。market_driver 自身がニュースを読むので無くても成立",
     "youtube_summary":     "動画要約。最大10回使うわりに、朝の判断に効かない",
-    "earnings_brief":      "決算PDF要約。**決算期には価値があるので消していない**",
-    "earnings_preview":    "同上。決算シーズンに戻す場合はこの2行を消す",
 }
 
 
