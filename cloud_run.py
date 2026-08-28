@@ -1156,6 +1156,8 @@ def run(mode: str):
             # 引数で受け取るだけで使っておらず、design_ai には引数自体が無かった。
             earnings_brief=earnings_brief, earnings_preview=earnings_preview,
             tdnet=tdnet, catalyst=catalyst,
+            # アノマリーもバックアップHTMLにしか渡っていなかった（決算と同じ形）
+            anomaly=anomaly,
             mode=mode,
         )
         # 公開ページが更新されたことを必ず確認する。

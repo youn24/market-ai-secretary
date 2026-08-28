@@ -572,7 +572,8 @@ def _build_unified_caption(risk, prices, fear_greed, ai_summary,
                            policy=None, market_driver=None, sentiment=None,
                            risk_sentiment=None, hot_stocks=None,
                            stocktwits=None, retail_heat=None,
-                           earnings_brief=None, earnings_preview=None) -> str:
+                           earnings_brief=None, earnings_preview=None,
+                           upcoming=None) -> str:
     """
     朝レポートを1通に集約したときのキャプション（Telegram上限1024字）。
 
@@ -824,10 +825,34 @@ def _build_unified_caption(risk, prices, fear_greed, ai_summary,
             when = f"あと{d}日" if isinstance(d, int) else u.get("earnings_date", "")
             earn.append(f"📅 次の決算 {u.get('name','')}（{when}）")
 
+    # ── 今日・明日の重要イベント ──
+    # 2026-08-26まで、経済イベントは公開レポートには出ていたが
+    # 通知には一度も出ていなかった（引数すら無かった）。
+    # 「今夜FOMC」は今日の行動が変わる情報で、レポートを開かないと
+    # 分からないのでは遅い。優先順位は20番台（確定した事実）。
+    #
+    # ⚠️ 先の予定まで並べない。「7日後に雇用統計」は今日の行動を変えない。
+    #    毎日出ると読み飛ばされ、本当に今日の日に気づけなくなる。
+    ev = []
+    for e in ((upcoming or {}).get("events") or []):
+        d = e.get("days_to")
+        if not isinstance(d, int) or d > 1:
+            continue
+        if d == 1 and e.get("importance") != "high":
+            continue          # 明日ぶんは重要なものだけ
+        if d == 0 and e.get("importance") == "low":
+            continue          # 今日でも満月などは載せない
+        when = "今日" if d == 0 else "明日"
+        ev.append(f"{e.get('icon','📅')} *{when}* {e.get('label','')}")
+        if len(ev) >= 2:
+            break
+
     foot = ["👇 3シナリオ・チャート・全データはレポートへ"]
 
     # 優先度の低い順に落として1024字に収める
-    blocks = [pre, sig, hot, ret, acc, earn, mac, ai_blk]
+    # 並びは src/priority.py の帯に合わせる。
+    # ev(20番台の予定) → acc(30番台の予測) → earn(40番台の決算) の順。
+    blocks = [pre, ev, sig, hot, ret, acc, earn, mac, ai_blk]
     while True:
         parts = [head]
         parts += [b for b in blocks if b]
@@ -1212,6 +1237,7 @@ def run(risk, analysis, report_paths, mode,
             # 2026-08-26: この2つは引数で受け取るだけで一度も使っていなかった。
             # 決算PDFをGeminiで要約しては捨てていたことになる。
             earnings_brief=earnings_brief, earnings_preview=earnings_preview,
+            upcoming=upcoming,
         )
 
         report_url = report_paths.get("url", "").strip()

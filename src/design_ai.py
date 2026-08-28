@@ -2158,6 +2158,7 @@ def generate(
     earnings_preview: dict = None,
     tdnet: dict = None,
     catalyst: dict = None,
+    anomaly: dict = None,
     nikkei_internals: dict = None,
     chart_patterns: list = None,
     gap_scan: dict = None,
@@ -2212,6 +2213,7 @@ def generate(
     brief_html = _brief_section(morning_brief)
     earn_html  = _earnings_section(earnings_brief, earnings_preview,
                                    tdnet, catalyst)
+    anom_html  = _anomaly_section(anomaly)
     pro_html     = _pro_cross(prices)
     news_html    = _news(news)
     cal_html     = _calendar(weekly_calendar)
@@ -2291,6 +2293,7 @@ def generate(
   {usmv_html}
   {nimpact_html}
   {earn_html}
+  {anom_html}
   {internals_html}
   {theme_html}
   {warn_html}
@@ -2412,6 +2415,7 @@ def run(
     earnings_preview: dict   = None,
     tdnet: dict              = None,
     catalyst: dict           = None,
+    anomaly: dict            = None,
     nikkei_internals: dict   = None,
     chart_patterns: list     = None,
     gap_scan: dict           = None,
@@ -2438,7 +2442,7 @@ def run(
             nikkei_impact=nikkei_impact, us_movers=us_movers,
             morning_brief=morning_brief,
             earnings_brief=earnings_brief, earnings_preview=earnings_preview,
-            tdnet=tdnet, catalyst=catalyst,
+            tdnet=tdnet, catalyst=catalyst, anomaly=anomaly,
         )
         # 生成できたと言い切る前に、ファイルが実在し中身があるかを必ず確かめる。
         # ここを検証していなかったため、本番で生成に失敗していたことに
@@ -2982,6 +2986,57 @@ def _us_movers_section(us_movers):
       📖 「大きく動いた」の基準は銘柄ごとに過去1年から自動計算しています。
       テスラのように普段から動く銘柄と、そうでない銘柄では同じ%でも意味が違うためです。
       同業が揃って動いたときは、翌日の日本株に波及しやすくなります。
+    </div>
+  </div>
+</div>"""
+
+
+# ── セクション：アノマリー（季節性・経験則）──────────────────────
+def _anomaly_section(anomaly):
+    """
+    今の時期に効きやすいとされる経験則。
+
+    ⚠️ 2026-08-26まで、これも公開レポートに出ていなかった
+       （バックアップ版HTMLにだけ渡っていた）。決算と同じ形。
+
+    ⚠️ 経験則であって検証済みの効果ではない。この案件では
+       ローソク足16種・酒田五法6種を検証していずれも有意でなかった。
+       同じ扱いで「そういう時期だと言われている」以上には書かない。
+    """
+    d = anomaly or {}
+    if not d.get("available"):
+        return ""
+    items = d.get("anomalies") or []
+    if not items:
+        return ""
+
+    col = {"warn": YELLOW, "bad": RED, "good": GREEN}
+    rows = []
+    for a in items[:5]:
+        c = col.get(a.get("sentiment"), MUTED)
+        rows.append(f"""
+      <div style="padding:6px 0;border-bottom:1px solid {BORDER}">
+        <div style="font-size:11px;font-weight:700;color:{c}">
+          {a.get('emoji','📅')} {a.get('name','')}</div>
+        <div style="font-size:10px;color:{TEXT};opacity:.8;margin-top:2px;line-height:1.6">
+          {a.get('desc','')}</div>
+      </div>""")
+
+    astro = d.get("astro") or {}
+    astro_html = ""
+    if astro.get("label"):
+        astro_html = (f'<div style="font-size:10px;color:{MUTED};margin-top:7px">'
+                      f'🌙 {astro["label"]}</div>')
+
+    return f"""
+<div style="margin-bottom:12px">
+  <div class="label" style="padding:0 2px;margin-bottom:6px">📅 今の時期の経験則</div>
+  <div class="glass" style="padding:14px">
+    {''.join(rows)}
+    {astro_html}
+    <div style="font-size:10px;color:{MUTED};margin-top:9px">
+      📖 昔からそう言われている、という話です。統計的な効果は確認していません。
+      判断材料の1つとして、他の情報と合わせてご覧ください。
     </div>
   </div>
 </div>"""
