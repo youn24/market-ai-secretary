@@ -2160,6 +2160,7 @@ def generate(
     catalyst: dict = None,
     anomaly: dict = None,
     shareholder: dict = None,
+    jquants: dict = None,
     nikkei_internals: dict = None,
     chart_patterns: list = None,
     gap_scan: dict = None,
@@ -2216,6 +2217,7 @@ def generate(
                                    tdnet, catalyst)
     anom_html  = _anomaly_section(anomaly)
     shr_html   = _shareholder_section(shareholder)
+    scr_html   = _screener_section(jquants)
     pro_html     = _pro_cross(prices)
     news_html    = _news(news)
     cal_html     = _calendar(weekly_calendar)
@@ -2295,6 +2297,7 @@ def generate(
   {usmv_html}
   {nimpact_html}
   {shr_html}
+  {scr_html}
   {earn_html}
   {anom_html}
   {internals_html}
@@ -2420,6 +2423,7 @@ def run(
     catalyst: dict           = None,
     anomaly: dict            = None,
     shareholder: dict        = None,
+    jquants: dict            = None,
     nikkei_internals: dict   = None,
     chart_patterns: list     = None,
     gap_scan: dict           = None,
@@ -2447,7 +2451,7 @@ def run(
             morning_brief=morning_brief,
             earnings_brief=earnings_brief, earnings_preview=earnings_preview,
             tdnet=tdnet, catalyst=catalyst, anomaly=anomaly,
-            shareholder=shareholder,
+            shareholder=shareholder, jquants=jquants,
         )
         # 生成できたと言い切る前に、ファイルが実在し中身があるかを必ず確かめる。
         # ここを検証していなかったため、本番で生成に失敗していたことに
@@ -2991,6 +2995,83 @@ def _us_movers_section(us_movers):
       📖 「大きく動いた」の基準は銘柄ごとに過去1年から自動計算しています。
       テスラのように普段から動く銘柄と、そうでない銘柄では同じ%でも意味が違うためです。
       同業が揃って動いたときは、翌日の日本株に波及しやすくなります。
+    </div>
+  </div>
+</div>"""
+
+
+# ── セクション：スクリーニング（3つの切り口）─────────────────────
+def _screener_section(jquants):
+    """
+    日経225銘柄を3つの切り口でふるいにかけた結果。
+
+    ⚠️ 2026-08-28まで、これも公開レポートに出ていなかった
+       （cloud_run で実行はしていたが design_ai に引数が無かった）。
+       決算・アノマリーと同じ形で、計算して捨てていた。
+
+    ⚠️ **推奨銘柄ではない。** 「今こういう状態にある銘柄」を並べただけで、
+       上がるという意味ではない。この案件では52週高値のシグナルを検証して
+       ドリフト調整後の優位性を確認できていない（p=0.29）。
+       見出しも「上昇率が高い」であって「買い」とは書かない。
+    """
+    d = jquants or {}
+    if not d.get("available"):
+        return ""
+    sc = d.get("screened") or {}
+    if not isinstance(sc, dict):
+        return ""
+
+    # (キー, 見出し, 色, 説明)。説明は「何を見た結果か」を必ず書く。
+    GROUPS = [
+        ("rising_top3", "上昇率が高い", GREEN,
+         "直近で値上がりした順。勢いはあるが、高値づかみにもなりやすい"),
+        ("near_ath", "52週高値に近い", BLUE,
+         "1年の高値圏にある。上値の重さが無い一方、調整も入りやすい"),
+        ("recovery", "安値から戻している", YELLOW,
+         "1年の安値から回復してきた。戻りの途中か、底打ちかは分かれる"),
+    ]
+    blocks = []
+    for key, title, col, note in GROUPS:
+        rows = sc.get(key) or []
+        if not rows:
+            continue
+        cells = []
+        for s in rows[:4]:
+            hi, lo = s.get("52w_high"), s.get("52w_low")
+            close = s.get("close")
+            # 52週レンジの中でどこにいるか。数字だけより位置の方が読みやすい
+            pos = ""
+            if hi and lo and close and hi > lo:
+                p = (close - lo) / (hi - lo) * 100
+                pos = f'<span style="font-size:9px;color:{MUTED}">52週の中で{p:.0f}%の位置</span>'
+            chg = s.get("change_pct")
+            c2 = GREEN if (chg or 0) >= 0 else RED
+            cells.append(f"""
+      <div style="display:flex;align-items:baseline;gap:8px;padding:4px 0;border-bottom:1px solid {BORDER}">
+        <span style="font-size:11px;color:{TEXT}">{s.get('name','')}</span>
+        <span style="font-size:9px;color:{MUTED}">{s.get('code','')}</span>
+        {pos}
+        <span style="font-size:12px;font-weight:800;color:{c2};margin-left:auto">
+          {chg:+.2f}%</span>
+      </div>""")
+        blocks.append(
+            f'<div style="font-size:10px;color:{col};font-weight:700;margin:9px 0 2px">'
+            f'{title}</div>'
+            f'<div style="font-size:9px;color:{MUTED};margin-bottom:3px">{note}</div>'
+            + "".join(cells))
+
+    if not blocks:
+        return ""
+
+    return f"""
+<div style="margin-bottom:12px">
+  <div class="label" style="padding:0 2px;margin-bottom:6px">🔍 スクリーニング</div>
+  <div class="glass" style="padding:14px">
+    {''.join(blocks)}
+    <div style="font-size:10px;color:{MUTED};margin-top:9px">
+      📖 日経225の主要{d.get('total_stocks', 0)}銘柄を3つの切り口でふるいにかけた結果です。
+      <strong>推奨ではありません。</strong>「今こういう状態にある」という事実だけで、
+      上がるという意味は含みません。
     </div>
   </div>
 </div>"""

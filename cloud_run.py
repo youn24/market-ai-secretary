@@ -1183,6 +1183,8 @@ def run(mode: str):
             tdnet=tdnet, catalyst=catalyst,
             # アノマリーもバックアップHTMLにしか渡っていなかった（決算と同じ形）
             anomaly=anomaly, shareholder=shareholder,
+            # スクリーニングも実行だけして表示していなかった（決算と同じ形）
+            jquants=jquants,
             mode=mode,
         )
         # 公開ページが更新されたことを必ず確認する。
