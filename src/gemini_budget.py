@@ -73,10 +73,16 @@ FALLBACK = {
 }
 
 # ── 余裕があれば動かすもの ────────────────────────────
+# ⚠️ 数字は **実測値**（scripts/measure_prompts.py の方式で計測）。
+#    2026-08-28まで静的解析の当て推量を置いていて、実態と大きくずれていた。
+#    theme_ranker は3と書いていたが実際は1、supply_demand も3→1。
+#    逆に financial_analyzer は3のところ**26回**、
+#    catalyst_analyzer は1回あたり**8万トークン**だった。
 NICE = {
+    "theme_ranker":         1,  # テーマ株ランキング。解説1回だけ（毎日・実測1回）
     "character_commentary": 2,  # キャラクター会話。オーナーが気に入っている表示
-    "catalyst_analyzer":    3,  # 材料分析。銘柄数ぶん使うので上限を切る
-    "sector_analysis":      1,  # セクターローテーション
+    "catalyst_analyzer":    3,  # 材料分析。1回8万トークンと重いので3回で頭打ち
+    "sector_analysis":      1,  # セクターローテーション（実測1回）
     # 2026-08-26: 出口（公開レポート・通知）を繋いだのでOFFから戻した。
     # 開示や決算が無い日はモジュール自身が early return するので、
     # 決算期以外はここに枠を取っても実際には使われない。
@@ -87,13 +93,14 @@ NICE = {
 # ── 曜日で散らすもの（重い分析。1日1つだけ順番が来る）──────────
 # 月曜に5つ重なって全滅していたのを、1つずつに分けた。
 # 週1回になるが、もともと週次の性質の分析なので頻度は足りている。
+# 数字は実測値。theme_ranker は毎日に移したので、月曜は財務分析に譲る。
 BY_WEEKDAY = {
-    0: ("theme_ranker",       3),   # 月 テーマ株ランキング
-    1: ("supply_demand",      3),   # 火 需給分析
-    2: ("financial_analyzer", 3),   # 水 財務・決算書分析
-    3: ("jquants_screener",   3),   # 木 日本株スクリーナー
-    4: ("economic_calendar",  3),   # 金 来週の経済カレンダー
-    5: ("fomc_sentiment",     2),   # 土 FOMC議事録
+    0: ("financial_analyzer", 3),   # 月 財務・決算書分析（実測26回なので3で頭打ち）
+    1: ("supply_demand",      1),   # 火 需給分析（実測1回）
+    2: ("jquants_screener",   1),   # 水 日本株スクリーナー（実測1回）
+    3: ("economic_calendar",  1),   # 木 来週の経済カレンダー（実測1回）
+    4: ("fomc_sentiment",     1),   # 金 FOMC議事録（実測1回）
+    5: ("note_article",       1),   # 土 note記事
     6: ("note_article",       1),   # 日 note記事
 }
 
@@ -186,14 +193,27 @@ def should_run(module: str, now=None) -> bool:
 
     st = _load()
     used = st.get("used", 0)
+    mine = (st.get("by") or {}).get(module, 0)
+
+    # ⚠️ モジュールごとの上限。2026-08-28まで、この判定が抜けていた。
+    #    表の数字は「全体の残りが足りるか」にしか使われておらず、
+    #    1つのモジュールが何回呼んでも止まらなかった。
+    #
+    #    実測すると financial_analyzer は**26回**、catalyst_analyzer は
+    #    1回あたり8万トークンを使っていた。表に3と書いてあっても、
+    #    全体の残りが尽きるまで走り続けて他を締め出す状態だった。
+    #    「順番に配る」という仕組みの前提が成り立っていなかった。
+    if mine >= need:
+        logger.info(f"⏭ {module}: 本日の割当{need}回を使い切りました")
+        return False
 
     # 中核と受け皿だけが予備枠まで使える。
     # 統合が失敗した日に受け皿まで止めると、朝の中身が丸ごと消えてしまう。
     cap = (DAILY_LIMIT if module in CORE or module in FALLBACK
            else DAILY_LIMIT - RESERVE)
-    if used + need > cap:
+    if used >= cap:
         logger.warning(f"⏭ {module}: 予算不足でスキップ"
-                       f"（使用{used}/{DAILY_LIMIT}・必要{need}・上限{cap}）")
+                       f"（使用{used}/{DAILY_LIMIT}・上限{cap}）")
         return False
     return True
 
