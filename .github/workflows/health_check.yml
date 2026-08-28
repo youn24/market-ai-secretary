@@ -42,7 +42,11 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           GITHUB_PAGES_URL: ${{ secrets.GITHUB_PAGES_URL }}
         run: |
-          pip install requests --quiet
+          # ⚠️ python-dotenv も要る。notify_telegram が読み込むため、
+          #    requests だけだと異常を検知しても「通知モジュールを
+          #    読み込めませんでした」で黙る（2026-08-27に実際に起きた）。
+          #    点検が鳴らないのは、点検が無いのと同じ。
+          pip install requests python-dotenv --quiet
           # 異常なら publish_check が exit 1 で落ち、Telegramにも通知が飛ぶ。
           # ここを `|| true` にすると点検そのものが無意味になるので絶対に付けない。
           python -m src.publish_check

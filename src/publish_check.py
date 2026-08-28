@@ -26,7 +26,15 @@ from src.utils import setup_logger, get_today_str
 
 logger = setup_logger("publish_check")
 
-_BASE = os.getenv("GITHUB_PAGES_URL", "https://youn24.github.io/market-ai-secretary").rstrip("/")
+# ⚠️ os.getenv(名前, 既定値) は「変数が無いとき」しか既定値を返さない。
+# 変数が**空文字で存在する**と空文字がそのまま返る。
+# ワークフローは未登録のSecretを空文字として渡すため、
+# GITHUB_PAGES_URL 未登録の状態でこの既定値が上書きされていた。
+# 結果 "/daily_report.html" という相対URLになり、点検が
+# ValueError: unknown url type で毎回失敗していた（2026-08-27発覚）。
+# or で受けると「空なら既定値」になる。
+_BASE = (os.getenv("GITHUB_PAGES_URL", "").strip()
+         or "https://youn24.github.io/market-ai-secretary").rstrip("/")
 
 # 見るページと、そこに必ず入っているべき目印。
 # 目印まで確認するのは、ページが200を返しても中身が空になる壊れ方があるため。
