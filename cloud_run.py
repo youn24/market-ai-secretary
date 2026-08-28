@@ -685,6 +685,22 @@ def run(mode: str):
     except Exception:
         logger.error("TDnetウォッチャーエラー"); logger.debug(traceback.format_exc())
 
+    # Step SH2: 株主還元とM&A・TOB（全上場企業・Gemini不使用）
+    # TOBは4,000社のどこで出るか分からないので、ウォッチリストで絞らない。
+    # ルールベースなのでGeminiの枠が尽きた日でも必ず動く。
+    shareholder = {"available": False}
+    try:
+        logger.info("--- Step SH2: 株主還元・M&A/TOB ---")
+        from src.shareholder_actions import run as run_sh
+        shareholder = run_sh()
+        if shareholder.get("available"):
+            bk = shareholder.get("by_kind") or {}
+            logger.info(f"✅ 株主還元・M&A {shareholder.get('count',0)}件"
+                        f"（TOB対象{len(bk.get('tob_target',[]))}件・"
+                        f"自社株買い{len(bk.get('buyback',[]))}件）")
+    except Exception:
+        logger.error("株主還元・M&Aエラー", exc_info=True)
+
     # Step EB: 決算ブリーフ（決算PDFのAI要約・毎日・tdnet依存）
     earnings_brief = {"available": False}
     try:
@@ -1097,7 +1113,8 @@ def run(mode: str):
                           character_comments=character_comments,
                           macro=macro, tdnet=tdnet, earnings_brief=earnings_brief,
                           catalyst=catalyst,
-                          anomaly=anomaly, theme_ranking=theme_ranking,
+                          anomaly=anomaly, shareholder=shareholder,
+                  theme_ranking=theme_ranking,
                           financial_analysis=financial_analysis,
                           supply_demand=supply_demand, kabuyoho=kabuyoho,
                           sector_heatmap=sector_heatmap,
@@ -1165,7 +1182,7 @@ def run(mode: str):
             earnings_brief=earnings_brief, earnings_preview=earnings_preview,
             tdnet=tdnet, catalyst=catalyst,
             # アノマリーもバックアップHTMLにしか渡っていなかった（決算と同じ形）
-            anomaly=anomaly,
+            anomaly=anomaly, shareholder=shareholder,
             mode=mode,
         )
         # 公開ページが更新されたことを必ず確認する。
@@ -1255,6 +1272,8 @@ def run(mode: str):
 
         notify_tg(risk, analysis, report_paths, mode,
                   video_path=video_path,
+                  # TOB対象・上場廃止・減配だけが通知に出る（残りはレポートへ）
+                  shareholder=shareholder,
                   prices=prices, news=news,
                   fear_greed=fear_greed, ai_summary=ai_summary,
                   chart_paths=chart_paths,

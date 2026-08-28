@@ -2159,6 +2159,7 @@ def generate(
     tdnet: dict = None,
     catalyst: dict = None,
     anomaly: dict = None,
+    shareholder: dict = None,
     nikkei_internals: dict = None,
     chart_patterns: list = None,
     gap_scan: dict = None,
@@ -2214,6 +2215,7 @@ def generate(
     earn_html  = _earnings_section(earnings_brief, earnings_preview,
                                    tdnet, catalyst)
     anom_html  = _anomaly_section(anomaly)
+    shr_html   = _shareholder_section(shareholder)
     pro_html     = _pro_cross(prices)
     news_html    = _news(news)
     cal_html     = _calendar(weekly_calendar)
@@ -2292,6 +2294,7 @@ def generate(
   {pat_html}
   {usmv_html}
   {nimpact_html}
+  {shr_html}
   {earn_html}
   {anom_html}
   {internals_html}
@@ -2416,6 +2419,7 @@ def run(
     tdnet: dict              = None,
     catalyst: dict           = None,
     anomaly: dict            = None,
+    shareholder: dict        = None,
     nikkei_internals: dict   = None,
     chart_patterns: list     = None,
     gap_scan: dict           = None,
@@ -2443,6 +2447,7 @@ def run(
             morning_brief=morning_brief,
             earnings_brief=earnings_brief, earnings_preview=earnings_preview,
             tdnet=tdnet, catalyst=catalyst, anomaly=anomaly,
+            shareholder=shareholder,
         )
         # 生成できたと言い切る前に、ファイルが実在し中身があるかを必ず確かめる。
         # ここを検証していなかったため、本番で生成に失敗していたことに
@@ -2986,6 +2991,75 @@ def _us_movers_section(us_movers):
       📖 「大きく動いた」の基準は銘柄ごとに過去1年から自動計算しています。
       テスラのように普段から動く銘柄と、そうでない銘柄では同じ%でも意味が違うためです。
       同業が揃って動いたときは、翌日の日本株に波及しやすくなります。
+    </div>
+  </div>
+</div>"""
+
+
+# ── セクション：株主還元とM&A・TOB ───────────────────────────
+def _shareholder_section(shareholder):
+    """
+    TOB・自社株買い・増配など、株価に直接効く「事実」を全上場企業から。
+
+    決算やテクニカルと違い、これらは予想ではなく**決まったこと**なので、
+    検証済みかどうかを問う必要がない。だから上位に置ける。
+
+    ⚠️ 良い話だけ並べない。減配・無配・優待廃止も同じ場所に出す。
+       還元の良い話だけ集めると、その銘柄の全体像を誤らせる。
+    """
+    d = shareholder or {}
+    if not d.get("available"):
+        return ""
+    by = d.get("by_kind") or {}
+    if not by:
+        return ""
+
+    # 表示順は「株価がどれだけ動くか」。TOB対象が最上位。
+    ORDER = [
+        ("tob_target",   RED,    "TOBの対象になりました"),
+        ("mbo",          RED,    "MBO・非公開化"),
+        ("delisting",    YELLOW, "上場廃止が決まりました"),
+        ("dividend_cut", YELLOW, "減配・無配・優待廃止"),
+        ("buyback",      GREEN,  "自社株買い"),
+        ("dividend_up",  GREEN,  "増配・復配・特別配当"),
+        ("benefit_up",   GREEN,  "株主優待の新設・拡充"),
+        ("tob_bidder",   BLUE,   "TOBを実施（買う側）"),
+        ("ma",           BLUE,   "M&A・子会社化"),
+    ]
+    blocks = []
+    for kind, col, label in ORDER:
+        rows = by.get(kind) or []
+        if not rows:
+            continue
+        cells = []
+        for r in rows[:5]:
+            amt = (f'<span style="font-size:9px;color:{MUTED}">{r["amount"]}</span>'
+                   if r.get("amount") else "")
+            cells.append(f"""
+      <div style="padding:5px 0;border-bottom:1px solid {BORDER}">
+        <div style="display:flex;align-items:baseline;gap:7px">
+          <span style="font-size:11px;font-weight:700;color:{TEXT}">{r.get('name','')}</span>
+          <span style="font-size:9px;color:{MUTED}">{r.get('code','')}</span>
+          {amt}
+        </div>
+        <div style="font-size:9.5px;color:{MUTED};margin-top:2px;line-height:1.55">
+          {r.get('title','')}</div>
+      </div>""")
+        more = (f'<span style="font-size:9px;color:{MUTED}">他{len(rows)-5}件</span>'
+                if len(rows) > 5 else "")
+        blocks.append(
+            f'<div style="font-size:10px;color:{col};font-weight:700;margin:9px 0 3px">'
+            f'{r["emoji"]} {label}　{len(rows)}件 {more}</div>' + "".join(cells))
+
+    return f"""
+<div style="margin-bottom:12px">
+  <div class="label" style="padding:0 2px;margin-bottom:6px">🎯 株主還元とM&amp;A・TOB</div>
+  <div class="glass" style="padding:14px">
+    {''.join(blocks)}
+    <div style="font-size:10px;color:{MUTED};margin-top:9px">
+      📖 東証の適時開示（TDnet）から、前営業日の全{d.get('scanned', 0)}件を機械的に分類しています。
+      TOBの対象になると株価は買付価格へ近づきます。
+      良い話だけでなく減配・優待廃止も同じ場所に出しています。
     </div>
   </div>
 </div>"""

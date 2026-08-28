@@ -573,7 +573,7 @@ def _build_unified_caption(risk, prices, fear_greed, ai_summary,
                            risk_sentiment=None, hot_stocks=None,
                            stocktwits=None, retail_heat=None,
                            earnings_brief=None, earnings_preview=None,
-                           upcoming=None) -> str:
+                           upcoming=None, shareholder=None) -> str:
     """
     朝レポートを1通に集約したときのキャプション（Telegram上限1024字）。
 
@@ -847,12 +847,24 @@ def _build_unified_caption(risk, prices, fear_greed, ai_summary,
         if len(ev) >= 2:
             break
 
+    # ── 株主還元・M&A/TOB（緊急のものだけ）──
+    # TOBの対象になると株価は買付価格まで跳ぶ。予想ではなく決まった事実なので、
+    # 検証済みかを問う必要がなく、確定した事実の帯（20番台）に置ける。
+    # 毎日出る自社株買い・増配まで並べると読み飛ばされるため、
+    # 通知は TOB対象・MBO・上場廃止・減配 に絞り、残りはレポートへ送る。
+    shr = []
+    try:
+        from src.shareholder_actions import notify_lines
+        shr = notify_lines(shareholder or {})
+    except Exception:
+        logger.error("株主還元の行を作れませんでした", exc_info=True)
+
     foot = ["👇 3シナリオ・チャート・全データはレポートへ"]
 
     # 優先度の低い順に落として1024字に収める
     # 並びは src/priority.py の帯に合わせる。
     # ev(20番台の予定) → acc(30番台の予測) → earn(40番台の決算) の順。
-    blocks = [pre, ev, sig, hot, ret, acc, earn, mac, ai_blk]
+    blocks = [pre, shr, ev, sig, hot, ret, acc, earn, mac, ai_blk]
     while True:
         parts = [head]
         parts += [b for b in blocks if b]
@@ -1203,7 +1215,13 @@ def run(risk, analysis, report_paths, mode,
         macro_regime=None, policy=None, market_driver=None,
         sentiment=None, risk_sentiment=None,
         hot_stocks=None, stocktwits=None, retail_heat=None,
-        video_path=None) -> bool:
+        shareholder=None,
+        video_path=None,
+        # ⚠️ **_extra を必ず残すこと。
+        #    cloud_run 側だけ先に新しい引数を渡すと TypeError になり、
+        #    朝の通知が丸ごと落ちる。引数が60個を超えていて
+        #    片側だけ直す事故が起きやすいため、受け皿を用意しておく。
+        **_extra) -> bool:
 
     if not _is_configured():
         logger.info("Telegram 設定なし。スキップします。")
@@ -1237,7 +1255,7 @@ def run(risk, analysis, report_paths, mode,
             # 2026-08-26: この2つは引数で受け取るだけで一度も使っていなかった。
             # 決算PDFをGeminiで要約しては捨てていたことになる。
             earnings_brief=earnings_brief, earnings_preview=earnings_preview,
-            upcoming=upcoming,
+            upcoming=upcoming, shareholder=shareholder,
         )
 
         report_url = report_paths.get("url", "").strip()

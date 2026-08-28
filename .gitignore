@@ -12,6 +12,7 @@ data/*
 !data/notify_ledger.json
 !data/notify_history.json
 !data/gemini_budget.json
+!data/shareholder_state.json
 !data/audit_state.json
 !data/theme_history.json
 !data/weekly_calendar.json
