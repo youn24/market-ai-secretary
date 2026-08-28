@@ -1274,6 +1274,8 @@ def run(mode: str):
                   video_path=video_path,
                   # TOB対象・上場廃止・減配だけが通知に出る（残りはレポートへ）
                   shareholder=shareholder,
+                  # 業種別は上位3・下位3だけ（オーナー指示）
+                  sector_ranking=sector_ranking,
                   prices=prices, news=news,
                   fear_greed=fear_greed, ai_summary=ai_summary,
                   chart_paths=chart_paths,

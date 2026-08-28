@@ -573,7 +573,9 @@ def _build_unified_caption(risk, prices, fear_greed, ai_summary,
                            risk_sentiment=None, hot_stocks=None,
                            stocktwits=None, retail_heat=None,
                            earnings_brief=None, earnings_preview=None,
-                           upcoming=None, shareholder=None) -> str:
+                           upcoming=None, shareholder=None,
+                           sector_ranking=None, rating=None,
+                           technical=None) -> str:
     """
     朝レポートを1通に集約したときのキャプション（Telegram上限1024字）。
 
@@ -859,12 +861,63 @@ def _build_unified_caption(risk, prices, fear_greed, ai_summary,
     except Exception:
         logger.error("株主還元の行を作れませんでした", exc_info=True)
 
+    # ── 業種別ランキング（上位3・下位3だけ）──
+    # 17業種を全部並べると読めないのでオーナー指示で上下3つずつ。
+    # 「どこに資金が向かっているか」は毎日変わる事実なので、
+    # 毎日出す価値がある（20番台＝確定した事実）。
+    #
+    # ⚠️ この数字は2026-08-23まで17業種すべて誤っていた（医薬品は符号まで逆）。
+    #    原因はYahooの chartPreviousClose。quote_util で修正済みだが、
+    #    毎朝 data_audit が別経路で検算し続けている。
+    sec_rank = []
+    sr = sector_ranking or {}
+    rk = sr.get("ranking") or []
+    if sr.get("available") and len(rk) >= 6:
+        up = "　".join(f"{x['name'][:6]} {x['pct']:+.1f}%" for x in rk[:3])
+        dn = "　".join(f"{x['name'][:6]} {x['pct']:+.1f}%" for x in rk[-3:])
+        sec_rank = [f"📈 *強い業種*　{up}", f"📉 *弱い業種*　{dn}"]
+
+    # ── 起きた日だけ出すもの ────────────────────────────
+    # オーナー指示「重要な場合や緊急性と信頼性が高い時だけ」。
+    # 毎日鳴るものを足すと全部読まれなくなるので、条件を厳しくする。
+    rare = []
+
+    # ①52週移動平均（年線）の上抜け／下抜け。
+    #   日本で最も意識される長期線で、抜けた日は年に数回しかない。
+    #   ⚠️ 検証では52週高値・移動平均の優位性は確認できていない
+    #      （ドリフト調整後 p=0.29）。「起きた事実」として出し、
+    #      「当たりやすい」とは書かない。
+    for s in ((technical or {}).get("signals") or [])[:8]:
+        if s.get("type") in ("ma52w_up", "ma52w_down"):
+            rare.append(f"{s.get('emoji','🌅')} *{s.get('label','')}*"
+                        f"　{s.get('name', s.get('symbol',''))}")
+            break
+
+    # ②上方修正。TDnetの分類をそのまま使う（Gemini不要）
+    for r_ in ((shareholder or {}).get("all") or []):
+        if "上方修正" in (r_.get("title") or ""):
+            rare.append(f"🚀 *上方修正*: {r_.get('name','')}（{r_.get('code','')}）")
+            break
+
+    # ③レーティング。目標株価が現値より大きく上なものだけ。
+    #   ⚠️ アナリスト予想の的中率はこちらで検証していない。
+    #      並べると「推奨」に読まれるので、上値余地が飛び抜けた1件だけ。
+    rr = (rating or {}).get("ranked_upside") or []
+    if rr:
+        top = max(rr, key=lambda x: x.get("upside") or 0)
+        if (top.get("upside") or 0) >= 30:
+            rare.append(f"🎯 *目標株価との差*: {top.get('code','')} "
+                        f"上値余地{top['upside']:.0f}%（アナリスト予想）")
+
     foot = ["👇 3シナリオ・チャート・全データはレポートへ"]
 
     # 優先度の低い順に落として1024字に収める
     # 並びは src/priority.py の帯に合わせる。
     # ev(20番台の予定) → acc(30番台の予測) → earn(40番台の決算) の順。
-    blocks = [pre, shr, ev, sig, hot, ret, acc, earn, mac, ai_blk]
+    # 並びは src/priority.py の帯に合わせる。
+    # 事実（TOB・52週線・業種）→ 予定 → 予測 → 参考 の順。
+    blocks = [pre, shr, rare, sec_rank, ev, sig, hot, ret, acc,
+              earn, mac, ai_blk]
     while True:
         parts = [head]
         parts += [b for b in blocks if b]
@@ -1215,7 +1268,7 @@ def run(risk, analysis, report_paths, mode,
         macro_regime=None, policy=None, market_driver=None,
         sentiment=None, risk_sentiment=None,
         hot_stocks=None, stocktwits=None, retail_heat=None,
-        shareholder=None,
+        shareholder=None, sector_ranking=None,
         video_path=None,
         # ⚠️ **_extra を必ず残すこと。
         #    cloud_run 側だけ先に新しい引数を渡すと TypeError になり、
@@ -1256,6 +1309,8 @@ def run(risk, analysis, report_paths, mode,
             # 決算PDFをGeminiで要約しては捨てていたことになる。
             earnings_brief=earnings_brief, earnings_preview=earnings_preview,
             upcoming=upcoming, shareholder=shareholder,
+            sector_ranking=sector_ranking, rating=kabuyoho,
+            technical=technical,
         )
 
         report_url = report_paths.get("url", "").strip()
