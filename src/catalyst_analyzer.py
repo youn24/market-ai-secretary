@@ -118,6 +118,99 @@ _PROMPT = """あなたは日本株の短期売買に長けたプロのトレー�
 }}"""
 
 
+# ── 全材料を1回でまとめて評価する（2026-08-28追加）──────────────
+# 1材料＝1呼び出しだと材料7件で7回かかり、1日20回の枠では3件で
+# 打ち切られていた。TOBや上方修正が4件目以降にあると分析されない。
+# 同じ「材料を読んで評価する」仕事なので、1回にまとめて全件見る。
+_PROMPT_BATCH = """あなたは日本株の短期売買に長けたプロのトレーダーです。
+以下の材料（適時開示）を**1件ずつ**、デイトレ目線で評価してください。
+要約ではなく、今日の寄り付き後に資金が入って買いが続くかを見極めるのが仕事です。
+
+【重要】株価・指標の具体的な数値は、各材料の「株価の状況」欄にあるものだけを使うこと。
+そこに無い数値の創作は禁止。不明な数値は「記載なし」と書くこと。
+【重要】材料ごとに独立して判断すること。他の材料に引きずられないでください。
+
+# 材料一覧
+{items}
+
+# 出力
+材料ごとに1件、下記の形のJSON配列**だけ**を出力してください。
+順番と件数は材料一覧と必ず一致させ、code で対応が分かるようにしてください。
+
+[
+  {{
+    "code": "証券コード（材料一覧のものをそのまま）",
+    "catalyst_type": "何の材料か（例: 上方修正＋増配 / 自社株買い）。20字以内",
+    "earnings_impact": "業績に効くか。売上増か利益率改善か、規模感を一言（30字以内）",
+    "temp_or_cont": "一時的か継続的か。25字以内",
+    "priced_in": "すでに株価に織り込まれていないか。直近の値動きを踏まえて（30字以内）",
+    "money_in_today": "高 / 中 / 低 のいずれか1つだけ",
+    "hypothesis": "仮説を1文で。50字以内",
+    "watch_point": "注意点を1文で。40字以内",
+    "fail_line": "仮説が崩れる失敗ライン。40字以内"
+  }}
+]"""
+
+
+def _analyze_batch(model, cats: list, phrases: dict) -> dict:
+    """
+    全材料を1回の呼び出しでまとめて評価する。→ {証券コード: 評価}
+
+    PDFも同じ1回に載せる（Geminiは1リクエストに複数のPDFを取れる）。
+    ⚠️ PDFは1ページ約258トークンで、バイト数は効かない。
+       894KBのPDFでも1ページなら258トークンだった（実測で確認）。
+
+    ⚠️ 1回にまとめる＝失敗すると全部失う。
+       呼び出し側は空の戻り値を見て、従来の1件ずつ版へ落とすこと。
+    """
+    lines = []
+    for i, c in enumerate(cats, 1):
+        body = c.get("brief_summary", "")
+        lines.append(
+            "## 材料{}\ncode: {}\n銘柄名: {}\nカテゴリ: {}\n"
+            "開示タイトル: {}\n株価の状況: {}\n開示の中身: {}".format(
+                i, c["code"], c["name"], c["category"], c["title"],
+                phrases.get(c["code"], "記載なし"),
+                body or "（タイトルとカテゴリから判断してください）")
+        )
+    parts = [_PROMPT_BATCH.format(items="\n\n".join(lines))]
+
+    # 中身の要約が無いものだけPDFを載せる。上限は従来どおり。
+    used = 0
+    for c in cats:
+        if used >= _MAX_PDF_READS:
+            break
+        if c.get("brief_summary") or not c.get("pdf"):
+            continue
+        b = _read_pdf_bytes(c["pdf"])
+        if b:
+            parts.append({"mime_type": "application/pdf", "data": b})
+            used += 1
+
+    try:
+        resp = model.generate_content(parts)
+        raw = (resp.text or "").strip()
+    except Exception as e:
+        logger.warning(f"材料の一括分析に失敗: {e}")
+        return {}
+
+    try:
+        m = re.search(r"\[.*\]", raw, re.S)
+        arr = json.loads(m.group(0) if m else raw)
+        if not isinstance(arr, list):
+            return {}
+    except Exception:
+        logger.warning("材料の一括分析: JSONを解析できませんでした")
+        return {}
+
+    out = {}
+    for d in arr:
+        if isinstance(d, dict) and d.get("code"):
+            out[str(d["code"])[:4]] = d
+    logger.info(f"✅ 材料を1回でまとめて評価（{len(out)}/{len(cats)}件）")
+    return out
+
+
 def _extract_json(text: str) -> dict:
     """Geminiの返答からJSONオブジェクトを取り出す"""
     if not text:
@@ -244,11 +337,26 @@ def run(prices: dict = None, risk: dict = None, fear_greed: dict = None,
     genai.configure(api_key=api_key)
     model = genai.GenerativeModel(os.getenv("GEMINI_MODEL", "gemini-2.5-flash"))
 
+    # 株価の文脈は先に全件そろえる（一括評価のプロンプトに要るため）。
+    # ここはGeminiを使わないので、何件あっても枠を消費しない。
+    ctxs = {c["code"]: _price_context(c["code"]) for c in catalysts}
+    phrases = {k: _price_phrase(v) for k, v in ctxs.items()}
+
+    # ── まず1回でまとめて評価する ──────────────────────────
+    # 1件ずつだと材料7件で7回かかり、1日20回の枠では3件で打ち切られていた。
+    # TOBや上方修正が4件目以降にあると分析されないままだった。
+    batch = _analyze_batch(model, catalysts, phrases)
+
     pdf_budget = [_MAX_PDF_READS]
     analyzed = []
     for cat in catalysts:
-        ctx = _price_context(cat["code"])
-        data = _analyze_one(model, cat, _price_phrase(ctx), pdf_budget)
+        ctx = ctxs.get(cat["code"]) or {}
+        data = batch.get(cat["code"])
+        if not data:
+            # 一括が失敗した／その材料だけ返ってこなかったときの受け皿。
+            # 1回にまとめる以上、失敗すると全部失うので個別版を残してある。
+            data = _analyze_one(model, cat, phrases.get(cat["code"], ""),
+                                pdf_budget)
         if not data or not data.get("hypothesis"):
             continue
         appeal = (data.get("money_in_today") or "").strip()[:1]
