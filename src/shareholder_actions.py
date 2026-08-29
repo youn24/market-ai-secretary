@@ -192,9 +192,17 @@ def notify_lines(result: dict, max_lines: int = 3) -> list:
     urgent = {"tob_target", "mbo", "delisting", "dividend_cut"}
     lines = []
     for r in result.get("all", []):
-        if r["kind"] not in urgent:
+        # ⚠️ r["kind"] と書くと、キーが1つ欠けただけで KeyError になり
+        #    **その日の株主還元が丸ごと消える**。呼び出し側の try で
+        #    通知自体は守られるが、材料は届かないまま静かに落ちる。
+        #    ここは .get() で受けて、欠けている行だけを飛ばす。
+        if not isinstance(r, dict) or r.get("kind") not in urgent:
             continue
-        lines.append(f"{r['emoji']} *{r['label']}*: {r['name']}（{r['code']}）")
+        name = r.get("name") or r.get("code") or ""
+        if not name:
+            continue
+        code = f"（{r['code']}）" if r.get("code") else ""
+        lines.append(f"{r.get('emoji', '📌')} *{r.get('label', '')}*: {name}{code}")
         if len(lines) >= max_lines:
             break
     return lines

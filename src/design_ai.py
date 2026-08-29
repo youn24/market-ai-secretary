@@ -3044,15 +3044,18 @@ def _screener_section(jquants):
             if hi and lo and close and hi > lo:
                 p = (close - lo) / (hi - lo) * 100
                 pos = f'<span style="font-size:9px;color:{MUTED}">52週の中で{p:.0f}%の位置</span>'
+            # ⚠️ chg が None のまま {chg:+.2f} すると TypeError で
+            #    セクションが丸ごと消える。書式に渡す前に必ず文字列にする。
             chg = s.get("change_pct")
             c2 = GREEN if (chg or 0) >= 0 else RED
+            chg_s = f"{chg:+.2f}%" if isinstance(chg, (int, float)) else "—"
             cells.append(f"""
       <div style="display:flex;align-items:baseline;gap:8px;padding:4px 0;border-bottom:1px solid {BORDER}">
         <span style="font-size:11px;color:{TEXT}">{s.get('name','')}</span>
         <span style="font-size:9px;color:{MUTED}">{s.get('code','')}</span>
         {pos}
         <span style="font-size:12px;font-weight:800;color:{c2};margin-left:auto">
-          {chg:+.2f}%</span>
+          {chg_s}</span>
       </div>""")
         blocks.append(
             f'<div style="font-size:10px;color:{col};font-weight:700;margin:9px 0 2px">'
@@ -3128,9 +3131,15 @@ def _shareholder_section(shareholder):
       </div>""")
         more = (f'<span style="font-size:9px;color:{MUTED}">他{len(rows)-5}件</span>'
                 if len(rows) > 5 else "")
+        # ⚠️ r["emoji"] と書くとキーが1つ欠けただけで KeyError になり、
+        #    セクションが丸ごと消える。区分ごとの絵文字は固定なので
+        #    ループ変数に頼らず、この場で決め打ちする。
+        emoji = {"tob_target": "🎯", "mbo": "🏛", "delisting": "⚠️",
+                 "dividend_cut": "📉", "buyback": "💰", "dividend_up": "🎁",
+                 "benefit_up": "🎫", "tob_bidder": "🤝", "ma": "🤝"}.get(kind, "📌")
         blocks.append(
             f'<div style="font-size:10px;color:{col};font-weight:700;margin:9px 0 3px">'
-            f'{r["emoji"]} {label}　{len(rows)}件 {more}</div>' + "".join(cells))
+            f'{emoji} {label}　{len(rows)}件 {more}</div>' + "".join(cells))
 
     return f"""
 <div style="margin-bottom:12px">
