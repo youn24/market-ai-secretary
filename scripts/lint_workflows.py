@@ -73,11 +73,37 @@ def _check_line(path: str, no: int, line: str) -> list:
     return out
 
 
+# ワークフローが呼ぶ src モジュールが実在するか。
+# 2026-08-25 に src/weekly_performance.py を「未使用」として削除した際、
+# weekly_performance.yml の参照だけ残り、以降 ModuleNotFoundError で
+# 毎週赤くなっていた（2026-08-31 発覚）。実行するまで気づけなかった。
+_MODREF = re.compile(
+    r"(?:python\s+-m\s+src\.([a-zA-Z_]\w*)"
+    r"|from\s+src\.([a-zA-Z_]\w*)\s+import"
+    r"|\bimport\s+src\.([a-zA-Z_]\w*))"
+)
+
+
+def _check_module_refs(path: str, no: int, line: str) -> list:
+    s = line.strip()
+    if s.startswith("#") or not s:
+        return []
+    out = []
+    for m in _MODREF.finditer(s):
+        mod = next(g for g in m.groups() if g)
+        if not (BASE / "src" / f"{mod}.py").exists():
+            out.append((HIGH, path, no,
+                        f"src.{mod} を参照していますが src/{mod}.py が存在しません。"
+                        f"実行時に ModuleNotFoundError で失敗します"))
+    return out
+
+
 def run() -> dict:
     findings = []
     for f in sorted(WF.glob("*.yml")):
         for no, line in enumerate(f.read_text(encoding="utf-8").split("\n"), 1):
             findings += _check_line(f.name, no, line)
+            findings += _check_module_refs(f.name, no, line)
 
     high = [x for x in findings if x[0] == HIGH]
     return {"findings": findings, "high": high, "ok": not high}

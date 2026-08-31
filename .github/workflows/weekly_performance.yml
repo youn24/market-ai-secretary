@@ -1,4 +1,13 @@
-name: 週次AIパフォーマンス報告
+name: 週次シグナル重み較正
+
+# 以前はここで週次パフォーマンス報告（src.weekly_performance）も送っていたが、
+# 2026-08-25 のコミット 5445fb1 で src/weekly_performance.py を
+# 「どこからも呼ばれていない重複モジュール」として削除した際、
+# このワークフローの参照を消し忘れ、以降 ModuleNotFoundError で
+# 毎週赤くなっていた（2026-08-31 発覚）。
+# 週次のパフォーマンス／正解率レポートは weekly_report.yml（weekly_run.py）が
+# 日曜 8:00 JST に配信しており重複のため、報告ステップは復活させず削除した。
+# このワークフローの役割はシグナル重みの再較正のみ。
 
 on:
   schedule:
@@ -17,12 +26,11 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - run: pip install pandas numpy requests python-dotenv PyYAML yfinance google-generativeai
+      - run: pip install pandas numpy requests python-dotenv PyYAML
 
       - name: シグナル重みを実績で再較正してコミット
         run: |
           # 「どの指標が実際に翌日の日経を当てたか」で重みを更新
-          # 失敗しても後続の報告送信は続けたいが、無音にはしない。
           # 較正が落ちたまま気づかないと、重みが古いまま固定される。
           python -m src.calibrate_weights || echo "::error::重みの再較正に失敗しました（重みは更新されていません）"
           git config --global user.email "actions@github.com"
@@ -38,10 +46,3 @@ jobs:
               git push origin main || { echo "::error::重みのpushに失敗しました"; exit 1; }
             fi
           fi
-
-      - name: 週次パフォーマンス報告送信
-        env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-        run: python -c "from src.weekly_performance import generate_weekly_report, send_weekly_telegram; r = generate_weekly_report(); send_weekly_telegram(r.get('telegram_message', ''))"
