@@ -12,12 +12,12 @@
  "dxy": {
   "zone": 1,
   "name": "標準",
-  "value": 99.628
+  "value": 99.581
  },
  "nt": {
   "zone": 3,
   "name": "極端な偏り",
-  "value": 15.85
+  "value": 15.78
  },
  "margin_pl": {
   "zone": 3,

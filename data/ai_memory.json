@@ -375,12 +375,12 @@
     {
       "date": "2026-08-31",
       "sentiment": "弱気 (リスクオフ)",
-      "score": -3.07,
+      "score": -3.33,
       "fg_score": 54.4,
       "fg_rating": "中立 😐",
-      "nikkei": 65270.9102,
+      "nikkei": 65361.6016,
       "sp500": 7711.7598,
-      "usdjpy": 160.033,
+      "usdjpy": 159.835,
       "vix": 14.43,
       "ai_judgment": ""
     }
