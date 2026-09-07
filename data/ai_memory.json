@@ -407,6 +407,18 @@
       "usdjpy": 155.574,
       "vix": 14.32,
       "ai_judgment": ""
+    },
+    {
+      "date": "2026-09-07",
+      "sentiment": "中立",
+      "score": 1.48,
+      "fg_score": 41.9,
+      "fg_rating": "恐怖 😟",
+      "nikkei": 65020.9414,
+      "sp500": 7718.6001,
+      "usdjpy": 156.189,
+      "vix": 14.53,
+      "ai_judgment": ""
     }
   ],
   "patterns": {},

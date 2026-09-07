@@ -681,6 +681,23 @@
       "verified": false,
       "correct": null,
       "actual_move": null
+    },
+    {
+      "date": "2026-09-07",
+      "direction": "neutral",
+      "score": 1.48,
+      "adj_score": 1.48,
+      "conf_rank": null,
+      "conf_win_rate": null,
+      "fg": 41.9,
+      "nikkei": 65020.9414,
+      "sp500": 7718.6001,
+      "usdjpy": 156.189,
+      "vix": 14.53,
+      "confidence": null,
+      "verified": false,
+      "correct": null,
+      "actual_move": null
     }
   ],
   "accuracy": {}
