@@ -1,0 +1,84 @@
+{
+  "decision": "買い",
+  "confidence": 0.6,
+  "agents_analysis": {
+    "market_taro": {
+      "vix": 14.53,
+      "trend": "neutral",
+      "momentum": -0.0038,
+      "volatility_assessment": "低い（安定的）",
+      "recommendation": "保有",
+      "confidence": 0.85
+    },
+    "news_hanako": {
+      "news_count": 5,
+      "top_news": [
+        {
+          "headline": "",
+          "impact": 0.4,
+          "category": "その他"
+        },
+        {
+          "headline": "",
+          "impact": 0.4,
+          "category": "その他"
+        },
+        {
+          "headline": "",
+          "impact": 0.4,
+          "category": "その他"
+        }
+      ],
+      "impact_level": "中程度",
+      "categories": [
+        "その他",
+        "その他",
+        "その他"
+      ],
+      "confidence": 0.75
+    },
+    "risk_jiro": {
+      "risk_score": 35.56,
+      "risk_level": "🟡 中程度",
+      "vix_component": 29.06,
+      "drawdown_component": 0,
+      "correlation_component": 6.5,
+      "recommendation": "通常管理",
+      "confidence": 0.8
+    },
+    "report_misaki": {
+      "status": "レポート作成準備中",
+      "sections": [
+        "📌 本日の市場環境",
+        "📊 データ分析結果",
+        "📰 重要ニュース",
+        "⚠️ リスク評価",
+        "🎯 投資判断",
+        "💡 明日への展望"
+      ],
+      "confidence": 0.8
+    },
+    "verification": {
+      "overall_accuracy": 0.6833333333333332,
+      "trend_accuracy": 0.62,
+      "risk_accuracy": 0.75,
+      "status": "⚠️ 改善推奨",
+      "confidence": 0.85,
+      "improvements": [
+        "毎週の検証ミーティングを導入"
+      ]
+    }
+  },
+  "consensus": {
+    "decision": "買い",
+    "confidence": 0.6,
+    "votes": {
+      "売り": 1,
+      "買い": 3,
+      "保有": 1
+    },
+    "rationale": "3/5 が同意",
+    "watch_points": "VIX, 金利トレンド, セクター別パフォーマンス"
+  },
+  "report": "\n======================================================================\n【市場AI秘書】完全自律チーム分析レポート\n2026年09月07日 09:09 JST\n======================================================================\n\n📌【本日の市場環境】\n  • VIX: 14.53\n  • トレンド: neutral\n  • リスクスコア: 36\n\n📊【マーケット太郎の分析】\n  • 推奨: 保有\n  • 信頼度: 85.0%\n\n📰【ニュース花子の評価】\n  • 検出件数: 5\n  • インパクト: 中程度\n\n⚠️【リスク次郎の警告】\n  • リスク水準: 🟡 中程度\n  • 推奨対応: 通常管理\n\n🎯【最終投資判断】\n  • 合意判断: 買い\n  • 根拠: 3/5 が同意\n  • 信頼度: 60.0%\n\n💡【明日への展望】\n  • 監視ポイント: VIX, 金利トレンド, セクター別パフォーマンス\n\n======================================================================\n"
+}
