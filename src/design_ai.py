@@ -2299,6 +2299,186 @@ def _holdings_section(holdings):
 </div>"""
 
 
+def _retail_heat_section(retail_heat):
+    """個人投資家の過熱度（0〜100）。
+
+    ⚠️ 2026-09-07まで、これは計算だけされてレポートに出ていなかった。
+       cloud_run が design_ai に渡していたのに引数が無く、**kwargs に
+       吸われて消えていた。Telegramには出ていたので気づきにくかった。
+    """
+    rh = retail_heat or {}
+    if not rh.get("available"):
+        return ""
+    try:
+        score = float(rh.get("score") or 0)
+    except (TypeError, ValueError):
+        return ""
+    score = max(0.0, min(100.0, score))
+    # 50が中立。上へ行くほど買われすぎ、下へ行くほど売られすぎ
+    if score >= 70:
+        col = RED
+    elif score >= 55:
+        col = YELLOW
+    elif score >= 30:
+        col = GREEN
+    else:
+        col = BLUE
+    reasons = "".join(
+        f'<div style="font-size:10.5px;color:{MUTED};padding:2px 0">・{r}</div>'
+        for r in (rh.get("reasons") or [])[:4] if isinstance(r, str))
+    return f"""
+<div style="margin-bottom:12px">
+  <div class="label" style="padding:0 2px;margin-bottom:6px">🌡 個人投資家の過熱度</div>
+  <div class="glass-sm fade" style="padding:12px">
+    <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:8px">
+      <span style="font-size:18px">{rh.get('emoji', '🌡')}</span>
+      <span style="font-size:15px;font-weight:900;color:{col}">{rh.get('label', '')}</span>
+      <span class="num" style="font-size:12px;font-weight:800;color:{TEXT};margin-left:auto">{score:.0f}<span style="font-size:9px;color:{MUTED}">/100</span></span>
+    </div>
+    <div style="position:relative;height:8px;border-radius:5px;background:linear-gradient(90deg,{BLUE},{GREEN} 40%,{YELLOW} 70%,{RED});opacity:.85">
+      <div style="position:absolute;left:{score:.1f}%;top:-3px;width:3px;height:14px;background:{TEXT};border-radius:2px;transform:translateX(-50%);box-shadow:0 0 6px rgba(0,0,0,.7)"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:8.5px;color:{MUTED};margin-top:3px">
+      <span>0 売られすぎ</span><span>50 ふつう</span><span>買われすぎ 100</span>
+    </div>
+    <div style="margin-top:8px">{reasons}</div>
+  </div>
+  <div style="font-size:9px;color:{MUTED};margin-top:5px;padding:0 2px">
+    騰落レシオ・値上がり銘柄の広がり・年初来高値の数・空売り比率・日経VIを合成した温度計です。
+    70を超えると「みんなが買いすぎ＝そろそろ反落しやすい」、30を割ると「売られすぎ＝反発しやすい」目安になります。
+  </div>
+</div>"""
+
+
+def _hot_stocks_section(hot_stocks):
+    """話題株ウォッチ（値動き × 個人投資家の声）"""
+    hs = hot_stocks or {}
+    rows_in = [x for x in (hs.get("stocks") or []) if isinstance(x, dict)]
+    if not hs.get("available") or not rows_in:
+        return ""
+    cards = []
+    for st in rows_in[:4]:
+        try:
+            chg = float(st.get("chg_pct") or 0)
+        except (TypeError, ValueError):
+            chg = 0.0
+        cc = GREEN if chg >= 0 else RED
+        sent = st.get("sentiment") if isinstance(st.get("sentiment"), dict) else {}
+        br = sent.get("bull_ratio")
+        br_s = ""
+        if isinstance(br, (int, float)):
+            br_s = (f'<span style="font-size:9.5px;color:{MUTED}">株クラ強気 '
+                    f'<b style="color:{TEXT}">{br:.0f}%</b></span>')
+        sample = (st.get("sample") or "")[:60]
+        quote = ""
+        if sample:
+            quote = (f'<div style="font-size:9.5px;color:{MUTED};background:rgba(255,255,255,.03);'
+                     f'border-left:2px solid {BORDER};padding:4px 8px;margin-top:5px;border-radius:0 5px 5px 0">'
+                     f'「{sample}」</div>')
+        cards.append(f"""<div style="padding:8px 0;border-bottom:1px solid {BORDER}">
+  <div style="display:flex;align-items:center;gap:7px">
+    <span style="font-size:13px">{st.get('verdict_emoji', '🔥')}</span>
+    <span style="font-size:11.5px;font-weight:800;color:{TEXT};flex:1;min-width:0">{st.get('name', '')}<span style="color:{MUTED};font-weight:600;font-size:9.5px"> {st.get('code', '')}</span></span>
+    <span class="num" style="font-size:12px;font-weight:900;color:{cc}">{chg:+.1f}%</span>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center;margin-top:3px">
+    <span style="font-size:10px;font-weight:700;color:{TEXT}">{st.get('verdict', '')}</span>{br_s}
+  </div>
+  <div style="font-size:10px;color:{MUTED};margin-top:3px">{st.get('note', '')}</div>{quote}
+</div>""")
+    return f"""
+<div style="margin-bottom:12px">
+  <div class="label" style="padding:0 2px;margin-bottom:6px">🔥 話題株ウォッチ</div>
+  <div class="glass-sm fade" style="padding:4px 12px 8px">{"".join(cards)}</div>
+  <div style="font-size:9px;color:{MUTED};margin-top:5px;padding:0 2px">
+    その日よく動いた銘柄について、SNSでの個人投資家の声を集めて「値動き」と「盛り上がり」を突き合わせています。
+    <b style="color:{YELLOW}">盛り上がっている＝買い、ではありません。</b>全員が強気のときほど、
+    これから買う人が残っていないので反落しやすい、という見方もあります。
+  </div>
+</div>"""
+
+
+def _stocktwits_section(stocktwits):
+    """米国個人投資家の感情（StockTwits）"""
+    stw = stocktwits or {}
+    rows_in = [x for x in (stw.get("stocks") or []) if isinstance(x, dict)]
+    if not stw.get("available") or not rows_in:
+        return ""
+    base = stw.get("base_ratio")
+    # 平均から離れているものほど情報がある。離れている順に並べる
+    rows_in.sort(key=lambda x: -abs(x.get("diff") or 0))
+    rows = []
+    for st in rows_in[:6]:
+        diff = st.get("diff")
+        br = st.get("bull_ratio")
+        dv = diff if isinstance(diff, (int, float)) else 0
+        dc = GREEN if dv > 0 else RED if dv < 0 else MUTED
+        d_s = f"{diff:+.0f}pt" if isinstance(diff, (int, float)) else "—"
+        b_s = f"{br:.0f}%" if isinstance(br, (int, float)) else "—"
+        bar = ""
+        if isinstance(br, (int, float)):
+            w = max(0.0, min(100.0, float(br)))
+            bar = (f'<div style="height:4px;border-radius:3px;background:rgba(255,255,255,.07);'
+                   f'overflow:hidden;margin-top:4px">'
+                   f'<div style="height:100%;width:{w:.0f}%;background:{dc};opacity:.8"></div></div>')
+        rows.append(f"""<div style="padding:6px 0;border-bottom:1px solid {BORDER}">
+  <div style="display:flex;align-items:center;gap:7px">
+    <span style="font-size:11px">{st.get('emoji', '')}</span>
+    <span style="font-size:11px;font-weight:700;color:{TEXT};flex:1;min-width:0">{st.get('name', st.get('symbol', ''))}<span style="color:{MUTED};font-size:9px;font-weight:600"> {st.get('category', '')}</span></span>
+    <span style="font-size:10px;color:{MUTED}">強気 <b class="num" style="color:{TEXT}">{b_s}</b></span>
+    <span class="num" style="font-size:10.5px;font-weight:800;color:{dc};min-width:44px;text-align:right">{d_s}</span>
+  </div>{bar}
+</div>""")
+    base_s = f"{base:.0f}%" if isinstance(base, (int, float)) else "—"
+    return f"""
+<div style="margin-bottom:12px">
+  <div class="label" style="padding:0 2px;margin-bottom:6px">🇺🇸 米国個人投資家の感情</div>
+  <div class="glass-sm fade" style="padding:4px 12px 8px">{"".join(rows)}</div>
+  <div style="font-size:9px;color:{MUTED};margin-top:5px;padding:0 2px">
+    米国のSNS（StockTwits）で、その銘柄について「強気」と書いた人の割合です。
+    右の数字は<b style="color:{TEXT}">全体の平均（{base_s}）との差</b>で、
+    ここが大きく離れている銘柄ほど注目が偏っているということです。
+    日本の半導体株・自動車株は米国の同業に連れて動きやすいので、前日の空気の目安になります。
+  </div>
+</div>"""
+
+
+def _fundamental_section(macro_regime):
+    """マクロ環境（実質金利など、数ヶ月単位で効く土台の指標）"""
+    mr = macro_regime or {}
+    sigs = [x for x in (mr.get("signals") or []) if isinstance(x, dict)]
+    if not mr.get("available") or not sigs:
+        return ""
+    lv_col = {"警戒": RED, "注意": YELLOW, "良好": GREEN}
+    rows = []
+    for g in sigs[:6]:
+        col = lv_col.get(g.get("level", ""), MUTED)
+        rows.append(f"""<div style="padding:7px 0;border-bottom:1px solid {BORDER}">
+  <div style="display:flex;align-items:center;gap:7px">
+    <span style="font-size:12px">{g.get('emoji', '🌐')}</span>
+    <span style="font-size:11.5px;font-weight:800;color:{TEXT};flex:1;min-width:0">{g.get('title', '')}</span>
+    <span class="num" style="font-size:11px;font-weight:800;color:{col};white-space:nowrap">{g.get('value', '')}</span>
+  </div>
+  <div style="font-size:10px;color:{MUTED};margin-top:3px;line-height:1.6">{g.get('meaning', '')}</div>
+  <div style="font-size:9px;color:{MUTED};opacity:.75;margin-top:2px">目安: {g.get('note', '')}</div>
+</div>""")
+    changed = [c for c in (mr.get("changed") or []) if isinstance(c, dict)]
+    ch = ""
+    if changed:
+        ch = (f'<div style="font-size:10px;color:{YELLOW};padding:7px 0 0">'
+              + "／".join(f"⚡ {c.get('title', '')} が変化" for c in changed[:2])
+              + "</div>")
+    return f"""
+<div style="margin-bottom:12px">
+  <div class="label" style="padding:0 2px;margin-bottom:6px">🌐 マクロ環境（土台の指標）</div>
+  <div class="glass-sm fade" style="padding:4px 12px 8px">{"".join(rows)}{ch}</div>
+  <div style="font-size:9px;color:{MUTED};margin-top:5px;padding:0 2px">
+    金利や景気という「土台」の数字です。日々の値動きではなく、数ヶ月単位の追い風・向かい風を見るためのもので、
+    毎日は変わりません。<b style="color:{TEXT}">変わったときだけ気にすれば十分</b>です。
+  </div>
+</div>"""
+
+
 def generate(
     mode: str = "morning",
     prices: dict = None,
@@ -2350,6 +2530,12 @@ def generate(
     chart_patterns: list = None,
     gap_scan: dict = None,
     # 2026-09-06: 作ってあったのに一度も呼ばれていなかった3つを接続
+    # 2026-09-07: この4つは cloud_run が渡していたのに引数が無く、
+    # **_kwargs に吸われて消えていた。Telegramには出ていたので気づけなかった。
+    hot_stocks: dict = None,    # 話題株（値動き×株クラの声）
+    stocktwits: dict = None,    # 米国個人投資家の感情
+    retail_heat: dict = None,   # 個人投資家の過熱度
+    macro_regime: dict = None,  # マクロ環境（実質金利など）
     history: dict = None,       # 主要4指標の1ヶ月推移（自前SVGチャート）
     daytrade: dict = None,      # 今日動きやすい銘柄（寄り前スクリーニング）
     holdings: dict = None,      # 保有銘柄の含み損益
@@ -2408,6 +2594,10 @@ def generate(
     shr_html   = _shareholder_section(shareholder)
     scr_html   = _screener_section(jquants)
     hist_html  = _history_section(history)
+    heat_html  = _retail_heat_section(retail_heat)
+    hotstk_html = _hot_stocks_section(hot_stocks)
+    stw_html   = _stocktwits_section(stocktwits)
+    fund_html  = _fundamental_section(macro_regime)
     dts_html   = _daytrade_section(daytrade)
     hold_html  = _holdings_section(holdings)
     pro_html     = _pro_cross(prices)
@@ -2484,11 +2674,15 @@ def generate(
   {upcoming_html}
   {valuation_html}
   {macro_html}
+  {fund_html}
   {risk_html}
   {sent_html}
   {gauge_html}
+  {heat_html}
   {gap_html}
   {pat_html}
+  {hotstk_html}
+  {stw_html}
   {usmv_html}
   {nimpact_html}
   {shr_html}
@@ -2622,6 +2816,10 @@ def run(
     nikkei_internals: dict   = None,
     chart_patterns: list     = None,
     gap_scan: dict           = None,
+    hot_stocks: dict         = None,
+    stocktwits: dict         = None,
+    retail_heat: dict        = None,
+    macro_regime: dict       = None,
     history: dict            = None,
     daytrade: dict           = None,
     holdings: dict           = None,
@@ -2651,6 +2849,8 @@ def run(
             tdnet=tdnet, catalyst=catalyst, anomaly=anomaly,
             shareholder=shareholder, jquants=jquants,
             history=history, daytrade=daytrade, holdings=holdings,
+            hot_stocks=hot_stocks, stocktwits=stocktwits,
+            retail_heat=retail_heat, macro_regime=macro_regime,
         )
         # 生成できたと言い切る前に、ファイルが実在し中身があるかを必ず確かめる。
         # ここを検証していなかったため、本番で生成に失敗していたことに
