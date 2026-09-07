@@ -87,6 +87,13 @@ def fetch_history() -> dict:
             continue
         base = closes[0] or 1
         pct  = [round((c / base - 1) * 100, 2) for c in closes]
+        # ⚠️ 市場ごとに休場日が違うので、日数は揃わない（日経23日・ドル円25日など）。
+        #    長さが違うまま描くと、短い系列が**先頭に詰められて数日ぶん左にずれる**。
+        #    合わせたいのは末尾（最新日）なので、足りない分は先頭を None で埋める。
+        pad = n - len(closes)
+        if pad > 0:
+            closes = [None] * pad + closes
+            pct    = [None] * pad + pct
         series.append({
             "name":  name,
             "color": color,

@@ -1068,6 +1068,58 @@ def run(mode: str):
     except Exception:
         logger.error("イベント予定エラー"); logger.debug(traceback.format_exc())
 
+    # ──────────────────────────────────────────────────────────
+    # 2026-09-06: ここから3つは、モジュールは書いてあったのに
+    #   **どこからも呼ばれていなかった**（作った本人しか知らない状態）。
+    #   3つともGeminiを使わないので、1日20回の枠は1回も減らない。
+    # ──────────────────────────────────────────────────────────
+
+    # Step PH: 主要4指標の1ヶ月推移（レポートの自前SVGチャート用）
+    # 既存のチャートはTradingViewの埋め込みで、全部「今日1日」の足。
+    # 1ヶ月の比較が無かったので、ここで取る。外部が落ちても出るように自前で描く。
+    history = {}
+    try:
+        logger.info("--- Step PH: 1ヶ月の値動きヒストリー ---")
+        from src.price_history import fetch_history
+        history = fetch_history() or {}
+        if history.get("series"):
+            logger.info(f"✅ ヒストリー: {len(history['series'])}系列"
+                        f"／{len(history.get('labels', []))}日分")
+    except Exception:
+        logger.error("ヒストリー取得エラー"); logger.debug(traceback.format_exc())
+
+    # Step PA: 保有銘柄の含み損益（data/portfolio.json）
+    # しきい値は portfolio.json の "alerts" を読む。
+    holdings = {"available": False}
+    try:
+        logger.info("--- Step PA: 保有銘柄の含み損益 ---")
+        from src.portfolio_alert import run as run_pa
+        holdings = run_pa(prices)
+        if holdings.get("available"):
+            logger.info(f"✅ 保有銘柄: {len(holdings.get('holdings_summary', []))}銘柄"
+                        f"／評価損益 {holdings.get('total_unrealized_pnl', 0):+,.0f}円"
+                        f"／アラート{len(holdings.get('alerts', []))}件")
+    except Exception:
+        logger.error("保有銘柄アラートエラー", exc_info=True)
+
+    # Step DTS: 今日動きやすい銘柄（寄り付き前スクリーニング）
+    # 朝だけ。昼・夜に「今日のデイトレ候補」を出しても、もう場が終わっている。
+    daytrade = {"available": False}
+    try:
+        if mode in ("morning", "test"):
+            logger.info("--- Step DTS: 今日動きやすい銘柄 ---")
+            from src.daytrade_screener import run as run_dts
+            daytrade = run_dts(prices=prices, risk=risk, fear_greed=fear_greed,
+                               catalyst=catalyst, adr=adr)
+            if daytrade.get("available"):
+                _t = daytrade["top"][0]
+                logger.info(f"✅ デイトレ候補: {daytrade.get('universe_size',0)}銘柄→"
+                            f"上位{len(daytrade['top'])}（首位 {_t['name']} {_t['score']:.0f}点）")
+            else:
+                logger.info(f"デイトレ候補なし: {daytrade.get('reason','')}")
+    except Exception:
+        logger.error("デイトレスクリーナーエラー", exc_info=True)
+
     # Step CHR: AIキャラクターコメント生成（全素材が揃ったこの位置で実行）
     try:
         logger.info("--- Step CHR: AIキャラクターコメント生成（詳細材料つき） ---")
@@ -1185,6 +1237,7 @@ def run(mode: str):
             anomaly=anomaly, shareholder=shareholder,
             # スクリーニングも実行だけして表示していなかった（決算と同じ形）
             jquants=jquants,
+            history=history, daytrade=daytrade, holdings=holdings,
             mode=mode,
         )
         # 公開ページが更新されたことを必ず確認する。
@@ -1305,6 +1358,7 @@ def run(mode: str):
                   earnings_preview=earnings_preview,
                   market_chain=market_chain,
                   jquants=jquants,
+                  holdings=holdings, daytrade=daytrade,
                   character_comments=character_comments,
                   macro=macro, tdnet=tdnet, earnings_brief=earnings_brief,
                   catalyst=catalyst,

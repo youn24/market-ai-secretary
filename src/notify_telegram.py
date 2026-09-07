@@ -575,7 +575,8 @@ def _build_unified_caption(risk, prices, fear_greed, ai_summary,
                            earnings_brief=None, earnings_preview=None,
                            upcoming=None, shareholder=None,
                            sector_ranking=None, rating=None,
-                           technical=None) -> str:
+                           technical=None, holdings=None,
+                           daytrade=None) -> str:
     """
     朝レポートを1通に集約したときのキャプション（Telegram上限1024字）。
 
@@ -909,6 +910,47 @@ def _build_unified_caption(risk, prices, fear_greed, ai_summary,
             rare.append(f"🎯 *目標株価との差*: {top.get('code','')} "
                         f"上値余地{top['upside']:.0f}%（アナリスト予想）")
 
+    # ── 保有銘柄アラート ──────────────────────────────
+    # 一番上に置く。相場全体の話より、自分が持っている株がどうなったかの方が
+    # 行動が変わる。鳴るのは損切り・利確ラインに届いた日と、
+    # 前日比が設定値を超えて動いた日だけなので、毎日は出ない。
+    hold = []
+    try:
+        ha = (holdings or {}).get("alerts") or []
+        seen_sym = set()
+        for a_ in ha:
+            if not isinstance(a_, dict):
+                continue
+            sym = a_.get("symbol")
+            if not sym or sym in seen_sym:
+                continue
+            seen_sym.add(sym)
+            pnl = a_.get("unrealized_pnl_pct")
+            pnl_s = f"（{pnl:+.1f}%）" if isinstance(pnl, (int, float)) else ""
+            hold.append(f"💼 *{a_.get('name', sym)}*{pnl_s}　{a_.get('message', '')}")
+            if len(hold) >= 3:
+                break
+        if hold:
+            hold = ["💼 *持ち株のお知らせ*"] + hold
+    except Exception:
+        logger.error("保有銘柄の行を作れませんでした", exc_info=True)
+
+    # ── 今日動きやすい銘柄（上位2つだけ）─────────────────
+    # ⚠️ 「当たりやすい銘柄」ではない。ボラ・出来高・材料から
+    #    **値動きが大きくなりやすい**順に並べただけで、方向は示していない。
+    #    詳しい価格レベルと注意点はレポート側に置き、ここは名前だけ。
+    dts = []
+    try:
+        dt = daytrade or {}
+        if dt.get("available") and dt.get("top"):
+            names = "　".join(
+                f"{x.get('name','')[:7]}" for x in dt["top"][:2] if isinstance(x, dict))
+            if names:
+                dts = [f"🎰 *今日 値動きが大きくなりやすい*　{names}",
+                       "　（方向の予想ではありません。詳細はレポート）"]
+    except Exception:
+        logger.error("デイトレ候補の行を作れませんでした", exc_info=True)
+
     foot = ["👇 3シナリオ・チャート・全データはレポートへ"]
 
     # 優先度の低い順に落として1024字に収める
@@ -916,8 +958,8 @@ def _build_unified_caption(risk, prices, fear_greed, ai_summary,
     # ev(20番台の予定) → acc(30番台の予測) → earn(40番台の決算) の順。
     # 並びは src/priority.py の帯に合わせる。
     # 事実（TOB・52週線・業種）→ 予定 → 予測 → 参考 の順。
-    blocks = [pre, shr, rare, sec_rank, ev, sig, hot, ret, acc,
-              earn, mac, ai_blk]
+    blocks = [hold, pre, shr, rare, sec_rank, ev, sig, hot, ret, acc,
+              earn, mac, dts, ai_blk]
     while True:
         parts = [head]
         parts += [b for b in blocks if b]
@@ -1268,6 +1310,7 @@ def run(risk, analysis, report_paths, mode,
         macro_regime=None, policy=None, market_driver=None,
         sentiment=None, risk_sentiment=None,
         hot_stocks=None, stocktwits=None, retail_heat=None,
+        holdings=None, daytrade=None,
         shareholder=None, sector_ranking=None,
         video_path=None,
         # ⚠️ **_extra を必ず残すこと。
@@ -1305,6 +1348,7 @@ def run(risk, analysis, report_paths, mode,
             policy=policy, market_driver=market_driver, sentiment=sentiment,
             risk_sentiment=risk_sentiment, hot_stocks=hot_stocks,
             stocktwits=stocktwits, retail_heat=retail_heat,
+            holdings=holdings, daytrade=daytrade,
             # 2026-08-26: この2つは引数で受け取るだけで一度も使っていなかった。
             # 決算PDFをGeminiで要約しては捨てていたことになる。
             earnings_brief=earnings_brief, earnings_preview=earnings_preview,

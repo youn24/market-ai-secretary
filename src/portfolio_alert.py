@@ -20,14 +20,40 @@ except ImportError:
 _DEFAULT_PORTFOLIO_PATH = Path(__file__).parent.parent / "data" / "portfolio.json"
 
 
+# アラートのしきい値。portfolio.json の "alerts" が無いときだけ使う。
+_DEFAULT_ALERTS = {"loss_pct": -10.0, "gain_pct": 20.0, "move_pct": 3.0}
+
+
 def _load_portfolio(portfolio_path: Optional[str] = None) -> list[dict]:
     """portfolio.json を読み込んで holdings リストを返す。"""
+    return _load_all(portfolio_path)[0]
+
+
+def _load_all(portfolio_path: Optional[str] = None) -> tuple[list[dict], dict]:
+    """(holdings, alerts設定) を返す。
+
+    ⚠️ 2026-09-06まで、しきい値は -10% / +20% / ±3% とコードに直書きで、
+       portfolio.json の "alerts": {"loss_pct": -5, "gain_pct": 10} は
+       **一度も読まれていなかった**。設定した本人は効いているつもりなのに
+       効いていない、という一番たちの悪い形なので、設定を正とする。
+    """
     path = Path(portfolio_path) if portfolio_path else _DEFAULT_PORTFOLIO_PATH
     if not path.exists():
-        return []
-    with open(path, encoding="utf-8") as f:
-        data = json.load(f)
-    return data.get("holdings", [])
+        return [], dict(_DEFAULT_ALERTS)
+    try:
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+    except Exception:
+        return [], dict(_DEFAULT_ALERTS)
+    cfg = dict(_DEFAULT_ALERTS)
+    for k, v in (data.get("alerts") or {}).items():
+        if k in cfg and isinstance(v, (int, float)):
+            cfg[k] = float(v)
+    # 損切り側は負の数で扱う。設定に 5 と書かれても -5% の意味に直す
+    cfg["loss_pct"] = -abs(cfg["loss_pct"])
+    cfg["gain_pct"] = abs(cfg["gain_pct"])
+    cfg["move_pct"] = abs(cfg["move_pct"])
+    return (data.get("holdings") or []), cfg
 
 
 def _fetch_price(symbol: str) -> Optional[tuple[float, float]]:
@@ -188,7 +214,7 @@ def check_portfolio_alerts(prices: dict = None) -> dict:
             "telegram_message": str,
         }
     """
-    holdings = _load_portfolio()
+    holdings, cfg = _load_all()
 
     if not holdings:
         return {
@@ -208,10 +234,21 @@ def check_portfolio_alerts(prices: dict = None) -> dict:
     total_unrealized_pnl = 0.0
 
     for holding in holdings:
-        symbol: str = holding["symbol"]
-        name: str = holding["name"]
-        shares: float = float(holding["shares"])
-        avg_cost: float = float(holding["avg_cost"])
+        # ⚠️ holding["symbol"] と書くと、1銘柄でキーが欠けただけで KeyError になり
+        #    **保有銘柄の欄が丸ごと消える**。欠けた行だけ飛ばす。
+        if not isinstance(holding, dict):
+            continue
+        symbol = str(holding.get("symbol") or "").strip()
+        if not symbol:
+            continue
+        name = str(holding.get("name") or symbol)
+        try:
+            shares = float(holding.get("shares") or 0)
+            avg_cost = float(holding.get("avg_cost") or 0)
+        except (TypeError, ValueError):
+            continue
+        if shares <= 0:
+            continue
 
         # 価格取得
         current_price: Optional[float] = None
@@ -250,7 +287,7 @@ def check_portfolio_alerts(prices: dict = None) -> dict:
         holding_alerts: list[dict] = []
 
         # 大きな変動アラート
-        if abs(change_pct) >= 3:
+        if abs(change_pct) >= cfg["move_pct"]:
             direction = "上昇" if change_pct > 0 else "下落"
             holding_alerts.append({
                 "alert_type": "large_change",
@@ -258,17 +295,17 @@ def check_portfolio_alerts(prices: dict = None) -> dict:
             })
 
         # 損切り検討アラート
-        if unrealized_pnl_pct <= -10:
+        if unrealized_pnl_pct <= cfg["loss_pct"]:
             holding_alerts.append({
                 "alert_type": "stop_loss",
-                "message": "⚠️ 損切り検討ライン付近です",
+                "message": f"⚠️ 損切り検討ライン（{cfg['loss_pct']:+.0f}%）に届きました",
             })
 
         # 利確検討アラート
-        if unrealized_pnl_pct >= 20:
+        if unrealized_pnl_pct >= cfg["gain_pct"]:
             holding_alerts.append({
                 "alert_type": "take_profit",
-                "message": "💰 利確検討ライン到達です",
+                "message": f"💰 利確検討ライン（{cfg['gain_pct']:+.0f}%）に届きました",
             })
 
         for a in holding_alerts:
@@ -337,3 +374,8 @@ def check_portfolio_alerts(prices: dict = None) -> dict:
         "has_urgent_alert": has_urgent_alert,
         "telegram_message": telegram_message,
     }
+
+
+def run(prices: dict = None) -> dict:
+    """cloud_run から呼ぶ入口。他モジュールと同じ run() の形に揃えてある。"""
+    return check_portfolio_alerts(prices)

@@ -2114,6 +2114,191 @@ def _adr_section(adr):
 </div>"""
 
 
+def _history_section(history):
+    """主要4指標の1ヶ月推移を、外部に頼らないインラインSVGで描く。
+
+    なぜ自前で描くか:
+      このレポートのチャートは全部TradingViewの埋め込みで、しかも全部
+      「今日1日」の足である。**1ヶ月どう動いてきたか**の比較が無かった。
+      さらに埋め込みは外部サーバが落ちれば白紙になる。
+      SVGならHTMLの中で完結するので、必ず出る。
+
+    4資産は単位がまるで違う（日経4万円 / VIX 15 / ドル円150）ので、
+    初日を0%とした変化率に揃えて重ねる。これで「どれが一番動いたか」が
+    そのまま線の高さになる。
+    """
+    h = history or {}
+    labels = h.get("labels") or []
+    series = [x for x in (h.get("series") or []) if x.get("pct")]
+    if len(labels) < 2 or not series:
+        return ""
+
+    # 描画領域（viewBox座標）
+    X0, X1, Y0, Y1 = 34, 316, 12, 116
+    n = len(labels)
+
+    vals = [v for sr in series for v in sr["pct"] if v is not None]
+    if not vals:
+        return ""
+    lo, hi = min(vals), max(vals)
+    if hi - lo < 1:                      # 全部ほぼ横ばいの日に線が潰れないように
+        mid = (hi + lo) / 2
+        lo, hi = mid - 1, mid + 1
+    pad = (hi - lo) * 0.12
+    lo, hi = lo - pad, hi + pad
+
+    def px(i):
+        return X0 + (X1 - X0) * (i / (n - 1))
+
+    def py(v):
+        return Y1 - (Y1 - Y0) * ((v - lo) / (hi - lo))
+
+    # 0%の基準線。ここより上か下かだけで損得が読めるので、必ず引く
+    zero_y = py(0) if lo <= 0 <= hi else None
+
+    paths = []
+    for sr in series:
+        d, pen_down = [], False
+        for i, v in enumerate(sr["pct"][:n]):
+            if v is None:
+                pen_down = False
+                continue
+            d.append(("L" if pen_down else "M") + f"{px(i):.1f},{py(v):.1f}")
+            pen_down = True
+        if not d:
+            continue
+        paths.append(
+            f'<path d="{" ".join(d)}" fill="none" stroke="{sr["color"]}" '
+            f'stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round" opacity="0.95"/>')
+
+    # 横軸ラベルは4つだけ。25個並べると読めない
+    ticks = []
+    for i in (0, (n - 1) // 3, (n - 1) * 2 // 3, n - 1):
+        ticks.append(f'<text x="{px(i):.1f}" y="130" fill="{MUTED}" font-size="8" '
+                     f'text-anchor="middle">{labels[i]}</text>')
+
+    grid = []
+    for v in (hi, (hi + lo) / 2, lo):
+        y = py(v)
+        grid.append(f'<line x1="{X0}" y1="{y:.1f}" x2="{X1}" y2="{y:.1f}" '
+                    f'stroke="{BORDER}" stroke-width="0.6"/>')
+        grid.append(f'<text x="{X0 - 4}" y="{y + 3:.1f}" fill="{MUTED}" font-size="8" '
+                    f'text-anchor="end">{v:+.1f}%</text>')
+
+    zero = ""
+    if zero_y is not None:
+        zero = (f'<line x1="{X0}" y1="{zero_y:.1f}" x2="{X1}" y2="{zero_y:.1f}" '
+                f'stroke="{TEXT}" stroke-width="0.8" stroke-dasharray="3 3" opacity="0.45"/>')
+
+    chips = []
+    for sr in series:
+        last = next((v for v in reversed(sr["pct"]) if v is not None), None)
+        if last is None:
+            continue
+        col = GREEN if last > 0 else RED if last < 0 else MUTED
+        chips.append(
+            f'<span style="display:inline-flex;align-items:center;gap:4px;'
+            f'font-size:10px;margin-right:10px">'
+            f'<i style="width:9px;height:2.5px;background:{sr["color"]};'
+            f'border-radius:2px;display:inline-block"></i>'
+            f'<b style="color:{TEXT};font-weight:700">{sr["name"]}</b>'
+            f'<b class="num" style="color:{col};font-weight:800">{last:+.1f}%</b></span>')
+
+    return f"""
+<div style="margin-bottom:12px">
+  <div class="label" style="padding:0 2px;margin-bottom:6px">📉 この1ヶ月の値動き比べ</div>
+  <div class="glass-sm fade" style="padding:10px 8px 8px">
+    <svg viewBox="0 0 330 136" style="width:100%;height:auto;display:block">
+      {"".join(grid)}
+      {zero}
+      {"".join(paths)}
+      {"".join(ticks)}
+    </svg>
+    <div style="padding:4px 4px 0;line-height:1.9">{"".join(chips)}</div>
+  </div>
+  <div style="font-size:9px;color:{MUTED};margin-top:5px;padding:0 2px">
+    値段の単位がバラバラなので、{labels[0]}を0%として「そこから何%動いたか」に揃えて重ねています。
+    点線が0%。線が点線より上なら1ヶ月前より高い、下なら安いということです。
+    VIXは恐怖指数なので、下がっているほど市場は落ち着いています。
+  </div>
+</div>"""
+
+
+def _daytrade_section(daytrade):
+    """今日動きやすい銘柄（寄り付き前のスクリーニング）"""
+    d = daytrade or {}
+    if not d.get("available") or not d.get("html"):
+        return ""
+    return f"""
+<div style="margin-bottom:12px">
+  <div class="label" style="padding:0 2px;margin-bottom:6px">🎰 今日 動きやすい銘柄</div>
+  {d["html"]}
+</div>"""
+
+
+def _holdings_section(holdings):
+    """保有銘柄の含み損益。
+
+    ⚠️ 表示は必ず .get() で受ける。1銘柄でキーが欠けただけで
+       KeyErrorになり、**保有銘柄の欄が丸ごと消える**という事故は
+       このレポートで既に4回起きている。
+    """
+    hd = holdings or {}
+    rows_in = hd.get("holdings_summary") or []
+    if not hd.get("available") or not rows_in:
+        return ""
+
+    alert_by = {}
+    for a in (hd.get("alerts") or []):
+        if isinstance(a, dict) and a.get("symbol"):
+            alert_by.setdefault(a["symbol"], []).append(a.get("message", ""))
+
+    rows = []
+    for r in rows_in:
+        if not isinstance(r, dict):
+            continue
+        sym = r.get("symbol", "")
+        pnl = r.get("unrealized_pnl_pct")
+        chg = r.get("change_pct")
+        pc  = GREEN if (pnl or 0) > 0 else RED if (pnl or 0) < 0 else MUTED
+        cc  = GREEN if (chg or 0) > 0 else RED if (chg or 0) < 0 else MUTED
+        pnl_s = f"{pnl:+.1f}%" if isinstance(pnl, (int, float)) else "—"
+        chg_s = f"{chg:+.1f}%" if isinstance(chg, (int, float)) else "—"
+        price = r.get("current_price")
+        price_s = f"{price:,.0f}" if isinstance(price, (int, float)) else "—"
+        msgs = alert_by.get(sym) or []
+        note = (f'<div style="font-size:9.5px;color:{YELLOW};padding:2px 0 0">'
+                f'{" / ".join(m for m in msgs if m)}</div>') if msgs else ""
+        rows.append(f"""<div style="padding:7px 0;border-bottom:1px solid {BORDER}">
+  <div style="display:flex;align-items:center;gap:8px">
+    <span style="font-size:11.5px;font-weight:700;color:{TEXT};flex:1;min-width:0">{r.get('name', sym)}</span>
+    <span class="num" style="font-size:10.5px;color:{MUTED}">{price_s}</span>
+    <span class="num" style="font-size:10.5px;font-weight:800;color:{cc};min-width:46px;text-align:right">{chg_s}</span>
+    <span class="num" style="font-size:11.5px;font-weight:900;color:{pc};min-width:52px;text-align:right">{pnl_s}</span>
+  </div>{note}
+</div>""")
+
+    total = hd.get("total_value") or 0
+    pnl_t = hd.get("total_unrealized_pnl") or 0
+    tc    = GREEN if pnl_t > 0 else RED if pnl_t < 0 else MUTED
+    return f"""
+<div style="margin-bottom:12px">
+  <div class="label" style="padding:0 2px;margin-bottom:6px">💼 あなたの保有銘柄</div>
+  <div class="glass-sm fade" style="padding:8px 12px">
+    {"".join(rows)}
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 0 2px">
+      <span style="font-size:10.5px;color:{MUTED};flex:1">評価額の合計</span>
+      <span class="num" style="font-size:11.5px;font-weight:700;color:{TEXT}">{total:,.0f}円</span>
+      <span class="num" style="font-size:11.5px;font-weight:900;color:{tc}">{pnl_t:+,.0f}円</span>
+    </div>
+  </div>
+  <div style="font-size:9px;color:{MUTED};margin-top:5px;padding:0 2px">
+    左から順に、現在の株価・前日比・取得価格からの損益です。損益は data/portfolio.json の
+    取得単価をもとに計算しています。
+  </div>
+</div>"""
+
+
 def generate(
     mode: str = "morning",
     prices: dict = None,
@@ -2164,6 +2349,10 @@ def generate(
     nikkei_internals: dict = None,
     chart_patterns: list = None,
     gap_scan: dict = None,
+    # 2026-09-06: 作ってあったのに一度も呼ばれていなかった3つを接続
+    history: dict = None,       # 主要4指標の1ヶ月推移（自前SVGチャート）
+    daytrade: dict = None,      # 今日動きやすい銘柄（寄り前スクリーニング）
+    holdings: dict = None,      # 保有銘柄の含み損益
     **_kwargs,
 ) -> str:
     prices      = prices      or {}
@@ -2218,6 +2407,9 @@ def generate(
     anom_html  = _anomaly_section(anomaly)
     shr_html   = _shareholder_section(shareholder)
     scr_html   = _screener_section(jquants)
+    hist_html  = _history_section(history)
+    dts_html   = _daytrade_section(daytrade)
+    hold_html  = _holdings_section(holdings)
     pro_html     = _pro_cross(prices)
     news_html    = _news(news)
     cal_html     = _calendar(weekly_calendar)
@@ -2277,6 +2469,9 @@ def generate(
   {charts_html}
   {ai_html}
   {setups_html}
+  {hold_html}
+  {dts_html}
+  {hist_html}
   {ensemble_html}
   {dossier_html}
   {cc_html}
@@ -2427,6 +2622,9 @@ def run(
     nikkei_internals: dict   = None,
     chart_patterns: list     = None,
     gap_scan: dict           = None,
+    history: dict            = None,
+    daytrade: dict           = None,
+    holdings: dict           = None,
     mode: str = "morning",
     **_kwargs,
 ) -> dict:
@@ -2452,6 +2650,7 @@ def run(
             earnings_brief=earnings_brief, earnings_preview=earnings_preview,
             tdnet=tdnet, catalyst=catalyst, anomaly=anomaly,
             shareholder=shareholder, jquants=jquants,
+            history=history, daytrade=daytrade, holdings=holdings,
         )
         # 生成できたと言い切る前に、ファイルが実在し中身があるかを必ず確かめる。
         # ここを検証していなかったため、本番で生成に失敗していたことに
