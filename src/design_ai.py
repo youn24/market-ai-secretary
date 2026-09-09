@@ -2450,6 +2450,17 @@ def _fundamental_section(macro_regime):
     if not mr.get("available") or not sigs:
         return ""
     lv_col = {"警戒": RED, "注意": YELLOW, "良好": GREEN}
+    # FREDが落ちた日は数日前の値で出す。**古い数字を今の数字として
+    # 読ませないため**、何日前かを必ず見えるところに出す。
+    try:
+        stale = int(mr.get("stale_days") or 0)
+    except (TypeError, ValueError):
+        stale = 0
+    stale_note = ""
+    if stale >= 1:
+        stale_note = (f'<div style="font-size:9.5px;color:{YELLOW};padding:0 0 6px">'
+                      f'⚠️ 取得元（FRED）につながらなかったため、'
+                      f'<b>{stale}日前の数字</b>を表示しています</div>')
     rows = []
     for g in sigs[:6]:
         col = lv_col.get(g.get("level", ""), MUTED)
@@ -2471,7 +2482,7 @@ def _fundamental_section(macro_regime):
     return f"""
 <div style="margin-bottom:12px">
   <div class="label" style="padding:0 2px;margin-bottom:6px">🌐 マクロ環境（土台の指標）</div>
-  <div class="glass-sm fade" style="padding:4px 12px 8px">{"".join(rows)}{ch}</div>
+  <div class="glass-sm fade" style="padding:4px 12px 8px">{stale_note}{"".join(rows)}{ch}</div>
   <div style="font-size:9px;color:{MUTED};margin-top:5px;padding:0 2px">
     金利や景気という「土台」の数字です。日々の値動きではなく、数ヶ月単位の追い風・向かい風を見るためのもので、
     毎日は変わりません。<b style="color:{TEXT}">変わったときだけ気にすれば十分</b>です。

@@ -220,10 +220,97 @@ def verify_yesterday(prices: dict):
                 f"実際={actual_dir}({actual_move:+.2f}%) → {'正解' if correct else '不正解'}"
             )
 
+    # 「昨日ちょうど」に当てはまらなかった予測をまとめて拾う
+    if _backfill(data):
+        updated = True
+
     if updated:
         _save(data)
 
     return data
+
+
+def _backfill(data: dict) -> bool:
+    """検証されないまま取り残された予測を、過去の実際の値動きで検証する。
+
+    なぜ必要か:
+      上の verify_yesterday() は「予測日 == 今日の1日前」しか見ていない。
+      そのため次の2つが**永久に検証されない**まま捨てられていた。
+
+        ① 金曜の予測。検証されるのは土曜だが土曜は動かない。
+           月曜になると「1日前＝日曜」となり、どの予測とも一致しない。
+        ② 翌日の実行が落ちた日の予測。
+           （2026-09-02・09-03 のように朝の実行が失敗した日）
+
+      2026-09-09時点で47件中14件（うち金曜6件・土曜2件）がこの形で
+      未検証のまま残っていた。**成績表から3割が抜け落ちていた**ことになる。
+
+      予測日の「次の営業日の終値」は後からでも分かるので、遡って検証できる。
+      判定式は verify_yesterday() と同じ（予測時に記録した日経の値を起点にする）。
+    """
+    pend = [p for p in data.get("predictions", [])
+            if not p.get("verified") and p.get("nikkei")]
+    if not pend:
+        return False
+
+    today = get_jst_now().strftime("%Y-%m-%d")
+    # 今日の予測はまだ答えが出ていない。除く。
+    pend = [p for p in pend if p.get("date", "") < today]
+    if not pend:
+        return False
+
+    try:
+        import warnings
+        warnings.filterwarnings("ignore")
+        import yfinance as yf
+        oldest = min(p["date"] for p in pend)
+        hist = yf.Ticker("^N225").history(start=oldest, interval="1d")
+        if hist is None or hist.empty:
+            logger.warning("日経の過去データを取得できず、遡り検証を見送ります")
+            return False
+        closes = {d.strftime("%Y-%m-%d"): float(v)
+                  for d, v in zip(hist.index, hist["Close"])}
+    except Exception:
+        logger.debug(traceback.format_exc())
+        return False
+
+    days = sorted(closes)
+    updated = False
+    for pred in pend:
+        d = pred["date"]
+        # 予測日より後の、最初に取引があった日を探す
+        nxt = next((x for x in days if x > d), None)
+        if nxt is None:
+            continue          # まだ答えが出ていない（今日の分など）
+        nk_then = pred.get("nikkei")
+        try:
+            actual_move = (closes[nxt] - float(nk_then)) / float(nk_then) * 100
+        except (TypeError, ValueError, ZeroDivisionError):
+            continue
+
+        if actual_move > 0.3:
+            actual_dir = "bull"
+        elif actual_move < -0.3:
+            actual_dir = "bear"
+        else:
+            actual_dir = "neutral"
+
+        pred["verified"] = True
+        pred["correct"] = (pred.get("direction") == actual_dir)
+        pred["actual_move"] = round(actual_move, 2)
+        pred["actual_dir"] = actual_dir
+        # 後から拾った分と当日検証した分を見分けられるようにしておく。
+        # 起点は同じだが、比較先が「終値」なので厳密には同一条件ではない。
+        pred["verified_by"] = "backfill"
+        pred["verified_against"] = nxt
+        updated = True
+        logger.info(f"{'✅' if pred['correct'] else '❌'} 遡り検証: {d} "
+                    f"予測={pred.get('direction')} → {nxt}の終値で "
+                    f"{actual_move:+.2f}%（{actual_dir}）")
+
+    if updated:
+        logger.info(f"📌 取り残されていた予測 {sum(1 for p in pend if p.get('verified'))}件を検証しました")
+    return updated
 
 
 # ──────────────────────────────────────────────────────────────

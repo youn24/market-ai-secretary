@@ -65,9 +65,12 @@
       "sp500": 7421.4702,
       "usdjpy": 160.216,
       "vix": 18.92,
-      "verified": false,
-      "correct": null,
-      "actual_move": null
+      "verified": true,
+      "correct": false,
+      "actual_move": 7.94,
+      "actual_dir": "bull",
+      "verified_by": "backfill",
+      "verified_against": "2026-06-15"
     },
     {
       "date": "2026-06-15",
@@ -134,9 +137,12 @@
       "sp500": 7500.5801,
       "usdjpy": 161.226,
       "vix": 16.4,
-      "verified": false,
-      "correct": null,
-      "actual_move": null
+      "verified": true,
+      "correct": true,
+      "actual_move": 3.51,
+      "actual_dir": "bull",
+      "verified_by": "backfill",
+      "verified_against": "2026-06-22"
     },
     {
       "date": "2026-06-22",
@@ -223,9 +229,12 @@
       "usdjpy": 161.685,
       "vix": 19.26,
       "confidence": null,
-      "verified": false,
-      "correct": null,
-      "actual_move": null
+      "verified": true,
+      "correct": true,
+      "actual_move": 0.15,
+      "actual_dir": "neutral",
+      "verified_by": "backfill",
+      "verified_against": "2026-06-29"
     },
     {
       "date": "2026-06-30",
@@ -282,9 +291,12 @@
       "usdjpy": 161.303,
       "vix": 16.15,
       "confidence": null,
-      "verified": false,
-      "correct": null,
-      "actual_move": null
+      "verified": true,
+      "correct": true,
+      "actual_move": -1.05,
+      "actual_dir": "bear",
+      "verified_by": "backfill",
+      "verified_against": "2026-07-06"
     },
     {
       "date": "2026-07-07",
@@ -341,9 +353,12 @@
       "usdjpy": 162.358,
       "vix": 15.84,
       "confidence": null,
-      "verified": false,
-      "correct": null,
-      "actual_move": null
+      "verified": true,
+      "correct": true,
+      "actual_move": 0.63,
+      "actual_dir": "bull",
+      "verified_by": "backfill",
+      "verified_against": "2026-07-13"
     },
     {
       "date": "2026-07-13",
@@ -415,9 +430,12 @@
       "usdjpy": 162.357,
       "vix": 16.73,
       "confidence": null,
-      "verified": false,
-      "correct": null,
-      "actual_move": null
+      "verified": true,
+      "correct": true,
+      "actual_move": -3.66,
+      "actual_dir": "bear",
+      "verified_by": "backfill",
+      "verified_against": "2026-07-21"
     },
     {
       "date": "2026-07-21",
@@ -459,9 +477,12 @@
       "usdjpy": 163.112,
       "vix": 16.64,
       "confidence": null,
-      "verified": false,
-      "correct": null,
-      "actual_move": null
+      "verified": true,
+      "correct": false,
+      "actual_move": -2.45,
+      "actual_dir": "bear",
+      "verified_by": "backfill",
+      "verified_against": "2026-07-24"
     },
     {
       "date": "2026-08-03",
@@ -473,9 +494,12 @@
       "usdjpy": 157.786,
       "vix": 15.99,
       "confidence": null,
-      "verified": false,
-      "correct": null,
-      "actual_move": null
+      "verified": true,
+      "correct": false,
+      "actual_move": -0.63,
+      "actual_dir": "bear",
+      "verified_by": "backfill",
+      "verified_against": "2026-08-04"
     },
     {
       "date": "2026-08-12",
@@ -502,9 +526,12 @@
       "usdjpy": 159.488,
       "vix": 14.62,
       "confidence": null,
-      "verified": false,
-      "correct": null,
-      "actual_move": null
+      "verified": true,
+      "correct": false,
+      "actual_move": 2.6,
+      "actual_dir": "bull",
+      "verified_by": "backfill",
+      "verified_against": "2026-08-14"
     },
     {
       "date": "2026-08-19",
@@ -555,9 +582,12 @@
       "usdjpy": 158.939,
       "vix": 16.01,
       "confidence": null,
-      "verified": false,
-      "correct": null,
-      "actual_move": null
+      "verified": true,
+      "correct": false,
+      "actual_move": 0.31,
+      "actual_dir": "bull",
+      "verified_by": "backfill",
+      "verified_against": "2026-08-24"
     },
     {
       "date": "2026-08-24",
@@ -626,9 +656,12 @@
       "usdjpy": 159.34,
       "vix": 15.21,
       "confidence": null,
-      "verified": false,
-      "correct": null,
-      "actual_move": null
+      "verified": true,
+      "correct": false,
+      "actual_move": 0.36,
+      "actual_dir": "bull",
+      "verified_by": "backfill",
+      "verified_against": "2026-08-28"
     },
     {
       "date": "2026-08-31",
@@ -661,9 +694,12 @@
       "usdjpy": 159.825,
       "vix": 14.92,
       "confidence": null,
-      "verified": false,
-      "correct": null,
-      "actual_move": null
+      "verified": true,
+      "correct": true,
+      "actual_move": -2.77,
+      "actual_dir": "bear",
+      "verified_by": "backfill",
+      "verified_against": "2026-09-02"
     },
     {
       "date": "2026-09-04",
@@ -678,9 +714,12 @@
       "usdjpy": 155.574,
       "vix": 14.32,
       "confidence": null,
-      "verified": false,
-      "correct": null,
-      "actual_move": null
+      "verified": true,
+      "correct": true,
+      "actual_move": 2.95,
+      "actual_dir": "bull",
+      "verified_by": "backfill",
+      "verified_against": "2026-09-07"
     },
     {
       "date": "2026-09-07",

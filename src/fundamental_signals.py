@@ -21,8 +21,9 @@ src/fundamental_signals.py — ファンダメンタル（マクロ）レジー�
 
 import io
 import json
+import time
 import traceback
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 import pandas as pd
 import requests
@@ -34,6 +35,16 @@ logger = setup_logger("fundamental_signals")
 _HEADERS    = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
 _STATE_FILE = BASE_DIR / "data" / "fundamental_state.json"
 
+# 直近で判定できたシグナルを丸ごと保存しておく置き場。
+# FREDが落ちた日でも「何日前の数字か」を添えて出せるようにするため。
+_CACHE_FILE = BASE_DIR / "data" / "fundamental_cache.json"
+
+# キャッシュを使ってよい日数。ここに並ぶのは失業率（月次）や実質金利など
+# 数ヶ月かけて動く指標なので、数日前の値でも判断の役に立つ。
+# 逆に2週間を超えたものを黙って出すと、古い数字を今の数字として
+# 読ませることになるので出さない。
+_CACHE_MAX_DAYS = 14
+
 # FRED系列（履歴が必要なのでCSVを直接読む）
 _SERIES = {
     "T10Y2Y":       "米10年-2年スプレッド",
@@ -43,24 +54,33 @@ _SERIES = {
 }
 
 
-def _fetch_series(sid: str) -> pd.Series | None:
-    """FREDのCSVを取得して日付インデックスのSeriesで返す"""
-    try:
-        r = requests.get(f"https://fred.stlouisfed.org/graph/fredgraph.csv?id={sid}",
-                         timeout=20, headers=_HEADERS)
-        if r.status_code != 200:
-            return None
-        df = pd.read_csv(io.StringIO(r.text), na_values=".")
-        df.columns = ["date", "value"]
-        df = df.dropna()
-        if df.empty:
-            return None
-        s = pd.Series(df["value"].astype(float).values,
-                      index=pd.to_datetime(df["date"]))
-        return s
-    except Exception:
-        logger.debug(traceback.format_exc())
-        return None
+def _fetch_series(sid: str, tries: int = 3) -> pd.Series | None:
+    """FREDのCSVを取得して日付インデックスのSeriesで返す。
+
+    ⚠️ FREDのこのCSV口は、混んでいる時間帯に接続そのものを切ってくる
+       （2026-09-09に4系列すべて ConnectionReset を実測）。
+       1回で諦めると、その日のマクロ欄が丸ごと消える。少し待って試し直す。
+    """
+    for i in range(tries):
+        try:
+            r = requests.get(
+                f"https://fred.stlouisfed.org/graph/fredgraph.csv?id={sid}",
+                timeout=25, headers=_HEADERS)
+            if r.status_code != 200:
+                return None
+            df = pd.read_csv(io.StringIO(r.text), na_values=".")
+            df.columns = ["date", "value"]
+            df = df.dropna()
+            if df.empty:
+                return None
+            return pd.Series(df["value"].astype(float).values,
+                             index=pd.to_datetime(df["date"]))
+        except Exception:
+            if i == tries - 1:
+                logger.debug(traceback.format_exc())
+                return None
+            time.sleep(2 * (i + 1))
+    return None
 
 
 # ── ① 逆イールド ────────────────────────────────────────────────
@@ -192,6 +212,33 @@ def _save_state(st: dict) -> None:
         logger.debug(traceback.format_exc())
 
 
+def _save_cache(signals: list) -> None:
+    """判定できたシグナルを、日付つきで保存する。"""
+    try:
+        _CACHE_FILE.parent.mkdir(parents=True, exist_ok=True)
+        _CACHE_FILE.write_text(json.dumps(
+            {"date": get_jst_now().strftime("%Y-%m-%d"), "signals": signals},
+            ensure_ascii=False, indent=2), encoding="utf-8")
+    except Exception:
+        logger.debug(traceback.format_exc())
+
+
+def _load_cache() -> tuple[list, int]:
+    """(シグナル一覧, 何日前のものか) を返す。使えなければ ([], -1)。"""
+    try:
+        c = json.loads(_CACHE_FILE.read_text(encoding="utf-8"))
+        sigs = [x for x in (c.get("signals") or []) if isinstance(x, dict)]
+        if not sigs:
+            return [], -1
+        d0 = datetime.strptime(c["date"], "%Y-%m-%d").date()
+        age = (get_jst_now().date() - d0).days
+        if age < 0 or age > _CACHE_MAX_DAYS:
+            return [], -1
+        return sigs, age
+    except Exception:
+        return [], -1
+
+
 # ── 実行 ─────────────────────────────────────────────────────────
 def run(*_args, **_kwargs) -> dict:
     """
@@ -218,7 +265,27 @@ def run(*_args, **_kwargs) -> dict:
                 signals.append(r)
 
         if not signals:
-            logger.info("マクロシグナル: 該当なし")
+            # ⚠️ ここで諦めると、FREDが落ちた日はレポートのマクロ欄が
+            #    丸ごと消える。実際 2026-09-08 の公開レポートで消えていた。
+            #    実質金利や失業率は数ヶ月かけて動く指標なので、
+            #    数日前の値でも「今の土台」を判断する役には十分立つ。
+            #    ただし古い数字を今の数字として読ませてはいけないので、
+            #    何日前かを必ず添える。
+            cached, age = _load_cache()
+            if cached:
+                for c in cached:
+                    c["stale_days"] = age
+                    if age >= 1:
+                        c["value"] = f"{c.get('value', '')}（{age}日前）"
+                result["signals"] = cached
+                result["changed"] = []      # 古い値で「変化した」と言わない
+                result["available"] = True
+                result["stale_days"] = age
+                result["telegram_block"] = build_block(cached)
+                logger.warning(f"⚠️ FREDから取得できず、{age}日前の値で表示します"
+                               f"（{len(cached)}件）")
+                return result
+            logger.info("マクロシグナル: 該当なし（キャッシュも無し）")
             return result
 
         signals.sort(key=lambda x: -x.get("weight", 0))
@@ -232,8 +299,10 @@ def run(*_args, **_kwargs) -> dict:
         _save_state({"keys": now_keys, "session": _session_key(),
                      "ts": get_jst_now().isoformat()})
 
+        _save_cache(signals)
         result["signals"]        = signals
         result["changed"]        = changed
+        result["stale_days"]     = 0
         result["available"]      = True
         result["telegram_block"] = build_block(signals)
         logger.info(f"✅ マクロシグナル {len(signals)}件（うち変化 {len(changed)}件）")
