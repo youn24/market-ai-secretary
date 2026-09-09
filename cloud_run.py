@@ -1074,6 +1074,26 @@ def run(mode: str):
     #   3つともGeminiを使わないので、1日20回の枠は1回も減らない。
     # ──────────────────────────────────────────────────────────
 
+    # Step BG: 割安株スキャナー（グレアム基準・Gemini不使用・月曜だけ）
+    # 指標は日々ほとんど変わらないので毎日走らせる意味がない。
+    # 20銘柄それぞれに yfinance の .info を叩くため時間もかかる。
+    bargain = {"available": False}
+    try:
+        # ⚠️ 上のほうの weekday_now は try の中で代入されているので、
+        #    そこが落ちた日には未定義になる。ここで独立に取り直す。
+        if get_jst_now().weekday() == 0 or mode == "test":
+            logger.info("--- Step BG: 割安株スキャナー ---")
+            from src.bargain_scanner import scan_bargain_stocks
+            bargain = scan_bargain_stocks(5)
+            if bargain.get("available"):
+                _t = (bargain.get("top_stocks") or [{}])[0]
+                logger.info(f"✅ 割安株: {bargain.get('scanned_count', 0)}銘柄が基準を満たす"
+                            f"（首位 {_t.get('name', '')} PER×PBR {_t.get('graham_score')}）")
+            else:
+                logger.info("割安株: グレアム基準を満たす銘柄なし")
+    except Exception:
+        logger.error("割安株スキャナーエラー", exc_info=True)
+
     # Step PH: 主要4指標の1ヶ月推移（レポートの自前SVGチャート用）
     # 既存のチャートはTradingViewの埋め込みで、全部「今日1日」の足。
     # 1ヶ月の比較が無かったので、ここで取る。外部が落ちても出るように自前で描く。
@@ -1238,6 +1258,7 @@ def run(mode: str):
             # スクリーニングも実行だけして表示していなかった（決算と同じ形）
             jquants=jquants,
             history=history, daytrade=daytrade, holdings=holdings,
+            bargain=bargain,
             mode=mode,
         )
         # 公開ページが更新されたことを必ず確認する。

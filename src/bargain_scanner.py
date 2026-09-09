@@ -6,6 +6,10 @@ bargain_scanner.py — 日経225割安株スキャナー
 
 import yfinance as yf
 
+from src.utils import setup_logger
+
+logger = setup_logger("bargain_scanner")
+
 WATCH_STOCKS = {
     "7203.T": "トヨタ自動車",
     "6758.T": "ソニーG",
@@ -33,21 +37,62 @@ MEDAL = ["🥇", "🥈", "🥉"]
 BADGE_COLOR = ["#FFD700", "#C0C0C0", "#CD7F32"]  # 金・銀・銅
 
 
+# グレアムの基準: PER × PBR が 22.5 以下なら割安。
+# （PER15 × PBR1.5 = 22.5 が上限、というベンジャミン・グレアムの目安）
+# これを超えるものは「割安株」と呼べないので、一覧から外す。
+_GRAHAM_MAX = 22.5
+
+
+def _dividend_yield_pct(info: dict, per: float) -> float:
+    """配当利回りを％で返す。
+
+    ⚠️ 2026-09-09までここが**100倍**になっていた。
+       `info["dividendYield"] * 100` と書いていたが、yfinanceは既に
+       ％の数字（本田技研なら 4.35）を返すため、435% と表示されていた。
+       しかもその値がスコアに ×8 で効いていたので、
+       **PER41の武田薬品が「割安株4位」になる**という結果になっていた。
+
+    版によって「割合(0.0435)」を返すこともあるため、値そのもので
+    判断せず、**配当額 ÷ 株価**という定義から計算し直すのを第一手にする。
+    """
+    try:
+        rate = info.get("dividendRate")
+        price = (info.get("currentPrice") or info.get("regularMarketPrice")
+                 or info.get("previousClose"))
+        if rate and price and float(price) > 0:
+            return float(rate) / float(price) * 100
+    except (TypeError, ValueError):
+        pass
+    # 配当額が取れないときだけ dividendYield を使う。
+    # 配当利回りが25%を超える上場企業は現実にはほぼ無いので、
+    # それを境に「％で来ているのか割合で来ているのか」を見分ける。
+    try:
+        raw = float(info.get("dividendYield") or 0)
+    except (TypeError, ValueError):
+        return 0.0
+    if raw <= 0:
+        return 0.0
+    return raw if raw <= 25 else 0.0 if raw > 2500 else raw / 100
+
+
 def _fetch_stock_data(sym: str, name: str) -> dict | None:
     """1銘柄の指標を取得。取得失敗またはPER/PBR欠損時はNoneを返す。"""
     try:
         info = yf.Ticker(sym).info
         per = info.get("trailingPE") or info.get("forwardPE") or 999
         pbr = info.get("priceToBook") or 999
-        div = (info.get("dividendYield") or 0) * 100
+        div = _dividend_yield_pct(info, per)
 
         # PERやPBRが取得できない場合はスキャン対象外
         if per == 999 or pbr == 999:
             return None
 
         graham = per * pbr
-        score = max(0, (22.5 - graham) / 22.5 * 60)
-        score += div * 8
+        # ⚠️ 以前は配当を `div * 8` で足していた。配当が100倍だったので
+        #    3,480点になり、割安さ（最大60点）を完全に押し流していた。
+        #    配当は「割安さの補強」であって主役ではないので、上限を付ける。
+        score = max(0, (_GRAHAM_MAX - graham) / _GRAHAM_MAX * 60)
+        score += min(div, 6.0) * 5          # 配当は最大30点まで
         score += 20 if pbr < 1.0 else 0
 
         return {
@@ -166,8 +211,24 @@ def scan_bargain_stocks(top_n: int = 5) -> dict:
             "telegram_message": "⚠️ 割安株データの取得に失敗しました。",
         }
 
-    results.sort(key=lambda x: x["total_score"], reverse=True)
-    top = results[:top_n]
+    # ⚠️ グレアム基準を満たさないものを「割安株」として出さない。
+    #    以前は配当スコアだけで上位に来られたため、PER41の銘柄が
+    #    4位に入っていた。名前と中身を一致させる。
+    cheap = [r for r in results if r["graham_score"] <= _GRAHAM_MAX]
+    if not cheap:
+        logger.info(f"グレアム基準（PER×PBR≦{_GRAHAM_MAX}）を満たす銘柄は"
+                    f"ありませんでした（{len(results)}銘柄を確認）")
+        return {
+            "available": False,
+            "top_stocks": [],
+            "scanned_count": len(results),
+            "html": "",
+            "telegram_message": "",
+        }
+
+    cheap.sort(key=lambda x: x["total_score"], reverse=True)
+    top = cheap[:top_n]
+    results = cheap
 
     return {
         "available": True,

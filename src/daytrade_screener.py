@@ -41,6 +41,23 @@ _CURATED = [
 ]
 
 
+# 1銘柄1日の売買代金の「常識的な上限」（億円）。
+# 東証プライム全体で1日4〜5兆円、その中で最も商いの大きいソフトバンクGでも
+# 7,000億円台。1銘柄で8,000億円を超えたら、株価か出来高のどちらかが
+# ずれている疑いが濃い。
+#
+# ⚠️ 2026-09-09の実測: yfinanceの 285A（キオクシア）が9日連続で
+#    1.1〜2.0兆円と出ていた。同時期のソフトバンクGの2.5倍で、
+#    一過性のバグではなく系統的なズレ。原因は特定できていない
+#    （株価が10倍になっているか、出来高の単位が違うと思われる）。
+#
+# スコアには影響しない（流動性の加点は10^3.5=3,162億円で頭打ちなので、
+# 8,000億でも2兆円でも同じ20点）。問題は**表示**で、初心者が
+# 「1.9兆円動いている」を事実として読んでしまうこと。
+# 消すのではなく「?」を付けて、鵜呑みにされないようにする。
+_TURNOVER_SANE_MAX = 8000.0
+
+
 def _load_watchlist():
     out = []
     try:
@@ -141,6 +158,7 @@ def _metrics(h):
     chg_5d = round((last_c / float(close.iloc[-6]) - 1) * 100, 1) if len(close) >= 6 else 0
     return {
         "close": round(last_c), "atr_pct": atr_pct, "turnover": turnover,
+        "turnover_doubt": turnover > _TURNOVER_SANE_MAX,
         "vol_ratio": vol_ratio, "hi20": round(hi20), "lo20": round(lo20),
         "pos_20d": pos, "chg_1d": chg_1d, "chg_5d": chg_5d, **_pivot(h),
     }
@@ -200,6 +218,13 @@ def run(prices: dict = None, risk: dict = None, fear_greed: dict = None,
     if not ranked:
         return {"available": False, "reason": "条件を満たす銘柄なし"}
 
+    _doubt = [r for r in ranked if (r.get("metrics") or {}).get("turnover_doubt")]
+    if _doubt:
+        logger.warning("⚠️ 売買代金があり得ない大きさの銘柄: "
+                       + "／".join(f"{r['name']}({r['code']}) "
+                                   f"{r['metrics']['turnover']:.0f}億"
+                                   for r in _doubt[:4]))
+
     ranked.sort(key=lambda x: x["score"], reverse=True)
     top = ranked[:top_n]
     result = {"available": True, "count": len(ranked), "top": top, "universe_size": len(codes)}
@@ -223,7 +248,8 @@ def build_telegram_message(result: dict) -> str:
         m = s["metrics"]
         rs = "／".join(s["reasons"][:2]) if s["reasons"] else "ボラ・流動性"
         lines.append(f"*{i}. [{s['code']}] {s['name']}*　{s['score']:.0f}点{_mark(s['cat_appeal'])}")
-        lines.append(f"　値幅{m['atr_pct']}%・売買代金{m['turnover']:.0f}億・出来高{m['vol_ratio']}x")
+        _q = "?" if m.get("turnover_doubt") else ""
+        lines.append(f"　値幅{m['atr_pct']}%・売買代金{m['turnover']:.0f}億{_q}・出来高{m['vol_ratio']}x")
         lines.append(f"　{rs}")
         lines.append(f"　🎯 {s['playbook']['long_trigger']}")
         lines.append(f"　🛑 {s['playbook']['stop']}")
@@ -258,7 +284,7 @@ def get_html(result: dict) -> str:
   <div style="margin-bottom:8px;">{reasons}</div>
   <div style="display:flex;flex-wrap:wrap;gap:6px 14px;font-size:0.74em;color:#9fb4d4;margin-bottom:8px;">
     <span>📊 値幅 <b style="color:#eaf2ff;">{m['atr_pct']}%</b></span>
-    <span>💴 売買代金 <b style="color:#eaf2ff;">{m['turnover']:.0f}億</b></span>
+    <span>💴 売買代金 <b style="color:{'#d29922' if m.get('turnover_doubt') else '#eaf2ff'};">{m['turnover']:.0f}億{'?' if m.get('turnover_doubt') else ''}</b></span>
     <span>📈 出来高 <b style="color:#eaf2ff;">{m['vol_ratio']}x</b></span>
     <span>📍 20日内位置 <b style="color:{pos_col};">{pos:.0f}%</b></span>
   </div>
@@ -285,7 +311,8 @@ def get_html(result: dict) -> str:
   </div>
   {cards}
   <div style="font-size:0.68em;color:#5a6b82;margin-top:4px;">
-    🟢材料の妙味 高 ／ 🟡中 ／ ⚪低　・　「今日動く度」はボラ・流動性・材料・夜間の動きの合成スコア　※AIの事前シナリオで、株価を保証しません
+    🟢材料の妙味 高 ／ 🟡中 ／ ⚪低　・　「今日動く度」はボラ・流動性・材料・夜間の動きの合成スコア　※AIの事前シナリオで、株価を保証しません<br>
+    <span style="color:#d29922;">売買代金に「?」が付いているものは、取得元のデータが1銘柄の常識的な範囲（8,000億円）を超えており、数字が正しくない可能性があります。</span>
   </div>
 </div>'''
 

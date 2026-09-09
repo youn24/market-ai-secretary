@@ -2490,6 +2490,52 @@ def _fundamental_section(macro_regime):
 </div>"""
 
 
+def _bargain_section(bargain):
+    """割安株（グレアム基準）。月曜だけ更新する。
+
+    ⚠️ この一覧は「安いから買い」ではない。安いには理由があることが多く、
+       業績が落ちている会社は指標だけ見れば必ず割安に見える。
+       そのことを表の下に必ず書く。
+    """
+    bg = bargain or {}
+    rows_in = [x for x in (bg.get("top_stocks") or []) if isinstance(x, dict)]
+    if not bg.get("available") or not rows_in:
+        return ""
+    rows = []
+    for i, x in enumerate(rows_in[:5], 1):
+        per = x.get("per")
+        pbr = x.get("pbr")
+        dv = x.get("dividend_yield")
+        gr = x.get("graham_score")
+        f = lambda v, d=1: f"{v:.{d}f}" if isinstance(v, (int, float)) else "—"
+        gcol = GREEN if isinstance(gr, (int, float)) and gr <= 12 else TEXT
+        rows.append(f"""<div style="padding:7px 0;border-bottom:1px solid {BORDER}">
+  <div style="display:flex;align-items:center;gap:7px">
+    <span class="num" style="font-size:10px;font-weight:900;color:{MUTED};min-width:14px">{i}</span>
+    <span style="font-size:11.5px;font-weight:800;color:{TEXT};flex:1;min-width:0">{x.get('name', '')}</span>
+    <span class="num" style="font-size:10.5px;font-weight:800;color:{gcol}">PER×PBR {f(gr)}</span>
+  </div>
+  <div style="display:flex;gap:12px;font-size:10px;color:{MUTED};margin-top:3px;padding-left:21px">
+    <span>PER <b style="color:{TEXT}">{f(per)}</b></span>
+    <span>PBR <b style="color:{TEXT}">{f(pbr, 2)}</b></span>
+    <span>配当 <b style="color:{GREEN}">{f(dv, 2)}%</b></span>
+  </div>
+</div>""")
+    return f"""
+<div style="margin-bottom:12px">
+  <div class="label" style="padding:0 2px;margin-bottom:6px">🏷 割安株（グレアム基準・月曜更新）</div>
+  <div class="glass-sm fade" style="padding:4px 12px 8px">{"".join(rows)}</div>
+  <div style="font-size:9px;color:{MUTED};margin-top:5px;padding:0 2px">
+    投資家ベンジャミン・グレアムの目安「PER×PBR が 22.5 以下なら割安」で選んでいます。
+    PERは「今の株価が利益の何年分か」、PBRは「会社の資産に対して株価が何倍か」です。
+    どちらも小さいほど安い、という意味になります。<br>
+    <b style="color:{YELLOW}">ただし「安い＝買い」ではありません。</b>
+    業績が落ちている会社は指標のうえでは必ず割安に見えます。
+    安い理由まで確かめてから判断してください。
+  </div>
+</div>"""
+
+
 def generate(
     mode: str = "morning",
     prices: dict = None,
@@ -2547,6 +2593,7 @@ def generate(
     stocktwits: dict = None,    # 米国個人投資家の感情
     retail_heat: dict = None,   # 個人投資家の過熱度
     macro_regime: dict = None,  # マクロ環境（実質金利など）
+    bargain: dict = None,       # 割安株（グレアム基準・月曜のみ）
     history: dict = None,       # 主要4指標の1ヶ月推移（自前SVGチャート）
     daytrade: dict = None,      # 今日動きやすい銘柄（寄り前スクリーニング）
     holdings: dict = None,      # 保有銘柄の含み損益
@@ -2605,6 +2652,7 @@ def generate(
     shr_html   = _shareholder_section(shareholder)
     scr_html   = _screener_section(jquants)
     hist_html  = _history_section(history)
+    bargain_html = _bargain_section(bargain)
     heat_html  = _retail_heat_section(retail_heat)
     hotstk_html = _hot_stocks_section(hot_stocks)
     stw_html   = _stocktwits_section(stocktwits)
@@ -2698,6 +2746,7 @@ def generate(
   {nimpact_html}
   {shr_html}
   {scr_html}
+  {bargain_html}
   {earn_html}
   {anom_html}
   {internals_html}
@@ -2831,6 +2880,7 @@ def run(
     stocktwits: dict         = None,
     retail_heat: dict        = None,
     macro_regime: dict       = None,
+    bargain: dict            = None,
     history: dict            = None,
     daytrade: dict           = None,
     holdings: dict           = None,
@@ -2862,6 +2912,7 @@ def run(
             history=history, daytrade=daytrade, holdings=holdings,
             hot_stocks=hot_stocks, stocktwits=stocktwits,
             retail_heat=retail_heat, macro_regime=macro_regime,
+            bargain=bargain,
         )
         # 生成できたと言い切る前に、ファイルが実在し中身があるかを必ず確かめる。
         # ここを検証していなかったため、本番で生成に失敗していたことに
