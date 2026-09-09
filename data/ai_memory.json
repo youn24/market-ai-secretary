@@ -431,6 +431,18 @@
       "usdjpy": 153.58,
       "vix": 15.3,
       "ai_judgment": ""
+    },
+    {
+      "date": "2026-09-09",
+      "sentiment": "弱気 (リスクオフ)",
+      "score": -1.97,
+      "fg_score": 40.6,
+      "fg_rating": "恐怖 😟",
+      "nikkei": 65428.2188,
+      "sp500": 7673.52,
+      "usdjpy": 153.335,
+      "vix": 15.72,
+      "ai_judgment": ""
     }
   ],
   "patterns": {},
