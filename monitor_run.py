@@ -190,6 +190,19 @@ def run():
         except Exception:
             logger.error("窓開けスキャンエラー", exc_info=True)
 
+    # 恐怖指数の見張り（fear_watch.py）
+    #   日経VIを**水準（過去約3年の中での位置）**で見張る。
+    #   既存の risk_gauges は前日比だけを見ているため、
+    #   高い水準に張り付いた週は一度も鳴らなかった。
+    #   上位10%ゾーンの出入りで1回ずつ通知する（実測で年7.6回）。
+    #   これは日本株の恐怖指数なので、FXグループではなくメインへ送る。
+    try:
+        from src.fear_watch import run_fear_alert
+        if run_fear_alert():
+            logger.info("✅ 恐怖指数アラート送信完了")
+    except Exception:
+        logger.error("恐怖指数の見張りエラー", exc_info=True)
+
     # リスク計器盤（risk_gauges.py）
     #   恐怖指数10種・債券/商品ボラ3種・日米金利・ドル指数・暗号資産F&Gを一覧し、
     #   「その指標にとって普段より大きい」動きが出たものだけ通知する。

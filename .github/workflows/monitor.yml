@@ -73,7 +73,7 @@ jobs:
                    data/fx_signal_state.json data/divergence_state.json \
                    data/risk_gauge_state.json data/gap_state.json \
                    data/pattern_state.json data/us_movers_state.json \
-                   data/nikkei_impact_state.json; do
+                   data/nikkei_impact_state.json data/fear_watch_state.json; do
             [ -f "$f" ] && git add -f "$f"
           done
           if ! git diff --staged --quiet; then

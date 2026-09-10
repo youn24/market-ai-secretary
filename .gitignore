@@ -17,6 +17,10 @@ data/*
 !data/theme_history.json
 !data/weekly_calendar.json
 !data/valuation_state.json
+!data/fear_watch_state.json
+!data/fundamental_cache.json
+!data/fundamental_state.json
+!data/fred_cache.json
 !data/macro_state.json
 !data/market_signal_state.json
 !data/policy_state.json
