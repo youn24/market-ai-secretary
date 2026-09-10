@@ -177,6 +177,49 @@ def _parse(text: str) -> dict:
     return {}
 
 
+def _resp_text(resp) -> str:
+    """応答から本文を取り出す。
+
+    ⚠️ `resp.text` は、本文が空のとき（MAX_TOKENSで打ち切られた・
+       安全フィルタで止められた等）**例外を投げる**。
+       getattr で包んでも例外は素通りするので、try で受ける必要がある。
+    """
+    try:
+        return resp.text or ""
+    except Exception:
+        pass
+    # text が使えないときは candidates から拾えることがある
+    try:
+        parts = resp.candidates[0].content.parts
+        return "".join(getattr(x, "text", "") or "" for x in parts)
+    except Exception:
+        return ""
+
+
+def _why(resp) -> str:
+    """空だった理由を短くまとめる。次に落ちたとき即座に原因が分かるように。"""
+    bits = []
+    try:
+        c = resp.candidates[0]
+        fr = getattr(c, "finish_reason", None)
+        bits.append(f"finish_reason={getattr(fr, 'name', fr)}")
+    except Exception:
+        bits.append("candidatesなし")
+    try:
+        u = resp.usage_metadata
+        bits.append(f"入力{u.prompt_token_count}tok"
+                    f"/出力{u.candidates_token_count}tok"
+                    f"/合計{u.total_token_count}tok")
+    except Exception:
+        pass
+    try:
+        if resp.prompt_feedback and resp.prompt_feedback.block_reason:
+            bits.append(f"block={resp.prompt_feedback.block_reason}")
+    except Exception:
+        pass
+    return " ".join(bits) or "詳細不明"
+
+
 def run(prices: dict, news: list, risk: dict, fear_greed: dict,
         us_ah: dict = None, adr: dict = None, us_movers: dict = None) -> dict:
     """
@@ -230,19 +273,56 @@ def run(prices: dict, news: list, risk: dict, fear_greed: dict,
 ・「必ず」「確実に」などの断定は避けてください
 ・専門用語を使うときは短く言い換えを添えてください"""
 
+        # ⚠️ max_output_tokens はここが命取りだった。
+        #    gemini-2.5-flash は**思考モデル**で、答えを書く前に内部推論に
+        #    出力トークンを使う。ところが google-generativeai 0.8.6（旧SDK）は
+        #    ThinkingConfig を持っておらず、思考を切ることができない。
+        #    2048 だと思考だけで使い切り、本文が空のまま MAX_TOKENS で
+        #    打ち切られる → JSONが解析できず available=False になる。
+        #
+        #    **Geminiの呼び出し回数は消費されるのに中身が返らない**ため、
+        #    予算表には「ai_brief: 1回」と記録が残り、ログも例外を出さない。
+        #    実際 2026-08-27〜09-10 の9回すべてこの形で落ちており、
+        #    朝の通知から「AIの見立て」が2週間まるごと消えていた。
+        #
+        #    要求している本文は日本語で約750字。思考ぶんを見込んで8192にする。
+        #    無料枠の制約は「1日20回」であってトークン数ではない
+        #    （1日250,000トークンに対し、20回×8192でも上限内）ので、
+        #    ここを絞る意味はない。
         resp = model.generate_content(
             prompt,
             generation_config={
-                "max_output_tokens": 2048,
+                "max_output_tokens": 8192,
                 "temperature": 0.7,
                 "response_mime_type": "application/json",
                 "response_schema": _SCHEMA,
             },
         )
-        data = _parse(getattr(resp, "text", "") or "")
+        data = _parse(_resp_text(resp))
         if not data:
-            logger.error("統合AI解釈: 応答を解析できませんでした")
-            return out
+            # なぜ空だったのかを必ず残す。ここを書いていなかったせいで
+            # 「失敗した」ことしか分からず、原因の特定に2週間かかった。
+            logger.error(f"統合AI解釈: 応答を解析できませんでした（{_why(resp)}）")
+            # スキーマ指定をやめてもう一度だけ試す。
+            # 構造化出力の制約と思考モデルの組み合わせで空になることがあり、
+            # 素のJSON要求なら通ることがある。呼び出しは1回増えるが、
+            # 朝の中身が丸ごと消えるほうがはるかに損失が大きい。
+            try:
+                resp2 = model.generate_content(
+                    prompt + "\n\nJSONだけを返してください。前後に説明を付けないこと。",
+                    generation_config={"max_output_tokens": 8192,
+                                       "temperature": 0.7},
+                )
+                data = _parse(_resp_text(resp2))
+                if data:
+                    logger.info("統合AI解釈: スキーマ無しの再試行で取得できました")
+            except Exception as e2:
+                if type(e2).__name__ == "BudgetExceeded":
+                    logger.info(f"統合AI解釈の再試行: {e2}")
+                else:
+                    logger.debug(f"再試行も失敗: {e2}")
+            if not data:
+                return out
 
         scen = []
         for s in (data.get("scenarios") or [])[:3]:

@@ -199,8 +199,25 @@ def _fetch_nikkei_official_csv(csv_name: str) -> dict | None:
         latest = rows[-1][1]
         prev   = rows[-2][1] if len(rows) >= 2 else None
         change = round((latest - prev) / abs(prev) * 100, 2) if prev else None
+
+        # ⚠️ ここまでで全履歴（約900営業日）を読んでいるのに、
+        #    最新の1点だけ返して残りを捨てていた。
+        #    恐怖指数は「20」と言われても高いのか低いのか分からない数字で、
+        #    意味を持つのは**過去のどのあたりか**である。
+        #    通信を増やさずに出せるので、ここで位置を計算して渡す。
+        #
+        #    実際これを持っていなかったせいで、日経VI 31.6（過去3年で
+        #    上から14%の高さ）を「平常」と表示していた。
+        #    固定しきい値38は上位4%でしか鳴らず、その下が全部「平常」だった。
+        pct = None
+        vals = sorted(v for _, v in rows)
+        if len(vals) >= 60:
+            below = sum(1 for v in vals if v < latest)
+            pct = round(below / len(vals) * 100, 1)
+
         return {"latest": round(latest, 2), "prev_close": round(prev, 2) if prev else None,
-                "change_pct": change, "source": "日経公式CSV"}
+                "change_pct": change, "source": "日経公式CSV",
+                "pctile": pct, "history_days": len(rows)}
     except Exception as e:
         logger.warning(f"日経公式CSV 失敗 [{csv_name}]: {e}")
     return None

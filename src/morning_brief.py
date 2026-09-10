@@ -38,7 +38,43 @@ _VIX_CALM, _VIX_ALERT = 20.0, 25.0
 # 日経VIの警戒水準。VIXと同じ数字は使えない。
 # 直近1年の日経VIは平均31.1・最低18.8・最高57.0で、VIX(平均18.1)より構造的に高い。
 # 日本株の方がもともと揺れやすいだけで、28は「異常」ではなく平常運転。
-_NVI_ALERT = 38.0
+# ⚠️ 固定のしきい値をやめた理由（2026-09-10）:
+#    _NVI_ALERT=38 は過去3年の**上位4%**にあたる。そこを超えないと
+#    警戒にならないので、31.6（上から14%）でも「平常」と表示していた。
+#    すぐ上の行に「弱気！慎重に」と出ているのに、その下が緑の「平常」で、
+#    読む人はどちらを信じればいいか分からない。
+#
+#    恐怖指数は「31.6」と言われても高いか低いか分からない数字なので、
+#    **過去の中での位置（パーセンタイル）**で判定し、位置も言葉で添える。
+#    しきい値を人が決め直す必要がなく、相場の水準が変わっても自動で追従する。
+_NVI_ALERT = 38.0          # 互換のため残す（下の位置判定が主）
+
+# 日経VIの「過去の中での位置」の区切り。数字ではなく順位で見る。
+_NVI_P_HIGH   = 90.0       # 上位10%に入っていれば高い
+_NVI_P_WARM   = 75.0       # 上位25%に入っていればやや高い
+_NVI_P_CALM   = 25.0       # 下位25%なら落ち着いている
+
+
+def _nvi_words(nvi, pct) -> str:
+    """恐怖指数の水準を、順位の言葉にして返す。
+
+    「31.6」だけでは判断できないが、「過去3年で上から14%」なら
+    高いか低いかが誰にでも分かる。
+    """
+    if nvi is None:
+        return ""
+    if pct is None:
+        return f"日経VI {nvi:.1f}"
+    top = 100.0 - pct
+    if pct >= _NVI_P_HIGH:
+        w = f"過去3年で上から{top:.0f}%の高さ"
+    elif pct >= _NVI_P_WARM:
+        w = f"過去3年で上から{top:.0f}%とやや高め"
+    elif pct <= _NVI_P_CALM:
+        w = f"過去3年で下から{pct:.0f}%と低め"
+    else:
+        w = "過去3年の平均的な水準"
+    return f"日経VI {nvi:.1f}（{w}）"
 
 
 def _band(diff_yen: float) -> tuple:
@@ -120,18 +156,27 @@ def _risk_temp() -> dict:
         yen_strong = fx_chg < -0.3        # 円高＝逃避の目印
 
         # 日本側の計器。取れなくても止めない（米国側だけで従来通り判定する）
-        nvi = nvi_chg = None
+        nvi = nvi_chg = nvi_pct = None
         try:
             from src.fetch_prices import _fetch_nikkei_vi
             d = _fetch_nikkei_vi() or {}
             nvi, nvi_chg = d.get("latest"), d.get("change_pct")
+            nvi_pct = d.get("pctile")
         except Exception:
             logger.error("日経VIを取得できませんでした", exc_info=True)
 
         # 日経VIは平常時でもVIXの倍近い（日本の方がもともと揺れやすい）。
         # 水準ではなく「普段からどれだけ跳ねたか」で見る。
         jp_jump = nvi_chg is not None and nvi_chg >= 8
-        jp_high = nvi is not None and nvi >= _NVI_ALERT
+        # 水準は「過去の中での位置」で見る。位置が取れない日だけ従来の38を使う。
+        if nvi_pct is not None:
+            jp_high = nvi_pct >= _NVI_P_HIGH        # 上位10%
+            jp_warm = nvi_pct >= _NVI_P_WARM        # 上位25%
+            jp_calm = nvi_pct <= _NVI_P_CALM        # 下位25%
+        else:
+            jp_high = nvi is not None and nvi >= _NVI_ALERT
+            jp_warm = nvi is not None and nvi >= 28.0
+            jp_calm = nvi is not None and nvi < 20.0
 
         if jp_jump and (yen_strong or vix_chg > 8):
             level, msg = "警戒", ("日本の恐怖指数が跳ね、円高か世界の不安も伴っています。"
@@ -142,17 +187,24 @@ def _risk_temp() -> dict:
         elif vix >= _VIX_ALERT and yen_strong:
             level, msg = "警戒", "恐怖指数が高く、同時に円高。本物のリスク回避が出ています"
         elif jp_high or vix >= _VIX_ALERT:
-            level, msg = "やや警戒", "恐怖指数が高めの水準にあります"
+            level, msg = "やや警戒", ("日本株の恐怖指数が過去3年でも高いほうの"
+                                      "10%に入っています")
         elif yen_strong and vix_chg > 5:
             level, msg = "やや警戒", "円高と恐怖指数の上昇が同時に出ています"
-        elif vix < _VIX_CALM and (nvi is None or nvi < _NVI_ALERT):
+        elif jp_warm:
+            # ⚠️ ここが抜けていた。上位25%の水準を「平常」と言っていたため、
+            #    「弱気！慎重に」の真下に緑の「平常」が並ぶ矛盾が起きていた。
+            level, msg = "やや高い", ("普段よりは警戒されている水準です。"
+                                      "パニックではありませんが、値動きは荒くなりやすい状態")
+        elif vix < _VIX_CALM and jp_calm:
             level, msg = "平常", "市場は落ち着いています"
         else:
             level, msg = "普通", "特に警戒すべき水準ではありません"
 
         return {"available": True, "vix": vix, "vix_chg": vix_chg,
                 "fx": fx, "fx_chg": fx_chg,
-                "nvi": nvi, "nvi_chg": nvi_chg,
+                "nvi": nvi, "nvi_chg": nvi_chg, "nvi_pctile": nvi_pct,
+                "nvi_words": _nvi_words(nvi, nvi_pct),
                 "level": level, "message": msg}
     except Exception:
         logger.error("リスク温度を出せませんでした", exc_info=True)
@@ -254,7 +306,10 @@ def build_message(d: dict) -> str:
 
     r = d.get("risk") or {}
     if r.get("available"):
-        icon = {"警戒": "🔴", "やや警戒": "🟡"}.get(r["level"], "🟢")
+        # ⚠️ 対応表に無い水準は全部🟢になる。「やや高い」を足したとき
+        #    ここを直し忘れると、黄色にしたはずの警告が緑で出る。
+        icon = {"警戒": "🔴", "やや警戒": "🟠",
+                "やや高い": "🟡", "普通": "⚪"}.get(r["level"], "🟢")
         lines.append(f"② *市場の緊張度*　{icon} {r['level']}")
         # 日本株を見ているのだから、日本の計器を先に出す
         if r.get("nvi") is not None:

@@ -564,6 +564,65 @@ def _build_overview_caption(risk, prices, fear_greed, news, ai_summary) -> str:
     return "\n".join(lines)
 
 
+# 33業種の名前は長いものが多く、そのまま並べると1行に収まらない。
+# 機械的に切ると意味が変わるので、よく出るものだけ短い言い方を決めておく。
+def _score_context(score) -> str:
+    """スコアが過去のどのあたりかを短く返す。
+
+    「スコア -4.3」だけでは、それが少し弱いのか、めったにない弱さなのかが
+    分からない。日経VIと同じ考え方で、**過去の中での位置**を添える。
+    記録が少ないうちは位置を出さず、取りうる幅だけ示す。
+    """
+    # ⚠️ risk["score"] は None や欠損で来ることがある。数値でなければ何も言わない。
+    try:
+        score = float(score)
+    except (TypeError, ValueError):
+        return ""
+    if score != score:          # NaN。比較が常に偽になり「下から0%」と出てしまう
+        return ""
+    try:
+        import json
+        from src.utils import BASE_DIR
+        d = json.loads((BASE_DIR / "data" / "predictions.json")
+                       .read_text(encoding="utf-8"))
+        vals = [p["score"] for p in d.get("predictions", [])
+                if isinstance(p.get("score"), (int, float))]
+    except Exception:
+        return ""
+    if len(vals) < 30:
+        return ""
+    below = sum(1 for v in vals if v < score)
+    pct = below / len(vals) * 100
+    if pct >= 85:
+        w = f"過去{len(vals)}日で上から{100 - pct:.0f}%と強い"
+    elif pct <= 15:
+        w = f"過去{len(vals)}日で下から{pct:.0f}%と弱い"
+    else:
+        w = f"過去{len(vals)}日で下から{pct:.0f}%"
+    return w
+
+
+_SECTOR_SHORT = {
+    "エネルギー資源": "エネルギー",
+    "金融（除く銀行）": "金融",
+    "金融": "金融",
+    "建設・資材": "建設",
+    "鉄鋼・非鉄": "鉄鋼",
+    "電機・精密": "電機",
+    "情報通信・サービスその他": "情報通信",
+    "自動車・輸送機": "自動車",
+    "運輸・物流": "運輸",
+    "食品": "食品",
+    "医薬品": "医薬品",
+    "小売": "小売",
+    "銀行": "銀行",
+    "商社・卸売": "商社",
+    "不動産": "不動産",
+    "electric_power": "電力・ガス",
+    "電力・ガス": "電力",
+}
+
+
 def _build_unified_caption(risk, prices, fear_greed, ai_summary,
                            setups=None, prediction_tracker=None,
                            us_afterhours=None, pts=None, adr=None,
@@ -598,6 +657,9 @@ def _build_unified_caption(risk, prices, fear_greed, ai_summary,
         "━━━━━━━━━━━━━━",
         f"{tl} *{mood}*　スコア `{score_s}`",
     ]
+    _sc = _score_context(score)
+    if _sc:
+        head.append(f"　{_sc}")
 
     # ── 寄り付きの見当と緊張度（最優先）──────────────────────
     # 朝いちばんに知りたいのは「今日どう始まるか」と「警戒すべきか」。
@@ -611,13 +673,24 @@ def _build_unified_caption(risk, prices, fear_greed, ai_summary,
             _ar = "🔺" if _o["diff_yen"] > 0 else "🔻"
             head.append(f"{_ar} 寄り付き目安 *{_o['diff_yen']:+,}円*（{_o['band']}）")
         if _r.get("available"):
-            _ic = {"警戒": "🔴", "やや警戒": "🟡"}.get(_r["level"], "🟢")
+            _ic = {"警戒": "🔴", "やや警戒": "🟠",
+                   "やや高い": "🟡", "普通": "⚪"}.get(_r["level"], "🟢")
             # 日本株を見ているのだから日本の計器を先に出す。
             # VIXだけで判定していた頃、日経が週-4.6%下げた5日間ずっと
             # 「平常」を出し続けていた（2026-08-25に判明）。
-            _g = (f"日経VI {_r['nvi']:.1f} / " if _r.get("nvi") is not None else "")
-            head.append(f"{_ic} 緊張度 *{_r['level']}*"
-                        f"（{_g}VIX {_r['vix']:.1f} / 円 {_r['fx']:.2f}）")
+            #
+            # ⚠️ さらに 2026-09-10、「日経VI 31.6」を🟢平常と表示していた。
+            #    31.6は過去3年で上から14%の高さで、すぐ上の行の
+            #    「🔴 弱気！慎重に」と真っ向から矛盾していた。
+            #    数字だけ出しても高いか低いか分からないので、
+            #    **過去の中での位置**を言葉で添える。
+            _g = _r.get("nvi_words") or (
+                f"日経VI {_r['nvi']:.1f}" if _r.get("nvi") is not None else "")
+            head.append(f"{_ic} 緊張度 *{_r['level']}*")
+            if _g:
+                head.append(f"　{_g}")
+            head.append(f"　VIX {_r['vix']:.1f} / ドル円 {_r['fx']:.2f}"
+                        f"（{_r['fx_chg']:+.1f}%）")
     except Exception:
         # ここで落ちても朝の通知そのものは止めない
         logger.error("寄り付き目安を通知に載せられませんでした", exc_info=True)
@@ -874,8 +947,14 @@ def _build_unified_caption(risk, prices, fear_greed, ai_summary,
     sr = sector_ranking or {}
     rk = sr.get("ranking") or []
     if sr.get("available") and len(rk) >= 6:
-        up = "　".join(f"{x['name'][:6]} {x['pct']:+.1f}%" for x in rk[:3])
-        dn = "　".join(f"{x['name'][:6]} {x['pct']:+.1f}%" for x in rk[-3:])
+        # ⚠️ 6字で機械的に切ると「金融(除く銀」「エネルギー資」のように
+        #    途中で切れて意味が分からなくなる。括弧の前で切り、
+        #    それでも長いものは短い通称に置き換える。
+        def _sec(nm: str) -> str:
+            nm = (nm or "").split("（")[0].split("(")[0].strip()
+            return _SECTOR_SHORT.get(nm, nm)[:7]
+        up = "　".join(f"{_sec(x['name'])} {x['pct']:+.1f}%" for x in rk[:3])
+        dn = "　".join(f"{_sec(x['name'])} {x['pct']:+.1f}%" for x in rk[-3:])
         sec_rank = [f"📈 *強い業種*　{up}", f"📉 *弱い業種*　{dn}"]
 
     # ── 起きた日だけ出すもの ────────────────────────────
@@ -943,11 +1022,23 @@ def _build_unified_caption(risk, prices, fear_greed, ai_summary,
     try:
         dt = daytrade or {}
         if dt.get("available") and dt.get("top"):
-            names = "　".join(
-                f"{x.get('name','')[:7]}" for x in dt["top"][:2] if isinstance(x, dict))
+            # ⚠️ 7字で機械的に切ると「ソフトバンクグ」のようになる。
+            #    よくある長い語尾を短くしてから、必要なら切る。
+            def _nm(x):
+                n = (x.get("name") or "")
+                for a_, b_ in (("グループ", "G"), ("ホールディングス", "HD"),
+                               ("株式会社", ""), ("・", "")):
+                    n = n.replace(a_, b_)
+                # 売買代金が常識外の銘柄は、通知の1行でも分かるようにする
+                q = "?" if (x.get("metrics") or {}).get("turnover_doubt") else ""
+                return n[:8] + q
+            names = "　".join(_nm(x) for x in dt["top"][:2] if isinstance(x, dict))
             if names:
-                dts = [f"🎰 *今日 値動きが大きくなりやすい*　{names}",
-                       "　（方向の予想ではありません。詳細はレポート）"]
+                _note = ("　（方向の予想ではありません。詳細はレポート）"
+                         if "?" not in names else
+                         "　（方向の予想ではありません。?は取得元の数字が"
+                         "怪しい銘柄です）")
+                dts = [f"🎰 *今日 値動きが大きくなりやすい*　{names}", _note]
     except Exception:
         logger.error("デイトレ候補の行を作れませんでした", exc_info=True)
 
