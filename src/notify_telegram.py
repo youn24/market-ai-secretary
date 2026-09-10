@@ -1049,8 +1049,13 @@ def _build_unified_caption(risk, prices, fear_greed, ai_summary,
     # ev(20番台の予定) → acc(30番台の予測) → earn(40番台の決算) の順。
     # 並びは src/priority.py の帯に合わせる。
     # 事実（TOB・52週線・業種）→ 予定 → 予測 → 参考 の順。
-    blocks = [hold, pre, shr, rare, sec_rank, ev, sig, hot, ret, acc,
-              earn, mac, dts, ai_blk]
+    # ⚠️ 1024字を超えると**後ろから**削られる。ここに ai_blk を最後に
+    #    置いていたため、混み合った日は「AIの一言」が真っ先に捨てられていた。
+    #    3視点をまとめた結論の1行は、決算やマクロの列挙より価値が高い。
+    #    事実（持ち株・寄り付き・TOB・業種）を前に置く方針は変えず、
+    #    読み物寄りのブロックより前へ移す。
+    blocks = [hold, pre, shr, rare, sec_rank, ev, sig, acc, ai_blk,
+              hot, ret, earn, mac, dts]
     while True:
         parts = [head]
         parts += [b for b in blocks if b]
