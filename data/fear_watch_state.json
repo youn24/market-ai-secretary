@@ -1,0 +1,8 @@
+{
+  "in_alert": false,
+  "zone": "warm",
+  "pctile": 84.3,
+  "nvi": 30.55,
+  "at": "2026-09-10T20:04:56.459161+09:00",
+  "jump_session": null
+}
