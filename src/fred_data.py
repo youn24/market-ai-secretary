@@ -4,10 +4,14 @@ APIキー不要でGDP・CPI・失業率・FF金利・イールドカーブを取
 """
 import urllib.request
 import ssl
+import time
 import io
+import json
 import csv
 import logging
 from datetime import datetime, timedelta
+
+from src.utils import BASE_DIR
 
 logger = logging.getLogger(__name__)
 
@@ -26,20 +30,80 @@ FRED_SERIES = {
 }
 
 
-def _fetch_series(series_id: str, limit: int = 24) -> list:
-    """FREDからCSVデータを取得（API不要）"""
+# FREDから取れた系列をそのまま置いておく場所。
+# ⚠️ FREDのCSV口は日によって全系列が落ちる（2026-09-10に実測。
+#    40分前まで取れていた T10Y2Y も含めて全滅した）。
+#    ここで扱うのはCPI・失業率・政策金利といった**月次で動く指標**なので、
+#    数日前の値でも判断の役に立つ。取れない日に何も出さないほうが損失が大きい。
+_CACHE_FILE = BASE_DIR / "data" / "fred_cache.json"
+_CACHE_MAX_DAYS = 21          # 月次指標なので3週間までは使う
+
+
+def _cache_load() -> dict:
+    try:
+        return json.loads(_CACHE_FILE.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
+def _cache_get(series_id: str):
+    """(行データ, 何日前か)。使えなければ (None, -1)。"""
+    c = _cache_load().get(series_id)
+    if not c:
+        return None, -1
+    try:
+        d0 = datetime.strptime(c["date"], "%Y-%m-%d").date()
+        age = (datetime.now().date() - d0).days
+        if age < 0 or age > _CACHE_MAX_DAYS or not c.get("rows"):
+            return None, -1
+        return c["rows"], age
+    except Exception:
+        return None, -1
+
+
+def _cache_put(series_id: str, rows: list) -> None:
+    try:
+        c = _cache_load()
+        c[series_id] = {"date": datetime.now().strftime("%Y-%m-%d"), "rows": rows}
+        _CACHE_FILE.parent.mkdir(parents=True, exist_ok=True)
+        _CACHE_FILE.write_text(json.dumps(c, ensure_ascii=False), encoding="utf-8")
+    except Exception:
+        pass
+
+
+def _fetch_series(series_id: str, limit: int = 24, tries: int = 3) -> list:
+    """FREDからCSVデータを取得（API不要）
+
+    ⚠️ FREDのこのCSV口は、混んでいる時間帯に**接続そのものを切ってくる**
+       （2026-09-10に WinError 10054 と read timeout を実測）。
+       1回で諦めていたため、政策金利ウォッチが 08-26 以降ずっと
+       「データなし」で落ちていた。少し待って試し直す。
+       同じ対策を src/fundamental_signals.py にも入れてある。
+    """
     url = f"https://fred.stlouisfed.org/graph/fredgraph.csv?id={series_id}"
     req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-    try:
-        resp = urllib.request.urlopen(req, context=_ctx, timeout=30)
-        content = resp.read().decode("utf-8")
-        reader = csv.reader(io.StringIO(content))
-        rows = [r for r in reader if len(r) == 2 and r[1] not in (".", "")]
-        rows = rows[1:]
-        return rows[-limit:]
-    except Exception as e:
-        logger.warning(f"FRED取得失敗 {series_id}: {e}")
-        return []
+    for i in range(tries):
+        try:
+            resp = urllib.request.urlopen(req, context=_ctx, timeout=30)
+            content = resp.read().decode("utf-8")
+            reader = csv.reader(io.StringIO(content))
+            rows = [r for r in reader if len(r) == 2 and r[1] not in (".", "")]
+            rows = rows[1:]
+            if rows:
+                _cache_put(series_id, rows[-60:])   # 少し多めに残しておく
+            return rows[-limit:]
+        except Exception as e:
+            if i == tries - 1:
+                cached, age = _cache_get(series_id)
+                if cached:
+                    logger.warning(f"FRED取得失敗 {series_id}（{tries}回試行）。"
+                                   f"{age}日前の値を使います: {e}")
+                    return cached[-limit:]
+                logger.warning(f"FRED取得失敗 {series_id}（{tries}回試行・"
+                               f"キャッシュも無し）: {e}")
+                return []
+            time.sleep(2 * (i + 1))
+    return []
 
 
 def _fetch_yahoo_macro() -> dict:
