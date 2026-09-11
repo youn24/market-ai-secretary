@@ -71,7 +71,38 @@ def _cache_put(series_id: str, rows: list) -> None:
         pass
 
 
-def _fetch_series(series_id: str, limit: int = 24, tries: int = 3) -> list:
+# ── FRED全体の遮断器（サーキットブレーカー）──────────────────
+# ⚠️ 2026-09-11、朝のレポートが**タイムアウトで丸ごと落ちた**。原因は前日に
+#    入れた「3回リトライ・30秒待ち」。FREDが落ちている日は1系列あたり
+#    最大97秒かかり、fred_data 7系列で11分・fundamental_signals 4系列で5分・
+#    政策金利2系列で3分、**合計約20分**が普段の20分に上乗せされて
+#    30分の制限を超えた。
+#
+#    しかも「FREDは落ちるときは全系列が同時に落ちる」ことは前日に
+#    自分で実測していた（40分前まで取れていた系列も含めて全滅した）。
+#    それなのに系列ごとに律儀に3回ずつ待つ作りにしていた。
+#
+#    そこで、**1系列でも全試行が失敗したら、その実行の間はFREDを
+#    落ちているとみなし、以降は通信せずキャッシュへ直行する**。
+#    最悪でも最初の1系列ぶん（約26秒）しか待たない。
+_FRED_DOWN = False
+
+
+def fred_is_down() -> bool:
+    """この実行の中でFREDが全滅と判定済みか（他モジュールからも見る）。"""
+    return _FRED_DOWN
+
+
+def mark_fred_down(reason: str = "") -> None:
+    """FREDを落ちているとみなす。以降のFRED呼び出しは通信しない。"""
+    global _FRED_DOWN
+    if not _FRED_DOWN:
+        logger.warning(f"⚡ FREDに接続できないため、この実行の間は通信を止めて"
+                       f"キャッシュを使います（{reason}）")
+    _FRED_DOWN = True
+
+
+def _fetch_series(series_id: str, limit: int = 24, tries: int = 2) -> list:
     """FREDからCSVデータを取得（API不要）
 
     ⚠️ FREDのこのCSV口は、混んでいる時間帯に**接続そのものを切ってくる**
@@ -80,11 +111,17 @@ def _fetch_series(series_id: str, limit: int = 24, tries: int = 3) -> list:
        「データなし」で落ちていた。少し待って試し直す。
        同じ対策を src/fundamental_signals.py にも入れてある。
     """
+    # 既に全滅と分かっているなら待たない。キャッシュがあれば使う。
+    if _FRED_DOWN:
+        cached, age = _cache_get(series_id)
+        return cached[-limit:] if cached else []
+
     url = f"https://fred.stlouisfed.org/graph/fredgraph.csv?id={series_id}"
     req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
     for i in range(tries):
         try:
-            resp = urllib.request.urlopen(req, context=_ctx, timeout=30)
+            # 30秒→12秒。応答するときは数秒で返る。長く待っても取れない。
+            resp = urllib.request.urlopen(req, context=_ctx, timeout=12)
             content = resp.read().decode("utf-8")
             reader = csv.reader(io.StringIO(content))
             rows = [r for r in reader if len(r) == 2 and r[1] not in (".", "")]
@@ -94,6 +131,7 @@ def _fetch_series(series_id: str, limit: int = 24, tries: int = 3) -> list:
             return rows[-limit:]
         except Exception as e:
             if i == tries - 1:
+                mark_fred_down(f"{series_id}: {type(e).__name__}")
                 cached, age = _cache_get(series_id)
                 if cached:
                     logger.warning(f"FRED取得失敗 {series_id}（{tries}回試行）。"

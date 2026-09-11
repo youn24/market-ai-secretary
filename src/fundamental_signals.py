@@ -54,18 +54,28 @@ _SERIES = {
 }
 
 
-def _fetch_series(sid: str, tries: int = 3) -> pd.Series | None:
+def _fetch_series(sid: str, tries: int = 2) -> pd.Series | None:
     """FREDのCSVを取得して日付インデックスのSeriesで返す。
 
     ⚠️ FREDのこのCSV口は、混んでいる時間帯に接続そのものを切ってくる
        （2026-09-09に4系列すべて ConnectionReset を実測）。
        1回で諦めると、その日のマクロ欄が丸ごと消える。少し待って試し直す。
     """
+    # fred_data と遮断器を共有する。どちらかで全滅と分かったら、
+    # もう一方も待たずにキャッシュへ回る（同じFREDなので当然同時に落ちている）。
+    try:
+        from src.fred_data import fred_is_down, mark_fred_down
+    except Exception:
+        fred_is_down = lambda: False           # noqa: E731
+        mark_fred_down = lambda *_a, **_k: None  # noqa: E731
+    if fred_is_down():
+        return None
+
     for i in range(tries):
         try:
             r = requests.get(
                 f"https://fred.stlouisfed.org/graph/fredgraph.csv?id={sid}",
-                timeout=25, headers=_HEADERS)
+                timeout=12, headers=_HEADERS)
             if r.status_code != 200:
                 return None
             df = pd.read_csv(io.StringIO(r.text), na_values=".")
@@ -75,9 +85,10 @@ def _fetch_series(sid: str, tries: int = 3) -> pd.Series | None:
                 return None
             return pd.Series(df["value"].astype(float).values,
                              index=pd.to_datetime(df["date"]))
-        except Exception:
+        except Exception as e:
             if i == tries - 1:
                 logger.debug(traceback.format_exc())
+                mark_fred_down(f"{sid}: {type(e).__name__}")
                 return None
             time.sleep(2 * (i + 1))
     return None

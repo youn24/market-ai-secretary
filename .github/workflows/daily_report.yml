@@ -64,7 +64,11 @@ jobs:
     needs: guard
     if: needs.guard.outputs.should_run == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # ⚠️ 2026-09-11 に30分で打ち切られ、公開レポートが更新されなかった。
+    #    普段20分前後で、外部サイトが遅い日は数分延びる。
+    #    30分では余裕が無さすぎた。原因（FREDの待ち）は遮断器で潰したが、
+    #    外部依存は他にも多いので上限自体にも余裕を持たせる。
+    timeout-minutes: 45
 
     steps:
       - name: リポジトリをチェックアウト
