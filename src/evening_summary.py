@@ -100,23 +100,61 @@ def generate_evening_message(prices: dict, fear_greed: dict, risk: dict) -> str:
 専門用語は使わず中学生でもわかる言葉で。"""
 
             resp = model.generate_content(prompt)
-            lines = [l.strip() for l in resp.text.strip().splitlines() if l.strip()]
+            # ⚠️ resp.text は本文が空だと例外を投げる（思考モデルで出力が
+            #    打ち切られたとき等）。朝の統合AI解釈はこれで2週間落ちていた。
+            try:
+                raw = resp.text or ""
+            except Exception:
+                raw = ""
+                try:
+                    fr = resp.candidates[0].finish_reason
+                    logger.error(f"夜の振り返り: Geminiの本文が空でした"
+                                 f"（finish_reason={getattr(fr, 'name', fr)}）")
+                except Exception:
+                    logger.error("夜の振り返り: Geminiの本文が空でした")
+            lines = [l.strip() for l in raw.strip().splitlines() if l.strip()]
             if len(lines) >= 3:
                 recap_text  = "\n".join(lines[:2])
                 tomorrow_tip = lines[2]
             elif lines:
                 recap_text = "\n".join(lines)
         except Exception:
-            logger.warning("Gemini振り返り生成失敗"); logger.debug(traceback.format_exc())
+            # warning＋debug では本番ログに原因が残らない。error で型ごと残す。
+            logger.error("夜の振り返り: Gemini生成に失敗", exc_info=True)
 
-    # ── フォールバック ──
+    # ── フォールバック（Geminiが使えなかった日）──
+    # ⚠️ 以前は**米国株(S&P500)だけ**で判定していた。そのため
+    #    2026-09-11、日経が-2.47%下げた日に（S&Pは-0.58%）
+    #    「📊 今日は方向感のない横ばい相場でした／大きな動きなく静かな1日でした」
+    #    と、真上に並ぶ数字と正反対のことを送っていた。
+    #    読んでいるのは日本株の投資家なので、**日経を先に見る**。
+    #    どちらかが大きく動いた日に「静か」とは絶対に書かない。
+    # 価格が取れなかった日を「静か」と呼ばない。取れていないだけである。
+    _have_nk = isinstance((prices.get("^N225") or {}).get("change_pct"), (int, float))
+    _have_sp = isinstance((prices.get("^GSPC") or {}).get("change_pct"), (int, float))
+    if not recap_text and not (_have_nk or _have_sp):
+        recap_text = ("⚠️ 今日は株価データを取得できませんでした\n"
+                      "明朝のレポートで改めてお伝えします。")
     if not recap_text:
-        if sp_chg >= 1:
-            recap_text = f"📈 今日は米国株が好調でした ({_change_arrow(sp_chg)})\n世界的にリスクオンの雰囲気です。"
-        elif sp_chg <= -1:
-            recap_text = f"📉 今日は米国株が下落しました ({_change_arrow(sp_chg)})\n売り圧力が強い1日でした。"
+        big_nk = abs(nk_chg) >= 1.0
+        big_sp = abs(sp_chg) >= 1.0
+        if big_nk and nk_chg < 0:
+            recap_text = (f"📉 今日は日本株が大きく下げました（日経 {_change_arrow(nk_chg)}）\n"
+                          + ("米国株も下げており、世界的に売りが優勢でした。" if sp_chg <= -0.5
+                             else "米国株は小動きで、日本側の材料による下げでした。"))
+        elif big_nk and nk_chg > 0:
+            recap_text = (f"📈 今日は日本株が大きく上げました（日経 {_change_arrow(nk_chg)}）\n"
+                          + ("米国株も上げており、世界的に買いが優勢でした。" if sp_chg >= 0.5
+                             else "米国株は小動きで、日本側の材料による上げでした。"))
+        elif big_sp:
+            recap_text = (f"{'📈' if sp_chg > 0 else '📉'} 米国株が大きく"
+                          f"{'上げ' if sp_chg > 0 else '下げ'}ました（{_change_arrow(sp_chg)}）\n"
+                          "日本株は小動きでしたが、明日の寄り付きに響く可能性があります。")
+        elif abs(nk_chg) >= 0.5 or abs(sp_chg) >= 0.5:
+            recap_text = (f"📊 今日は小幅な動きでした（日経 {_change_arrow(nk_chg)}／"
+                          f"S&P {_change_arrow(sp_chg)}）\n大きな方向感は出ていません。")
         else:
-            recap_text = f"📊 今日は方向感のない横ばい相場でした\n大きな動きなく静かな1日でした。"
+            recap_text = "📊 今日は方向感のない横ばい相場でした\n大きな動きなく静かな1日でした。"
     if not tomorrow_tip:
         tomorrow_tip = "明日も無理せず、長期目線で✨"
 

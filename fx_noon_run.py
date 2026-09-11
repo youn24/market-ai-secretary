@@ -299,6 +299,11 @@ def main():
         logger.debug(traceback.format_exc())
 
     # ── Step 3: Telegram 送信（1通に集約：カード画像＋要点＋ボタン） ──
+    # ⚠️ 2026-09-11まで、ここは何が起きても正常終了していた
+    #    （未設定なら黙って return、送信失敗も例外もログに書くだけ）。
+    #    夜の通知と同じ形で、昼の通知が止まっても Actions は緑のままだった。
+    #    届いたかどうかを最後まで持ち出して、届かなければ赤にする。
+    ok = False
     try:
         logger.info("--- Step 3: Telegram 送信（1通に集約）---")
         from src.notify_telegram import (
@@ -309,11 +314,11 @@ def main():
         _premium = fx_result.get("premium", {}) or {}
 
         if not _is_configured():
-            logger.info("Telegram 未設定 → スキップ")
+            logger.error("❌ Telegram 未設定（TOKEN/CHAT_ID が空）。昼の通知を送れません")
             print("\n" + "─" * 60)
             print(_build_compact_msg(fx_result, mood_emoji, char_info))
             print("─" * 60)
-            return
+            return False
 
         # AI解説は1回だけ生成して使い回す（従来は2回呼ばれていた）
         ai_comment = ""
@@ -348,13 +353,16 @@ def main():
             logger.info(f"{'✅' if ok else '❌'} FXレポート送信（テキスト・フォールバック）")
 
     except Exception:
-        logger.error("Telegram 送信エラー")
-        logger.debug(traceback.format_exc())
+        # debug では本番ログに原因が残らない
+        logger.error("❌ Telegram 送信エラー", exc_info=True)
+        ok = False
 
     logger.info("=" * 55)
-    logger.info("  FX午後レポート完了")
+    logger.info(f"  FX午後レポート完了（{'届いた' if ok else '❌ 届いていない'}）")
     logger.info("=" * 55)
+    return bool(ok)
 
 
 if __name__ == "__main__":
-    main()
+    # 届かなかった日は Actions を赤にする（緑のまま黙って止まらないように）
+    sys.exit(0 if main() else 1)

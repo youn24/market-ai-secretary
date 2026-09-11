@@ -101,18 +101,34 @@ def run(*_args, **_kwargs) -> dict:
     返り値: {available, up: [...], down: [...], telegram_block}
     """
     result = {"available": False, "up": [], "down": []}
+    # ⚠️ 手元では毎回取れるのに、GitHub Actions では 08-26 以降 **毎回** 落ちている。
+    #    株探がデータセンターのIPを弾いている疑いが濃いが、確証が無い。
+    #    以前はどの失敗経路も無言だった:
+    #      ・200以外 → 何も記録しない
+    #      ・例外     → debug（本番ログに出ない）
+    #      ・200だが表が空 → 何も言わない（ボット確認ページ等を返されるとこれになる）
+    #    原因が分からないまま代替の取得先を足すと穴が増えるだけなので、
+    #    まず「何が返ってきたか」を1行で残す。これで次の実行ログを見れば分かる。
+    why = []
     try:
         for key, url, _label, _color in PAGES:
             try:
                 r = requests.get(url, headers=HEADERS, timeout=15)
                 if r.status_code == 200:
                     result[key] = _parse_page(r.text)
-            except Exception:
-                logger.debug(traceback.format_exc())
+                    if not result[key]:
+                        import re as _re
+                        _t = _re.search(r"<title>([^<]{0,60})", r.text or "")
+                        why.append(f"{key}: HTTP200だが表が空（{len(r.text):,}字・"
+                                   f"title={_t.group(1).strip() if _t else 'なし'!r}）")
+                else:
+                    why.append(f"{key}: HTTP {r.status_code}（{len(r.text or ''):,}字）")
+            except Exception as e:
+                why.append(f"{key}: {type(e).__name__}: {str(e)[:80]}")
             time.sleep(1.0)  # サイトへの負荷配慮
 
         if not result["up"] and not result["down"]:
-            logger.warning("PTS: データ取得できず")
+            logger.warning("PTS: データ取得できず → " + " ／ ".join(why or ["理由不明"]))
             return result
 
         result["available"] = True
@@ -120,8 +136,7 @@ def run(*_args, **_kwargs) -> dict:
         logger.info(f"✅ PTS取得完了（急騰{len(result['up'])}件・急落{len(result['down'])}件）")
         return result
     except Exception:
-        logger.error("PTSエラー")
-        logger.debug(traceback.format_exc())
+        logger.error("PTSエラー", exc_info=True)
         return result
 
 

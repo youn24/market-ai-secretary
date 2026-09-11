@@ -46,19 +46,32 @@ def run():
         logger.debug(traceback.format_exc())
 
     # 夜の振り返り送信
+    # ⚠️ 2026-09-11まで、ここは何が起きても正常終了していた。
+    #    ・通知モジュールが壊れても → 詳細は debug（本番ログに出ない）
+    #    ・送信に失敗しても → warning だけ
+    #    どちらも GitHub Actions は緑のまま。夜の通知が止まっても
+    #    誰も気づけない作りだった（点検中に構文エラーを入れたとき、
+    #    実際に「✅ 完走・送信0件」で終わるのを見て発覚した）。
+    #    「公開レポートが1.5ヶ月更新されなかった」事故と同じ形。
+    #    届かなかったときは、Actionsを赤にしてメールで気づけるようにする。
+    delivered = False
     try:
         logger.info("夜の振り返り生成 + 送信...")
         from src.evening_summary import run as run_evening
         result = run_evening(prices, fear_greed, risk)
         if result.get("available"):
             logger.info("✅ 夜の振り返り完了")
+            delivered = True
         else:
-            logger.warning("送信失敗（設定を確認してください）")
+            logger.error("❌ 夜の振り返りを送信できませんでした"
+                         "（TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID を確認）")
     except Exception:
-        logger.error("夜の振り返りエラー"); logger.debug(traceback.format_exc())
+        logger.error("❌ 夜の振り返りでエラー", exc_info=True)
 
     logger.info("====== 夜の振り返り終了 ======")
+    return delivered
 
 
 if __name__ == "__main__":
-    run()
+    # 届かなかった日はActionsを赤にする（緑のまま黙って止まらないように）
+    sys.exit(0 if run() else 1)
