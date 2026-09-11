@@ -183,7 +183,7 @@ def _risk_temp() -> dict:
                                   "本物のリスク回避です")
         elif jp_jump:
             level, msg = "やや警戒", ("日本の恐怖指数が跳ねています。"
-                                      "米国は静かなので、日本side固有の材料の可能性")
+                                      "米国は静かなので、日本側固有の材料の可能性")
         elif vix >= _VIX_ALERT and yen_strong:
             level, msg = "警戒", "恐怖指数が高く、同時に円高。本物のリスク回避が出ています"
         elif jp_high or vix >= _VIX_ALERT:
