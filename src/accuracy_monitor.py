@@ -122,7 +122,16 @@ def _make_trend_chart(weekly_stats: list, overall_30d_rate) -> str | None:
         matplotlib.use("Agg")
         import matplotlib.pyplot as plt
         import matplotlib.patches as mpatches
-        import japanize_matplotlib
+        # ⚠️ ここだけ japanize_matplotlib をむき出しで読んでいた。
+        #    他の9モジュールはすべて try で受けて、無ければ apt で入れた
+        #    Noto CJK に切り替える作り。週次のworkflowは今は入れているので動くが、
+        #    インストール行から外れた途端に**週次の精度グラフが黙って消える**。
+        try:
+            import japanize_matplotlib  # noqa: F401
+        except ImportError:
+            matplotlib.rcParams["font.family"] = [
+                "Noto Sans CJK JP", "Noto Sans JP", "IPAexGothic",
+                "Yu Gothic", "Meiryo", "DejaVu Sans"]
 
         dirs = get_dirs()
         out_path = str(dirs["charts"] / "accuracy_trend.png")
@@ -180,7 +189,8 @@ def _make_trend_chart(weekly_stats: list, overall_30d_rate) -> str | None:
         return out_path
 
     except Exception:
-        logger.error("精度チャート生成エラー"); logger.debug(traceback.format_exc())
+        # debug では本番ログに原因が残らない
+        logger.error("精度チャート生成エラー", exc_info=True)
         return None
 
 

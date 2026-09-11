@@ -108,33 +108,25 @@ def run():
     except Exception:
         logger.error("カレンダー生成エラー")
 
-    # 自己改善AI（毎週日曜に実行）
+    # 自己改善AI — 2026-09-11 に停止（コードは src/self_improving_ai.py に残置）
+    #
+    # ⚠️ 毎週日曜に「現在の正解率: 100.0%」という**偽の数字**を送っていた。
+    #    読んでいる項目名が予測データに存在しなかったため:
+    #      bull_probability / bear_probability → 無い → 0
+    #      actual_change_pct → 無い（本当は actual_move）→ 0
+    #    全予測が neutral・実際の値動き0%と扱われ、`abs(0) <= 1.0` で全件正解になっていた。
+    #    同じ週次の精度欄では44%と出ているのに、その下に100%が並んでいた。
+    #
+    #    さらにこのモジュールは、今の予測の仕組み（スコアの閾値 7.0/-2.0）とは
+    #    別物の「確率の閾値 40〜55」を探しており、実物とつながっていない。
+    #    改善が5%を超えると prediction_tracker.py を書き換えて
+    #    **CIから git commit と git push まで自動で行う**作りだった。
+    #    偽の100%のせいで一度も発動していなかったが、条件がいじられた途端に
+    #    偽の数字で本番コードを書き換えて公開することになる。
+    #
+    #    閾値の検証は src/backtest_predictions.py と CLAUDE.md 09-11 の
+    #    「純優位」の分析で行う。ここは呼ばない。
     self_improve_result = {}
-    try:
-        logger.info("--- 自己改善AI エンジン ---")
-        from src.self_improving_ai import run_and_auto_improve
-        self_improve_result = run_and_auto_improve()
-        if self_improve_result.get("auto_updated"):
-            # パラメータが更新された → 自動git commit
-            import subprocess
-            subprocess.run(
-                ["git", "add", "src/prediction_tracker.py"],
-                capture_output=True
-            )
-            msg = (
-                f"fix: 自己改善AI パラメータ自動最適化\n\n"
-                f"精度 {self_improve_result.get('current_accuracy')}% → "
-                f"{self_improve_result.get('best_accuracy')}% (+{self_improve_result.get('improvement')}%)\n"
-                f"最適パラメータ: {self_improve_result.get('best_params')}"
-            )
-            subprocess.run(
-                ["git", "commit", "-m", msg],
-                capture_output=True
-            )
-            subprocess.run(["git", "push", "origin", "main"], capture_output=True)
-            logger.info("✅ 自己改善: パラメータ更新→自動コミット完了")
-    except Exception:
-        logger.error("自己改善AIエラー"); logger.debug(traceback.format_exc())
 
     # 週間パフォーマンスチャート生成
     weekly_chart_path = None
@@ -244,8 +236,39 @@ Fear&Greed: {fear_greed.get('score','---')} ({fear_greed.get('rating_ja','---')}
         return {"available": False}
 
 
+def _week_change(sym: str):
+    """直近の終値と、その7日前（またはそれ以前で最も近い日）の終値の変化率。
+
+    ⚠️ 以前は prices の change_pct をそのまま使っていたが、あれは
+       **その日1日だけの変化**。日曜に届く週次で「今週の注目騰落」と書きながら
+       金曜1日の動きを見せていた（2026-09-11の点検で発覚）。
+       日付で7日前を取るので、株・為替・24時間動く暗号資産のどれでも同じ意味になる。
+    """
+    try:
+        import warnings
+        warnings.filterwarnings("ignore")
+        import yfinance as yf
+        h = yf.Ticker(sym).history(period="1mo")["Close"].dropna()
+        if len(h) < 3:
+            return None
+        last_d = h.index[-1]
+        prior = h[h.index <= last_d - __import__("datetime").timedelta(days=7)]
+        if prior.empty:
+            return None
+        return (float(h.iloc[-1]) / float(prior.iloc[-1]) - 1) * 100
+    except Exception:
+        return None
+
+
 def _weekly_movers(prices: dict) -> str:
-    """今週の主要銘柄の騰落をテキスト形式で返す"""
+    """今週（直近7日）の主要銘柄の騰落をテキスト形式で返す。
+
+    ⚠️ 以前は**順位で色を付けていた**（上位4つを🟢・下位3つを🔴）。
+       そのため 2026-09-11 は「🟢 S&P500 -0.58%」と、下げているのに緑、
+       「🟢 VIX +8.38%」と、恐怖指数の上昇（悪い知らせ）まで緑で出ていた。
+       色は「良い/悪い」を連想させるので、順位では付けない。
+       向きは📈/📉で示し、恐怖指数には「上がるほど警戒」と添える。
+    """
     watch = [
         ("^N225", "日経平均"), ("^GSPC", "S&P500"), ("^IXIC", "NASDAQ"),
         ("USDJPY=X", "ドル円"), ("GC=F", "金"), ("CL=F", "原油"),
@@ -253,18 +276,20 @@ def _weekly_movers(prices: dict) -> str:
     ]
     movers = []
     for sym, name in watch:
-        chg = prices.get(sym, {}).get("change_pct")
-        if chg is not None:
-            movers.append((name, chg))
+        chg = _week_change(sym)
+        if chg is None:
+            # 週間が取れなければ出さない。1日の変化を週間と偽って並べるよりよい
+            continue
+        movers.append((sym, name, chg))
     if not movers:
         return ""
-    movers.sort(key=lambda x: x[1], reverse=True)
+    # 大きく動いた順（上げ下げを問わず）。何が一番動いたかが知りたいことなので
+    movers.sort(key=lambda x: abs(x[2]), reverse=True)
     lines = []
-    for name, chg in movers[:4]:
-        lines.append(f"🟢 {name} {chg:+.2f}%")
-    for name, chg in reversed(movers[-3:]):
-        if (name, chg) not in movers[:4]:
-            lines.append(f"🔴 {name} {chg:+.2f}%")
+    for sym, name, chg in movers[:6]:
+        mark = "📈" if chg > 0 else "📉" if chg < 0 else "➡️"
+        note = "（恐怖指数・上がるほど警戒）" if sym == "^VIX" else ""
+        lines.append(f"{mark} {name} {chg:+.2f}%{note}")
     return "\n".join(lines)
 
 
@@ -316,7 +341,8 @@ def _send_weekly_report(weekly, youtube, memory_analysis, prices, fear_greed, ri
             f"😱 Fear&Greed: {fear_greed.get('score','---')} ({fear_greed.get('rating_ja','---')})",
         ]
         if movers_txt:
-            msg1_lines += ["━━━━━━━━━━━━━━━", "📊 *今週の注目騰落*", movers_txt]
+            msg1_lines += ["━━━━━━━━━━━━━━━",
+                           "📊 *今週の注目騰落*（1週間の変化・大きい順）", movers_txt]
 
         # 週間チャート付きで送信
         msg1 = "\n".join(msg1_lines)
@@ -448,14 +474,39 @@ def _send_weekly_report(weekly, youtube, memory_analysis, prices, fear_greed, ri
             else:
                 rate_icon = "⚠️"
 
+            # ⚠️ 「総合正解率」を見出しにしない（CLAUDE.md の決まり）。
+            #    neutral は相場が±0.3%以内に収まった日しか正解にならず、
+            #    その日は2割程度しかない。弱い日に「わからない」と答えるのは
+            #    正しい棄権なのに、総合の数字ではそれが全部「外れ」に数えられる。
+            #    2026-09-11 の検証でも、neutral を減らすと成績はむしろ下がった。
+            #    見出しは「上げ/下げと言い切った日にどれだけ当たったか」にする。
+            _dir = patterns.get("direction", {}) or {}
+            _say_n = sum((_dir.get(k) or {}).get("total", 0) for k in ("bull", "bear"))
+            _say_c = sum((_dir.get(k) or {}).get("correct", 0) for k in ("bull", "bear"))
+            _say_r = round(_say_c / _say_n * 100) if _say_n else None
+            _neu = _dir.get("neutral") or {}
+            if _say_r is None:
+                _head = f"📊 *直近30日: 言い切った予測はまだありません*"
+                _bar = ""
+            else:
+                _icon = "🎯" if _say_r >= 60 else "👍" if _say_r >= 50 else "⚠️"
+                _head = (f"{_icon} *上げ/下げと言い切った日の的中率: {_say_r}%*"
+                         f"（{_say_c}/{_say_n}件・直近30日）")
+                _bar = "`" + "█" * round(_say_r / 10) + "░" * (10 - round(_say_r / 10)) + "`"
             acc_lines = [
                 f"📈 *AI予測 精度モニタリングレポート*",
                 "━━━━━━━━━━━━━━━",
-                f"{rate_icon} *直近30日の総合正解率: {rate30}%*",
-                f"`{rate_bar}`",
-                f"検証済み予測: {total30}件 / 正解: {acc.get('correct_30d',0)}件",
+                _head,
+            ]
+            if _bar:
+                acc_lines.append(_bar)
+            if _neu.get("total"):
+                acc_lines.append(f"➡️ 「どちらとも言えない」と見送った日: {_neu['total']}件"
+                                 f"（弱い日は見送るのが正しい判断です）")
+            acc_lines += [
+                f"参考・3択での総合: {rate30}%（{acc.get('correct_30d',0)}/{total30}件）",
                 "",
-                "📅 *週別正解率トレンド*",
+                "📅 *週別正解率トレンド*（3択）",
             ]
             for w in weekly_stats:
                 if w["total"] > 0:
@@ -473,12 +524,21 @@ def _send_weekly_report(weekly, youtube, memory_analysis, prices, fear_greed, ri
                 for d, v in dir_s.items():
                     if v.get("total", 0) > 0:
                         r = v.get("rate")
+                        if d == "neutral":
+                            # 見送りの的中率は構造的に低い（凪の日しか正解にならない）ので
+                            # 警告の印を付けない。付けると「弱点」に読まれる。
+                            acc_lines.append(
+                                f"  ▫️ {icon_map.get(d,'')} 見送り: {v['total']}件"
+                                f"（うち実際に小動きだった日 {v['correct']}件）")
+                            continue
                         flag = "✅" if r and r >= 55 else "⚠️" if r and r < 40 else "▫️"
                         acc_lines.append(
                             f"  {flag} {icon_map.get(d,'')} {d}: {r}% ({v['correct']}/{v['total']}件)"
                         )
 
-            # 苦手パターン
+            # 苦手パターン（neutral は棄権なので「苦手」に数えない）
+            weak = [w for w in (weak or [])
+                    if not str(w).startswith("neutral") and "中立(" not in str(w)]
             if weak:
                 acc_lines += ["", "⚠️ *苦手なパターン（正解率35%以下）*"]
                 for w_pat in weak[:4]:
