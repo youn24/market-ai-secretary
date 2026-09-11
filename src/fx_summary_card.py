@@ -140,37 +140,63 @@ def _intervention(uj, uj_chg=None) -> dict:
     “円安が急に進んだとき”に行われる。当日の方向を加味して補正する
     （円高が進んだ日は警戒後退、円安が進んだ日は警戒強まる）。
     """
-    try:
-        from src.cb_monitor import calc_intervention_risk
-        r = dict(calc_intervention_risk(uj) or {})
-    except Exception:
-        logger.debug(traceback.format_exc())
-        return {}
-    if not r:
-        return {}
-
-    r["dir_note"] = ""
-
-    # 直近に介入があった場合は「追撃介入」が続きやすいので方向補正をかけない。
-    # 実績: 2026年5月の2回は、初回介入で円高方向へ振れている最中に実施された。
-    recent_intervention = False
+    # ⚠️ 2026-09-11 まで、昼の通知は cb_monitor の**固定ゾーン**（153〜158円＝一律「高警戒」）で
+    #    判定し、補正も「その日1日の変化が±0.8%を超えたら」だけだった。
+    #    その結果、1ヶ月で5.7円も円高に動いて介入の条件から遠ざかっている日に、
+    #    平日毎日「🚨 介入警戒: 🟠 高警戒」と送っていた。
+    #    同じ週の土曜の介入レポート（intervention_stats）は「やや注意 20/100・
+    #    1ヶ月で-5.7円と円高方向」と正反対を言っていた。
+    #    さらに補正で点数を下げても、表示する言葉（「高警戒」）は元のままだった。
+    #
+    #    土曜の物差しは財務省の実際の介入記録と照らして
+    #    「水準・直前1ヶ月の円安の速さ・直近の介入からの日数」を点数にしている
+    #    （介入は直前1ヶ月に平均+3.5円の円安が進んだ後に起きている）。
+    #    同じ質問に2つの答えを出さないよう、昼もこちらに揃える。
+    #    取れない日だけ、従来の固定ゾーンに落とす。
+    r = {}
     try:
         from src.intervention_stats import analyze as _iv
-        _res = _iv()
-        if _res.get("available") and _res.get("current", {}).get("days_since", 999) <= 30:
-            recent_intervention = True
-            r["dir_note"] = (f"{_res['current']['days_since']}日前に介入済み"
-                             "→ 追撃介入が続きやすく、円高方向でも警戒は緩めない")
+        res = _iv()
+        if res.get("available"):
+            cur = res.get("current") or {}
+            r = {
+                "score": int(res.get("score") or 0),
+                "level": f"{res.get('emoji', '')} {res.get('level_label', '')}".strip(),
+                "emoji": res.get("emoji", ""),
+                "usdjpy": cur.get("price", uj),
+                "speed_1m": cur.get("speed_1m"),
+                "days_since": cur.get("days_since"),
+                "source": "財務省の介入実績と照合",
+            }
+            sp = cur.get("speed_1m")
+            ds = cur.get("days_since")
+            bits = []
+            if isinstance(sp, (int, float)):
+                bits.append(f"1ヶ月で{sp:+.1f}円" + ("の円安" if sp > 0 else "の円高" if sp < 0 else ""))
+            if isinstance(ds, (int, float)) and ds <= 90:
+                bits.append(f"{int(ds)}日前に介入")
+            r["dir_note"] = "・".join(bits)
     except Exception:
-        logger.debug(traceback.format_exc())
+        logger.error("介入警戒（実績照合）を出せませんでした", exc_info=True)
 
-    if (not recent_intervention) and uj_chg is not None and r.get("score", 0) >= 30:
-        if uj_chg <= -0.8:
-            r["score"] = max(0, r["score"] - 25)
-            r["dir_note"] = f"本日は円高方向（{uj_chg:+.2f}%）→ 介入警戒は後退"
-        elif uj_chg >= 0.8:
-            r["score"] = min(100, r["score"] + 15)
-            r["dir_note"] = f"本日は円安方向（{uj_chg:+.2f}%）→ 介入警戒が強まる"
+    if not r:
+        # 実績照合が使えない日だけ、水準の固定ゾーンで代替する
+        try:
+            from src.cb_monitor import calc_intervention_risk
+            r = dict(calc_intervention_risk(uj) or {})
+            r["dir_note"] = "水準のみで判定（実績照合が取得できなかったため）"
+        except Exception:
+            logger.debug(traceback.format_exc())
+            return {}
+
+    # 過去の介入水準との距離（cb_monitor の説明文）は残す
+    try:
+        from src.cb_monitor import calc_intervention_risk
+        _ref = (calc_intervention_risk(uj) or {}).get("history_ref")
+        if _ref:
+            r["history_ref"] = _ref
+    except Exception:
+        pass
     return r
 
 

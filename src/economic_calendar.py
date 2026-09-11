@@ -48,11 +48,52 @@ def _load_watchlist_symbols() -> list[tuple[str, str]]:
 
 
 def get_week_dates() -> list[datetime]:
-    """今週月〜金の日付リストを返す（JST）"""
+    """対象の週（月〜金）の日付リストを返す（JST）。
+
+    平日は「今週」、**土日は「来週」**。
+
+    ⚠️ 2026-09-11 まで、ここは常に「今週の月曜」を起点にしていた。
+       日曜日（weekday()=6）に走ると 6日前の月曜＝**終わったばかりの週**になり、
+       日曜の週次レポートの「📅 来週のイベントスケジュール」に
+       先週のイベントを載せていた。月曜朝の実行は正しく今週になるので、
+       日曜の週次だけがずれていた。
+    """
     now = get_jst_now()
-    # 月曜日を起点に
-    monday = now - timedelta(days=now.weekday())
+    if now.weekday() >= 5:                              # 土・日 → 来週の月曜
+        monday = now + timedelta(days=7 - now.weekday())
+    else:                                               # 平日 → 今週の月曜
+        monday = now - timedelta(days=now.weekday())
     return [monday + timedelta(days=i) for i in range(5)]
+
+
+def _deterministic_events(week_dates: list) -> list:
+    """FOMC・SQ・雇用統計など、日程が計算で決まるものを入れる。
+
+    ⚠️ 主要イベントを Gemini に書かせるだけにしていたため、
+       Gemini が使えない日は FOMC すら載らず「全0件」になっていた。
+       一方、朝の通知の upcoming_events は確定日程を計算で出している。
+       同じ情報源を使って、カレンダーが空にならないようにする。
+    """
+    out = []
+    try:
+        from src.upcoming_events import run as _ue
+        days = {d.strftime("%Y-%m-%d") for d in week_dates}
+        for e in (_ue().get("events") or []):
+            d = str(e.get("date", ""))[:10]
+            if d in days:
+                out.append({
+                    "date": d,
+                    "time": e.get("time", ""),
+                    # 「〈本日〉」「〈明日〉」のような、生成した日から見た言葉は外す。
+                    # カレンダーは後から見返すので、見る日によって嘘になる。
+                    "event": __import__("re").sub(r"〈[^〉]*〉", "", str(e.get("label", ""))).strip(),
+                    "country": e.get("country", ""),
+                    "importance": e.get("importance", "medium"),
+                    "category": "FRB" if "FOMC" in str(e.get("label", "")) else "指標",
+                })
+    except Exception:
+        logger.error("確定日程イベントの取得に失敗", exc_info=True)
+    return out
 
 
 def fetch_calendar_via_gemini(week_dates: list) -> list:
@@ -408,6 +449,24 @@ def run() -> dict:
 
     # Geminiでカレンダーデータ取得
     events = fetch_calendar_via_gemini(week_dates)
+
+    # 日程が計算で決まるもの（FOMC・SQ・雇用統計）は必ず入れる。
+    # Geminiが使えない日でも主要イベントが消えないように。重複は下で除く。
+    _det = _deterministic_events(week_dates)
+    # Gemini側と書き方が違っても（「FOMC政策金利発表」と「FOMC結果発表」等）、
+    # 同じ日に同じ種類があれば二重に並べない。
+    def _kind(t):
+        t = str(t)
+        for k in ("FOMC", "SQ", "雇用統計", "CPI", "日銀"):
+            if k in t:
+                return k
+        return None
+    _have = {(e.get("date", ""), _kind(e.get("event", ""))) for e in events}
+    _det = [e for e in _det if (e["date"], _kind(e["event"])) not in _have
+            or _kind(e["event"]) is None]
+    if _det:
+        logger.info(f"確定日程イベント: {len(_det)}件（FOMC・SQ・雇用統計など）")
+    events += _det
 
     # yfinanceで米国主要株の決算追加（今週分）
     events += fetch_earnings_yfinance(week_dates)

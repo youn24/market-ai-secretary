@@ -138,6 +138,15 @@ jobs:
           done || true
 
       - name: 完全自律AIチームシステム - 朝の分析を実行
+        # ⛔ 2026-09-11 停止。
+        #    ・出力（team_morning_analysis_*.json）はGitにも保存されず、
+        #      本番のどこからも読まれていない（使うのは開発用スクリプト2つだけ）
+        #    ・Geminiを3回（市場・ニュース・リスクの3エージェント）使うが、
+        #      cloud_run の予算管理（gemini_budget）の**外**で走るため、
+        #      予算表は「20回ある」と思っているのに実際は17回しか残っていなかった
+        #    ・その後の検証（team_verification.yml）も一度も動いたことがない
+        #    止めると朝の実行が数分短くなり、Gemini 3回が本体に戻る。
+        if: false
         env:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}

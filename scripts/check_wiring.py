@@ -140,6 +140,9 @@ PAIRS = [
     ("cloud_run.py", "notify_tg",  "src/notify_telegram.py", "run"),
     ("src/notify_telegram.py", "_build_unified_caption",
      "src/notify_telegram.py", "_build_unified_caption"),
+    # 2026-09-11 追加: ここは08-28から毎回 TypeError で落ちていたのに、
+    # 検査の対象に入っていなかったので見つけられなかった。
+    ("cloud_run.py", "_save_html_report", "cloud_run.py", "_save_html_report"),
 ]
 
 

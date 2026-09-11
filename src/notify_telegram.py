@@ -1029,16 +1029,11 @@ def _build_unified_caption(risk, prices, fear_greed, ai_summary,
                 for a_, b_ in (("グループ", "G"), ("ホールディングス", "HD"),
                                ("株式会社", ""), ("・", "")):
                     n = n.replace(a_, b_)
-                # 売買代金が常識外の銘柄は、通知の1行でも分かるようにする
-                q = "?" if (x.get("metrics") or {}).get("turnover_doubt") else ""
-                return n[:8] + q
+                return n[:8]
             names = "　".join(_nm(x) for x in dt["top"][:2] if isinstance(x, dict))
             if names:
-                _note = ("　（方向の予想ではありません。詳細はレポート）"
-                         if "?" not in names else
-                         "　（方向の予想ではありません。?は取得元の数字が"
-                         "怪しい銘柄です）")
-                dts = [f"🎰 *今日 値動きが大きくなりやすい*　{names}", _note]
+                dts = [f"🎰 *今日 値動きが大きくなりやすい*　{names}",
+                       "　（方向の予想ではありません。詳細はレポート）"]
     except Exception:
         logger.error("デイトレ候補の行を作れませんでした", exc_info=True)
 
@@ -1455,8 +1450,13 @@ def run(risk, analysis, report_paths, mode,
 
         report_url = report_paths.get("url", "").strip()
         if not report_url:
-            report_url = os.getenv("GITHUB_PAGES_URL",
-                                   "https://youn24.github.io/market-ai-secretary") + "/daily_report.html"
+            # ⚠️ os.getenv(名前, 既定値) は、変数が「空文字で設定されている」と
+            #    既定値を使わず "" を返す（GitHubは未登録のSecretを空文字で渡す）。
+            #    そうなると URL が "/daily_report.html" になり、Telegramが
+            #    ボタン付きの送信を拒否する。publish_check で同じ事故を一度直している。
+            _base = ((os.getenv("GITHUB_PAGES_URL") or "").strip()
+                     or "https://youn24.github.io/market-ai-secretary").rstrip("/")
+            report_url = _base + "/daily_report.html"
 
         card_path = None
         try:

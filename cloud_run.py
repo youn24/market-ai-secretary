@@ -113,46 +113,56 @@ def run(mode: str):
         logger.error("指標計算エラー"); logger.debug(traceback.format_exc())
 
     # Step 4.5: 爆速通知 ─ AI解析前に価格＋リスクを即テキスト送信（開始60秒以内）
-    try:
-        logger.info("--- Step 4.5: 爆速通知（価格・リスク速報） ---")
-        from src.notify_telegram import send_message
+    #
+    # ⛔ 2026-09-11 既定で停止。オーナーの決まりは「朝の通知は必ず1通に収める」
+    #    （2026-08-03）なのに、ここで「⚡ 朝の速報」を先に1通送り、
+    #    本体のカードで2通目を送っていた（さらに自律チームの検証で3通目）。
+    #    速報の中身（日経・S&P・ドル円・VIX・地合い・F&G）は、
+    #    本体のカードとキャプションに全部入っている。
+    #    戻したいときは環境変数 EARLY_NOTIFY=1 を渡す（コードはそのまま残してある）。
+    if os.getenv("EARLY_NOTIFY", "").strip() != "1":
+        logger.info("--- Step 4.5: 爆速通知 → 停止中（朝は1通の決まり。EARLY_NOTIFY=1 で再開）")
+    else:
+      try:
+          logger.info("--- Step 4.5: 爆速通知（価格・リスク速報） ---")
+          from src.notify_telegram import send_message
 
-        def _fv(sym, dp=0, unit=""):
-            d = prices.get(sym, {})
-            v = d.get("latest")
-            c = d.get("change_pct")
-            if v is None:
-                return "---"
-            arrow = "▲" if (c or 0) >= 0 else "▼"
-            return f"{v:,.{dp}f}{unit} ({arrow}{abs(c or 0):.2f}%)"
+          def _fv(sym, dp=0, unit=""):
+              d = prices.get(sym, {})
+              v = d.get("latest")
+              c = d.get("change_pct")
+              if v is None:
+                  return "---"
+              arrow = "▲" if (c or 0) >= 0 else "▼"
+              return f"{v:,.{dp}f}{unit} ({arrow}{abs(c or 0):.2f}%)"
 
-        _fg     = fear_greed.get("score")
-        _fg_s   = f"{int(_fg)}" if _fg is not None else "---"
-        _fg_r   = fear_greed.get("rating_ja", "---")
-        _rscore = risk.get("score", 0)
-        _rsent  = risk.get("sentiment", "不明")
-        _r_sign = "+" if _rscore >= 0 else ""
-        _now_s  = get_jst_now().strftime("%m/%d %H:%M")
+          _fg     = fear_greed.get("score")
+          _fg_s   = f"{int(_fg)}" if _fg is not None else "---"
+          _fg_r   = fear_greed.get("rating_ja", "---")
+          _rscore = risk.get("score", 0)
+          _rsent  = risk.get("sentiment", "不明")
+          _r_sign = "+" if _rscore >= 0 else ""
+          _now_s  = get_jst_now().strftime("%m/%d %H:%M")
 
-        _early_msg = "\n".join([
-            f"⚡ *朝の速報* — {_now_s} JST",
-            "━━━━━━━━━━━━━━━",
-            f"🇯🇵 日経225: *{_fv('^N225', 0)}*",
-            f"🇺🇸 S&P500: *{_fv('^GSPC', 0)}*",
-            f"🇺🇸 NASDAQ: *{_fv('^IXIC', 0)}*",
-            f"💴 USD/JPY: *{_fv('USDJPY=X', 2, '円')}*",
-            f"😱 VIX: *{_fv('^VIX', 2)}*",
-            "━━━━━━━━━━━━━━━",
-            f"🌡 地合い: *{_rsent}* ({_r_sign}{_rscore:.1f}pt)",
-            f"😰 Fear&Greed: *{_fg_s}* ({_fg_r})",
-            "━━━━━━━━━━━━━━━",
-            "📊 *AI詳細分析は10〜20分後に届きます*",
-        ])
-        send_message(_early_msg)
-        logger.info("✅ 爆速通知送信完了")
-    except Exception:
-        logger.error("爆速通知エラー（メインパイプラインは継続）")
-        logger.debug(traceback.format_exc())
+          _early_msg = "\n".join([
+              f"⚡ *朝の速報* — {_now_s} JST",
+              "━━━━━━━━━━━━━━━",
+              f"🇯🇵 日経225: *{_fv('^N225', 0)}*",
+              f"🇺🇸 S&P500: *{_fv('^GSPC', 0)}*",
+              f"🇺🇸 NASDAQ: *{_fv('^IXIC', 0)}*",
+              f"💴 USD/JPY: *{_fv('USDJPY=X', 2, '円')}*",
+              f"😱 VIX: *{_fv('^VIX', 2)}*",
+              "━━━━━━━━━━━━━━━",
+              f"🌡 地合い: *{_rsent}* ({_r_sign}{_rscore:.1f}pt)",
+              f"😰 Fear&Greed: *{_fg_s}* ({_fg_r})",
+              "━━━━━━━━━━━━━━━",
+              "📊 *AI詳細分析は10〜20分後に届きます*",
+          ])
+          send_message(_early_msg)
+          logger.info("✅ 爆速通知送信完了")
+      except Exception:
+          logger.error("爆速通知エラー（メインパイプラインは継続）")
+          logger.debug(traceback.format_exc())
 
     # Step 5: 分析
     try:
@@ -1201,7 +1211,8 @@ def run(mode: str):
             "url":  f"{PAGES_URL}/daily_report.html",
         }
     except Exception:
-        logger.error("レポート生成エラー"); logger.debug(traceback.format_exc())
+        # debug では本番ログに原因が残らない。これのせいで2週間気づけなかった。
+        logger.error("レポート生成エラー（バックアップ版）", exc_info=True)
 
     # Step 7a2: デザインAIレポート（docs/daily_report.html・公開メインのリッチ版）
     try:
@@ -1543,8 +1554,20 @@ def _save_html_report(mode, prices, news, risk, analysis, fear_greed, chart_path
                       catalyst=None,
                       theme_ranking=None, financial_analysis=None,
                       supply_demand=None, kabuyoho=None, sector_heatmap=None,
-                      nikkei_internals=None, adr=None, weekly_calendar=None):
-    """初心者でもわかる見やすいダッシュボードHTMLを保存"""
+                      nikkei_internals=None, adr=None, weekly_calendar=None,
+                      shareholder=None, **_extra):
+    """初心者でもわかる見やすいダッシュボードHTMLを保存
+
+    ⚠️ 2026-08-28 に株主還元（shareholder）を足したとき、呼び出し側だけ
+       shareholder= を渡し、ここに受け口を作り忘れた。以降この関数は
+       **毎回 TypeError で即座に落ちていた**（09-11 に全体テストで発覚）。
+       しかも失敗は debug にしか残らず、後ろにある report_paths の組み立ても
+       飛ばされていた（通知のボタンは既定URLに落ちるので表面化しなかった）。
+       バックアップ版なので新しい素材を表示しなくても困らない。
+       片側だけ引数を足しても落ちないよう **_extra で受ける。
+       ⚠️ ただし公開版（design_ai.run）でこれをやると「黙って消える」ので、
+          そちらは scripts/check_wiring.py の検査に頼ること。
+    """
     import base64
     today  = get_today_str()
     dirs   = get_dirs()

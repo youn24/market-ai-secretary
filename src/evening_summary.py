@@ -188,7 +188,15 @@ def generate_evening_message(prices: dict, fear_greed: dict, risk: dict) -> str:
 
 
 def send_evening_telegram(message: str) -> bool:
-    """Telegramに夜の振り返りを送信"""
+    """Telegramに夜の振り返りを送信
+
+    ⚠️ 2026-09-11まで、ここだけ api.telegram.org へ直接 requests.post していた。
+       そのため:
+       ・notify_meter（通知の実績記録）を通らず、夜の分が記録に残らなかった
+       ・Markdownの書式エラー（Geminiの文に * や _ が1つ余る等）で
+         Telegramが400を返すと、**そのまま届かなかった**
+       send_message は書式エラー時に書式なしで送り直すので、そちらに揃える。
+    """
     token   = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
     chat_id = os.getenv("TELEGRAM_CHAT_ID", "").strip()
     skip    = {"ここにBotFatherのトークン", "ここにあなたのChat ID", ""}
@@ -196,22 +204,15 @@ def send_evening_telegram(message: str) -> bool:
         logger.warning("Telegram未設定 — 送信スキップ")
         return False
     try:
-        import requests
-        url  = f"https://api.telegram.org/bot{token}/sendMessage"
-        resp = requests.post(url, json={
-            "chat_id": chat_id,
-            "text": message,
-            "parse_mode": "Markdown",
-            "disable_web_page_preview": True,
-        }, timeout=15)
-        if resp.ok:
+        from src.notify_telegram import send_message
+        ok = bool(send_message(message))
+        if ok:
             logger.info("✅ 夜の振り返り送信完了")
-            return True
         else:
-            logger.error(f"Telegram送信失敗: {resp.text}")
-            return False
+            logger.error("❌ 夜の振り返りの送信に失敗しました")
+        return ok
     except Exception:
-        logger.error("Telegram送信エラー"); logger.debug(traceback.format_exc())
+        logger.error("❌ 夜の振り返りの送信でエラー", exc_info=True)
         return False
 
 

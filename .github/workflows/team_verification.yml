@@ -4,8 +4,19 @@
 name: 自律チーム予測検証
 
 on:
-  schedule:
-    - cron: "35 22 * * 1-5"   # UTC 日〜木 22:35 = JST 月〜金 7:35
+  # schedule:  ← 見出しだけ残すと書式エラーになるので、見出しごとコメントにした
+    # ⛔ 2026-09-11 停止。この検証は**設置以来一度も動いたことがない**。
+    #    朝の分析は daily_report（別の処理）、検証はここ（別の処理）で走るが、
+    #    src/autonomous_team.py は予測を**メモリ上のリストにしか持たず**
+    #    （self.daily_reports = []、ファイルから読み戻さない）、検証側からは毎回空。
+    #    作られた検証ファイルはすべて2バイト（{}）だった。
+    #    その空の結果から、平日毎朝
+    #      「📊 予測: --- ／ 📈 実績: +0.00% ／ ✅ 判定: 外れ ❌ ／ 📝 理由: ---」
+    #    という通知を送り続けていた（correct が無いと「外れ」になる作り）。
+    #    しかも「1日3通・朝は1通」の決まりに対する4通目で、notify_meter も通っていなかった。
+    #    予測の検証は cloud_run の prediction_tracker が担っている（遡り検証つき）。
+    #    必要になったら手動実行（workflow_dispatch）で動かせるよう、ファイルは残す。
+    # - cron: "35 22 * * 1-5"   # UTC 日〜木 22:35 = JST 月〜金 7:35
   workflow_dispatch:
 
 permissions:
@@ -65,10 +76,11 @@ jobs:
           fi
 
       - name: 検証結果をTelegramに通知
+        # ⛔ 2026-09-11 停止。空の結果から毎朝「外れ ❌」だけを送っていた。上の説明を参照。
+        if: false
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        if: always()
         run: |
           python -c "
           import os, requests, json
