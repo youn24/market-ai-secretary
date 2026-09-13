@@ -809,6 +809,23 @@
       "verified": false,
       "correct": null,
       "actual_move": null
+    },
+    {
+      "date": "2026-09-14",
+      "direction": "bull",
+      "score": 14.0,
+      "adj_score": 12.5,
+      "conf_rank": "S",
+      "conf_win_rate": 80.6,
+      "fg": 33.3,
+      "nikkei": 64011.3398,
+      "sp500": 7656.98,
+      "usdjpy": 153.699,
+      "vix": 15.84,
+      "confidence": null,
+      "verified": false,
+      "correct": null,
+      "actual_move": null
     }
   ],
   "accuracy": {}
