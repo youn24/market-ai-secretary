@@ -1,0 +1,612 @@
+"""
+AI予測トラッカー（自己学習モジュール）
+毎日の予測を記録 → 翌日の実際の結果と照合 → 正解率を計算
+→ 正解率・パターンをGeminiにフィードバックして分析精度を向上させる
+"""
+import os
+import json
+import traceback
+from datetime import datetime, timedelta
+from pathlib import Path
+from src.utils import setup_logger, get_jst_now, get_today_str, get_dirs
+
+logger = setup_logger("prediction_tracker")
+
+PRED_FILE = Path("data/predictions.json")
+
+
+# ──────────────────────────────────────────────────────────────
+# データ読み書き
+# ──────────────────────────────────────────────────────────────
+
+def _load() -> dict:
+    try:
+        if PRED_FILE.exists():
+            with open(PRED_FILE, encoding="utf-8") as f:
+                return json.load(f)
+    except Exception as e:
+        logger.error(f"予測データ読込エラー: {e}")
+    return {"predictions": [], "accuracy": {}}
+
+
+def _save(data: dict):
+    try:
+        PRED_FILE.parent.mkdir(parents=True, exist_ok=True)
+        with open(PRED_FILE, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        logger.error(f"予測データ保存エラー: {e}")
+
+
+# ──────────────────────────────────────────────────────────────
+# 予測を保存
+# ──────────────────────────────────────────────────────────────
+
+def save_prediction(prices: dict, risk: dict, ai_summary: dict, scenario: dict,
+                    fear_greed: dict = None, confidence: float = None):
+    """
+    今日の「予測」を記録する。
+    - AIが「強気」「弱気」「中立」どれを言ったか
+    - 現在の市場データ（検証用）
+    - confidence: マルチエージェント合議の確信度(0.5〜1.0)。後で update_confidence() でも更新可
+    """
+    today = get_today_str()
+    data  = _load()
+
+    # AIの予測方向を判定（F&Gも渡してバイアス補正）
+    direction, adj_score = _direction_and_score(ai_summary, scenario, risk, fear_greed)
+
+    # そのサインがどのクラスかを添える。
+    # 同じ「下げ」でも過去の勝率が50%と83%では意味が違うため、
+    # 方向だけ記録しても後から読み返したときに判断できない。
+    sig_conf = {"available": False}
+    try:
+        from src.signal_confidence import evaluate as _sc_eval
+        sig_conf = _sc_eval(direction, adj_score)
+    except Exception:
+        logger.error("信頼度ランクの判定に失敗しました", exc_info=True)
+
+    # 現在価格を記録
+    def p(sym): return prices.get(sym, {}).get("latest")
+
+    record = {
+        "date":         today,
+        "direction":    direction,      # "bull" / "bear" / "neutral"
+        "score":        risk.get("score", 0),
+        "adj_score":    round(adj_score, 2),   # F&G補正後。信頼度ランクの根拠
+        "conf_rank":    sig_conf.get("rank") if sig_conf.get("available") else None,
+        "conf_win_rate": sig_conf.get("win_rate") if sig_conf.get("available") else None,
+        "fg":           (fear_greed or {}).get("score"),   # Fear&Greed スコア
+        "nikkei":       p("^N225"),
+        "sp500":        p("^GSPC"),
+        "usdjpy":       p("USDJPY=X"),
+        "vix":          p("^VIX"),
+        "confidence":   confidence,     # マルチエージェント確信度(0.5〜1.0)。Brierスコア計算用
+        "verified":     False,          # 翌日に検証済みになる
+        "correct":      None,           # True/False/None
+        "actual_move":  None,           # 翌日の実際の騰落率
+    }
+
+    # 既存の同日レコードを更新
+    data["predictions"] = [p for p in data["predictions"] if p["date"] != today]
+    data["predictions"].append(record)
+
+    # 最新90日分のみ保持
+    data["predictions"] = sorted(
+        data["predictions"], key=lambda x: x["date"]
+    )[-90:]
+
+    _save(data)
+    rank = f" / 信頼度{sig_conf['rank']}({sig_conf['win_rate']}%)" if sig_conf.get("available") else ""
+    logger.info(f"予測記録: {today} → {direction} (スコア:{risk.get('score',0):+.2f}"
+                f" 補正後{adj_score:+.2f}){rank}")
+    # 通知・レポート用に信頼度の詳細も返す。保存済みレコード本体は汚さない
+    # （同じオブジェクトを後から書き換えると、次の保存で意図せず混ざるため）
+    return {**record, "signal_confidence": sig_conf}
+
+
+def _extract_direction(ai_summary: dict, scenario: dict, risk: dict, fear_greed: dict = None) -> str:
+    """AIの総合的な方向性を文字列で返す"""
+    return _direction_and_score(ai_summary, scenario, risk, fear_greed)[0]
+
+
+def _direction_and_score(ai_summary: dict, scenario: dict, risk: dict,
+                         fear_greed: dict = None) -> tuple:
+    """
+    方向と、判定に使った補正後スコアの両方を返す。
+
+    スコアを外に出しているのは、signal_confidence が
+    「そのサインがどれくらい強かったか」を必要とするため。
+    補正のかけ方を二重に実装すると必ずズレるので、判定と同じ値を渡す。
+    """
+    score = risk.get("score", 0)
+    fg = (fear_greed or {}).get("score")
+
+    # Fear&Greedによるスコア補正（恐怖圏では弱気方向に調整）
+    # 実績分析: F&G=25-35の恐怖圏でも強気予測が多発→バイアス修正
+    adjusted_score = score
+    if fg is not None:
+        if fg < 25:    adjusted_score -= 3.0   # 極度の恐怖
+        elif fg < 35:  adjusted_score -= 1.5   # 恐怖
+        elif fg >= 75: adjusted_score += 3.0   # 極度の強欲
+        elif fg >= 65: adjusted_score += 1.5   # 強欲
+
+    # 閾値は過去2年470件のバックテストで決定（2026-08-13・src/backtest_predictions.py）。
+    # それ以前は実運用の少ないサンプル（bull 11件で的中27%）から「強気過多」と判断し
+    # 9.0まで引き上げていたが、470件で検証すると逆の構造が見えた:
+    #   9.0/-3.0 … 全体41.3% / bull 76件72.4% / neutral 260件24.6%
+    #   予測のneutralが55%も出るのに、実際にneutral(±0.3%以内)だった日は22%しかない。
+    #   つまり閾値の幅が広すぎて、判断できるはずの日を取りこぼしていた。
+    # 7.0/-2.0 に緩和すると全体45.3%（+4.0pt）、bullは110件で的中70.0%を維持できる。
+    # さらに下げれば全体は47.9%まで伸びるが、bull的中率が57.9%まで落ちるため採らない
+    # （「強気」と言ったときの信頼性を優先する）。
+    if adjusted_score >= 7.0:    base = "bull"
+    elif adjusted_score <= -2.0: base = "bear"
+    else:                        base = "neutral"
+
+    # シナリオ確率で補正（確率差30%以上の場合のみ方向を変更）
+    # 2026-07-12: 25%閾値だとスコア2.5点でもbullに上書きされ外れた実績があったため30%に引き上げ
+    if scenario and scenario.get("available"):
+        bull_p = scenario.get("bull", {}).get("prob", 0) or 0
+        bear_p = scenario.get("bear", {}).get("prob", 0) or 0
+        try:
+            bull_p = int(bull_p); bear_p = int(bear_p)
+        except Exception:
+            pass
+        diff = bull_p - bear_p
+        if diff >= 30:    base = "bull"
+        elif diff <= -30: base = "bear"
+
+    return base, adjusted_score
+
+
+# ──────────────────────────────────────────────────────────────
+# 昨日の予測を検証
+# ──────────────────────────────────────────────────────────────
+
+def update_confidence(date: str, confidence: float):
+    """
+    マルチエージェント合議の確信度を既存の予測レコードに書き戻す。
+    save_prediction() の後、multi_agent_consensus が終わってから呼ぶ。
+    """
+    data = _load()
+    for pred in data["predictions"]:
+        if pred["date"] == date:
+            pred["confidence"] = round(confidence, 3)
+            _save(data)
+            logger.info(f"確信度更新: {date} → {confidence:.3f}")
+            return
+    logger.warning(f"update_confidence: {date} のレコードが見つからない")
+
+
+def verify_yesterday(prices: dict):
+    """
+    昨日の予測が当たったか検証する。
+    日経平均の実際の値動きと予測方向を比較。
+    """
+    data     = _load()
+    yesterday = (get_jst_now() - timedelta(days=1)).strftime("%Y-%m-%d")
+    nk_now   = prices.get("^N225", {}).get("latest")
+    if not nk_now:
+        logger.warning("日経平均データなし → 検証スキップ")
+        return
+
+    updated = False
+    for pred in data["predictions"]:
+        if pred["date"] == yesterday and not pred["verified"]:
+            nk_then = pred.get("nikkei")
+            if not nk_then:
+                continue
+
+            actual_move = (nk_now - nk_then) / nk_then * 100
+            direction   = pred["direction"]
+
+            # 正解判定（±0.3%以内は中立とみなす）
+            if actual_move > 0.3:    actual_dir = "bull"
+            elif actual_move < -0.3: actual_dir = "bear"
+            else:                    actual_dir = "neutral"
+
+            correct = (direction == actual_dir)
+
+            pred["verified"]    = True
+            pred["correct"]     = correct
+            pred["actual_move"] = round(actual_move, 2)
+            pred["actual_dir"]  = actual_dir
+            updated = True
+
+            result_emoji = "✅" if correct else "❌"
+            logger.info(
+                f"{result_emoji} 検証: {yesterday} 予測={direction} "
+                f"実際={actual_dir}({actual_move:+.2f}%) → {'正解' if correct else '不正解'}"
+            )
+
+    # 「昨日ちょうど」に当てはまらなかった予測をまとめて拾う
+    if _backfill(data):
+        updated = True
+
+    if updated:
+        _save(data)
+
+    return data
+
+
+def _backfill(data: dict) -> bool:
+    """検証されないまま取り残された予測を、過去の実際の値動きで検証する。
+
+    なぜ必要か:
+      上の verify_yesterday() は「予測日 == 今日の1日前」しか見ていない。
+      そのため次の2つが**永久に検証されない**まま捨てられていた。
+
+        ① 金曜の予測。検証されるのは土曜だが土曜は動かない。
+           月曜になると「1日前＝日曜」となり、どの予測とも一致しない。
+        ② 翌日の実行が落ちた日の予測。
+           （2026-09-02・09-03 のように朝の実行が失敗した日）
+
+      2026-09-09時点で47件中14件（うち金曜6件・土曜2件）がこの形で
+      未検証のまま残っていた。**成績表から3割が抜け落ちていた**ことになる。
+
+      予測日の「次の営業日の終値」は後からでも分かるので、遡って検証できる。
+      判定式は verify_yesterday() と同じ（予測時に記録した日経の値を起点にする）。
+    """
+    pend = [p for p in data.get("predictions", [])
+            if not p.get("verified") and p.get("nikkei")]
+    if not pend:
+        return False
+
+    today = get_jst_now().strftime("%Y-%m-%d")
+    # 今日の予測はまだ答えが出ていない。除く。
+    pend = [p for p in pend if p.get("date", "") < today]
+    if not pend:
+        return False
+
+    try:
+        import warnings
+        warnings.filterwarnings("ignore")
+        import yfinance as yf
+        oldest = min(p["date"] for p in pend)
+        hist = yf.Ticker("^N225").history(start=oldest, interval="1d")
+        if hist is None or hist.empty:
+            logger.warning("日経の過去データを取得できず、遡り検証を見送ります")
+            return False
+        closes = {d.strftime("%Y-%m-%d"): float(v)
+                  for d, v in zip(hist.index, hist["Close"])}
+    except Exception:
+        logger.debug(traceback.format_exc())
+        return False
+
+    days = sorted(closes)
+    updated = False
+    for pred in pend:
+        d = pred["date"]
+        # 予測日より後の、最初に取引があった日を探す
+        nxt = next((x for x in days if x > d), None)
+        if nxt is None:
+            continue          # まだ答えが出ていない（今日の分など）
+        nk_then = pred.get("nikkei")
+        try:
+            actual_move = (closes[nxt] - float(nk_then)) / float(nk_then) * 100
+        except (TypeError, ValueError, ZeroDivisionError):
+            continue
+
+        if actual_move > 0.3:
+            actual_dir = "bull"
+        elif actual_move < -0.3:
+            actual_dir = "bear"
+        else:
+            actual_dir = "neutral"
+
+        pred["verified"] = True
+        pred["correct"] = (pred.get("direction") == actual_dir)
+        pred["actual_move"] = round(actual_move, 2)
+        pred["actual_dir"] = actual_dir
+        # 後から拾った分と当日検証した分を見分けられるようにしておく。
+        # 起点は同じだが、比較先が「終値」なので厳密には同一条件ではない。
+        pred["verified_by"] = "backfill"
+        pred["verified_against"] = nxt
+        updated = True
+        logger.info(f"{'✅' if pred['correct'] else '❌'} 遡り検証: {d} "
+                    f"予測={pred.get('direction')} → {nxt}の終値で "
+                    f"{actual_move:+.2f}%（{actual_dir}）")
+
+    if updated:
+        logger.info(f"📌 取り残されていた予測 {sum(1 for p in pend if p.get('verified'))}件を検証しました")
+    return updated
+
+
+# ──────────────────────────────────────────────────────────────
+# 正解率を計算
+# ──────────────────────────────────────────────────────────────
+
+def calc_accuracy() -> dict:
+    """過去10日・30日・90日の正解率を計算"""
+    data = _load()
+    verified = [p for p in data["predictions"] if p.get("verified")]
+
+    def acc(days: int) -> dict:
+        cutoff   = (get_jst_now() - timedelta(days=days)).strftime("%Y-%m-%d")
+        recent   = [p for p in verified if p["date"] >= cutoff]
+        total    = len(recent)
+        correct  = sum(1 for p in recent if p.get("correct"))
+        rate     = correct / total * 100 if total > 0 else None
+
+        # 方向別の正解率
+        bull_total   = sum(1 for p in recent if p["direction"] == "bull")
+        bull_correct = sum(1 for p in recent if p["direction"] == "bull" and p.get("correct"))
+        bear_total   = sum(1 for p in recent if p["direction"] == "bear")
+        bear_correct = sum(1 for p in recent if p["direction"] == "bear" and p.get("correct"))
+
+        return {
+            "total":        total,
+            "correct":      correct,
+            "rate":         round(rate, 1) if rate is not None else None,
+            "bull_acc":     round(bull_correct/bull_total*100, 1) if bull_total > 0 else None,
+            "bear_acc":     round(bear_correct/bear_total*100, 1) if bear_total > 0 else None,
+        }
+
+    # Brierスコア計算（確信度が記録されているレコードのみ）
+    # Brier = mean((confidence - outcome)²)  0=完璧 0.25=ランダム 1=完全外れ
+    brier_candidates = [
+        p for p in verified
+        if p.get("confidence") is not None and p.get("correct") is not None
+    ]
+    brier_30 = None
+    brier_all = None
+    if brier_candidates:
+        cutoff30 = (get_jst_now() - timedelta(days=30)).strftime("%Y-%m-%d")
+        cands30 = [p for p in brier_candidates if p["date"] >= cutoff30]
+        def _brier(preds):
+            scores = [(p["confidence"] - (1.0 if p["correct"] else 0.0)) ** 2 for p in preds]
+            return round(sum(scores) / len(scores), 4)
+        if cands30:
+            brier_30 = _brier(cands30)
+        brier_all = _brier(brier_candidates)
+
+    result = {
+        "10d":  acc(10),
+        "30d":  acc(30),
+        "90d":  acc(90),
+        "total_verified": len(verified),
+        "brier_30d":  brier_30,   # 直近30日Brierスコア（低いほど良い）
+        "brier_all":  brier_all,  # 全期間Brierスコア
+        "brier_count": len(brier_candidates),
+    }
+
+    # 最近のパターン（直近5日）
+    recent5 = sorted(verified, key=lambda x: x["date"])[-5:]
+    result["recent5"] = [
+        {
+            "date":       p["date"],
+            "direction":  p["direction"],
+            "correct":    p.get("correct"),
+            "move":       p.get("actual_move"),
+            "confidence": p.get("confidence"),
+        }
+        for p in recent5
+    ]
+
+    logger.info(
+        f"正解率: 10日={result['10d']['rate']}% / "
+        f"30日={result['30d']['rate']}% / "
+        f"Brier30日={brier_30} / 検証済={result['total_verified']}件"
+    )
+    return result
+
+
+# ──────────────────────────────────────────────────────────────
+# 学習フィードバックをGeminiに渡すテキスト生成
+# ──────────────────────────────────────────────────────────────
+
+def generate_learning_feedback() -> str:
+    """
+    Geminiに渡す「過去の予測実績」テキストを生成。
+    これをプロンプトに含めることで分析精度が向上する。
+    """
+    stats = calc_accuracy()
+    data  = _load()
+    verified = [p for p in data["predictions"] if p.get("verified")]
+
+    if not verified:
+        return "（予測データ蓄積中）"
+
+    lines = []
+
+    # 正解率サマリー
+    r10 = stats["10d"]["rate"]
+    r30 = stats["30d"]["rate"]
+    lines.append(f"【あなたの最近の予測実績】")
+    if r10 is not None:
+        emoji = "🎯" if r10 >= 60 else "⚠️" if r10 < 50 else "🔶"
+        lines.append(f"{emoji} 直近10日の正解率: {r10}% ({stats['10d']['correct']}/{stats['10d']['total']})")
+    if r30 is not None:
+        lines.append(f"   直近30日の正解率: {r30}%")
+
+    # 方向別の得意・不得意
+    b_acc = stats["10d"].get("bull_acc")
+    br_acc = stats["10d"].get("bear_acc")
+    if b_acc is not None: lines.append(f"   強気予測の正解率: {b_acc}%")
+    if br_acc is not None: lines.append(f"   弱気予測の正解率: {br_acc}%")
+
+    # 直近5日の結果
+    if stats.get("recent5"):
+        lines.append("\n【直近の予測と結果】")
+        icons = {"bull": "📈", "bear": "📉", "neutral": "➡️"}
+        for r in stats["recent5"]:
+            mark  = "✅" if r.get("correct") else "❌" if r.get("correct") is False else "⏳"
+            icon  = icons.get(r["direction"], "")
+            move  = f"{r['move']:+.1f}%" if r.get("move") is not None else ""
+            lines.append(f"  {mark} {r['date']} {icon}{r['direction']} → 実際{move}")
+
+    # 精度に応じた自己調整指示
+    lines.append("\n【精度に基づく分析指針】")
+    if r10 is not None:
+        if r10 >= 65:
+            lines.append("✅ 予測精度が高い状態です。自信を持って分析してください。")
+        elif r10 >= 50:
+            lines.append("🔶 予測精度は普通。バランスよく両サイドを考慮してください。")
+        else:
+            lines.append("⚠️ 最近予測が外れ気味です。より慎重に、断定を避けて分析してください。")
+    else:
+        lines.append("📊 データ蓄積中。標準的な分析を行ってください。")
+
+    return "\n".join(lines)
+
+
+# ──────────────────────────────────────────────────────────────
+# Geminiによる予測分析強化
+# ──────────────────────────────────────────────────────────────
+
+def analyze_with_learning(prices: dict, risk: dict, fear_greed: dict,
+                           news: list, base_analysis: dict) -> str:
+    """
+    過去の予測実績を踏まえてGeminiが高精度な分析を行う
+    """
+    api_key = os.getenv("GEMINI_API_KEY", "").strip()
+    if not api_key:
+        return ""
+
+    feedback = generate_learning_feedback()
+    stats    = calc_accuracy()
+    r10      = stats["10d"]["rate"]
+
+    # データが少ない場合はスキップ
+    if stats["total_verified"] < 3:
+        logger.info("検証データ3件未満 → 学習フィードバックスキップ")
+        return ""
+
+    try:
+        import google.generativeai as genai
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel(os.getenv("GEMINI_MODEL", "gemini-2.5-flash"))
+
+        def fmt(sym, unit=""):
+            d = prices.get(sym, {})
+            v = d.get("latest"); c = d.get("change_pct")
+            if v is None: return "---"
+            s = f"+{c:.2f}%" if (c or 0)>=0 else f"{c:.2f}%"
+            return f"{v:,.2f}{unit}({s})"
+
+        prompt = f"""あなたは自己学習する市場分析AIです。
+過去の予測実績から自分の得意・不得意を把握し、より精度の高い分析を行います。
+
+{feedback}
+
+【現在の市場データ】
+日経平均: {fmt('^N225','円')} / S&P500: {fmt('^GSPC')} / ドル円: {fmt('USDJPY=X','円')}
+VIX: {fmt('^VIX')} / リスクスコア: {risk.get('score',0):+.2f}
+Fear&Greed: {fear_greed.get('score', 50):.0f} ({fear_greed.get('rating_ja','---')})
+
+【前回までのAI分析サマリー】
+{base_analysis.get('neutral_view','なし')[:200] if base_analysis.get('available') else 'なし'}
+
+上記の予測実績と現在データをもとに、以下を分析してください：
+
+【🎯 精度向上ポイント】（100文字以内）
+過去の予測パターンから、今日特に注意すべきことは何か。
+
+【📊 今日の確信度】（高/中/低 + 理由を50文字）
+現在の相場について、どの程度確信を持って予測できるか。
+
+【🔮 今日の方向性予測】（bull/neutral/bear + 根拠100文字）
+今日から明日にかけての方向性。過去の実績を踏まえた推測として。
+
+断定表現は避け、すべて推測として述べてください。"""
+
+        response = model.generate_content(prompt)
+        result   = response.text
+        logger.info("✅ 学習フィードバック分析完了")
+        return result
+
+    except Exception as e:
+        logger.error(f"学習分析エラー: {e}")
+        return ""
+
+
+# ──────────────────────────────────────────────────────────────
+# 週次サマリー（weekly_run.pyから使用）
+# ──────────────────────────────────────────────────────────────
+
+def get_week_summary() -> dict:
+    """
+    直近7日間の予測成績をまとめて返す（週次レポート用）
+    """
+    data     = _load()
+    verified = [p for p in data["predictions"] if p.get("verified")]
+
+    cutoff = (get_jst_now() - timedelta(days=7)).strftime("%Y-%m-%d")
+    week   = [p for p in verified if p["date"] >= cutoff]
+
+    if not week:
+        return {"available": False}
+
+    wins   = sum(1 for p in week if p.get("correct"))
+    losses = sum(1 for p in week if p.get("correct") is False)
+    total  = wins + losses
+    rate   = round(wins / total * 100) if total > 0 else 0
+
+    # コメント生成
+    if rate >= 70:
+        comment = "🏆 今週のAIは絶好調！予測が当たり続けています。"
+    elif rate >= 50:
+        comment = "👍 今週は半数以上の予測が的中しました。"
+    elif total < 3:
+        comment = "📊 データ蓄積中。来週以降に精度が上がります。"
+    else:
+        comment = "📚 今週は予測が難しい相場でした。来週に学習が活きます。"
+
+    icons_d = {"bull": "📈", "bear": "📉", "neutral": "➡️"}
+    days = [
+        {
+            "date":      p["date"],
+            "direction": p["direction"],
+            "correct":   p.get("correct"),
+            "move":      p.get("actual_move"),
+            "icon":      icons_d.get(p["direction"], ""),
+        }
+        for p in sorted(week, key=lambda x: x["date"])
+    ]
+
+    return {
+        "available": True,
+        "wins":      wins,
+        "losses":    losses,
+        "total":     total,
+        "rate":      rate,
+        "days":      days,
+        "comment":   comment,
+    }
+
+
+# ──────────────────────────────────────────────────────────────
+# メイン実行
+# ──────────────────────────────────────────────────────────────
+
+def run(prices: dict, risk: dict, fear_greed: dict, news: list,
+        ai_summary: dict, scenario: dict) -> dict:
+    """予測トラッカーのメイン処理"""
+    logger.info("=== 予測トラッカー開始 ===")
+
+    # Step 1: 昨日の予測を検証
+    verify_yesterday(prices)
+
+    # Step 2: 正解率を計算
+    stats = calc_accuracy()
+
+    # Step 3: 今日の予測を記録（Fear&Greed も保存）
+    pred = save_prediction(prices, risk, ai_summary, scenario, fear_greed=fear_greed)
+
+    # Step 4: 学習フィードバック付き分析
+    learning_analysis = analyze_with_learning(
+        prices, risk, fear_greed, news, ai_summary
+    )
+
+    # Step 5: フィードバックテキスト（通知・HTMLに使う）
+    feedback_text = generate_learning_feedback()
+
+    logger.info(f"✅ 予測トラッカー完了 (検証済:{stats['total_verified']}件)")
+    return {
+        "available":        True,
+        "stats":            stats,
+        "today_prediction": pred,
+        "learning_analysis": learning_analysis,
+        "feedback_text":    feedback_text,
+    }

@@ -1,0 +1,600 @@
+"""
+週次レポート（毎週日曜日に自動実行）
+1週間の振り返り・AI分析・来週の見通し
+"""
+import os
+import sys
+import json
+import traceback
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent))
+from src.utils import ensure_dirs, setup_logger, get_jst_now, get_today_str, get_dirs
+
+logger = setup_logger("weekly_run")
+
+
+def run():
+    ensure_dirs()
+    now = get_jst_now()
+    logger.info(f"====== 週次レポート開始 {now.strftime('%Y-%m-%d')} ======")
+
+    prices     = {}
+    fear_greed = {"score": None, "rating_ja": "---"}
+    news       = []
+    risk       = {"score": 0, "sentiment": "不明", "signals": []}
+
+    # データ取得
+    try:
+        from src.fetch_prices import run as fp
+        prices, fear_greed = fp()
+    except Exception:
+        logger.error("価格取得エラー")
+
+    try:
+        from src.fetch_news import run as fn
+        news = fn()
+    except Exception:
+        logger.error("ニュース取得エラー")
+
+    try:
+        from src.indicators import calc_risk_score
+        risk = calc_risk_score(prices)
+    except Exception:
+        logger.error("リスク計算エラー")
+
+    # 週次AI分析
+    weekly_analysis = _generate_weekly_analysis(prices, news, risk, fear_greed)
+
+    # セクター分析・ローテーション
+    sector = {}
+    try:
+        from src.sector_analysis import run as run_sector
+        sector = run_sector()
+        if sector.get("available"):
+            logger.info(f"✅ セクター分析完了: {sector.get('rotation',{}).get('phase','---')}")
+    except Exception:
+        logger.error("セクター分析エラー")
+
+    # セクターチャート生成
+    sector_chart_path = None
+    try:
+        if sector.get("available"):
+            from src.sector_chart import make_sector_chart
+            sector_chart_path = make_sector_chart(sector)
+    except Exception:
+        logger.error("セクターチャート生成エラー")
+
+    # 予測学習サマリー
+    pred_summary = {}
+    try:
+        from src.prediction_tracker import calc_accuracy, get_week_summary
+        pred_summary = get_week_summary()
+    except Exception:
+        logger.error("予測サマリーエラー")
+
+    # 予測精度モニタリング（4週トレンド + パターン分析）
+    accuracy_monitor = {}
+    try:
+        logger.info("--- 精度モニタリング（4週トレンド） ---")
+        from src.accuracy_monitor import run as run_acc
+        accuracy_monitor = run_acc()
+        if accuracy_monitor.get("available"):
+            logger.info(f"✅ 精度モニタリング完了: 30日正解率={accuracy_monitor.get('rate_30d')}%")
+    except Exception:
+        logger.error("精度モニタリングエラー"); logger.debug(traceback.format_exc())
+
+    # YouTube要約
+    youtube = {}
+    try:
+        from src.youtube_summary import run as yt_run
+        youtube = yt_run(news)
+    except Exception:
+        logger.error("YouTube分析エラー")
+
+    # 記憶更新
+    try:
+        from src.ai_memory import update_memory, analyze_with_memory
+        memory = update_memory(prices, risk, fear_greed, {})
+        memory_analysis = analyze_with_memory(prices, risk, fear_greed)
+    except Exception:
+        memory_analysis = ""
+
+    # 来週のカレンダー生成
+    calendar_data = {}
+    try:
+        from src.economic_calendar import run as run_cal
+        calendar_data = run_cal()
+    except Exception:
+        logger.error("カレンダー生成エラー")
+
+    # 自己改善AI — 2026-09-11 に停止（コードは src/self_improving_ai.py に残置）
+    #
+    # ⚠️ 毎週日曜に「現在の正解率: 100.0%」という**偽の数字**を送っていた。
+    #    読んでいる項目名が予測データに存在しなかったため:
+    #      bull_probability / bear_probability → 無い → 0
+    #      actual_change_pct → 無い（本当は actual_move）→ 0
+    #    全予測が neutral・実際の値動き0%と扱われ、`abs(0) <= 1.0` で全件正解になっていた。
+    #    同じ週次の精度欄では44%と出ているのに、その下に100%が並んでいた。
+    #
+    #    さらにこのモジュールは、今の予測の仕組み（スコアの閾値 7.0/-2.0）とは
+    #    別物の「確率の閾値 40〜55」を探しており、実物とつながっていない。
+    #    改善が5%を超えると prediction_tracker.py を書き換えて
+    #    **CIから git commit と git push まで自動で行う**作りだった。
+    #    偽の100%のせいで一度も発動していなかったが、条件がいじられた途端に
+    #    偽の数字で本番コードを書き換えて公開することになる。
+    #
+    #    閾値の検証は src/backtest_predictions.py と CLAUDE.md 09-11 の
+    #    「純優位」の分析で行う。ここは呼ばない。
+    self_improve_result = {}
+
+    # 週間パフォーマンスチャート生成
+    weekly_chart_path = None
+    try:
+        from src.weekly_chart import make_weekly_chart
+        weekly_chart_path = make_weekly_chart(prices)
+    except Exception:
+        logger.warning("週間チャート生成スキップ（src/weekly_chart.py未定義）")
+
+    # Telegram送信
+    _send_weekly_report(weekly_analysis, youtube, memory_analysis, prices, fear_greed, risk,
+                        calendar_data, sector, sector_chart_path, pred_summary,
+                        self_improve_result=self_improve_result,
+                        weekly_chart_path=weekly_chart_path,
+                        accuracy_monitor=accuracy_monitor)
+
+    logger.info("====== 週次レポート完了 ======")
+
+
+def _generate_weekly_analysis(prices, news, risk, fear_greed) -> dict:
+    """Geminiで週次分析を生成"""
+    import os
+    api_key = os.getenv("GEMINI_API_KEY", "").strip()
+    if not api_key:
+        return {"available": False}
+
+    try:
+        import google.generativeai as genai
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel(os.getenv("GEMINI_MODEL", "gemini-2.5-flash"))
+
+        # 過去1週間のニュース
+        news_text = "\n".join(f"・{n.get('title','')}" for n in
+                              sorted(news, key=lambda x: {"A":0,"B":1,"C":2}.get(x.get("importance","C"),2))[:15])
+
+        def fmt(sym, unit=""):
+            d = prices.get(sym, {})
+            v = d.get("latest")
+            chg = d.get("change_pct")
+            if v is None: return "---"
+            s = f"+{chg:.2f}%" if (chg or 0) >= 0 else f"{chg:.2f}%"
+            return f"{v:,.2f}{unit}({s})"
+
+        prompt = f"""あなたはプロの金融アナリストです。
+今週の市場を振り返り、来週の見通しを分析してください。
+
+【今週末の市場データ】
+日経平均: {fmt('^N225','円')}
+S&P500: {fmt('^GSPC')}
+ドル円: {fmt('USDJPY=X','円')}
+VIX: {fmt('^VIX')}
+金: {fmt('GC=F','$')}
+Bitcoin: {fmt('BTC-USD','$')}
+地合い: {risk.get('sentiment','---')} (スコア:{risk.get('score',0):+.2f})
+Fear&Greed: {fear_greed.get('score','---')} ({fear_greed.get('rating_ja','---')})
+
+【今週の主要ニュース】
+{news_text}
+
+以下を分析してください：
+
+【今週の総括】（200文字以内）
+今週の市場を一言で表すと。
+
+【来週の注目イベント】（150文字以内）
+来週注目すべき経済指標・イベント（推測として）。
+
+【来週の見通し】（200文字以内）
+来週の市場方向性（推測として、断定禁止）。
+
+【投資家へのメッセージ】（150文字以内）
+来週に向けて投資家が意識すべき点。"""
+
+        response = model.generate_content(prompt)
+        result = response.text
+
+        sections = {}
+        current = "all"
+        lines = []
+        for line in result.split("\n"):
+            if "今週の総括" in line:
+                if lines: sections[current] = "\n".join(lines).strip()
+                current = "summary"; lines = []
+            elif "来週の注目" in line:
+                if lines: sections[current] = "\n".join(lines).strip()
+                current = "events"; lines = []
+            elif "来週の見通し" in line:
+                if lines: sections[current] = "\n".join(lines).strip()
+                current = "outlook"; lines = []
+            elif "投資家へのメッセージ" in line:
+                if lines: sections[current] = "\n".join(lines).strip()
+                current = "message"; lines = []
+            else:
+                if line.strip(): lines.append(line)
+        if lines: sections[current] = "\n".join(lines).strip()
+
+        return {
+            "available": True,
+            "summary": sections.get("summary", ""),
+            "events":  sections.get("events", ""),
+            "outlook": sections.get("outlook", ""),
+            "message": sections.get("message", ""),
+        }
+
+    except Exception as e:
+        logger.error(f"週次分析エラー: {e}")
+        return {"available": False}
+
+
+def _week_change(sym: str):
+    """直近の終値と、その7日前（またはそれ以前で最も近い日）の終値の変化率。
+
+    ⚠️ 以前は prices の change_pct をそのまま使っていたが、あれは
+       **その日1日だけの変化**。日曜に届く週次で「今週の注目騰落」と書きながら
+       金曜1日の動きを見せていた（2026-09-11の点検で発覚）。
+       日付で7日前を取るので、株・為替・24時間動く暗号資産のどれでも同じ意味になる。
+    """
+    try:
+        import warnings
+        warnings.filterwarnings("ignore")
+        import yfinance as yf
+        h = yf.Ticker(sym).history(period="1mo")["Close"].dropna()
+        if len(h) < 3:
+            return None
+        last_d = h.index[-1]
+        prior = h[h.index <= last_d - __import__("datetime").timedelta(days=7)]
+        if prior.empty:
+            return None
+        return (float(h.iloc[-1]) / float(prior.iloc[-1]) - 1) * 100
+    except Exception:
+        return None
+
+
+def _weekly_movers(prices: dict) -> str:
+    """今週（直近7日）の主要銘柄の騰落をテキスト形式で返す。
+
+    ⚠️ 以前は**順位で色を付けていた**（上位4つを🟢・下位3つを🔴）。
+       そのため 2026-09-11 は「🟢 S&P500 -0.58%」と、下げているのに緑、
+       「🟢 VIX +8.38%」と、恐怖指数の上昇（悪い知らせ）まで緑で出ていた。
+       色は「良い/悪い」を連想させるので、順位では付けない。
+       向きは📈/📉で示し、恐怖指数には「上がるほど警戒」と添える。
+    """
+    watch = [
+        ("^N225", "日経平均"), ("^GSPC", "S&P500"), ("^IXIC", "NASDAQ"),
+        ("USDJPY=X", "ドル円"), ("GC=F", "金"), ("CL=F", "原油"),
+        ("BTC-USD", "BTC"), ("^VIX", "VIX"),
+    ]
+    movers = []
+    for sym, name in watch:
+        chg = _week_change(sym)
+        if chg is None:
+            # 週間が取れなければ出さない。1日の変化を週間と偽って並べるよりよい
+            continue
+        movers.append((sym, name, chg))
+    if not movers:
+        return ""
+    # 大きく動いた順（上げ下げを問わず）。何が一番動いたかが知りたいことなので
+    movers.sort(key=lambda x: abs(x[2]), reverse=True)
+    lines = []
+    for sym, name, chg in movers[:6]:
+        mark = "📈" if chg > 0 else "📉" if chg < 0 else "➡️"
+        note = "（恐怖指数・上がるほど警戒）" if sym == "^VIX" else ""
+        lines.append(f"{mark} {name} {chg:+.2f}%{note}")
+    return "\n".join(lines)
+
+
+def _send_weekly_report(weekly, youtube, memory_analysis, prices, fear_greed, risk,
+                        calendar_data=None, sector=None, sector_chart_path=None,
+                        pred_summary=None, self_improve_result=None,
+                        weekly_chart_path=None, accuracy_monitor=None):
+    """週次レポートをTelegramに送信"""
+    try:
+        from src.notify_telegram import send_message, send_photo
+        from src.utils import get_today_str
+
+        today = get_today_str()
+
+        def fmt(sym, unit=""):
+            d = prices.get(sym, {})
+            v = d.get("latest")
+            chg = d.get("change_pct")
+            if v is None: return "---"
+            s = f"{'▲' if (chg or 0)>=0 else '▼'}{abs(chg):.2f}%" if chg else ""
+            return f"{v:,.2f}{unit} {s}"
+
+        # 信号機判定
+        score = risk.get("score", 0)
+        if   score >= 2:    sig = "🟢🟢 強気継続"
+        elif score >= 0.5:  sig = "🟢 やや強気"
+        elif score >= -0.5: sig = "🟡 中立"
+        elif score >= -2:   sig = "🟠 要注意"
+        else:               sig = "🔴🔴 弱気警戒"
+
+        # 注目銘柄騰落
+        movers_txt = _weekly_movers(prices)
+
+        # メッセージ①：週次サマリー + 注目銘柄
+        msg1_lines = [
+            f"📅 *週次マーケットレポート* [{today}]",
+            f"━━━━━━━━━━━━━━━",
+            f"🚦 *今週のシグナル: {sig}*",
+            f"",
+            f"📊 今週末の主要指標",
+            f"🇯🇵 日経: {fmt('^N225','円')}",
+            f"🇺🇸 S&P: {fmt('^GSPC')}",
+            f"💵 ドル円: {fmt('USDJPY=X','円')}",
+            f"😰 VIX: {fmt('^VIX')}",
+            f"🥇 金: {fmt('GC=F','$')}",
+            f"₿ BTC: {fmt('BTC-USD','$')}",
+            f"━━━━━━━━━━━━━━━",
+            f"🌡 地合い: {risk.get('sentiment','---')} (スコア:{score:+.2f})",
+            f"😱 Fear&Greed: {fear_greed.get('score','---')} ({fear_greed.get('rating_ja','---')})",
+        ]
+        if movers_txt:
+            msg1_lines += ["━━━━━━━━━━━━━━━",
+                           "📊 *今週の注目騰落*（1週間の変化・大きい順）", movers_txt]
+
+        # 週間チャート付きで送信
+        msg1 = "\n".join(msg1_lines)
+        if weekly_chart_path and os.path.exists(str(weekly_chart_path)):
+            send_photo(str(weekly_chart_path), caption=msg1)
+        else:
+            send_message(msg1)
+
+        # メッセージ②：AI週次分析
+        if weekly.get("available"):
+            msg2_lines = ["🤖 *Gemini AI 週次分析*", "━━━━━━━━━━━━━━━"]
+            if weekly.get("summary"):
+                msg2_lines += ["📝 今週の総括", weekly["summary"], ""]
+            if weekly.get("events"):
+                msg2_lines += ["🎯 来週の注目イベント", weekly["events"], ""]
+            if weekly.get("outlook"):
+                msg2_lines += ["🔮 来週の見通し", weekly["outlook"], ""]
+            if weekly.get("message"):
+                msg2_lines += ["💌 投資家へのメッセージ", weekly["message"]]
+            send_message("\n".join(msg2_lines))
+
+        # メッセージ③：記憶分析＋YouTube
+        msg3_lines = []
+        if memory_analysis:
+            msg3_lines += ["🧠 *AI記憶分析*", "━━━━━━━━━━━━━━━", memory_analysis, ""]
+        if youtube.get("available"):
+            msg3_lines += ["📺 *今週の注目動画まとめ*", "━━━━━━━━━━━━━━━"]
+            if youtube.get("points"):
+                msg3_lines += ["💡 動画のポイント", youtube["points"], ""]
+            if youtube.get("impact"):
+                msg3_lines += ["📊 市場への示唆", youtube["impact"]]
+            for v in youtube.get("videos", [])[:3]:
+                msg3_lines.append(f"🎬 {v['title']}")
+        if msg3_lines:
+            send_message("\n".join(msg3_lines))
+
+        # メッセージ④：セクターローテーション
+        if sector and sector.get("available"):
+            rot  = sector.get("rotation", {})
+            top3 = sector.get("top3", [])
+            bot3 = sector.get("bottom3", [])
+            ai_c = sector.get("ai_comment", "")[:250]
+
+            top_str = "\n".join(f"  🟢 {s['name']}({s['symbol']}): 日{s['chg_1d']:+.1f}% 週{s['chg_1w']:+.1f}% 月{s['chg_1m']:+.1f}%" for s in top3)
+            bot_str = "\n".join(f"  🔴 {s['name']}({s['symbol']}): 日{s['chg_1d']:+.1f}% 週{s['chg_1w']:+.1f}% 月{s['chg_1m']:+.1f}%" for s in bot3)
+
+            sec_msg_lines = [
+                "🌐 *今週のセクターローテーション*",
+                "━━━━━━━━━━━━━━━",
+                f"📊 フェーズ: {rot.get('phase','---')}",
+                f"{rot.get('label','')}",
+                f"📝 {rot.get('detail','')}",
+                "",
+                "💪 今週強かったセクター",
+                top_str,
+                "",
+                "📉 今週弱かったセクター",
+                bot_str,
+            ]
+            if ai_c:
+                sec_msg_lines += ["", "🤖 AI分析", ai_c]
+
+            if sector_chart_path and os.path.exists(str(sector_chart_path)):
+                send_photo(str(sector_chart_path), caption="\n".join(sec_msg_lines))
+            else:
+                send_message("\n".join(sec_msg_lines))
+
+        # メッセージ⑤：AI予測の週次成績
+        if pred_summary and pred_summary.get("available"):
+            wins   = pred_summary.get("wins", 0)
+            losses = pred_summary.get("losses", 0)
+            total  = wins + losses
+            rate   = round(wins / total * 100) if total > 0 else 0
+            days   = pred_summary.get("days", [])
+
+            trophy = "🏆" if rate >= 70 else "👍" if rate >= 50 else "📚"
+            bar    = "█" * round(rate / 10) + "░" * (10 - round(rate / 10))
+
+            pred_lines = [
+                f"{trophy} *今週のAI予測成績*",
+                "━━━━━━━━━━━━━━━",
+                f"📊 {wins}勝{losses}敗 ({rate}%)",
+                f"`{bar}`",
+                "",
+                "*今週の予測 vs 実際*",
+            ]
+            icons_d = {"bull": "📈", "bear": "📉", "neutral": "➡️"}
+            for d in days:
+                mark = "✅" if d.get("correct") else "❌" if d.get("correct") is False else "⏳"
+                icon = icons_d.get(d.get("direction", ""), "")
+                move = f"{d['move']:+.1f}%" if d.get("move") is not None else "未確定"
+                pred_lines.append(f"  {mark} {d.get('date','')[-5:]} {icon} → {move}")
+
+            if pred_summary.get("comment"):
+                pred_lines += ["", f"💡 {pred_summary['comment']}"]
+
+            send_message("\n".join(pred_lines))
+
+        # 来週のカレンダー画像
+        if calendar_data and calendar_data.get("available"):
+            cal_path = calendar_data.get("image_path","")
+            if cal_path and os.path.exists(str(cal_path)):
+                n = len(calendar_data.get("events",[]))
+                send_photo(str(cal_path), caption=(
+                    f"📅 *来週のイベントスケジュール*\n"
+                    f"━━━━━━━━━━━━━━━\n"
+                    f"📋 全{n}件掲載\n"
+                    f"🔴 赤=重要  🟠 橙=注目  🟣 紫=決算\n"
+                    f"⏰ 時刻は日本時間・目安です"
+                ))
+
+        # 精度トレンドレポート（4週グラフ + パターン分析）
+        if accuracy_monitor and accuracy_monitor.get("available"):
+            acc    = accuracy_monitor
+            rate30 = acc.get("rate_30d")
+            total30 = acc.get("total_30d", 0)
+            weekly_stats = acc.get("weekly_stats", [])
+            patterns = acc.get("patterns", {})
+            weak = patterns.get("weak_patterns", [])
+
+            # バー表現
+            rate_bar = ("█" * round((rate30 or 0) / 10) + "░" * (10 - round((rate30 or 0) / 10)))
+            if rate30 is None:
+                rate_icon = "📊"
+            elif rate30 >= 60:
+                rate_icon = "🎯"
+            elif rate30 >= 50:
+                rate_icon = "👍"
+            else:
+                rate_icon = "⚠️"
+
+            # ⚠️ 「総合正解率」を見出しにしない（CLAUDE.md の決まり）。
+            #    neutral は相場が±0.3%以内に収まった日しか正解にならず、
+            #    その日は2割程度しかない。弱い日に「わからない」と答えるのは
+            #    正しい棄権なのに、総合の数字ではそれが全部「外れ」に数えられる。
+            #    2026-09-11 の検証でも、neutral を減らすと成績はむしろ下がった。
+            #    見出しは「上げ/下げと言い切った日にどれだけ当たったか」にする。
+            _dir = patterns.get("direction", {}) or {}
+            _say_n = sum((_dir.get(k) or {}).get("total", 0) for k in ("bull", "bear"))
+            _say_c = sum((_dir.get(k) or {}).get("correct", 0) for k in ("bull", "bear"))
+            _say_r = round(_say_c / _say_n * 100) if _say_n else None
+            _neu = _dir.get("neutral") or {}
+            if _say_r is None:
+                _head = f"📊 *直近30日: 言い切った予測はまだありません*"
+                _bar = ""
+            else:
+                _icon = "🎯" if _say_r >= 60 else "👍" if _say_r >= 50 else "⚠️"
+                _head = (f"{_icon} *上げ/下げと言い切った日の的中率: {_say_r}%*"
+                         f"（{_say_c}/{_say_n}件・直近30日）")
+                _bar = "`" + "█" * round(_say_r / 10) + "░" * (10 - round(_say_r / 10)) + "`"
+            acc_lines = [
+                f"📈 *AI予測 精度モニタリングレポート*",
+                "━━━━━━━━━━━━━━━",
+                _head,
+            ]
+            if _bar:
+                acc_lines.append(_bar)
+            if _neu.get("total"):
+                acc_lines.append(f"➡️ 「どちらとも言えない」と見送った日: {_neu['total']}件"
+                                 f"（弱い日は見送るのが正しい判断です）")
+            acc_lines += [
+                f"参考・3択での総合: {rate30}%（{acc.get('correct_30d',0)}/{total30}件）",
+                "",
+                "📅 *週別正解率トレンド*（3択）",
+            ]
+            for w in weekly_stats:
+                if w["total"] > 0:
+                    bar = "█" * round((w["rate"] or 0) / 10) + "░" * (10 - round((w["rate"] or 0) / 10))
+                    color = "🟢" if (w["rate"] or 0) >= 50 else "🔴"
+                    acc_lines.append(f"  {color} {w['label']} {w['rate']}%  `{bar}`  ({w['correct']}/{w['total']}件)")
+                else:
+                    acc_lines.append(f"  ⚫ {w['label']}  データなし")
+
+            # 方向別正解率
+            dir_s = patterns.get("direction", {})
+            if dir_s:
+                acc_lines += ["", "🎯 *方向別正解率*"]
+                icon_map = {"bull": "📈", "bear": "📉", "neutral": "➡️"}
+                for d, v in dir_s.items():
+                    if v.get("total", 0) > 0:
+                        r = v.get("rate")
+                        if d == "neutral":
+                            # 見送りの的中率は構造的に低い（凪の日しか正解にならない）ので
+                            # 警告の印を付けない。付けると「弱点」に読まれる。
+                            acc_lines.append(
+                                f"  ▫️ {icon_map.get(d,'')} 見送り: {v['total']}件"
+                                f"（うち実際に小動きだった日 {v['correct']}件）")
+                            continue
+                        flag = "✅" if r and r >= 55 else "⚠️" if r and r < 40 else "▫️"
+                        acc_lines.append(
+                            f"  {flag} {icon_map.get(d,'')} {d}: {r}% ({v['correct']}/{v['total']}件)"
+                        )
+
+            # 苦手パターン（neutral は棄権なので「苦手」に数えない）
+            weak = [w for w in (weak or [])
+                    if not str(w).startswith("neutral") and "中立(" not in str(w)]
+            if weak:
+                acc_lines += ["", "⚠️ *苦手なパターン（正解率35%以下）*"]
+                for w_pat in weak[:4]:
+                    acc_lines.append(f"  ・{w_pat}")
+
+            # AIコメント
+            if acc.get("ai_comment"):
+                acc_lines += ["", "🤖 *AIコーチより*", acc["ai_comment"]]
+
+            chart_path = acc.get("chart_path")
+            msg_acc = "\n".join(acc_lines)
+            if chart_path and os.path.exists(str(chart_path)):
+                send_photo(str(chart_path), caption=msg_acc)
+            else:
+                send_message(msg_acc)
+
+        # 自己改善AIレポート
+        if self_improve_result and self_improve_result.get("available"):
+            si = self_improve_result
+            if si.get("enough_data"):
+                updated = si.get("auto_updated", False)
+                imp = si.get("improvement", 0)
+                si_lines = [
+                    f"🧠 *自己改善AI 週次レポート*",
+                    "━━━━━━━━━━━━━━━",
+                    f"{'🚀 パラメータ自動更新完了！' if updated else '📊 分析完了（更新なし）'}",
+                    f"",
+                    f"現在の正解率: {si.get('current_accuracy','---')}%",
+                    f"最適化後:     {si.get('best_accuracy','---')}% (+{imp}%)",
+                    f"検証済み予測: {si.get('n_verified','---')}件",
+                ]
+                if updated:
+                    p = si.get("best_params", {})
+                    si_lines += [
+                        f"",
+                        f"✏️ 更新されたパラメータ",
+                        f"  bull閾値: {p.get('bull_th','---')}",
+                        f"  bear閾値: {p.get('bear_th','---')}",
+                        f"  VIX重み: {p.get('vix_weight','---')}",
+                    ]
+                weak = [p for p in si.get("patterns", []) if p.get("weak")]
+                if weak:
+                    si_lines += ["", "⚠️ 苦手な市場環境"]
+                    for w in weak[:3]:
+                        si_lines.append(f"  {w['condition']}: {w['accuracy']:.0f}%")
+                if si.get("ai_comment"):
+                    si_lines += ["", f"🤖 AI分析", si["ai_comment"]]
+                send_message("\n".join(si_lines))
+            else:
+                send_message(f"🧠 *自己改善AI*\nデータ蓄積中... 5件以上で最適化開始")
+
+        logger.info("✅ 週次レポートTelegram送信完了")
+
+    except Exception as e:
+        logger.error(f"週次送信エラー: {e}")
+
+
+if __name__ == "__main__":
+    run()

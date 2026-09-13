@@ -1,0 +1,545 @@
+﻿2026-06-06 00:00:17 [INFO] report_writer: レポート保存: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\reports\2026-06-06_morning.html
+2026-06-06 00:00:19 [INFO] notify_telegram: Telegram 送信成功
+2026-06-06 00:00:20 [INFO] notify_telegram: Telegram 送信成功
+2026-06-06 00:00:21 [INFO] notify_telegram: Telegram 送信成功
+2026-06-06 00:00:21 [INFO] notify_iphone: ntfy.sh未設定。スキップします。
+2026-06-06 00:08:08 [INFO] run_daily: ====== Market AI Secretary 開始 [mode=test] ======
+2026-06-06 00:08:08 [INFO] run_daily: 実行時刻(JST): 2026-06-06 00:08:08
+2026-06-06 00:08:08 [INFO] run_daily: --- Step 1: 価格データ取得 ---
+2026-06-06 00:08:09 [INFO] fetch_prices: === 価格データ取得開始 ===
+2026-06-06 00:08:10 [INFO] fetch_prices: [OK] 日経平均(^N225) = 67470.6875
+2026-06-06 00:08:11 [ERROR] fetch_prices: [FAIL] TOPIX(^TOPX): 全ソースで取得失敗
+2026-06-06 00:08:12 [INFO] fetch_prices: [OK] S&P500(^GSPC) = 7502.0698
+2026-06-06 00:08:12 [INFO] fetch_prices: [OK] NASDAQ(^IXIC) = 26294.5
+2026-06-06 00:08:13 [INFO] fetch_prices: [OK] ダウ(^DJI) = 51401.5312
+2026-06-06 00:08:13 [INFO] fetch_prices: [OK] VIX（恐怖指数）(^VIX) = 16.32
+2026-06-06 00:08:14 [INFO] fetch_prices: [OK] VIX9D（超短期）(^VIX9D) = 14.66
+2026-06-06 00:08:14 [INFO] fetch_prices: [OK] VIX3M（3ヶ月）(^VIX3M) = 19.64
+2026-06-06 00:08:15 [INFO] fetch_prices: [OK] VVIX（VIXのVIX）(^VVIX) = 87.64
+2026-06-06 00:08:15 [INFO] fetch_prices: [OK] SKEW（テールリスク）(^SKEW) = 142.15
+2026-06-06 00:08:16 [INFO] fetch_prices: [OK] 米10年金利(^TNX) = 4.536
+2026-06-06 00:08:16 [INFO] fetch_prices: [OK] ドル円(USDJPY=X) = 160.277
+2026-06-06 00:08:17 [INFO] fetch_prices: [OK] ユーロドル(EURUSD=X) = 1.1555
+2026-06-06 00:08:17 [INFO] fetch_prices: [OK] 米10年金利(^TNX) = 4.536
+2026-06-06 00:08:18 [INFO] fetch_prices: [OK] 金(GOLD)(GC=F) = 4393.0
+2026-06-06 00:08:18 [INFO] fetch_prices: [OK] WTI原油(CL=F) = 91.27
+2026-06-06 00:08:19 [INFO] fetch_prices: [OK] Bitcoin(BTC-USD) = 60769.9297
+2026-06-06 00:08:19 [INFO] fetch_prices: [OK] NVIDIA(NVDA) = 209.9382
+2026-06-06 00:08:20 [INFO] fetch_prices: [OK] Apple(AAPL) = 313.13
+2026-06-06 00:08:20 [INFO] fetch_prices: [OK] Tesla(TSLA) = 403.231
+2026-06-06 00:08:21 [INFO] fetch_prices: [OK] Microsoft(MSFT) = 421.555
+2026-06-06 00:08:21 [INFO] fetch_prices: [OK] Amazon(AMZN) = 252.955
+2026-06-06 00:08:22 [INFO] fetch_prices: [OK] Meta(META) = 614.36
+2026-06-06 00:08:23 [INFO] fetch_prices: [OK] トヨタ(7203.T) = 2838.5
+2026-06-06 00:08:23 [INFO] fetch_prices: [OK] ソフトバンクG(9984.T) = 7377.0
+2026-06-06 00:08:24 [INFO] fetch_prices: [OK] ソニーG(6758.T) = 3540.0
+2026-06-06 00:08:24 [INFO] fetch_prices: [OK] 三菱UFJ(8306.T) = 3169.0
+2026-06-06 00:08:25 [INFO] fetch_prices: [OK] アドバンテスト(6857.T) = 28170.0
+2026-06-06 00:08:25 [INFO] fetch_prices: [OK] 信越化学(4063.T) = 7641.0
+2026-06-06 00:08:26 [INFO] fetch_prices: [OK] CNN Fear & Greed: 50.5 (中立 😐)
+2026-06-06 00:08:26 [INFO] fetch_prices: 価格データ保存: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\data\raw\2026-06-06_prices.json
+2026-06-06 00:08:26 [INFO] fetch_prices: === 取得完了: 成功27件 / 失敗1件 ===
+2026-06-06 00:08:26 [INFO] run_daily: --- Step 2: ニュース取得 ---
+2026-06-06 00:08:27 [INFO] fetch_news: === ニュース取得開始 ===
+2026-06-06 00:08:27 [INFO] fetch_news: [OK] ニュース取得 [トランプ 発言 政策]: 5件
+2026-06-06 00:08:29 [INFO] fetch_news: [OK] ニュース取得 [トランプ 関税 貿易]: 5件
+2026-06-06 00:08:31 [INFO] fetch_news: [OK] ニュース取得 [Trump tariff economy]: 5件
+2026-06-06 00:08:32 [INFO] fetch_news: [OK] ニュース取得 [トランプ 大統領 経済]: 5件
+2026-06-06 00:08:34 [INFO] fetch_news: [OK] ニュース取得 [日銀]: 5件
+2026-06-06 00:08:36 [INFO] fetch_news: [OK] ニュース取得 [FRB 金融政策]: 5件
+2026-06-06 00:08:38 [INFO] fetch_news: [OK] ニュース取得 [FedWatch 利上げ 確率]: 5件
+2026-06-06 00:08:40 [INFO] fetch_news: [OK] ニュース取得 [site:boj.or.jp]: 5件
+2026-06-06 00:08:42 [INFO] fetch_news: [OK] ニュース取得 [site:kantei.go.jp 経済]: 5件
+2026-06-06 00:08:44 [INFO] fetch_news: [OK] ニュース取得 [site:mof.go.jp]: 5件
+2026-06-06 00:08:46 [INFO] fetch_news: [OK] ニュース取得 [米国株]: 5件
+2026-06-06 00:08:48 [INFO] fetch_news: [OK] ニュース取得 [日本株]: 5件
+2026-06-06 00:08:50 [INFO] fetch_news: [OK] ニュース取得 [金利]: 5件
+2026-06-06 00:08:52 [INFO] fetch_news: [OK] ニュース取得 [地政学リスク]: 5件
+2026-06-06 00:08:53 [INFO] fetch_news: [OK] ニュース取得 [為替 ドル円]: 5件
+2026-06-06 00:08:56 [INFO] fetch_news: [OK] ニュース取得 [OANDA 為替 レート]: 5件
+2026-06-06 00:08:57 [INFO] fetch_news: [OK] ニュース取得 [半導体]: 5件
+2026-06-06 00:09:00 [INFO] fetch_news: [OK] ニュース取得 [決算]: 5件
+2026-06-06 00:09:01 [INFO] fetch_news: [OK] ニュース取得 [原油]: 5件
+2026-06-06 00:09:03 [INFO] fetch_news: [OK] ニュース取得 [site:traders.co.jp]: 5件
+2026-06-06 00:09:05 [INFO] fetch_news: [OK] ニュース取得 [site:minkabu.jp 株]: 5件
+2026-06-06 00:09:07 [INFO] fetch_news: [OK] ニュース取得 [site:fx.minkabu.jp]: 5件
+2026-06-06 00:09:09 [INFO] fetch_news: [OK] ニュース取得 [site:nikkei225jp.com]: 5件
+2026-06-06 00:09:11 [INFO] fetch_news: [OK] ニュース取得 [帝国データバンク 倒産]: 5件
+2026-06-06 00:09:13 [INFO] fetch_news: [OK] ニュース取得 [site:tdb.co.jp]: 5件
+2026-06-06 00:09:14 [INFO] fetch_news: ニュース保存: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\data\news\2026-06-06_news.json (125件)
+2026-06-06 00:09:14 [INFO] fetch_news: === ニュース取得完了: 125件 ===
+2026-06-06 00:09:14 [INFO] run_daily: --- Step 3: 指標計算 ---
+2026-06-06 00:09:14 [INFO] indicators: リスク判定: 弱気 (リスクオフ) (スコア=-6.77)
+2026-06-06 00:09:14 [INFO] run_daily: --- Step 4: 分析 ---
+2026-06-06 00:09:14 [INFO] analyze: === 分析開始 ===
+2026-06-06 00:09:14 [INFO] analyze: === 分析完了 ===
+2026-06-06 00:09:14 [INFO] run_daily: --- Step 5: matplotlibチャート生成 ---
+2026-06-06 00:09:14 [INFO] visualize: === チャート生成開始 ===
+2026-06-06 00:09:15 [INFO] visualize: 指数チャート保存: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\reports\charts\2026-06-06_indices.png
+2026-06-06 00:09:15 [INFO] visualize: 銘柄チャート保存: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\reports\charts\2026-06-06_stocks.png
+2026-06-06 00:09:15 [INFO] visualize: コモディティチャート保存: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\reports\charts\2026-06-06_commodities.png
+2026-06-06 00:09:16 [INFO] visualize: Fear&Greed保存: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\reports\charts\2026-06-06_fear_greed.png
+2026-06-06 00:09:16 [INFO] visualize: リスクメーター保存: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\reports\charts\2026-06-06_risk_meter.png
+2026-06-06 00:09:16 [INFO] visualize: ニュースチャート保存: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\reports\charts\2026-06-06_news.png
+2026-06-06 00:09:16 [INFO] visualize: === チャート生成完了: 6件 ===
+2026-06-06 00:09:16 [INFO] run_daily: --- Step 6: Plotlyチャート生成 ---
+2026-06-06 00:09:17 [INFO] visualize_plotly: === Plotly チャート生成開始 ===
+2026-06-06 00:09:17 [INFO] visualize_plotly: [OK] indices
+2026-06-06 00:09:17 [INFO] visualize_plotly: [OK] stocks
+2026-06-06 00:09:17 [INFO] visualize_plotly: [OK] fear_greed
+2026-06-06 00:09:17 [INFO] visualize_plotly: [OK] risk_meter
+2026-06-06 00:09:17 [INFO] visualize_plotly: [OK] commodities
+2026-06-06 00:09:17 [INFO] visualize_plotly: [OK] news
+2026-06-06 00:09:17 [INFO] visualize_plotly: === Plotly 完了: 6件 ===
+2026-06-06 00:09:17 [INFO] run_daily: --- Step 5b: テクニカル分析 ---
+2026-06-06 00:09:17 [INFO] technical: === テクニカル分析開始 ===
+2026-06-06 00:09:17 [INFO] technical: [OK] テクニカル: 日経平均 RSI=74.3 トレンド=短期上昇トレンド / 中期上昇
+2026-06-06 00:09:18 [INFO] technical: [OK] テクニカル: S&P500 RSI=59.9 トレンド=中期上昇
+2026-06-06 00:09:18 [INFO] technical: [OK] テクニカル: NASDAQ RSI=51.5 トレンド=中期上昇
+2026-06-06 00:09:19 [INFO] technical: [OK] テクニカル: ドル円 RSI=78.4 トレンド=短期上昇トレンド / 中期下落
+2026-06-06 00:09:20 [INFO] technical: [OK] テクニカル: 金 RSI=35.4 トレンド=短期下落トレンド / 中期下落
+2026-06-06 00:09:20 [INFO] technical: [OK] テクニカル: 原油 RSI=31.8 トレンド=短期下落トレンド / 中期上昇
+2026-06-06 00:09:21 [INFO] technical: [OK] テクニカル: Bitcoin RSI=11.4 トレンド=短期下落トレンド / 中期上昇
+2026-06-06 00:09:21 [INFO] technical: === テクニカル分析完了: 7件 → C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\data\processed\2026-06-06_technical.json ===
+2026-06-06 00:09:21 [INFO] run_daily: --- Step 5c: ファンダメンタル分析 ---
+2026-06-06 00:09:21 [INFO] fundamental: === ファンダメンタル分析開始 ===
+2026-06-06 00:09:22 [INFO] fundamental: [OK] ファンダ NVIDIA: PER=32.10015 レーティング=strong_buy
+2026-06-06 00:09:22 [INFO] fundamental: [OK] ファンダ Apple: PER=37.960003 レーティング=buy
+2026-06-06 00:09:23 [INFO] fundamental: [OK] ファンダ Tesla: PER=370.0734 レーティング=buy
+2026-06-06 00:09:24 [INFO] fundamental: [OK] ファンダ Microsoft: PER=25.134087 レーティング=strong_buy
+2026-06-06 00:09:25 [INFO] fundamental: [OK] ファンダ Amazon: PER=31.576681 レーティング=strong_buy
+2026-06-06 00:09:26 [INFO] fundamental: [OK] ファンダ Meta: PER=22.357948 レーティング=strong_buy
+2026-06-06 00:09:26 [INFO] fundamental: [OK] ファンダ トヨタ: PER=9.654471 レーティング=buy
+2026-06-06 00:09:27 [INFO] fundamental: [OK] ファンダ SBG: PER=8.509224 レーティング=buy
+2026-06-06 00:09:28 [INFO] fundamental: [OK] ファンダ ソニーG: PER=20.771566 レーティング=strong_buy
+2026-06-06 00:09:29 [INFO] fundamental: [OK] ファンダ 三菱UFJ: PER=15.1610775 レーティング=buy
+2026-06-06 00:09:30 [INFO] fundamental: [OK] ファンダ アドバンテスト: PER=52.205036 レーティング=buy
+2026-06-06 00:09:30 [INFO] fundamental: [OK] 先物 S&P500先物: 7523.5
+2026-06-06 00:09:31 [INFO] fundamental: [OK] 先物 NASDAQ先物: 29857.5
+2026-06-06 00:09:31 [INFO] fundamental: [OK] 先物 ダウ先物: 51497.0
+2026-06-06 00:09:32 [INFO] fundamental: [OK] 先物 金先物: 4393.10009765625
+2026-06-06 00:09:32 [INFO] fundamental: [OK] 先物 原油先物: 91.33000183105469
+2026-06-06 00:09:33 [INFO] fundamental: [OK] 先物 米10年債先物: 109.09375
+2026-06-06 00:09:34 [INFO] fundamental: [OK] VIXオプション PCR=0.19
+2026-06-06 00:09:37 [INFO] fundamental: [OK] 騰落レシオ近似: 111.7
+2026-06-06 00:09:37 [INFO] fundamental: [OK] 市場統計ニュース [信用残]: 4件
+2026-06-06 00:09:39 [INFO] fundamental: [OK] 市場統計ニュース [騰落レシオ]: 4件
+2026-06-06 00:09:41 [INFO] fundamental: [OK] 市場統計ニュース [空売り比率]: 4件
+2026-06-06 00:09:43 [INFO] fundamental: [OK] 市場統計ニュース [裁定残]: 4件
+2026-06-06 00:09:45 [INFO] fundamental: [OK] 市場統計ニュース [投資主体別]: 4件
+2026-06-06 00:09:47 [INFO] fundamental: [OK] 市場統計ニュース [決算情報]: 4件
+2026-06-06 00:09:49 [INFO] fundamental: [OK] 市場統計ニュース [レーティング]: 4件
+2026-06-06 00:09:51 [INFO] fundamental: [OK] 市場統計ニュース [経済指標]: 4件
+2026-06-06 00:09:52 [INFO] fundamental: [OK] 市場統計ニュース [FOMC]: 4件
+2026-06-06 00:09:54 [INFO] fundamental: [OK] 市場統計ニュース [日銀会合]: 4件
+2026-06-06 00:09:56 [INFO] fundamental: [OK] 市場統計ニュース [先物/オプション]: 4件
+2026-06-06 00:09:57 [INFO] fundamental: [OK] 市場統計ニュース [バリュエーション]: 4件
+2026-06-06 00:10:08 [INFO] fundamental: [OK] 経済カレンダーニュース: 18件
+2026-06-06 00:10:08 [INFO] fundamental: === ファンダ分析完了・保存: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\data\processed\2026-06-06_fundamental.json ===
+2026-06-06 00:10:08 [INFO] run_daily: --- Step 6b: 追加ニュース・Polymarket取得 ---
+2026-06-06 00:10:08 [INFO] fetch_extra_news: === 追加ニュース・Polymarket 取得開始 ===
+2026-06-06 00:10:08 [INFO] fetch_extra_news: [OK] NHK 経済: 6件
+2026-06-06 00:10:09 [INFO] fetch_extra_news: [OK] NHK トップ: 5件
+2026-06-06 00:10:10 [INFO] fetch_extra_news: [OK] Yahoo! ファイナンス: 6件
+2026-06-06 00:10:11 [INFO] fetch_extra_news: [OK] 東洋経済: 5件
+2026-06-06 00:10:13 [INFO] fetch_extra_news: [OK] MarketWatch: 5件
+2026-06-06 00:10:14 [INFO] fetch_extra_news: [OK] FXStreet（FX専門）: 5件
+2026-06-06 00:10:15 [INFO] fetch_extra_news: [OK] Investing.com: 5件
+2026-06-06 00:10:16 [INFO] fetch_extra_news: [OK] Yahoo Finance: 5件
+2026-06-06 00:10:17 [INFO] fetch_extra_news: [OK] 日銀公式: 5件
+2026-06-06 00:10:19 [INFO] fetch_extra_news: [OK] 首相官邸: 4件
+2026-06-06 00:10:20 [INFO] fetch_extra_news: [OK] 財務省: 4件
+2026-06-06 00:10:21 [INFO] fetch_extra_news: [OK] トレーダーズウェブ: 5件
+2026-06-06 00:10:23 [INFO] fetch_extra_news: [OK] トレーダーズウェブFX: 4件
+2026-06-06 00:10:24 [INFO] fetch_extra_news: [OK] みんかぶ: 5件
+2026-06-06 00:10:26 [INFO] fetch_extra_news: [OK] みんかぶFX: 4件
+2026-06-06 00:10:27 [INFO] fetch_extra_news: [OK] 日経225専門: 4件
+2026-06-06 00:10:28 [INFO] fetch_extra_news: [OK] OANDA為替: 4件
+2026-06-06 00:10:30 [INFO] fetch_extra_news: [OK] 帝国データバンク: 4件
+2026-06-06 00:10:31 [INFO] fetch_extra_news: [OK] FedWatch利上げ確率: 4件
+2026-06-06 00:10:33 [INFO] fetch_extra_news: [OK] PayPay証券: 3件
+2026-06-06 00:10:35 [INFO] fetch_extra_news: [OK] Polymarket: 3件（金融・経済関連）
+2026-06-06 00:10:35 [INFO] fetch_extra_news: 追加ニュース保存: 92件 / Polymarket: 3件
+2026-06-06 00:10:35 [INFO] fetch_extra_news: === 完了: ニュース92件 / Polymarket3件 ===
+2026-06-06 00:10:35 [INFO] run_daily: --- Step 7: Ollama AI要約（カテゴリ別） ---
+2026-06-06 00:10:39 [INFO] ai_summary: Ollama AI要約開始: モデル=qwen2.5:3b
+2026-06-06 00:10:39 [INFO] ai_summary: AI要約生成中: 🏦 日銀・日本政府（27件）
+2026-06-06 00:10:47 [INFO] ai_summary: AI要約生成中: 🇺🇸 FRB・米国金融政策（11件）
+2026-06-06 00:10:51 [INFO] ai_summary: AI要約生成中: 📈 米国株市場（23件）
+2026-06-06 00:10:54 [INFO] ai_summary: AI要約生成中: 🗾 日本株市場（23件）
+2026-06-06 00:10:58 [INFO] ai_summary: AI要約生成中: 💱 為替・FX（20件）
+2026-06-06 00:11:01 [INFO] ai_summary: AI要約生成中: 🌍 地政学リスク（12件）
+2026-06-06 00:11:09 [INFO] ai_summary: 市場全体コメント生成完了
+2026-06-06 00:11:09 [INFO] ai_summary: AI要約完了: 6カテゴリ
+2026-06-06 00:11:09 [INFO] run_daily: AI要約保存: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\data\raw\2026-06-06_ai_test.json
+2026-06-06 00:11:09 [INFO] run_daily: --- Step 8: レポート生成 ---
+2026-06-06 00:11:09 [INFO] report_writer: レポート保存: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\reports\2026-06-06_test.html
+2026-06-06 00:11:09 [INFO] run_daily: HTML: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\reports\2026-06-06_test.html
+2026-06-06 00:11:09 [INFO] run_daily: --- Step 9: Telegram通知 ---
+2026-06-06 00:11:10 [INFO] notify_telegram: Telegram 送信成功
+2026-06-06 00:11:12 [INFO] notify_telegram: Telegram 送信成功
+2026-06-06 00:11:13 [INFO] notify_telegram: Telegram 送信成功
+2026-06-06 00:11:16 [INFO] notify_telegram: Telegram 画像送信成功: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\reports\charts\2026-06-06_fear_greed.png
+2026-06-06 00:11:19 [INFO] notify_telegram: Telegram 画像送信成功: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\reports\charts\2026-06-06_indices.png
+2026-06-06 00:11:21 [INFO] notify_telegram: Telegram 画像送信成功: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\reports\charts\2026-06-06_stocks.png
+2026-06-06 00:11:23 [INFO] notify_telegram: Telegram 画像送信成功: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\reports\charts\2026-06-06_commodities.png
+2026-06-06 00:11:23 [INFO] notify_telegram: チャート画像 4枚 送信
+2026-06-06 00:11:27 [INFO] notify_telegram: Telegram ファイル送信成功: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\reports\2026-06-06_test.html
+2026-06-06 00:11:27 [INFO] run_daily: --- Step 10: iPhone通知（ntfy.sh） ---
+2026-06-06 00:11:27 [INFO] notify_iphone: ntfy.sh未設定。スキップします。
+2026-06-06 00:11:27 [INFO] run_daily: ====== 完了 [mode=test] ======
+2026-06-06 00:42:45 [INFO] run_daily: ====== Market AI Secretary 開始 [mode=test] ======
+2026-06-06 00:42:45 [INFO] run_daily: 実行時刻(JST): 2026-06-06 00:42:45
+2026-06-06 00:42:45 [INFO] run_daily: --- Step 1: 価格データ取得 ---
+2026-06-06 00:42:46 [INFO] fetch_prices: === 価格データ取得開始 ===
+2026-06-06 00:42:48 [INFO] fetch_prices: [OK] 日経平均(^N225) = 67470.6875
+2026-06-06 00:42:48 [ERROR] fetch_prices: [FAIL] TOPIX(^TOPX): 全ソースで取得失敗
+2026-06-06 00:42:49 [INFO] fetch_prices: [OK] S&P500(^GSPC) = 7482.0
+2026-06-06 00:42:49 [INFO] fetch_prices: [OK] NASDAQ(^IXIC) = 26188.168
+2026-06-06 00:42:50 [INFO] fetch_prices: [OK] ダウ(^DJI) = 51321.8711
+2026-06-06 00:42:50 [INFO] fetch_prices: [OK] VIX（恐怖指数）(^VIX) = 16.58
+2026-06-06 00:42:51 [INFO] fetch_prices: [OK] VIX9D（超短期）(^VIX9D) = 15.13
+2026-06-06 00:42:52 [INFO] fetch_prices: [OK] VIX3M（3ヶ月）(^VIX3M) = 19.75
+2026-06-06 00:42:52 [INFO] fetch_prices: [OK] VVIX（VIXのVIX）(^VVIX) = 88.37
+2026-06-06 00:42:53 [INFO] fetch_prices: [OK] SKEW（テールリスク）(^SKEW) = 142.15
+2026-06-06 00:42:53 [INFO] fetch_prices: [OK] 米10年金利(^TNX) = 4.54
+2026-06-06 00:42:54 [INFO] fetch_prices: [OK] ドル円(USDJPY=X) = 160.29
+2026-06-06 00:42:54 [INFO] fetch_prices: [OK] ユーロドル(EURUSD=X) = 1.1539
+2026-06-06 00:42:55 [INFO] fetch_prices: [OK] 米10年金利(^TNX) = 4.54
+2026-06-06 00:42:55 [INFO] fetch_prices: [OK] 金(GOLD)(GC=F) = 4376.0
+2026-06-06 00:42:56 [INFO] fetch_prices: [OK] WTI原油(CL=F) = 90.85
+2026-06-06 00:42:56 [INFO] fetch_prices: [OK] Bitcoin(BTC-USD) = 60280.2695
+2026-06-06 00:42:57 [INFO] fetch_prices: [OK] NVIDIA(NVDA) = 207.99
+2026-06-06 00:42:58 [INFO] fetch_prices: [OK] Apple(AAPL) = 313.92
+2026-06-06 00:42:58 [INFO] fetch_prices: [OK] Tesla(TSLA) = 401.255
+2026-06-06 00:42:59 [INFO] fetch_prices: [OK] Microsoft(MSFT) = 420.99
+2026-06-06 00:42:59 [INFO] fetch_prices: [OK] Amazon(AMZN) = 253.34
+2026-06-06 00:43:00 [INFO] fetch_prices: [OK] Meta(META) = 612.5
+2026-06-06 00:43:00 [INFO] fetch_prices: [OK] トヨタ(7203.T) = 2838.5
+2026-06-06 00:43:01 [INFO] fetch_prices: [OK] ソフトバンクG(9984.T) = 7377.0
+2026-06-06 00:43:01 [INFO] fetch_prices: [OK] ソニーG(6758.T) = 3540.0
+2026-06-06 00:43:02 [INFO] fetch_prices: [OK] 三菱UFJ(8306.T) = 3169.0
+2026-06-06 00:43:03 [INFO] fetch_prices: [OK] アドバンテスト(6857.T) = 28170.0
+2026-06-06 00:43:03 [INFO] fetch_prices: [OK] 信越化学(4063.T) = 7641.0
+2026-06-06 00:43:04 [INFO] fetch_prices: [OK] CNN Fear & Greed: 50.3 (中立 😐)
+2026-06-06 00:43:04 [INFO] fetch_prices: 価格データ保存: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\data\raw\2026-06-06_prices.json
+2026-06-06 00:43:04 [INFO] fetch_prices: === 取得完了: 成功27件 / 失敗1件 ===
+2026-06-06 00:43:04 [INFO] run_daily: --- Step 2: ニュース取得 ---
+2026-06-06 00:43:04 [INFO] fetch_news: === ニュース取得開始 ===
+2026-06-06 00:43:05 [INFO] fetch_news: [OK] ニュース取得 [トランプ 発言 政策]: 5件
+2026-06-06 00:43:07 [INFO] fetch_news: [OK] ニュース取得 [トランプ 関税 貿易]: 5件
+2026-06-06 00:43:08 [INFO] fetch_news: [OK] ニュース取得 [Trump tariff economy]: 5件
+2026-06-06 00:43:10 [INFO] fetch_news: [OK] ニュース取得 [トランプ 大統領 経済]: 5件
+2026-06-06 00:43:13 [INFO] fetch_news: [OK] ニュース取得 [日銀]: 5件
+2026-06-06 00:43:15 [INFO] fetch_news: [OK] ニュース取得 [FRB 金融政策]: 5件
+2026-06-06 00:43:16 [INFO] fetch_news: [OK] ニュース取得 [FedWatch 利上げ 確率]: 5件
+2026-06-06 00:43:18 [INFO] fetch_news: [OK] ニュース取得 [site:boj.or.jp]: 5件
+2026-06-06 00:43:20 [INFO] fetch_news: [OK] ニュース取得 [site:kantei.go.jp 経済]: 5件
+2026-06-06 00:43:22 [INFO] fetch_news: [OK] ニュース取得 [site:mof.go.jp]: 5件
+2026-06-06 00:43:24 [INFO] fetch_news: [OK] ニュース取得 [米国株]: 5件
+2026-06-06 00:43:26 [INFO] fetch_news: [OK] ニュース取得 [日本株]: 5件
+2026-06-06 00:43:28 [INFO] fetch_news: [OK] ニュース取得 [金利]: 5件
+2026-06-06 00:43:30 [INFO] fetch_news: [OK] ニュース取得 [地政学リスク]: 5件
+2026-06-06 00:43:31 [INFO] fetch_news: [OK] ニュース取得 [為替 ドル円]: 5件
+2026-06-06 00:43:33 [INFO] fetch_news: [OK] ニュース取得 [OANDA 為替 レート]: 5件
+2026-06-06 00:43:35 [INFO] fetch_news: [OK] ニュース取得 [半導体]: 5件
+2026-06-06 00:43:37 [INFO] fetch_news: [OK] ニュース取得 [決算]: 5件
+2026-06-06 00:43:39 [INFO] fetch_news: [OK] ニュース取得 [原油]: 5件
+2026-06-06 00:43:41 [INFO] fetch_news: [OK] ニュース取得 [site:traders.co.jp]: 5件
+2026-06-06 00:43:43 [INFO] fetch_news: [OK] ニュース取得 [site:minkabu.jp 株]: 5件
+2026-06-06 00:43:45 [INFO] fetch_news: [OK] ニュース取得 [site:fx.minkabu.jp]: 5件
+2026-06-06 00:43:46 [INFO] fetch_news: [OK] ニュース取得 [site:nikkei225jp.com]: 5件
+2026-06-06 00:43:48 [INFO] fetch_news: [OK] ニュース取得 [帝国データバンク 倒産]: 5件
+2026-06-06 00:43:50 [INFO] fetch_news: [OK] ニュース取得 [site:tdb.co.jp]: 5件
+2026-06-06 00:43:51 [INFO] fetch_news: ニュース保存: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\data\news\2026-06-06_news.json (125件)
+2026-06-06 00:43:51 [INFO] fetch_news: === ニュース取得完了: 125件 ===
+2026-06-06 00:43:51 [INFO] run_daily: --- Step 3: 指標計算 ---
+2026-06-06 00:43:51 [INFO] indicators: リスク判定: 弱気 (リスクオフ) (スコア=-8.16)
+2026-06-06 00:43:51 [INFO] run_daily: --- Step 4: 分析 ---
+2026-06-06 00:43:51 [INFO] analyze: === 分析開始 ===
+2026-06-06 00:43:51 [INFO] analyze: === 分析完了 ===
+2026-06-06 00:43:51 [INFO] run_daily: --- Step 5: matplotlibチャート生成 ---
+2026-06-06 00:43:51 [INFO] visualize: === チャート生成開始 ===
+2026-06-06 00:43:52 [INFO] visualize: 指数チャート保存: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\reports\charts\2026-06-06_indices.png
+2026-06-06 00:43:52 [INFO] visualize: 銘柄チャート保存: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\reports\charts\2026-06-06_stocks.png
+2026-06-06 00:43:53 [INFO] visualize: コモディティチャート保存: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\reports\charts\2026-06-06_commodities.png
+2026-06-06 00:43:53 [INFO] visualize: Fear&Greed保存: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\reports\charts\2026-06-06_fear_greed.png
+2026-06-06 00:43:53 [INFO] visualize: リスクメーター保存: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\reports\charts\2026-06-06_risk_meter.png
+2026-06-06 00:43:54 [INFO] visualize: ニュースチャート保存: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\reports\charts\2026-06-06_news.png
+2026-06-06 00:43:54 [INFO] visualize: === チャート生成完了: 6件 ===
+2026-06-06 00:43:54 [INFO] run_daily: --- Step 6: Plotlyチャート生成 ---
+2026-06-06 00:43:54 [INFO] visualize_plotly: === Plotly チャート生成開始 ===
+2026-06-06 00:43:54 [INFO] visualize_plotly: [OK] indices
+2026-06-06 00:43:54 [INFO] visualize_plotly: [OK] stocks
+2026-06-06 00:43:54 [INFO] visualize_plotly: [OK] fear_greed
+2026-06-06 00:43:54 [INFO] visualize_plotly: [OK] risk_meter
+2026-06-06 00:43:54 [INFO] visualize_plotly: [OK] commodities
+2026-06-06 00:43:54 [INFO] visualize_plotly: [OK] news
+2026-06-06 00:43:54 [INFO] visualize_plotly: === Plotly 完了: 6件 ===
+2026-06-06 00:43:54 [INFO] run_daily: --- Step 5b: テクニカル分析 ---
+2026-06-06 00:43:54 [INFO] technical: === テクニカル分析開始 ===
+2026-06-06 00:43:54 [INFO] technical: [OK] テクニカル: 日経平均 RSI=74.3 トレンド=短期上昇トレンド / 中期上昇
+2026-06-06 00:43:55 [INFO] technical: [OK] テクニカル: S&P500 RSI=57.5 トレンド=中期上昇
+2026-06-06 00:43:56 [INFO] technical: [OK] テクニカル: NASDAQ RSI=49.5 トレンド=中期上昇
+2026-06-06 00:43:56 [INFO] technical: [OK] テクニカル: ドル円 RSI=78.5 トレンド=短期上昇トレンド / 中期下落
+2026-06-06 00:43:57 [INFO] technical: [OK] テクニカル: 金 RSI=34.3 トレンド=短期下落トレンド / 中期下落
+2026-06-06 00:43:58 [INFO] technical: [OK] テクニカル: 原油 RSI=31.5 トレンド=短期下落トレンド / 中期上昇
+2026-06-06 00:43:58 [INFO] technical: [OK] テクニカル: Bitcoin RSI=11.2 トレンド=短期下落トレンド / 中期上昇
+2026-06-06 00:43:59 [INFO] technical: === テクニカル分析完了: 7件 → C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\data\processed\2026-06-06_technical.json ===
+2026-06-06 00:43:59 [INFO] run_daily: --- Step 5c: ファンダメンタル分析 ---
+2026-06-06 00:43:59 [INFO] fundamental: === ファンダメンタル分析開始 ===
+2026-06-06 00:43:59 [INFO] fundamental: [OK] ファンダ NVIDIA: PER=31.831789 レーティング=strong_buy
+2026-06-06 00:44:00 [INFO] fundamental: [OK] ファンダ Apple: PER=38.020607 レーティング=buy
+2026-06-06 00:44:01 [INFO] fundamental: [OK] ファンダ Tesla: PER=368.25687 レーティング=buy
+2026-06-06 00:44:01 [INFO] fundamental: [OK] ファンダ Microsoft: PER=25.105185 レーティング=strong_buy
+2026-06-06 00:44:02 [INFO] fundamental: [OK] ファンダ Amazon: PER=31.581045 レーティング=strong_buy
+2026-06-06 00:44:03 [INFO] fundamental: [OK] ファンダ Meta: PER=22.262094 レーティング=strong_buy
+2026-06-06 00:44:04 [INFO] fundamental: [OK] ファンダ トヨタ: PER=9.654471 レーティング=buy
+2026-06-06 00:44:05 [INFO] fundamental: [OK] ファンダ SBG: PER=8.509224 レーティング=buy
+2026-06-06 00:44:05 [INFO] fundamental: [OK] ファンダ ソニーG: PER=20.771566 レーティング=strong_buy
+2026-06-06 00:44:06 [INFO] fundamental: [OK] ファンダ 三菱UFJ: PER=15.1610775 レーティング=buy
+2026-06-06 00:44:07 [INFO] fundamental: [OK] ファンダ アドバンテスト: PER=52.205036 レーティング=buy
+2026-06-06 00:44:08 [INFO] fundamental: [OK] 先物 S&P500先物: 7502.0
+2026-06-06 00:44:08 [INFO] fundamental: [OK] 先物 NASDAQ先物: 29697.75
+2026-06-06 00:44:09 [INFO] fundamental: [OK] 先物 ダウ先物: 51434.0
+2026-06-06 00:44:09 [INFO] fundamental: [OK] 先物 金先物: 4372.10009765625
+2026-06-06 00:44:10 [INFO] fundamental: [OK] 先物 原油先物: 90.83000183105469
+2026-06-06 00:44:10 [INFO] fundamental: [OK] 先物 米10年債先物: 109.09375
+2026-06-06 00:44:11 [INFO] fundamental: [OK] VIXオプション PCR=0.18
+2026-06-06 00:44:14 [INFO] fundamental: [OK] 騰落レシオ近似: 111.7
+2026-06-06 00:44:15 [INFO] fundamental: [OK] 市場統計ニュース [信用残]: 4件
+2026-06-06 00:44:16 [INFO] fundamental: [OK] 市場統計ニュース [騰落レシオ]: 4件
+2026-06-06 00:44:18 [INFO] fundamental: [OK] 市場統計ニュース [空売り比率]: 4件
+2026-06-06 00:44:20 [INFO] fundamental: [OK] 市場統計ニュース [裁定残]: 4件
+2026-06-06 00:44:22 [INFO] fundamental: [OK] 市場統計ニュース [投資主体別]: 4件
+2026-06-06 00:44:24 [INFO] fundamental: [OK] 市場統計ニュース [決算情報]: 4件
+2026-06-06 00:44:25 [INFO] fundamental: [OK] 市場統計ニュース [レーティング]: 4件
+2026-06-06 00:44:27 [INFO] fundamental: [OK] 市場統計ニュース [経済指標]: 4件
+2026-06-06 00:44:29 [INFO] fundamental: [OK] 市場統計ニュース [FOMC]: 4件
+2026-06-06 00:44:31 [INFO] fundamental: [OK] 市場統計ニュース [日銀会合]: 4件
+2026-06-06 00:44:33 [INFO] fundamental: [OK] 市場統計ニュース [先物/オプション]: 4件
+2026-06-06 00:44:34 [INFO] fundamental: [OK] 市場統計ニュース [バリュエーション]: 4件
+2026-06-06 00:44:45 [INFO] fundamental: [OK] 経済カレンダーニュース: 18件
+2026-06-06 00:44:45 [INFO] fundamental: === ファンダ分析完了・保存: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\data\processed\2026-06-06_fundamental.json ===
+2026-06-06 00:44:45 [INFO] run_daily: --- Step 6b: 追加ニュース・Polymarket取得 ---
+2026-06-06 00:44:45 [INFO] fetch_extra_news: === 追加ニュース・Polymarket 取得開始 ===
+2026-06-06 00:44:45 [INFO] fetch_extra_news: [OK] NHK 経済: 6件
+2026-06-06 00:44:46 [INFO] fetch_extra_news: [OK] NHK トップ: 5件
+2026-06-06 00:44:47 [INFO] fetch_extra_news: [OK] Yahoo! ファイナンス: 6件
+2026-06-06 00:44:48 [INFO] fetch_extra_news: [OK] 東洋経済: 5件
+2026-06-06 00:44:50 [INFO] fetch_extra_news: [OK] MarketWatch: 5件
+2026-06-06 00:44:51 [INFO] fetch_extra_news: [OK] FXStreet（FX専門）: 5件
+2026-06-06 00:44:52 [INFO] fetch_extra_news: [OK] Investing.com: 5件
+2026-06-06 00:44:53 [INFO] fetch_extra_news: [OK] Yahoo Finance: 5件
+2026-06-06 00:44:54 [INFO] fetch_extra_news: [OK] 日銀公式: 5件
+2026-06-06 00:44:56 [INFO] fetch_extra_news: [OK] 首相官邸: 4件
+2026-06-06 00:44:57 [INFO] fetch_extra_news: [OK] 財務省: 4件
+2026-06-06 00:44:58 [INFO] fetch_extra_news: [OK] トレーダーズウェブ: 5件
+2026-06-06 00:45:00 [INFO] fetch_extra_news: [OK] トレーダーズウェブFX: 4件
+2026-06-06 00:45:01 [INFO] fetch_extra_news: [OK] みんかぶ: 5件
+2026-06-06 00:45:03 [INFO] fetch_extra_news: [OK] みんかぶFX: 4件
+2026-06-06 00:45:04 [INFO] fetch_extra_news: [OK] 日経225専門: 4件
+2026-06-06 00:45:05 [INFO] fetch_extra_news: [OK] OANDA為替: 4件
+2026-06-06 00:45:07 [INFO] fetch_extra_news: [OK] 帝国データバンク: 4件
+2026-06-06 00:45:09 [INFO] fetch_extra_news: [OK] FedWatch利上げ確率: 4件
+2026-06-06 00:45:11 [INFO] fetch_extra_news: [OK] PayPay証券: 3件
+2026-06-06 00:45:13 [INFO] fetch_extra_news: [OK] Polymarket: 3件（金融・経済関連）
+2026-06-06 00:45:13 [INFO] fetch_extra_news: 追加ニュース保存: 92件 / Polymarket: 3件
+2026-06-06 00:45:13 [INFO] fetch_extra_news: === 完了: ニュース92件 / Polymarket3件 ===
+2026-06-06 00:45:13 [INFO] run_daily: --- Step 7: Ollama AI要約（カテゴリ別） ---
+2026-06-06 00:45:17 [INFO] ai_summary: Ollama AI要約開始: モデル=qwen2.5:3b
+2026-06-06 00:45:17 [INFO] ai_summary: AI要約生成中: 🏦 日銀・日本政府（27件）
+2026-06-06 00:45:24 [INFO] ai_summary: AI要約生成中: 🇺🇸 FRB・米国金融政策（14件）
+2026-06-06 00:45:27 [INFO] ai_summary: AI要約生成中: 📈 米国株市場（24件）
+2026-06-06 00:45:31 [INFO] ai_summary: AI要約生成中: 🗾 日本株市場（22件）
+2026-06-06 00:45:34 [INFO] ai_summary: AI要約生成中: 💱 為替・FX（18件）
+2026-06-06 00:45:37 [INFO] ai_summary: AI要約生成中: 🌍 地政学リスク（12件）
+2026-06-06 00:45:45 [INFO] ai_summary: 市場全体コメント生成完了
+2026-06-06 00:45:45 [INFO] ai_summary: AI要約完了: 6カテゴリ
+2026-06-06 00:45:45 [INFO] run_daily: AI要約保存: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\data\raw\2026-06-06_ai_test.json
+2026-06-06 00:45:45 [INFO] run_daily: --- Step 8: レポート生成 ---
+2026-06-06 00:45:45 [INFO] report_writer: レポート保存: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\reports\2026-06-06_test.html
+2026-06-06 00:45:45 [INFO] run_daily: HTML: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\reports\2026-06-06_test.html
+2026-06-06 00:45:45 [INFO] run_daily: --- Step 9: Telegram通知 ---
+2026-06-06 00:45:46 [INFO] notify_telegram: Telegram 送信成功
+2026-06-06 00:45:49 [INFO] notify_telegram: Telegram 画像送信成功: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\reports\charts\2026-06-06_indices.png
+2026-06-06 00:45:52 [INFO] notify_telegram: Telegram ファイル送信成功: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\reports\2026-06-06_test.html
+2026-06-06 00:45:52 [INFO] notify_telegram: Telegram 3通送信完了
+2026-06-06 00:45:52 [INFO] run_daily: --- Step 10: iPhone通知（ntfy.sh） ---
+2026-06-06 00:45:52 [INFO] notify_iphone: ntfy.sh未設定。スキップします。
+2026-06-06 00:45:52 [INFO] run_daily: ====== 完了 [mode=test] ======
+2026-06-06 01:23:01 [INFO] run_daily: ====== Market AI Secretary 開始 [mode=test] ======
+2026-06-06 01:23:01 [INFO] run_daily: 実行時刻(JST): 2026-06-06 01:23:01
+2026-06-06 01:23:01 [INFO] run_daily: --- Step 1: 価格データ取得 ---
+2026-06-06 01:23:02 [INFO] fetch_prices: === 価格データ取得開始 ===
+2026-06-06 01:23:03 [INFO] fetch_prices: [OK] 日経平均(^N225) = 67470.6875
+2026-06-06 01:23:04 [ERROR] fetch_prices: [FAIL] TOPIX(^TOPX): 全ソースで取得失敗
+2026-06-06 01:23:04 [INFO] fetch_prices: [OK] S&P500(^GSPC) = 7464.9302
+2026-06-06 01:23:05 [INFO] fetch_prices: [OK] NASDAQ(^IXIC) = 26128.543
+2026-06-06 01:23:05 [INFO] fetch_prices: [OK] ダウ(^DJI) = 51183.3008
+2026-06-06 01:23:06 [INFO] fetch_prices: [OK] VIX（恐怖指数）(^VIX) = 17.87
+2026-06-06 01:23:06 [INFO] fetch_prices: [OK] VIX9D（超短期）(^VIX9D) = 17.44
+2026-06-06 01:23:07 [INFO] fetch_prices: [OK] VIX3M（3ヶ月）(^VIX3M) = 20.4
+2026-06-06 01:23:07 [INFO] fetch_prices: [OK] VVIX（VIXのVIX）(^VVIX) = 92.5
+2026-06-06 01:23:08 [INFO] fetch_prices: [OK] SKEW（テールリスク）(^SKEW) = 142.15
+2026-06-06 01:23:08 [INFO] fetch_prices: [OK] 米10年金利(^TNX) = 4.54
+2026-06-06 01:23:09 [INFO] fetch_prices: [OK] ドル円(USDJPY=X) = 160.296
+2026-06-06 01:23:09 [INFO] fetch_prices: [OK] ユーロドル(EURUSD=X) = 1.1529
+2026-06-06 01:23:10 [INFO] fetch_prices: [OK] 米10年金利(^TNX) = 4.54
+2026-06-06 01:23:10 [INFO] fetch_prices: [OK] 金(GOLD)(GC=F) = 4363.1001
+2026-06-06 01:23:11 [INFO] fetch_prices: [OK] WTI原油(CL=F) = 90.59
+2026-06-06 01:23:11 [INFO] fetch_prices: [OK] Bitcoin(BTC-USD) = 61363.3789
+2026-06-06 01:23:12 [INFO] fetch_prices: [OK] NVIDIA(NVDA) = 208.935
+2026-06-06 01:23:12 [INFO] fetch_prices: [OK] Apple(AAPL) = 312.2686
+2026-06-06 01:23:13 [INFO] fetch_prices: [OK] Tesla(TSLA) = 399.83
+2026-06-06 01:23:13 [INFO] fetch_prices: [OK] Microsoft(MSFT) = 420.17
+2026-06-06 01:23:14 [INFO] fetch_prices: [OK] Amazon(AMZN) = 252.67
+2026-06-06 01:23:14 [INFO] fetch_prices: [OK] Meta(META) = 610.74
+2026-06-06 01:23:15 [INFO] fetch_prices: [OK] トヨタ(7203.T) = 2838.5
+2026-06-06 01:23:16 [INFO] fetch_prices: [OK] ソフトバンクG(9984.T) = 7377.0
+2026-06-06 01:23:16 [INFO] fetch_prices: [OK] ソニーG(6758.T) = 3540.0
+2026-06-06 01:23:17 [INFO] fetch_prices: [OK] 三菱UFJ(8306.T) = 3169.0
+2026-06-06 01:23:17 [INFO] fetch_prices: [OK] アドバンテスト(6857.T) = 28170.0
+2026-06-06 01:23:18 [INFO] fetch_prices: [OK] 信越化学(4063.T) = 7641.0
+2026-06-06 01:23:19 [INFO] fetch_prices: [OK] CNN Fear & Greed: 49.1 (中立 😐)
+2026-06-06 01:23:19 [INFO] fetch_prices: 価格データ保存: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\data\raw\2026-06-06_prices.json
+2026-06-06 01:23:19 [INFO] fetch_prices: === 取得完了: 成功27件 / 失敗1件 ===
+2026-06-06 01:23:19 [INFO] run_daily: --- Step 2: ニュース取得 ---
+2026-06-06 01:23:19 [INFO] fetch_news: === ニュース取得開始 ===
+2026-06-06 01:23:20 [INFO] fetch_news: [OK] ニュース取得 [トランプ 発言 政策]: 5件
+2026-06-06 01:23:22 [INFO] fetch_news: [OK] ニュース取得 [トランプ 関税 貿易]: 5件
+2026-06-06 01:23:23 [INFO] fetch_news: [OK] ニュース取得 [Trump tariff economy]: 5件
+2026-06-06 01:23:25 [INFO] fetch_news: [OK] ニュース取得 [トランプ 大統領 経済]: 5件
+2026-06-06 01:23:27 [INFO] fetch_news: [OK] ニュース取得 [日銀]: 5件
+2026-06-06 01:23:29 [INFO] fetch_news: [OK] ニュース取得 [FRB 金融政策]: 5件
+2026-06-06 01:23:30 [INFO] fetch_news: [OK] ニュース取得 [FedWatch 利上げ 確率]: 5件
+2026-06-06 01:23:32 [INFO] fetch_news: [OK] ニュース取得 [site:boj.or.jp]: 5件
+2026-06-06 01:23:34 [INFO] fetch_news: [OK] ニュース取得 [site:kantei.go.jp 経済]: 5件
+2026-06-06 01:23:36 [INFO] fetch_news: [OK] ニュース取得 [site:mof.go.jp]: 5件
+2026-06-06 01:23:38 [INFO] fetch_news: [OK] ニュース取得 [米国株]: 5件
+2026-06-06 01:23:40 [INFO] fetch_news: [OK] ニュース取得 [日本株]: 5件
+2026-06-06 01:23:42 [INFO] fetch_news: [OK] ニュース取得 [金利]: 5件
+2026-06-06 01:23:45 [INFO] fetch_news: [OK] ニュース取得 [地政学リスク]: 5件
+2026-06-06 01:23:46 [INFO] fetch_news: [OK] ニュース取得 [為替 ドル円]: 5件
+2026-06-06 01:23:48 [INFO] fetch_news: [OK] ニュース取得 [OANDA 為替 レート]: 5件
+2026-06-06 01:23:50 [INFO] fetch_news: [OK] ニュース取得 [半導体]: 5件
+2026-06-06 01:23:52 [INFO] fetch_news: [OK] ニュース取得 [決算]: 5件
+2026-06-06 01:23:53 [INFO] fetch_news: [OK] ニュース取得 [原油]: 5件
+2026-06-06 01:23:55 [INFO] fetch_news: [OK] ニュース取得 [site:traders.co.jp]: 5件
+2026-06-06 01:23:57 [INFO] fetch_news: [OK] ニュース取得 [site:minkabu.jp 株]: 5件
+2026-06-06 01:23:59 [INFO] fetch_news: [OK] ニュース取得 [site:fx.minkabu.jp]: 5件
+2026-06-06 01:24:01 [INFO] fetch_news: [OK] ニュース取得 [site:nikkei225jp.com]: 5件
+2026-06-06 01:24:03 [INFO] fetch_news: [OK] ニュース取得 [帝国データバンク 倒産]: 5件
+2026-06-06 01:24:05 [INFO] fetch_news: [OK] ニュース取得 [site:tdb.co.jp]: 5件
+2026-06-06 01:24:06 [INFO] fetch_news: ニュース保存: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\data\news\2026-06-06_news.json (125件)
+2026-06-06 01:24:06 [INFO] fetch_news: === ニュース取得完了: 125件 ===
+2026-06-06 01:24:06 [INFO] run_daily: --- Step 3: 指標計算 ---
+2026-06-06 01:24:06 [INFO] indicators: リスク判定: 弱気 (リスクオフ) (スコア=-12.70)
+2026-06-06 01:24:06 [INFO] run_daily: --- Step 4: 分析 ---
+2026-06-06 01:24:06 [INFO] analyze: === 分析開始 ===
+2026-06-06 01:24:06 [INFO] analyze: === 分析完了 ===
+2026-06-06 01:24:06 [INFO] run_daily: --- Step 5: matplotlibチャート生成 ---
+2026-06-06 01:24:07 [INFO] visualize: === チャート生成開始 ===
+2026-06-06 01:24:09 [INFO] visualize: メインダッシュボード保存: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\reports\charts\2026-06-06_overview.png
+2026-06-06 01:24:11 [INFO] visualize: === チャート生成完了: 7件 ===
+2026-06-06 01:24:11 [INFO] run_daily: --- Step 6: Plotlyチャート生成 ---
+2026-06-06 01:24:11 [INFO] visualize_plotly: === Plotly チャート生成開始 ===
+2026-06-06 01:24:11 [INFO] visualize_plotly: [OK] indices
+2026-06-06 01:24:11 [INFO] visualize_plotly: [OK] stocks
+2026-06-06 01:24:11 [INFO] visualize_plotly: [OK] fear_greed
+2026-06-06 01:24:11 [INFO] visualize_plotly: [OK] risk_meter
+2026-06-06 01:24:11 [INFO] visualize_plotly: [OK] commodities
+2026-06-06 01:24:11 [INFO] visualize_plotly: [OK] news
+2026-06-06 01:24:11 [INFO] visualize_plotly: === Plotly 完了: 6件 ===
+2026-06-06 01:24:11 [INFO] run_daily: --- Step 5b: テクニカル分析 ---
+2026-06-06 01:24:11 [INFO] technical: === テクニカル分析開始 ===
+2026-06-06 01:24:12 [INFO] technical: [OK] テクニカル: 日経平均 RSI=74.3 トレンド=短期上昇トレンド / 中期上昇
+2026-06-06 01:24:12 [INFO] technical: [OK] テクニカル: S&P500 RSI=55.4 トレンド=中期上昇
+2026-06-06 01:24:13 [INFO] technical: [OK] テクニカル: NASDAQ RSI=48.0 トレンド=中期上昇
+2026-06-06 01:24:13 [INFO] technical: [OK] テクニカル: ドル円 RSI=79.4 トレンド=短期上昇トレンド / 中期下落
+2026-06-06 01:24:14 [INFO] technical: [OK] テクニカル: 金 RSI=33.6 トレンド=短期下落トレンド / 中期下落
+2026-06-06 01:24:15 [INFO] technical: [OK] テクニカル: 原油 RSI=31.2 トレンド=短期下落トレンド / 中期上昇
+2026-06-06 01:24:15 [INFO] technical: [OK] テクニカル: Bitcoin RSI=11.6 トレンド=短期下落トレンド / 中期上昇
+2026-06-06 01:24:16 [INFO] technical: === テクニカル分析完了: 7件 → C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\data\processed\2026-06-06_technical.json ===
+2026-06-06 01:24:16 [INFO] run_daily: --- Step 5c: ファンダメンタル分析 ---
+2026-06-06 01:24:16 [INFO] fundamental: === ファンダメンタル分析開始 ===
+2026-06-06 01:24:16 [INFO] fundamental: [OK] ファンダ NVIDIA: PER=31.926636 レーティング=strong_buy
+2026-06-06 01:24:17 [INFO] fundamental: [OK] ファンダ Apple: PER=37.81091 レーティング=buy
+2026-06-06 01:24:18 [INFO] fundamental: [OK] ファンダ Tesla: PER=366.49542 レーティング=buy
+2026-06-06 01:24:19 [INFO] fundamental: [OK] ファンダ Microsoft: PER=25.04231 レーティング=strong_buy
+2026-06-06 01:24:19 [INFO] fundamental: [OK] ファンダ Amazon: PER=31.504986 レーティング=strong_buy
+2026-06-06 01:24:20 [INFO] fundamental: [OK] ファンダ Meta: PER=22.207348 レーティング=strong_buy
+2026-06-06 01:24:21 [INFO] fundamental: [OK] ファンダ トヨタ: PER=9.654471 レーティング=buy
+2026-06-06 01:24:22 [INFO] fundamental: [OK] ファンダ SBG: PER=8.509224 レーティング=buy
+2026-06-06 01:24:23 [INFO] fundamental: [OK] ファンダ ソニーG: PER=20.771566 レーティング=strong_buy
+2026-06-06 01:24:23 [INFO] fundamental: [OK] ファンダ 三菱UFJ: PER=15.1610775 レーティング=buy
+2026-06-06 01:24:24 [INFO] fundamental: [OK] ファンダ アドバンテスト: PER=52.205036 レーティング=buy
+2026-06-06 01:24:25 [INFO] fundamental: [OK] 先物 S&P500先物: 7481.0
+2026-06-06 01:24:25 [INFO] fundamental: [OK] 先物 NASDAQ先物: 29607.5
+2026-06-06 01:24:26 [INFO] fundamental: [OK] 先物 ダウ先物: 51265.0
+2026-06-06 01:24:26 [INFO] fundamental: [OK] 先物 金先物: 4362.10009765625
+2026-06-06 01:24:27 [INFO] fundamental: [OK] 先物 原油先物: 90.47000122070312
+2026-06-06 01:24:27 [INFO] fundamental: [OK] 先物 米10年債先物: 109.0625
+2026-06-06 01:24:28 [INFO] fundamental: [OK] VIXオプション PCR=0.13
+2026-06-06 01:24:31 [INFO] fundamental: [OK] 騰落レシオ近似: 111.7
+2026-06-06 01:24:32 [INFO] fundamental: [OK] 市場統計ニュース [信用残]: 4件
+2026-06-06 01:24:34 [INFO] fundamental: [OK] 市場統計ニュース [騰落レシオ]: 4件
+2026-06-06 01:24:36 [INFO] fundamental: [OK] 市場統計ニュース [空売り比率]: 4件
+2026-06-06 01:24:37 [INFO] fundamental: [OK] 市場統計ニュース [裁定残]: 4件
+2026-06-06 01:24:39 [INFO] fundamental: [OK] 市場統計ニュース [投資主体別]: 4件
+2026-06-06 01:24:41 [INFO] fundamental: [OK] 市場統計ニュース [決算情報]: 4件
+2026-06-06 01:24:43 [INFO] fundamental: [OK] 市場統計ニュース [レーティング]: 4件
+2026-06-06 01:24:44 [INFO] fundamental: [OK] 市場統計ニュース [経済指標]: 4件
+2026-06-06 01:24:46 [INFO] fundamental: [OK] 市場統計ニュース [FOMC]: 4件
+2026-06-06 01:24:48 [INFO] fundamental: [OK] 市場統計ニュース [日銀会合]: 4件
+2026-06-06 01:24:49 [INFO] fundamental: [OK] 市場統計ニュース [先物/オプション]: 4件
+2026-06-06 01:24:51 [INFO] fundamental: [OK] 市場統計ニュース [バリュエーション]: 4件
+2026-06-06 01:25:02 [INFO] fundamental: [OK] 経済カレンダーニュース: 18件
+2026-06-06 01:25:02 [INFO] fundamental: === ファンダ分析完了・保存: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\data\processed\2026-06-06_fundamental.json ===
+2026-06-06 01:25:02 [INFO] run_daily: --- Step 6b: 追加ニュース・Polymarket取得 ---
+2026-06-06 01:25:02 [INFO] fetch_extra_news: === 追加ニュース・Polymarket 取得開始 ===
+2026-06-06 01:25:04 [INFO] fetch_extra_news: [OK] NHK 経済: 6件
+2026-06-06 01:25:05 [INFO] fetch_extra_news: [OK] NHK トップ: 5件
+2026-06-06 01:25:06 [INFO] fetch_extra_news: [OK] Yahoo! ファイナンス: 6件
+2026-06-06 01:25:07 [INFO] fetch_extra_news: [OK] 東洋経済: 5件
+2026-06-06 01:25:10 [INFO] fetch_extra_news: [OK] MarketWatch: 5件
+2026-06-06 01:25:11 [INFO] fetch_extra_news: [OK] FXStreet（FX専門）: 5件
+2026-06-06 01:25:12 [INFO] fetch_extra_news: [OK] Investing.com: 5件
+2026-06-06 01:25:13 [INFO] fetch_extra_news: [OK] Yahoo Finance: 5件
+2026-06-06 01:25:15 [INFO] fetch_extra_news: [OK] 日銀公式: 5件
+2026-06-06 01:25:16 [INFO] fetch_extra_news: [OK] 首相官邸: 4件
+2026-06-06 01:25:18 [INFO] fetch_extra_news: [OK] 財務省: 4件
+2026-06-06 01:25:19 [INFO] fetch_extra_news: [OK] トレーダーズウェブ: 5件
+2026-06-06 01:25:21 [INFO] fetch_extra_news: [OK] トレーダーズウェブFX: 4件
+2026-06-06 01:25:22 [INFO] fetch_extra_news: [OK] みんかぶ: 5件
+2026-06-06 01:25:23 [INFO] fetch_extra_news: [OK] みんかぶFX: 4件
+2026-06-06 01:25:24 [INFO] fetch_extra_news: [OK] 日経225専門: 4件
+2026-06-06 01:25:26 [INFO] fetch_extra_news: [OK] OANDA為替: 4件
+2026-06-06 01:25:28 [INFO] fetch_extra_news: [OK] 帝国データバンク: 4件
+2026-06-06 01:25:29 [INFO] fetch_extra_news: [OK] FedWatch利上げ確率: 4件
+2026-06-06 01:25:32 [INFO] fetch_extra_news: [OK] PayPay証券: 3件
+2026-06-06 01:25:33 [INFO] fetch_extra_news: [OK] Polymarket: 3件（金融・経済関連）
+2026-06-06 01:25:33 [INFO] fetch_extra_news: 追加ニュース保存: 92件 / Polymarket: 3件
+2026-06-06 01:25:33 [INFO] fetch_extra_news: === 完了: ニュース92件 / Polymarket3件 ===
+2026-06-06 01:25:33 [INFO] run_daily: --- Step 7: Ollama AI要約（カテゴリ別） ---
+2026-06-06 01:25:38 [INFO] ai_summary: Ollama AI要約開始: モデル=qwen2.5:3b
+2026-06-06 01:25:38 [INFO] ai_summary: AI要約生成中: 🏦 日銀・日本政府（27件）
+2026-06-06 01:25:45 [INFO] ai_summary: AI要約生成中: 🇺🇸 FRB・米国金融政策（14件）
+2026-06-06 01:25:48 [INFO] ai_summary: AI要約生成中: 📈 米国株市場（24件）
+2026-06-06 01:25:52 [INFO] ai_summary: AI要約生成中: 🗾 日本株市場（23件）
+2026-06-06 01:25:55 [INFO] ai_summary: AI要約生成中: 💱 為替・FX（17件）
+2026-06-06 01:25:58 [INFO] ai_summary: AI要約生成中: 🌍 地政学リスク（12件）
+2026-06-06 01:26:06 [INFO] ai_summary: 市場全体コメント生成完了
+2026-06-06 01:26:06 [INFO] ai_summary: AI要約完了: 6カテゴリ
+2026-06-06 01:26:07 [INFO] run_daily: AI要約保存: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\data\raw\2026-06-06_ai_test.json
+2026-06-06 01:26:07 [INFO] run_daily: --- Step 8: レポート生成 ---
+2026-06-06 01:26:07 [INFO] report_writer: レポート保存: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\reports\2026-06-06_test.html
+2026-06-06 01:26:07 [INFO] run_daily: HTML: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\reports\2026-06-06_test.html
+2026-06-06 01:26:07 [INFO] run_daily: --- Step 9: Telegram通知 ---
+2026-06-06 01:26:08 [INFO] notify_telegram: Telegram 送信成功
+2026-06-06 01:26:12 [INFO] notify_telegram: Telegram 画像送信成功: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\reports\charts\2026-06-06_overview.png
+2026-06-06 01:26:15 [INFO] notify_telegram: Telegram ファイル送信成功: C:\Users\中田　洋介\Desktop\tousijouhou\market-ai-secretary\reports\2026-06-06_test.html
+2026-06-06 01:26:15 [INFO] notify_telegram: Telegram 3通送信完了
+2026-06-06 01:26:15 [INFO] run_daily: --- Step 10: iPhone通知（ntfy.sh） ---
+2026-06-06 01:26:15 [INFO] notify_iphone: ntfy.sh未設定。スキップします。
+2026-06-06 01:26:15 [INFO] run_daily: ====== 完了 [mode=test] ======

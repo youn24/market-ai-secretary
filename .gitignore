@@ -1,0 +1,47 @@
+.env
+.mcp.json
+__pycache__/
+# data/ は基本除外するが、学習データ(predictions.json)と記憶データは永続化のためGit管理
+data/*
+!data/predictions.json
+!data/ai_memory.json
+!data/portfolio.json
+!data/last_run_report.json
+# 状態ファイル: 前回との差分を見るのが役目なので、永続化しないと機能しない。
+# （通知の重複防止・ゾーン跨ぎ検知は「前回どうだったか」が無いと判定できない）
+!data/notify_ledger.json
+!data/notify_history.json
+!data/gemini_budget.json
+!data/shareholder_state.json
+!data/audit_state.json
+!data/theme_history.json
+!data/weekly_calendar.json
+!data/valuation_state.json
+!data/fear_watch_state.json
+!data/fundamental_cache.json
+!data/fundamental_state.json
+!data/fred_cache.json
+!data/macro_state.json
+!data/market_signal_state.json
+!data/policy_state.json
+!data/sentiment_state.json
+!data/risk_sentiment_state.json
+# シグナルの「通知済み」記録。保存されないと重複防止が毎回リセットされ、
+# 同じサインが何度も届く（2026-08-18まで実際にそうなっていた）。
+!data/alert_state.json
+!data/tech_signal_state.json
+!data/fx_signal_state.json
+!data/divergence_state.json
+!data/risk_gauge_state.json
+!data/gap_state.json
+!data/pattern_state.json
+!data/us_movers_state.json
+!data/nikkei_impact_state.json
+reports/charts/
+logs/
+
+# .env の控え・派生ファイルも必ず除外する。
+# 2026-08-24: .env.backup_… が無視対象外で、コミットできる状態だった。
+# 本体だけ守っても、控えから漏れたら同じこと。
+.env.*
+!.env.example

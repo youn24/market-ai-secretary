@@ -1,0 +1,85 @@
+# 15分ごと市場監視（急変アラート）
+name: 市場監視アラート
+
+on:
+  schedule:
+    # ⚠️ 2026-08-31: 予約実行がほぼ全部落とされる状態になった。
+    #    実測: 8/26は51回動いていたのが、8/30には2回、8/31も2回。
+    #    朝のレポートも 8/28(金) と 8/31(月) が実行されず、
+    #    8/27は293分遅れだった。
+    #
+    #    このリポジトリの予約は1日61回で、その**57回がこのファイル**だった。
+    #    公開リポジトリはActions分こそ無制限だが、予約実行を多く積む
+    #    リポジトリはGitHub側で遅延・間引きの対象になる。
+    #    monitor が枠を食い尽くし、**朝のレポートまで落とされていた**。
+    #
+    #    そこで「本当に15分刻みが要る時間帯」だけに絞る。
+    #    ・東京の寄り付き前後（JST 8:45-9:30）… 窓開けと急変を拾う
+    #    ・米国の寄り付き（JST 22:30-23:30）… 夜間の急変の起点
+    #    それ以外は30分・1時間に落とす。急変アラートの基準は
+    #    「年5〜15回」に較正してあり、15分と30分で取りこぼしは実質変わらない。
+    #    1日57回 → 約20回。
+    - cron: "*/15 23 * * 0-4"      # UTC 23時台（JST 8時台）= 寄り付き直前
+    - cron: "*/15 0 * * 1-5"       # UTC 0時台（JST 9時台）= 寄り付き直後
+    - cron: "*/30 1-6 * * 1-5"     # UTC 1-6時（JST 10-15時）= 東京場中は30分毎
+    - cron: "0 7-13 * * 1-5"       # UTC 7-13時（JST 16-22時）= 引け後は1時間毎
+    - cron: "*/30 13-14 * * 1-5"   # UTC 13-14時（JST 22-23時）= 米国寄り付き前後
+    - cron: "0 15-21 * * 1-5"      # UTC 15-21時（JST 24-6時）= 夜間は1時間毎
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: チェックアウト
+        uses: actions/checkout@v4
+
+      - name: Python セットアップ
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: ライブラリインストール
+        run: |
+          pip install --upgrade pip
+          pip install pandas numpy requests python-dotenv \
+                      PyYAML yfinance feedparser google-generativeai
+
+      - name: 市場監視・急変アラート
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          # 為替シグナルはFX専用グループへ送る。未設定ならメイン側に落ちる
+          TELEGRAM_FX_CHAT_ID: ${{ secrets.TELEGRAM_FX_CHAT_ID }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          python monitor_run.py
+
+      - name: シグナルの通知済み記録を保存（重複通知の防止用）
+        run: |
+          # これらが保存されないと「同じサインは1日1回」が毎回リセットされる。
+          # 以前は alert_state.json だけを見ていたうえ、そのファイルが
+          # gitignore対象だったため `git status --porcelain` が常に空を返し、
+          # このブロック自体が一度も実行されていなかった（2026-08-18発覚）。
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          for f in data/alert_state.json data/tech_signal_state.json \
+                   data/fx_signal_state.json data/divergence_state.json \
+                   data/risk_gauge_state.json data/gap_state.json \
+                   data/pattern_state.json data/us_movers_state.json \
+                   data/nikkei_impact_state.json data/fear_watch_state.json; do
+            [ -f "$f" ] && git add -f "$f"
+          done
+          if ! git diff --staged --quiet; then
+            git commit -m "chore: シグナル通知済み記録の更新 [skip ci]"
+            # この状態ファイルが保存されないと「同じアラートを何度も送らない」が
+            # 毎回リセットされ、重複通知が発生する。握りつぶしてはいけない。
+            git pull --rebase --autostash origin main || true
+            git push || { echo "::error::アラート状態のpushに失敗しました（重複通知の原因になります）"; exit 1; }
+          fi

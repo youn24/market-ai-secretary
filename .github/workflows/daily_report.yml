@@ -1,0 +1,287 @@
+# GitHub Actions - 毎日自動実行（PC電源OFF中も動く）
+# 朝7:30 JST（UTCの前日22:30）に自動実行
+
+name: 毎日市場レポート
+
+on:
+  schedule:
+    # ⚠️ :00 と :30 ちょうどは世界中のリポジトリの予約が集中し、
+    #    GitHub側で遅延・欠落が起きやすい。実際 2026-08-27 は293分遅れ、
+    #    2026-08-28 は実行そのものが行われなかった。
+    #    半端な分にずらすのが公式に案内されている回避策。
+    # ⚠️ 2026-09-11 の実測: 8/31以降、朝のレポートは**毎日 9:30〜10:40 に完了**している
+    #    （8/21〜8/26 は 8:10 前後だった）。7:35予定の検証ジョブも同じだけ遅れており、
+    #    GitHub側でこの時間帯（UTC 22時台）の予約が一律に約2時間遅れている。
+    #
+    #    その結果、**朝の通知が毎日、9:00の寄り付き後に届いていた**。
+    #    中身の中心は「寄り付きの見当」「今日動きやすい銘柄」で、開く前に読むためのもの。
+    #    寄り付き後に届いては役目を果たせない。
+    #
+    #    そこで 6:23 にもう1回早い予約を置く。同じだけ遅れても 8時台に届く。
+    #    6:23 は「1年中データが揃ったうえで少し余裕がある時刻」:
+    #      ・米国市場の終了 … 夏時間 5:00 / 冬時間 6:00（JST）
+    #      ・日経先物の夜間取引 … 6:00 終了
+    #    冬時間はGitHubが遅れなかった日に終値確定から23分後に走ることになる。
+    #    これより早くすると、冬は米国の終値が確定しきる前に走りかねない。
+    #
+    #    どれか1つが先に成功すれば、残りは下の guard ジョブが止める
+    #    （本日分の公開レポートがあれば実行しない）。朝の通知は1通のまま。
+    - cron: "23 21 * * 0-4"   # UTC 日〜木 21:23 = JST 月〜金 6:23（最も早い試行）
+    - cron: "23 22 * * 0-4"   # UTC 日〜木 22:23 = JST 月〜金 7:23（平日）
+    # ⚠️ 直近10営業日のうち **3日（8/28・9/2・9/3）で朝レポートが届かなかった**。
+    #    9/2・9/3 の真因は上の apt-get 404（フォント導入で落ちていた）で、
+    #    そこは再試行を入れて直した。ただし 8/27 は293分遅れ、8/24〜8/26 も
+    #    45分前後の遅れが出ており、**GitHubの予約実行そのものが不確実**なのは変わらない。
+    #    原因が何であれ「朝、何も届かない」がこのシステムの最悪の失敗なので、
+    #    1時間後にもう一度だけ予約して取りこぼしを拾う。
+    #
+    #    二度流すと**朝の通知が2通になる**（オーナー指示「朝は必ず1通」に反する）ので、
+    #    先に本日分が出来ていたら下の guard ジョブが止める。
+    - cron: "23 23 * * 0-4"   # UTC 日〜木 23:23 = JST 月〜金 8:23（取りこぼし用）
+  workflow_dispatch:  # 手動実行ボタンも有効化
+
+# 7:23の回がまだ走っている最中に8:23の回が始まると、門番が
+# 「本日分はまだ無い」と判断してしまい、朝の通知が2通になる。
+# 同時に走らせず順番待ちにすれば、前の回が終わってから門番が
+# 判定するので、その取り違えが起きない。
+concurrency:
+  group: daily-report
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  # 本日分の公開レポートが既にあるなら、この回は何もしない。
+  # 8:23の取りこぼし用が「2通目の朝通知」にならないようにするための門番。
+  # 手動実行のときは必ず通す（作り直したいから押しているはずなので）。
+  guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      should_run: ${{ steps.check.outputs.should_run }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: check
+        run: |
+          TODAY=$(TZ=Asia/Tokyo date +%Y-%m-%d)
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "手動実行なので実行します"
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+          elif [ -f docs/daily_report.html ] && grep -q "市場AI秘書 — $TODAY" docs/daily_report.html; then
+            echo "本日（$TODAY）の公開レポートは既にあります。二重配信を避けるため中止します"
+            echo "should_run=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "本日（$TODAY）の公開レポートがまだありません。実行します"
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  daily-report:
+    needs: guard
+    if: needs.guard.outputs.should_run == 'true'
+    runs-on: ubuntu-latest
+    # ⚠️ 2026-09-11 に30分で打ち切られ、公開レポートが更新されなかった。
+    #    普段20分前後で、外部サイトが遅い日は数分延びる。
+    #    30分では余裕が無さすぎた。原因（FREDの待ち）は遮断器で潰したが、
+    #    外部依存は他にも多いので上限自体にも余裕を持たせる。
+    timeout-minutes: 45
+
+    steps:
+      - name: リポジトリをチェックアウト
+        uses: actions/checkout@v4
+
+      - name: Python 3.11 セットアップ
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: 日本語・絵文字フォント＋ffmpegインストール
+        run: |
+          # apt-get update を先に実行する。GitHub Actions ランナーの
+          # パッケージ一覧は古いことがあり、update 無しの install は
+          # 「404 Not Found」で落ちる（2026-09-02・09-03 の失敗原因）。
+          # 一時的なネットワーク障害に備えて3回まで再試行し、
+          # 最終的に入っていなければ明示的に失敗させる（|| true で隠さない）。
+          ok=0
+          for i in 1 2 3; do
+            if sudo apt-get update -qq && sudo apt-get install -y \
+                 fonts-noto-cjk fonts-noto-cjk-extra fonts-noto-color-emoji ffmpeg; then
+              ok=1; break
+            fi
+            echo "apt-get 失敗（試行 $i/3）。20秒待って再試行します"
+            sleep 20
+          done
+          [ "$ok" -eq 1 ] || { echo "::error::フォント／ffmpeg のインストールに3回とも失敗しました"; exit 1; }
+          fc-cache -fv
+
+      - name: ライブラリインストール
+        run: |
+          pip install --upgrade pip
+          pip install pandas numpy requests feedparser beautifulsoup4 \
+                      lxml python-dotenv PyYAML yfinance plotly \
+                      matplotlib kaleido google-generativeai google-genai playwright \
+                      tweepy edge-tts
+
+      - name: Playwright Chromium インストール（noteカバー画像のHTML→PNG描画用）
+        run: |
+          python -m playwright install --with-deps chromium
+
+      - name: VOICEVOX音声エンジン起動（要約動画のキャラ声・失敗しても続行）
+        run: |
+          docker run -d --name voicevox -p 50021:50021 \
+            voicevox/voicevox_engine:cpu-ubuntu20.04-latest || true
+          # 起動待ち（最大60秒）。起動しなければedge-ttsに自動フォールバック
+          for i in $(seq 1 30); do
+            curl -sf http://127.0.0.1:50021/version && break || sleep 2
+          done || true
+
+      - name: 完全自律AIチームシステム - 朝の分析を実行
+        # ⛔ 2026-09-11 停止。
+        #    ・出力（team_morning_analysis_*.json）はGitにも保存されず、
+        #      本番のどこからも読まれていない（使うのは開発用スクリプト2つだけ）
+        #    ・Geminiを3回（市場・ニュース・リスクの3エージェント）使うが、
+        #      cloud_run の予算管理（gemini_budget）の**外**で走るため、
+        #      予算表は「20回ある」と思っているのに実際は17回しか残っていなかった
+        #    ・その後の検証（team_verification.yml）も一度も動いたことがない
+        #    止めると朝の実行が数分短くなり、Gemini 3回が本体に戻る。
+        if: false
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GITHUB_PAGES_URL: "https://youn24.github.io/market-ai-secretary"
+        run: |
+          echo "🤖 完全自律AIチームシステムを起動..."
+          python run_autonomous_team.py --mode morning
+
+      - name: 従来型の市場レポートも生成（バックアップ）
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GITHUB_PAGES_URL: "https://youn24.github.io/market-ai-secretary"
+          NOTE_MAGAZINE_URL: ${{ secrets.NOTE_MAGAZINE_URL }}
+          FX_AFFILIATE_URL: ${{ secrets.FX_AFFILIATE_URL }}
+          X_API_KEY: ${{ secrets.X_API_KEY }}
+          X_API_SECRET: ${{ secrets.X_API_SECRET }}
+          X_ACCESS_TOKEN: ${{ secrets.X_ACCESS_TOKEN }}
+          X_ACCESS_TOKEN_SECRET: ${{ secrets.X_ACCESS_TOKEN_SECRET }}
+          CF_PROXY_URL: ${{ secrets.CF_PROXY_URL }}
+          VOICEVOX_URL: "http://127.0.0.1:50021"
+        run: |
+          echo "📋 従来型レポート生成中..."
+          # cloud_run.py の失敗は隠さない（|| true を付けない）。
+          # 通知が来ない事故を「緑表示」で見逃さないため、失敗時はこのジョブを赤にする。
+          python cloud_run.py --mode morning
+          # 拡張版・モバイル版は任意（失敗しても続行）
+          python generate_expanded_report.py || true  # lint:allow-fail 拡張版は任意。失敗しても本編の配信を止めない
+          python generate_mobile_report.py || true  # lint:allow-fail モバイル版は任意。失敗しても本編の配信を止めない
+
+      - name: 公開レポートが今日の内容に更新されたか検証
+        if: always()
+        run: |
+          # 「Actionsは緑なのに公開ページが古いまま」を二度と見逃さないための検証。
+          # 実際にこの事故が長期間続いたため、ここで明示的に確認する。
+          REPORT=docs/daily_report.html
+          TODAY=$(TZ=Asia/Tokyo date +%Y-%m-%d)
+          if [ ! -f "$REPORT" ]; then
+            echo "::error::公開レポート $REPORT が生成されていません"
+          elif grep -q "$TODAY" "$REPORT"; then
+            echo "✅ 公開レポートは本日（$TODAY）の内容に更新されています（$(wc -c < "$REPORT") バイト）"
+          else
+            echo "::error::公開レポートに本日（$TODAY）の日付がありません。古い内容のままの可能性があります"
+            grep -o "<title>[^<]*</title>" "$REPORT" | head -1 || true
+          fi
+          # 実行記録を要約表示（ログを開かずに失敗Stepが分かるようにする）
+          if [ -f data/last_run_report.json ]; then
+            python -m src.run_recorder || true  # lint:allow-fail 実行記録の表示のみ。失敗しても成果物に影響しない
+          fi
+
+      - name: モバイル版レポートを docs/mobile.html に公開用コピー
+        if: always()
+        run: |
+          mkdir -p docs
+          # メインの daily_report.html は cloud_run の Step 7a2（design_ai）が
+          # docs/ に直接出力する。モバイル簡素版は別URL docs/mobile.html で公開する
+          if [ -f reports/today_report.html ]; then
+            cp reports/today_report.html docs/mobile.html
+            echo "✅ docs/mobile.html を更新"
+          else
+            echo "⚠️ reports/today_report.html が無いためモバイル版はスキップ"
+          fi
+
+      - name: レポート(docs/)と学習データをmainブランチに保存・公開
+        if: always()
+        run: |
+          git config --global user.email "actions@github.com"
+          git config --global user.name "GitHub Actions Bot"
+          # GitHub Pages は main/docs を公開するため、生成した docs/ を必ずpushする
+          # （これをしないと公開ページが更新されず古いまま固定される）
+          # ⚠️ git add に「存在しないパス」を1つでも渡すと、git add は
+          # エラー終了し **何もステージしない**。状態ファイルは初回や未生成時に
+          # 存在しないため、これで毎日 docs/ ごと巻き添えになり、公開レポートが
+          # 1週間更新されなかった（2026-08-18発覚）。2>/dev/null || true が
+          # 失敗を完全に隠し、Actionsは緑のままだった。
+          # 対策: docs は単独で add し、状態ファイルは存在確認して1つずつ add する。
+          git add docs
+          for f in data/predictions.json data/ai_memory.json data/theme_history.json                    data/weekly_calendar.json data/valuation_state.json data/macro_state.json                    data/market_signal_state.json data/policy_state.json                    data/sentiment_state.json data/risk_sentiment_state.json                    data/notify_ledger.json data/notify_history.json data/gemini_budget.json data/shareholder_state.json data/audit_state.json data/last_run_report.json data/fundamental_cache.json data/fundamental_state.json data/fred_cache.json data/fear_watch_state.json; do
+            if [ -f "$f" ]; then
+              git add -f "$f"
+            else
+              echo "（未生成のためスキップ: $f）"
+            fi
+          done
+          if git diff --staged --quiet; then
+            echo "::error::コミット対象がありません。公開レポートが更新されていない可能性があります"
+          else
+            git commit -m "📊 レポート更新 $(date '+%Y-%m-%d %H:%M JST')"
+          fi
+          # 作業中の手動pushなどでリモートが進んでいると push が拒否される。
+          # 以前は `|| true` で握りつぶしていたため、予測記録などの学習データが
+          # 毎回失われ、正解率の計算が止まっていた（2026-08-12に発覚）。
+          # rebase して再試行し、それでも駄目なら必ずエラーとしてログに残す。
+          if ! git push origin main 2>&1; then
+            echo "pushが拒否されたため rebase して再試行します"
+            git pull --rebase --autostash origin main || true
+            if git push origin main 2>&1; then
+              echo "✅ rebase後のpushに成功しました"
+            else
+              echo "::error::学習データのpushに失敗しました。予測記録が保存されていません"
+            fi
+          fi
+
+      - name: レポートをgh-pagesに公開
+        if: always()
+        run: |
+          git config --global user.email "actions@github.com"
+          git config --global user.name "GitHub Actions"
+          # gh-pagesブランチにreportsフォルダを公開
+          cp -r reports/ /tmp/reports_backup
+          git fetch origin gh-pages 2>/dev/null || true
+          git checkout --orphan gh-pages-temp
+          git rm -rf . --quiet 2>/dev/null || true
+          cp -r /tmp/reports_backup/* .
+          # インデックスページ作成
+          ls *.html 2>/dev/null | sort -r | head -1 | xargs -I{} cp {} index.html 2>/dev/null || true  # lint:allow-fail htmlが無い日はindex作成をスキップしてよい
+          git add -A
+          # `|| true` だと commit の失敗と「変更なし」を区別できない。
+          # 変更が無いのは正常、commit が落ちるのは異常なので分けて扱う。
+          if git diff --staged --quiet; then
+            echo "gh-pagesに公開する変更はありません"
+          else
+            git commit -m "レポート更新 $(date '+%Y-%m-%d %H:%M JST')"
+          fi
+          git push origin gh-pages-temp:gh-pages --force
+          git checkout main
+
+      - name: レポートをArtifactとして保存（7日間）
+        uses: actions/upload-artifact@v4
+        with:
+          name: market-report-${{ github.run_number }}
+          path: reports/
+          retention-days: 7

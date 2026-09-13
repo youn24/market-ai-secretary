@@ -1,0 +1,97 @@
+{
+ "available": true,
+ "generated_at": "2026-08-17 16:12",
+ "source_n": 470,
+ "period": "2024-08-20〜2026-08-14",
+ "edges": [
+  3.0,
+  6.0,
+  10.0,
+  15.0
+ ],
+ "min_n": 15,
+ "table": {
+  "bull": {
+   "buckets": {
+    "2": {
+     "range": "|スコア|6〜10",
+     "n": 9,
+     "win_rate": 84.0,
+     "expectancy": 0.747,
+     "rank": "S",
+     "stars": "★★★★",
+     "advice": "かなり信頼できる",
+     "estimated": true
+    },
+    "3": {
+     "range": "|スコア|10〜15",
+     "n": 36,
+     "win_rate": 80.6,
+     "expectancy": 1.075,
+     "rank": "S",
+     "stars": "★★★★",
+     "advice": "かなり信頼できる",
+     "estimated": false
+    },
+    "4": {
+     "range": "|スコア|≥15",
+     "n": 30,
+     "win_rate": 86.7,
+     "expectancy": 1.723,
+     "rank": "S",
+     "stars": "★★★★",
+     "advice": "かなり信頼できる",
+     "estimated": false
+    }
+   },
+   "overall_win_rate": 84.0,
+   "n": 75
+  },
+  "bear": {
+   "buckets": {
+    "1": {
+     "range": "|スコア|3〜6",
+     "n": 37,
+     "win_rate": 54.1,
+     "expectancy": 0.113,
+     "rank": "C",
+     "stars": "★",
+     "advice": "参考程度（コイン投げに近い）",
+     "estimated": false
+    },
+    "2": {
+     "range": "|スコア|6〜10",
+     "n": 30,
+     "win_rate": 50.0,
+     "expectancy": 0.129,
+     "rank": "C",
+     "stars": "★",
+     "advice": "参考程度（コイン投げに近い）",
+     "estimated": false
+    },
+    "3": {
+     "range": "|スコア|10〜15",
+     "n": 26,
+     "win_rate": 69.2,
+     "expectancy": 0.53,
+     "rank": "B",
+     "stars": "★★",
+     "advice": "やや信頼できる",
+     "estimated": false
+    },
+    "4": {
+     "range": "|スコア|≥15",
+     "n": 41,
+     "win_rate": 82.9,
+     "expectancy": 1.767,
+     "rank": "S",
+     "stars": "★★★★",
+     "advice": "かなり信頼できる",
+     "estimated": false
+    }
+   },
+   "overall_win_rate": 64.9,
+   "n": 134
+  }
+ }
+}

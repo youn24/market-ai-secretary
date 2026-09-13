@@ -1,0 +1,356 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "🌅 朝のレポート（テスト実行）",
+      "type": "shell",
+      "command": "python cloud_run.py --mode test",
+      "group": { "kind": "build", "isDefault": true },
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "🌙 夜の振り返り＋感情売買ガード",
+      "type": "shell",
+      "command": "python evening_run.py",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "📊 週次レポート（日曜）",
+      "type": "shell",
+      "command": "python weekly_run.py",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "💱 FX午後レポート（14:00）",
+      "type": "shell",
+      "command": "python fx_noon_run.py",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "🔔 急変モニター（15分ごと）",
+      "type": "shell",
+      "command": "python monitor_run.py",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "📱 Streamlitダッシュボード起動",
+      "type": "shell",
+      "command": "streamlit run streamlit_app.py",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "🔍 煽りニュース検出テスト",
+      "type": "shell",
+      "command": "python -c \"from src.news_bias_detector import analyze_news_bias; r=analyze_news_bias([{'title':'日経大暴落！今すぐ売れ！緊急速報'},{'title':'米国市場は小幅上昇'},{'title':'激震！FRBが前代未聞の緊急利上げ！絶対に見逃すな'}]); [print(f\\\"{i['bias_label']} ({i['bias_score']:.1f}) {i['title'][:30]}\\\") for i in r['items']]\"",
+      "presentation": { "reveal": "always", "panel": "shared", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "🔥 FIREシミュレーターテスト",
+      "type": "shell",
+      "command": "python -c \"from src.fire_simulator import calc_fire_years; import json; r=calc_fire_years(); print(f\\\"FIRE達成: {r.get('fire_age')}歳（あと{r.get('fire_years')}年）\\\"); print(f\\\"目標額: {r.get('fire_target',0)/10000:.0f}万円\\\"); print(f\\\"現在達成率: {r.get('progress_pct',0):.1f}%\\\")\"",
+      "presentation": { "reveal": "always", "panel": "shared", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "🏆 割安株スキャンテスト（TOP3）",
+      "type": "shell",
+      "command": "python -c \"from src.bargain_scanner import scan_bargain_stocks; r=scan_bargain_stocks(3); print(r.get('telegram_message','スキャン失敗'))\"",
+      "presentation": { "reveal": "always", "panel": "shared", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "📚 今日の投資レッスンテスト",
+      "type": "shell",
+      "command": "python -c \"from src.investment_tutor import generate_daily_lesson; r=generate_daily_lesson({},{},{}); print('テーマ:', r.get('topic')); print(r.get('lesson',''))\"",
+      "presentation": { "reveal": "always", "panel": "shared", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "📅 積立タイミング分析テスト（日経225）",
+      "type": "shell",
+      "command": "python -c \"from src.dca_optimizer import analyze_dca_timing; r=analyze_dca_timing(); print(r.get('insight','分析失敗'))\"",
+      "presentation": { "reveal": "always", "panel": "shared", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "📡 保有銘柄アラートチェック",
+      "type": "shell",
+      "command": "python -c \"from src.portfolio_alert import check_portfolio_alerts; r=check_portfolio_alerts(); alerts=r.get('alerts',[]); print(f'アラート{len(alerts)}件'); [print(f\\\"  {a['name']}: {a['change_pct']:+.1f}% 含み損益{a['unrealized_pnl_pct']:+.1f}%\\\") for a in alerts] if alerts else print('  異常なし')\"",
+      "presentation": { "reveal": "always", "panel": "shared", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "🔕 通知重要度スコアテスト",
+      "type": "shell",
+      "command": "python -c \"from src.notification_filter import score_notification_importance; r=score_notification_importance({'USDJPY=X':{'latest':157},'\\^VIX':{'latest':22},'\\^GSPC':{'change_pct':-1.5},'\\^N225':{'change_pct':-0.8}},{},{'score':45}); print(f\\\"重要度: {r['importance_score']:.1f} [{r['level']}]  フル送信: {r['send_full_report']}\\\")\"",
+      "presentation": { "reveal": "always", "panel": "shared", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "📊 週次AIパフォーマンスレポートテスト",
+      "type": "shell",
+      "command": "python -c \"from src.weekly_performance import generate_weekly_report; r=generate_weekly_report(); print(r.get('telegram_message') if r.get('available') else '予測データが蓄積されていません（1週間後に有効）')\"",
+      "presentation": { "reveal": "always", "panel": "shared", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "🌙 夜の振り返りメッセージプレビュー",
+      "type": "shell",
+      "command": "python -c \"from src.fetch_prices import run as fp; from src.indicators import calc_risk_score; prices,fg=fp(); risk=calc_risk_score(prices); from src.evening_summary import generate_evening_message; print(generate_evening_message(prices,fg,risk))\"",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "🔧 全モジュール インポートチェック",
+      "type": "shell",
+      "command": "python -c \"mods=['news_bias_detector','fire_simulator','bargain_scanner','investment_tutor','dca_optimizer','notification_filter','portfolio_alert','weekly_performance','evening_summary']; [(__import__(f'src.{m}',fromlist=[m]) and print(f'✅ {m}')) or None for m in mods]\"",
+      "presentation": { "reveal": "always", "panel": "shared", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "📊 財務分析: ウォッチリスト全銘柄",
+      "type": "shell",
+      "command": "python analyze_stock.py",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "📊 財務分析: フジクラ (5803)",
+      "type": "shell",
+      "command": "python analyze_stock.py 5803",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "📊 財務分析: ソフトバンクG (9984)",
+      "type": "shell",
+      "command": "python analyze_stock.py 9984",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "📊 財務分析: 村田製作所 (6981)",
+      "type": "shell",
+      "command": "python analyze_stock.py 6981",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "📊 財務分析: TDK (6762)",
+      "type": "shell",
+      "command": "python analyze_stock.py 6762",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "📊 財務分析: 日立製作所 (6501)",
+      "type": "shell",
+      "command": "python analyze_stock.py 6501",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "📊 財務分析: 川崎重工業 (7012)",
+      "type": "shell",
+      "command": "python analyze_stock.py 7012",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "📊 財務分析: キオクシア (285A)",
+      "type": "shell",
+      "command": "python analyze_stock.py 285A",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "📊 財務分析: 信越化学工業 (4063)",
+      "type": "shell",
+      "command": "python analyze_stock.py 4063",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "📊 財務分析: ファーストリテイリング (9983) 日経寄与度1位",
+      "type": "shell",
+      "command": "python analyze_stock.py 9983",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "📊 財務分析: 東京エレクトロン (8035) 日経寄与度2位",
+      "type": "shell",
+      "command": "python analyze_stock.py 8035",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "📊 財務分析: ファナック (6954)",
+      "type": "shell",
+      "command": "python analyze_stock.py 6954",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "📊 財務分析: アドバンテスト (6857)",
+      "type": "shell",
+      "command": "python analyze_stock.py 6857",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "📊 財務分析: KDDI (9433)",
+      "type": "shell",
+      "command": "python analyze_stock.py 9433",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "📊 財務分析: ダイキン工業 (6367)",
+      "type": "shell",
+      "command": "python analyze_stock.py 6367",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "🔥 テーマ株人気ランキング（今すぐ確認）",
+      "type": "shell",
+      "command": "python -c \"from src.theme_ranker import run; r=run(); [print(f\\\"{i+1}位 {x['theme']} | 5日{x['perf_5d']:+.1f}% | ニュース{x['news_count']}件\\\") for i,x in enumerate(r['rankings'][:10])]\"",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "📋 適時開示チェック（前営業日・ウォッチリスト）",
+      "type": "shell",
+      "command": "python -m src.tdnet_watcher",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "📋 適時開示チェック（過去3営業日分）",
+      "type": "shell",
+      "command": "python -m src.tdnet_watcher 3",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "📋 適時開示チェック（日付指定 例:20260611）",
+      "type": "shell",
+      "command": "python -m src.tdnet_watcher ${input:tdnetDate}",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "📜 今日のアノマリーを確認",
+      "type": "shell",
+      "command": "python -m src.anomaly_calendar",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "🌙 天体イベント（今後45日）を確認",
+      "type": "shell",
+      "command": "python -m src.astro_calendar",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "📊 需給分析ランキング（ウォッチリスト26銘柄）",
+      "type": "shell",
+      "command": "python -m src.supply_demand",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "🔥 空売り残高ランキング（踏み上げ候補）",
+      "type": "shell",
+      "command": "python -m src.short_selling",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "🌐 ファンダ＆金融政策の要約（今すぐ）",
+      "type": "shell",
+      "command": "python -m src.macro_summary",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "📑 決算ブリーフ（前営業日の決算PDFをAI要約）",
+      "type": "shell",
+      "command": "python -m src.earnings_brief",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "🔥 空売り残高: 個別銘柄（コード入力）",
+      "type": "shell",
+      "command": "python -m src.short_selling ${input:stockCode}",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "🤖 テーマ分析: AIテーマ（さくらインターネット）",
+      "type": "shell",
+      "command": "python analyze_stock.py 3778",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "🛡️ テーマ分析: 防衛テーマ（三菱重工・IHI）",
+      "type": "shell",
+      "command": "python analyze_stock.py 7011 7013",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "💾 テーマ分析: 半導体材料（SUMCO・レゾナック）",
+      "type": "shell",
+      "command": "python analyze_stock.py 3436 4004",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "✈️ テーマ分析: インバウンド（ANA・オリエンタルランド）",
+      "type": "shell",
+      "command": "python analyze_stock.py 9202 4661",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "🏦 テーマ分析: 金利恩恵・高配当（三菱UFJ・商船三井・三菱商事）",
+      "type": "shell",
+      "command": "python analyze_stock.py 8306 9104 8058",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "📊 財務分析: 銘柄コードを入力して分析",
+      "type": "shell",
+      "command": "python analyze_stock.py ${input:stockCode}",
+      "presentation": { "reveal": "always", "panel": "new", "clear": true },
+      "problemMatcher": []
+    }
+  ],
+  "inputs": [
+    {
+      "id": "stockCode",
+      "type": "promptString",
+      "description": "証券コードを入力（例: 7203 / 6758 / 4063）",
+      "default": "9984"
+    },
+    {
+      "id": "tdnetDate",
+      "type": "promptString",
+      "description": "適時開示を見たい日付 YYYYMMDD（例: 20260611）",
+      "default": "20260611"
+    }
+  ]
+}

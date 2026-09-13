@@ -1,0 +1,352 @@
+"""
+朝の3分ブリーフ（Step MB）— 起きて最初に見る一枚
+
+なぜ必要か:
+  レポートには30以上の区画があり、全部見るのは現実的でない。
+  一方で「今日が普通の日か、特別な日か」の判断に本当に必要なのは
+  ごく少数の数字だけである。それを最初の一枚にまとめる。
+
+  優先順位は、この順に「行動が変わるか」で決めた。
+    ① 寄り付きがどうなるか   … 今日いちばん先に知りたいこと
+    ② 世界が怖がっているか   … VIXと円。2つ揃って初めて意味を持つ
+    ③ 夜のうちに何が起きたか … 通知を見逃していても分かるように
+    ④ 今日の予定           … 身構えるべき時間があるか
+
+  「たくさん載せる」ことより「これだけ見れば済む」ことを優先する。
+  詳細を知りたくなったら本編レポートへ進めばよい。
+
+run() → ブリーフのデータ / build_message() → Telegram用
+"""
+import traceback
+from datetime import datetime, timedelta
+
+from src.utils import setup_logger, get_jst_now
+
+logger = setup_logger("morning_brief")
+
+# 寄り付きの乖離をどう言い表すか（円）。日経の1日の値幅を踏まえた区分。
+_GAP_BANDS = [
+    (200,  "ほぼ変わらず", "落ち着いて見ていて大丈夫です"),
+    (500,  "やや動いた",   "普通の範囲です"),
+    (1000, "大きめ",       "何か材料が出ています。注意して見てください"),
+    (10**9, "非常に大きい", "大きな変化です。無理に動かない方が無難です"),
+]
+
+# VIXの水準。20未満は平常、25超で警戒というのが一般的な目安。
+_VIX_CALM, _VIX_ALERT = 20.0, 25.0
+
+# 日経VIの警戒水準。VIXと同じ数字は使えない。
+# 直近1年の日経VIは平均31.1・最低18.8・最高57.0で、VIX(平均18.1)より構造的に高い。
+# 日本株の方がもともと揺れやすいだけで、28は「異常」ではなく平常運転。
+# ⚠️ 固定のしきい値をやめた理由（2026-09-10）:
+#    _NVI_ALERT=38 は過去3年の**上位4%**にあたる。そこを超えないと
+#    警戒にならないので、31.6（上から14%）でも「平常」と表示していた。
+#    すぐ上の行に「弱気！慎重に」と出ているのに、その下が緑の「平常」で、
+#    読む人はどちらを信じればいいか分からない。
+#
+#    恐怖指数は「31.6」と言われても高いか低いか分からない数字なので、
+#    **過去の中での位置（パーセンタイル）**で判定し、位置も言葉で添える。
+#    しきい値を人が決め直す必要がなく、相場の水準が変わっても自動で追従する。
+_NVI_ALERT = 38.0          # 互換のため残す（下の位置判定が主）
+
+# 日経VIの「過去の中での位置」の区切り。数字ではなく順位で見る。
+_NVI_P_HIGH   = 90.0       # 上位10%に入っていれば高い
+_NVI_P_WARM   = 75.0       # 上位25%に入っていればやや高い
+_NVI_P_CALM   = 25.0       # 下位25%なら落ち着いている
+
+
+def _nvi_words(nvi, pct) -> str:
+    """恐怖指数の水準を、順位の言葉にして返す。
+
+    「31.6」だけでは判断できないが、「過去3年で上から14%」なら
+    高いか低いかが誰にでも分かる。
+    """
+    if nvi is None:
+        return ""
+    if pct is None:
+        return f"日経VI {nvi:.1f}"
+    top = 100.0 - pct
+    if pct >= _NVI_P_HIGH:
+        w = f"過去3年で上から{top:.0f}%の高さ"
+    elif pct >= _NVI_P_WARM:
+        w = f"過去3年で上から{top:.0f}%とやや高め"
+    elif pct <= _NVI_P_CALM:
+        w = f"過去3年で下から{pct:.0f}%と低め"
+    else:
+        w = "過去3年の平均的な水準"
+    return f"日経VI {nvi:.1f}（{w}）"
+
+
+def _band(diff_yen: float) -> tuple:
+    a = abs(diff_yen)
+    for limit, label, advice in _GAP_BANDS:
+        if a < limit:
+            return label, advice
+    return _GAP_BANDS[-1][1], _GAP_BANDS[-1][2]
+
+
+def _nikkei_outlook() -> dict:
+    """
+    ①寄り付きの見当。日経先物と東京終値の差を出す。
+    この1つだけで「今日どう始まるか」がほぼ分かるので最優先で置く。
+    """
+    out = {"available": False}
+    try:
+        from src.fetch_prices import _fetch_nikkei_official_csv
+        from src.quote_util import quote
+
+        nk = _fetch_nikkei_official_csv("nikkei_stock_average_daily_jp.csv") or {}
+        cash = nk.get("latest")
+        # 先物は2契約から取り、片方が欠けても止まらないようにする
+        fut = None
+        for sym in ("NKD=F", "NIY=F"):
+            q = quote(sym, rng="5d")
+            if q:
+                fut = q["price"]
+                break
+        if not cash or not fut:
+            return out
+
+        diff = fut - cash
+        label, advice = _band(diff)
+        return {
+            "available": True,
+            "cash": cash, "cash_chg": nk.get("change_pct"),
+            "future": fut,
+            "diff_yen": round(diff), "diff_pct": round(diff / cash * 100, 2),
+            "band": label, "advice": advice,
+        }
+    except Exception:
+        logger.error("寄り付きの見当を出せませんでした", exc_info=True)
+        return out
+
+
+def _risk_temp() -> dict:
+    """
+    ②怖がられているか。**日経VI・VIX・ドル円の3つ**を組で見る。
+
+    ⚠️ 2026-08-25に判明した重大な穴:
+      当初はVIXとドル円だけで判定していた。しかし2026年8月17〜21日の週、
+      日経平均は−4.63%下げたのに、VIXは−0.39%（1年で下から12%）、
+      ドル円も−0.21%でほとんど動かなかった。
+      結果、**日経が4.6%下げている5日間ずっと「平常」を出し続けていた**。
+
+      原因は明快で、VIXは米国株にかかる保険料であって日本株のものではない。
+      下げたのが日本の半導体・AI関連に集中していたため、米国の計器は動かなかった。
+      同じ週、日本側の日経VIは水曜に+10%跳ねており、拾えたはずの信号だった。
+
+      そこで日経VIを判定の中心に据える。日本株を見ている以上、
+      日本の計器を最初に見るのが筋である。
+
+    3つを組で見る理由:
+      ・日経VI … 日本株そのものの警戒度。**これが主**
+      ・VIX    … 世界共通の話かどうかの切り分け
+      ・ドル円 … 円高を伴えば本物の逃避。伴わなければ株の中の話
+    """
+    out = {"available": False}
+    try:
+        from src.quote_util import quote
+        v = quote("^VIX", rng="5d")
+        f = quote("USDJPY=X", rng="5d")
+        if not v or not f:
+            return out
+
+        vix, vix_chg = v["price"], v["change_pct"]
+        fx, fx_chg = f["price"], f["change_pct"]
+        yen_strong = fx_chg < -0.3        # 円高＝逃避の目印
+
+        # 日本側の計器。取れなくても止めない（米国側だけで従来通り判定する）
+        nvi = nvi_chg = nvi_pct = None
+        try:
+            from src.fetch_prices import _fetch_nikkei_vi
+            d = _fetch_nikkei_vi() or {}
+            nvi, nvi_chg = d.get("latest"), d.get("change_pct")
+            nvi_pct = d.get("pctile")
+        except Exception:
+            logger.error("日経VIを取得できませんでした", exc_info=True)
+
+        # 日経VIは平常時でもVIXの倍近い（日本の方がもともと揺れやすい）。
+        # 水準ではなく「普段からどれだけ跳ねたか」で見る。
+        jp_jump = nvi_chg is not None and nvi_chg >= 8
+        # 水準は「過去の中での位置」で見る。位置が取れない日だけ従来の38を使う。
+        if nvi_pct is not None:
+            jp_high = nvi_pct >= _NVI_P_HIGH        # 上位10%
+            jp_warm = nvi_pct >= _NVI_P_WARM        # 上位25%
+            jp_calm = nvi_pct <= _NVI_P_CALM        # 下位25%
+        else:
+            jp_high = nvi is not None and nvi >= _NVI_ALERT
+            jp_warm = nvi is not None and nvi >= 28.0
+            jp_calm = nvi is not None and nvi < 20.0
+
+        if jp_jump and (yen_strong or vix_chg > 8):
+            level, msg = "警戒", ("日本の恐怖指数が跳ね、円高か世界の不安も伴っています。"
+                                  "本物のリスク回避です")
+        elif jp_jump:
+            level, msg = "やや警戒", ("日本の恐怖指数が跳ねています。"
+                                      "米国は静かなので、日本側固有の材料の可能性")
+        elif vix >= _VIX_ALERT and yen_strong:
+            level, msg = "警戒", "恐怖指数が高く、同時に円高。本物のリスク回避が出ています"
+        elif jp_high or vix >= _VIX_ALERT:
+            level, msg = "やや警戒", ("日本株の恐怖指数が過去3年でも高いほうの"
+                                      "10%に入っています")
+        elif yen_strong and vix_chg > 5:
+            level, msg = "やや警戒", "円高と恐怖指数の上昇が同時に出ています"
+        elif jp_warm:
+            # ⚠️ ここが抜けていた。上位25%の水準を「平常」と言っていたため、
+            #    「弱気！慎重に」の真下に緑の「平常」が並ぶ矛盾が起きていた。
+            level, msg = "やや高い", ("普段よりは警戒されている水準です。"
+                                      "パニックではありませんが、値動きは荒くなりやすい状態")
+        elif vix < _VIX_CALM and jp_calm:
+            level, msg = "平常", "市場は落ち着いています"
+        else:
+            level, msg = "普通", "特に警戒すべき水準ではありません"
+
+        return {"available": True, "vix": vix, "vix_chg": vix_chg,
+                "fx": fx, "fx_chg": fx_chg,
+                "nvi": nvi, "nvi_chg": nvi_chg, "nvi_pctile": nvi_pct,
+                "nvi_words": _nvi_words(nvi, nvi_pct),
+                "level": level, "message": msg}
+    except Exception:
+        logger.error("リスク温度を出せませんでした", exc_info=True)
+        return out
+
+
+def _overnight() -> dict:
+    """
+    ③夜のうちに何が起きたか。
+    通知を見逃していても朝に把握できるよう、直近1セッション分をまとめる。
+    """
+    out = {"available": False, "items": []}
+    try:
+        from src.quote_util import quote
+        items = []
+        for sym, label in (("^GSPC", "S&P500"), ("^SOX", "SOX半導体"),
+                           ("^IXIC", "NASDAQ")):
+            q = quote(sym, rng="5d")
+            if q:
+                items.append({"name": label, "chg": round(q["change_pct"], 2)})
+
+        # 米国で全面的な動きがあったかは us_movers の判定を借りる
+        big = None
+        try:
+            from src.us_movers import run as um_run
+            r = um_run()
+            if r.get("available"):
+                big = {"emergency": bool(r.get("emergency")),
+                       "sectors": [s["sector"] for s in (r.get("sectors") or [])[:2]],
+                       "movers": [(m["name"], m["chg_pct"])
+                                  for m in (r.get("movers") or [])[:3]]}
+        except Exception:
+            logger.debug(traceback.format_exc())
+
+        return {"available": bool(items), "items": items, "us": big}
+    except Exception:
+        logger.error("夜間の動きをまとめられませんでした", exc_info=True)
+        return out
+
+
+def _today_events() -> dict:
+    """④今日の予定。身構えるべき時間があるかだけ分かればよい。"""
+    try:
+        from src.economic_calendar import run as cal_run
+        c = cal_run() or {}
+        evs = c.get("today") or c.get("events") or []
+        return {"available": bool(evs), "events": evs[:4]}
+    except Exception:
+        logger.debug(traceback.format_exc())
+        return {"available": False, "events": []}
+
+
+def run() -> dict:
+    logger.info("=== 朝の3分ブリーフ ===")
+    d = {
+        "generated_at": get_jst_now().strftime("%Y-%m-%d %H:%M"),
+        "outlook": _nikkei_outlook(),
+        "risk": _risk_temp(),
+        "overnight": _overnight(),
+        "events": _today_events(),
+    }
+    d["available"] = d["outlook"].get("available") or d["risk"].get("available")
+    d["headline"] = _headline(d)
+    logger.info(f"✅ {d['headline']}")
+    return d
+
+
+def _headline(d: dict) -> str:
+    """
+    最初の1行。ここだけ読めば「今日が普通の日か」が分かるようにする。
+    """
+    o, r = d.get("outlook") or {}, d.get("risk") or {}
+    parts = []
+    if o.get("available"):
+        diff = o["diff_yen"]
+        arrow = "高く" if diff > 0 else "安く"
+        parts.append(f"寄り付きは約{abs(diff):,}円{arrow}始まる見込み")
+    if r.get("available") and r["level"] in ("警戒", "やや警戒"):
+        parts.append(f"リスク {r['level']}")
+    if not parts:
+        return "今日は特筆すべき材料はありません"
+    return " ／ ".join(parts)
+
+
+def build_message(d: dict) -> str:
+    lines = ["☀️ *おはようございます — 今日の3分ブリーフ*",
+             f"　{d['headline']}",
+             "━━━━━━━━━━━━━━", ""]
+
+    o = d.get("outlook") or {}
+    if o.get("available"):
+        arrow = "🔺" if o["diff_yen"] > 0 else "🔻"
+        lines += [f"① *寄り付きの見当*　{o['band']}",
+                  f"　日経（昨日の終値）　{o['cash']:,.0f}円"
+                  + (f"（{o['cash_chg']:+.2f}%）" if o.get("cash_chg") is not None else ""),
+                  f"　日経先物（今）　　　{o['future']:,.0f}円",
+                  f"　{arrow} 差 *{o['diff_yen']:+,}円*（{o['diff_pct']:+.2f}%）",
+                  f"　→ {o['advice']}", ""]
+
+    r = d.get("risk") or {}
+    if r.get("available"):
+        # ⚠️ 対応表に無い水準は全部🟢になる。「やや高い」を足したとき
+        #    ここを直し忘れると、黄色にしたはずの警告が緑で出る。
+        icon = {"警戒": "🔴", "やや警戒": "🟠",
+                "やや高い": "🟡", "普通": "⚪"}.get(r["level"], "🟢")
+        lines.append(f"② *市場の緊張度*　{icon} {r['level']}")
+        # 日本株を見ているのだから、日本の計器を先に出す
+        if r.get("nvi") is not None:
+            lines.append(f"　日経VI（日本）　　{r['nvi']:.2f}"
+                         + (f"（{r['nvi_chg']:+.2f}%）" if r.get("nvi_chg") is not None else ""))
+        lines += [f"　VIX（米国）　　　{r['vix']:.2f}（{r['vix_chg']:+.2f}%）",
+                  f"　ドル円　　　　　　{r['fx']:.2f}（{r['fx_chg']:+.2f}%）",
+                  f"　→ {r['message']}", ""]
+
+    ov = d.get("overnight") or {}
+    if ov.get("available"):
+        lines.append("③ *夜のうちの動き*")
+        lines.append("　" + "　".join(f"{x['name']} {x['chg']:+.2f}%"
+                                      for x in ov["items"]))
+        us = ov.get("us") or {}
+        if us.get("emergency"):
+            lines.append("　🚨 米国市場は全面的に動いています")
+        if us.get("movers"):
+            lines.append("　大きく動いた: " +
+                         "・".join(f"{n} {c:+.1f}%" for n, c in us["movers"]))
+        lines.append("")
+
+    ev = d.get("events") or {}
+    if ev.get("available"):
+        lines.append("④ *今日の予定*")
+        for e in ev["events"]:
+            t = e.get("time") or e.get("時刻") or ""
+            n = e.get("name") or e.get("event") or e.get("イベント") or str(e)
+            lines.append(f"　{t} {n}".rstrip())
+        lines.append("")
+
+    lines += ["ℹ️ ①と②だけで「今日が普通の日か特別な日か」はほぼ判断できます。",
+              "　 気になったときだけ、レポート本編へお進みください。"]
+    return "\n".join(lines)[:4000]
+
+
+if __name__ == "__main__":
+    import io, sys
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+    print(build_message(run()))

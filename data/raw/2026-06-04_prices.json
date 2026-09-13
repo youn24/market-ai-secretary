@@ -1,0 +1,134 @@
+{
+  "^N225": {
+    "symbol": "^N225",
+    "name": "日経平均",
+    "category": "japan",
+    "fetch_time": "2026-06-04T18:37:49.733501+09:00",
+    "source": "yfinance",
+    "latest": 67470.6875,
+    "prev_close": 68402.1328,
+    "change_pct": -1.36,
+    "error": null
+  },
+  "^TOPX": {
+    "symbol": "^TOPX",
+    "name": "TOPIX",
+    "category": "japan",
+    "fetch_time": "2026-06-04T18:37:49.733501+09:00",
+    "source": null,
+    "latest": null,
+    "prev_close": null,
+    "change_pct": null,
+    "error": "全ソースで取得失敗"
+  },
+  "^GSPC": {
+    "symbol": "^GSPC",
+    "name": "S&P500",
+    "category": "us",
+    "fetch_time": "2026-06-04T18:37:49.733501+09:00",
+    "source": "yfinance",
+    "latest": 7553.6802,
+    "prev_close": 7609.7798,
+    "change_pct": -0.74,
+    "error": null
+  },
+  "^IXIC": {
+    "symbol": "^IXIC",
+    "name": "NASDAQ",
+    "category": "us",
+    "fetch_time": "2026-06-04T18:37:49.733501+09:00",
+    "source": "yfinance",
+    "latest": 26853.9805,
+    "prev_close": 27093.9004,
+    "change_pct": -0.89,
+    "error": null
+  },
+  "^DJI": {
+    "symbol": "^DJI",
+    "name": "ダウ工業株",
+    "category": "us",
+    "fetch_time": "2026-06-04T18:37:49.733501+09:00",
+    "source": "yfinance",
+    "latest": 50687.0703,
+    "prev_close": 51307.7891,
+    "change_pct": -1.21,
+    "error": null
+  },
+  "^VIX": {
+    "symbol": "^VIX",
+    "name": "VIX恐怖指数",
+    "category": "us",
+    "fetch_time": "2026-06-04T18:37:49.733501+09:00",
+    "source": "yfinance",
+    "latest": 16.49,
+    "prev_close": 16.06,
+    "change_pct": 2.68,
+    "error": null
+  },
+  "USDJPY=X": {
+    "symbol": "USDJPY=X",
+    "name": "ドル円",
+    "category": "forex",
+    "fetch_time": "2026-06-04T18:37:49.733501+09:00",
+    "source": "yfinance",
+    "latest": 159.85,
+    "prev_close": 159.968,
+    "change_pct": -0.07,
+    "error": null
+  },
+  "EURUSD=X": {
+    "symbol": "EURUSD=X",
+    "name": "ユーロドル",
+    "category": "forex",
+    "fetch_time": "2026-06-04T18:37:49.733501+09:00",
+    "source": "yfinance",
+    "latest": 1.1629,
+    "prev_close": 1.1622,
+    "change_pct": 0.06,
+    "error": null
+  },
+  "^TNX": {
+    "symbol": "^TNX",
+    "name": "米10年金利",
+    "category": "rates",
+    "fetch_time": "2026-06-04T18:37:49.733501+09:00",
+    "source": "yfinance",
+    "latest": 4.491,
+    "prev_close": 4.455,
+    "change_pct": 0.81,
+    "error": null
+  },
+  "GC=F": {
+    "symbol": "GC=F",
+    "name": "金(GOLD)",
+    "category": "commodity",
+    "fetch_time": "2026-06-04T18:37:49.733501+09:00",
+    "source": "yfinance",
+    "latest": 4492.5,
+    "prev_close": 4436.7002,
+    "change_pct": 1.26,
+    "error": null
+  },
+  "CL=F": {
+    "symbol": "CL=F",
+    "name": "WTI原油",
+    "category": "commodity",
+    "fetch_time": "2026-06-04T18:37:49.733501+09:00",
+    "source": "yfinance",
+    "latest": 94.79,
+    "prev_close": 96.02,
+    "change_pct": -1.28,
+    "error": null
+  },
+  "BTC-USD": {
+    "symbol": "BTC-USD",
+    "name": "Bitcoin",
+    "category": "crypto",
+    "fetch_time": "2026-06-04T18:37:49.733501+09:00",
+    "source": "yfinance",
+    "latest": 62852.0,
+    "prev_close": 64014.3672,
+    "change_pct": -1.82,
+    "error": null
+  }
+}

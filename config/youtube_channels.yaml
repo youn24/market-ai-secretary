@@ -1,0 +1,82 @@
+# YouTube 登録チャンネル（本格分析の対象）
+# ─────────────────────────────────────────────────────────────
+# ここに登録したチャンネルの「直近の最新動画」を毎朝1本ずつ取得し、
+# Gemini が動画の実際の中身（音声・字幕）を解析して日経平均・銘柄の
+# 要点を要約します。
+#
+# 追加方法:
+#   1) 追加したいチャンネルのページを開く（例 https://www.youtube.com/@ToshiruRsec）
+#   2) チャンネルIDを調べる（"UC" で始まる文字列。ページのソースの "channelId" 、
+#      または handle を下の resolve_handle に書けば自動解決します）
+#   3) 下の channels に - name と channel_id を1行ずつ足すだけ
+#
+# 無料枠の制限: 1日あたりYouTube動画 合計8時間まで → 解析は max_videos 本に制限
+# ─────────────────────────────────────────────────────────────
+
+settings:
+  max_videos: 8          # 1回の実行で解析する最大本数（登録が増えたので、その日の新しい順に8本）
+  within_hours: 30       # 「最近の動画」とみなす時間（これより古い動画は対象外）
+  model: "gemini-2.5-flash"   # YouTube解析に使うGeminiモデル（2.5+推奨）
+
+# 質の高い・情報が正確な市場解説チャンネルを厳選登録
+channels:
+  - name: "トウシル（楽天証券）"
+    channel_id: "UC5BiTvy2Ni2MyigJPspjhOA"
+    # 楽天証券公式。日経平均・マーケットの解説を高頻度で配信（信頼性◎）
+
+  - name: "暁投資顧問（投資の寺子屋）"
+    channel_id: "UCOfzLmXpI3qmZfV7_Cs1sYA"
+    # 投資顧問会社。毎日の相場解説・需給/空売り比率など実践的で精度が高い
+
+  - name: "NOBU塾"
+    channel_id: "UCOX7X_ddhi1oXurSbJsk45Q"
+    # 日経平均・デイトレ。相場のシナリオを具体的な水準で解説
+
+  - name: "松井証券"
+    channel_id: "UCS5dVIXy8SYcIMWRmEI-_3A"
+    # 松井証券公式。市場解説と操作案内が混在 → 非市場動画は自動スキップ
+
+  - name: "上岡正明"
+    channel_id: "UC0gvn7xAe2wHtFZYPqsf6bA"
+    # 株式投資・日経平均の解説（ビジネス作家・投資家）
+
+  - name: "ばっちゃまの米国株"
+    channel_id: "UCzZSnddt3xTL0V-ELJaMUFw"
+    # 米国株を毎日解説（じっちゃま系）。日本株中心の他5社に米国市場の視点を補完
+
+  - name: "株リアルライブ"
+    channel_id: "UC5Qgc-tEFmm5iQX5tUy6TyA"
+    # 日次で個別株を詳細解説。「あすの朝、要注意」など寄り前情報が充実
+
+  - name: "明日上がる株を予想"
+    channel_id: "UCjpbdd7wZ2VL3RwfsK91CQg"
+    # 毎日「翌日上がる株」を予想
+
+  - name: "ひげづら株ちゃんねる"
+    channel_id: "UCfx9nY1DIwd3p0zbtdG4FOQ"
+    # 取引日ごとに国内外指数・セクター・個別株の地合いと見通しを解説
+
+  - name: "株の買い時を考えるチャンネル"
+    channel_id: "UCoADGOCHt0bH5K-S8eL_kwg"
+    # 日本株の買い時・個別株の状況を解説
+
+  - name: "株Tube（Jumping Point!!）"
+    channel_id: "UCgDa6dxD3jPElw6eCvL1T2g"
+    # 注目銘柄ランキング・「明日上がる株」シリーズ（数日おき）
+
+  - name: "もふもふ不動産"
+    channel_id: "UCsWTZ4nYODCwlE8rdv7DZzA"
+    # 株・経済・不動産・税金など（日経/日銀の解説あり。不動産寄りの回も）
+
+  - name: "日経CNBC"
+    channel_id: "UClVsQnfs-jKkjKmUKUHnT2g"
+    # 日経CNBC公式。市場・経済の専門解説（※テレ東BIZは一般ニュース中心のため代替採用）
+
+  # 更新が稀なため一旦保留（配信があれば下のコメントを外せば復活）
+  # - name: "後藤達也・経済チャンネル"
+  #   channel_id: "UCeLeyHAaZJb4tm0cAMxc60Q"
+
+  # 追加方法: channel_id を入れるか、分からなければ handle だけでもOK（自動解決）
+  # - name: "お気に入りチャンネル"
+  #   channel_id: "UCxxxxxxxxxxxxxxxxxxxxxx"
+  #   handle: "@example"

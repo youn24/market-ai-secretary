@@ -1,0 +1,99 @@
+# GitHub Actions - 完全自律チームの予測検証ワークフロー
+# 毎朝7:35 JST（前日の予測を検証）に実行
+
+name: 自律チーム予測検証
+
+on:
+  # schedule:  ← 見出しだけ残すと書式エラーになるので、見出しごとコメントにした
+    # ⛔ 2026-09-11 停止。この検証は**設置以来一度も動いたことがない**。
+    #    朝の分析は daily_report（別の処理）、検証はここ（別の処理）で走るが、
+    #    src/autonomous_team.py は予測を**メモリ上のリストにしか持たず**
+    #    （self.daily_reports = []、ファイルから読み戻さない）、検証側からは毎回空。
+    #    作られた検証ファイルはすべて2バイト（{}）だった。
+    #    その空の結果から、平日毎朝
+    #      「📊 予測: --- ／ 📈 実績: +0.00% ／ ✅ 判定: 外れ ❌ ／ 📝 理由: ---」
+    #    という通知を送り続けていた（correct が無いと「外れ」になる作り）。
+    #    しかも「1日3通・朝は1通」の決まりに対する4通目で、notify_meter も通っていなかった。
+    #    予測の検証は cloud_run の prediction_tracker が担っている（遡り検証つき）。
+    #    必要になったら手動実行（workflow_dispatch）で動かせるよう、ファイルは残す。
+    # - cron: "35 22 * * 1-5"   # UTC 日〜木 22:35 = JST 月〜金 7:35
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  prediction-verification:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: リポジトリをチェックアウト
+        uses: actions/checkout@v4
+
+      - name: Python 3.11 セットアップ
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: ライブラリインストール
+        run: |
+          pip install --upgrade pip
+          pip install pandas numpy requests feedparser beautifulsoup4 \
+                      lxml python-dotenv PyYAML yfinance plotly \
+                      matplotlib kaleido google-generativeai pytz
+
+      - name: 予測検証・改善案生成
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          PYTHONIOENCODING: utf-8
+        run: |
+          echo "🔬 前日の予測を検証中..."
+          python run_autonomous_team.py --mode verification
+
+      - name: 検証結果をgit保存
+        run: |
+          git config --global user.email "actions@github.com"
+          git config --global user.name "Autonomous Team Bot"
+          # git add に存在しないパスを渡すと何もステージされない（2026-08-18の事故）。
+          # ワイルドカードもログファイルも「無いことがある」ので個別に確認する。
+          for f in data/team_verification_*.json logs/autonomous_team.log; do
+            [ -f "$f" ] && git add -f "$f"
+          done
+          if git diff --staged --quiet; then
+            echo "記録する変更はありません"
+          else
+            git commit -m "🔬 自動検証: 前日の予測検証結果を記録"
+            if ! git push origin main; then
+              git pull --rebase --autostash origin main || true
+              git push origin main || { echo "::error::検証結果のpushに失敗しました"; exit 1; }
+            fi
+          fi
+
+      - name: 検証結果をTelegramに通知
+        # ⛔ 2026-09-11 停止。空の結果から毎朝「外れ ❌」だけを送っていた。上の説明を参照。
+        if: false
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          python -c "
+          import os, requests, json
+          from pathlib import Path
+          files = sorted(Path('data').glob('team_verification_*.json'), reverse=True)
+          if files:
+              r = json.loads(files[0].read_text(encoding='utf-8'))
+              msg = ('🔬 【自律チーム検証結果】\n\n'
+                     '📊 予測: ' + str(r.get('predicted','---')) + '\n'
+                     '📈 実績: ' + ('+' if (r.get('actual_change',0) or 0) >= 0 else '') + f\"{r.get('actual_change',0):.2f}%\" + '\n'
+                     '✅ 判定: ' + ('正解 ✅' if r.get('correct') else '外れ ❌') + '\n'
+                     '📝 理由: ' + str(r.get('lesson_learned','---')))
+              requests.post(
+                  'https://api.telegram.org/bot' + os.environ['TELEGRAM_BOT_TOKEN'] + '/sendMessage',
+                  json={'chat_id': os.environ['TELEGRAM_CHAT_ID'], 'text': msg})
+          " || echo "通知スキップ"

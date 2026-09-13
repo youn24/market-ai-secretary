@@ -1,0 +1,1502 @@
+"""
+Telegram通知モジュール（初心者でも一目でわかるデザイン）
+"""
+import os
+import re
+import json
+import traceback
+import requests
+from dotenv import load_dotenv
+from src.utils import setup_logger, get_today_str
+
+logger = setup_logger("notify_telegram")
+load_dotenv()
+
+
+def _is_configured() -> bool:
+    token   = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
+    chat_id = os.getenv("TELEGRAM_CHAT_ID", "").strip()
+    skip    = {"ここにBotFatherのトークン", "ここにあなたのChat ID", ""}
+    return token not in skip and chat_id not in skip
+
+
+def _fmt(prices: dict, sym: str, unit: str = "") -> str:
+    d   = prices.get(sym, {})
+    v   = d.get("latest")
+    chg = d.get("change_pct")
+    if v is None:
+        return "---"
+    arrow = "▲" if (chg or 0) >= 0 else "▼"
+    chg_s = f"{abs(chg):.2f}%" if chg is not None else ""
+    return f"{v:,.2f}{unit} {arrow}{chg_s}"
+
+
+def _mood(score: float) -> tuple:
+    """地合いスコア → (信号灯, 一言)"""
+    if   score >= 2:   return "🟢", "強気！上昇ムード"
+    elif score >= 0.5: return "🟢", "やや強気"
+    elif score >= -0.5:return "🟡", "中立・様子見"
+    elif score >= -2:  return "🟠", "やや弱気・注意"
+    else:               return "🔴", "弱気！慎重に"
+
+
+def _fg_bar(score) -> str:
+    """Fear&Greed をテキストバーで表現"""
+    n = int(score or 50)
+    filled = round(n / 10)
+    bar = "█" * filled + "░" * (10 - filled)
+    if n >= 75: emoji, label = "😱", "超強欲"
+    elif n >= 55: emoji, label = "😤", "強欲"
+    elif n >= 45: emoji, label = "😐", "中立"
+    elif n >= 25: emoji, label = "😰", "恐怖"
+    else:         emoji, label = "😭", "超恐怖"
+    return f"{emoji} {bar} {n} ({label})"
+
+
+def _fmtv(prices: dict, sym: str, unit: str = "") -> str:
+    """値をinline code・変化率を矢印付きで返す（プロ仕様フォーマット）"""
+    d   = prices.get(sym, {})
+    v   = d.get("latest")
+    chg = d.get("change_pct")
+    if v is None:
+        return "`---`"
+    arrow = "▲" if (chg or 0) >= 0 else "▼"
+    chg_s = f" {arrow}`{abs(chg):.2f}%`" if chg is not None else ""
+    return f"`{v:,.2f}{unit}`{chg_s}"
+
+
+def build_three_messages(risk, analysis, mode,
+                         prices=None, news=None,
+                         fear_greed=None, ai_summary=None,
+                         report_paths=None,
+                         note_article_url: str = "",
+                         note_magazine_url: str = "") -> list:
+    from datetime import date as _date
+    today      = get_today_str()
+    prices     = prices or {}
+    news       = news or []
+    fear_greed = fear_greed or {}
+    ai_summary = ai_summary or {}
+    report_paths = report_paths or {}
+
+    score    = risk.get("score", 0)
+    tl, mood = _mood(score)
+    fg_score = fear_greed.get("score") or 50
+    fg_bar   = _fg_bar(fg_score)
+    score_s  = f"+{score:.1f}" if score >= 0 else f"{score:.1f}"
+    weekday  = ["月", "火", "水", "木", "金", "土", "日"][_date.today().weekday()]
+
+    # VIX判定
+    vix_val = prices.get("^VIX", {}).get("latest") or 0
+    if   vix_val < 15: vix_icon, vix_txt = "🟢", "安定"
+    elif vix_val < 20: vix_icon, vix_txt = "🟡", "やや不安"
+    elif vix_val < 30: vix_icon, vix_txt = "🟠", "警戒"
+    else:              vix_icon, vix_txt = "🔴", "危険！"
+
+    # ニュース整理（重要度順・カテゴリ偏り防止）
+    sorted_news = sorted(news, key=lambda x: {"A":0,"B":1,"C":2}.get(x.get("importance","C"),2))
+    imp_icon    = {"A": "🔴", "B": "🟡", "C": "⚪"}
+    cat_counts: dict[str, int] = {}
+    news_lines  = []
+    for item in sorted_news:
+        if len(news_lines) >= 6:
+            break
+        cat = item.get("category", "その他")
+        cat_counts[cat] = cat_counts.get(cat, 0) + 1
+        if cat_counts[cat] <= 2:
+            icon  = imp_icon.get(item.get("importance", "C"), "⚪")
+            title = item.get("title", "")[:42]
+            news_lines.append(f"{icon} {title}")
+
+    # ━━━━━ 通知① 相場まとめ（プロ仕様） ━━━━━
+    msg1 = (
+        f"🤖 *市場AI秘書* | {today}（{weekday}）\n"
+        f"━━━━━━━━━━━━━━━━━━━━\n"
+        f"\n"
+        f"┌─────────────────────┐\n"
+        f"│  {tl} *今日の判断: {mood}*\n"
+        f"│  AIスコア `{score_s}` / ±3\n"
+        f"└─────────────────────┘\n"
+        f"\n"
+        f"*📈 株価*\n"
+        f"🇯🇵 日経  {_fmtv(prices,'^N225','円')}\n"
+        f"🇺🇸 S&P  {_fmtv(prices,'^GSPC')}\n"
+        f"🇺🇸 NAS  {_fmtv(prices,'^IXIC')}\n"
+        f"\n"
+        f"*💱 為替・商品*\n"
+        f"💵 ドル円 {_fmtv(prices,'USDJPY=X','円')}\n"
+        f"🥇 金    {_fmtv(prices,'GC=F','$')}\n"
+        f"🛢 原油  {_fmtv(prices,'CL=F','$')}\n"
+        f"₿ BTC   {_fmtv(prices,'BTC-USD','$')}\n"
+        f"\n"
+        f"⚡ *VIX* {_fmtv(prices,'^VIX')}  {vix_icon} {vix_txt}\n"
+        f"😱 *恐怖指数* `{fg_bar}`\n"
+        f"\n"
+        f"━━━━━━━━━━━━━━━━━━━━\n"
+        f"*📰 注目ニュース*\n"
+        + "\n".join(news_lines)
+    )
+
+    # ━━━━━ 通知② AI 3視点分析 ━━━━━
+    ai_lines = []
+    if ai_summary.get("available"):
+        bull = (ai_summary.get("bull_view") or "")[:120]
+        bear = (ai_summary.get("bear_view") or "")[:120]
+        neut = (ai_summary.get("neutral_view") or "")[:180]
+        if bull: ai_lines.append(f"📈 *強気派の見方*\n{bull}")
+        if bear: ai_lines.append(f"📉 *弱気派の見方*\n{bear}")
+        if neut: ai_lines.append(f"⚖️ *AIの総合判断*\n{neut}")
+    else:
+        ai_lines.append("🤖 AI分析を実行中...")
+
+    msg2_caption = (
+        f"🤖 *AI 3視点分析*\n"
+        f"━━━━━━━━━━━━━━━━━━━━\n"
+        + "\n\n".join(ai_lines)
+    )
+
+    # ━━━━━ 通知③ 詳細レポート + note誘導 ━━━━━
+    report_url   = report_paths.get("url", "")
+    mag_url      = note_magazine_url or os.getenv("NOTE_MAGAZINE_URL", "").strip()
+    article_url  = note_article_url  or ""
+
+    # note誘導ブロック（マガジンURLがある場合のみ表示）
+    note_block = ""
+    if mag_url:
+        note_block = (
+            f"\n"
+            f"━━━━━━━━━━━━━━━━━━━━\n"
+            f"📝 *今日のnote記事（AI深掘り分析）*\n"
+        )
+        if article_url:
+            note_block += f"🔗 {article_url}\n"
+        note_block += (
+            f"✅ 無料：相場まとめ・価格表\n"
+            f"🔐 有料：AI3視点・シナリオ・テクニカル\n"
+            f"\n"
+            f"📰 *月額マガジン登録*（毎朝届く深掘り分析）\n"
+            f"💳 {mag_url}\n"
+        )
+
+    # FXアフィリエイトブロック（FX_AFFILIATE_URL設定時のみ表示）
+    aff_url = os.getenv("FX_AFFILIATE_URL", "").strip()
+    aff_block = ""
+    if aff_url:
+        aff_block = (
+            f"\n"
+            f"━━━━━━━━━━━━━━━━━━━━\n"
+            f"💹 *FX口座をお持ちでない方へ*\n"
+            f"スプレッド最狭水準・ツール充実のFX口座\n"
+            f"👇 無料開設はこちら\n"
+            f"{aff_url}\n"
+        )
+
+    msg3 = (
+        f"📱 *詳細レポート*\n"
+        f"━━━━━━━━━━━━━━━━━━━━\n"
+        f"チャート・AI分析・ニュースを一画面で確認：\n\n"
+        f"{report_url if report_url else '（準備中）'}\n"
+        f"\n"
+        f"📊チャート  🤖AI議論  📰ニュース\n"
+        f"📐テクニカル  🎭シナリオ  📅カレンダー"
+        + note_block
+        + aff_block
+    )
+
+    return [msg1, msg2_caption, msg3]
+
+
+# ────────────────────────────────────────────────────────────────
+# 低レベル送信関数
+# ────────────────────────────────────────────────────────────────
+
+def verify_bot() -> bool:
+    """
+    起動時にボットトークンの有効性を確認し、結果をログに明示する。
+    → トークンが失効/不一致のとき、Actionsログに「❌」が必ず残るので
+       「成功表示なのに通知が来ない」事故が一目で分かる。
+    """
+    if not _is_configured():
+        logger.error("❌ Telegram未設定（TOKEN/CHAT_IDが空）。通知は送れません。"
+                     "GitHub Secrets を確認してください。")
+        return False
+    token = os.getenv("TELEGRAM_BOT_TOKEN")
+    try:
+        r = requests.get(f"https://api.telegram.org/bot{token}/getMe", timeout=10)
+        if r.status_code == 200 and r.json().get("ok"):
+            uname = r.json().get("result", {}).get("username", "?")
+            logger.info(f"✅ Telegramボット有効: @{uname}")
+            return True
+        logger.error(f"❌ TELEGRAM_BOT_TOKEN が無効（getMe status={r.status_code}）。"
+                     "BotFatherでトークンを再生成した場合は GitHub Secrets の "
+                     "TELEGRAM_BOT_TOKEN を新トークンに更新してください。")
+        return False
+    except Exception as e:
+        logger.error(f"❌ Telegram getMe 失敗: {e}")
+        return False
+
+
+def send_message(text: str, chat_id: str = None, bot_token: str = None) -> bool:
+    _tok = bot_token or os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
+    _cid = str(chat_id) if chat_id is not None else os.getenv("TELEGRAM_CHAT_ID", "").strip()
+    if not _tok or not _cid or _tok in {"ここにBotFatherのトークン", ""} or _cid in {"ここにあなたのChat ID", ""}:
+        logger.info("Telegram 未設定スキップ")
+        return False
+
+    # 全通知はここを通る。通数の記録と暴走の安全弁をここ1か所で行う
+    # （各所に入れて回ると必ず付け忘れが出る）。
+    try:
+        from src.notify_meter import allow as _allow, record as _rec
+    except Exception:
+        _allow, _rec = (lambda *a, **k: True), (lambda *a, **k: None)
+    if not _allow("text"):
+        return False
+
+    url = f"https://api.telegram.org/bot{_tok}/sendMessage"
+
+    # ① まず Markdown で送信
+    try:
+        r = requests.post(
+            url,
+            json={"chat_id": _cid, "text": text, "parse_mode": "Markdown"},
+            timeout=15,
+        )
+        if r.status_code == 200:
+            logger.info("Telegram テキスト送信 ✅")
+            _rec("text", True)
+            return True
+        # Markdown構文エラー(400)等 → プレーンで再送して"1通消える"のを防ぐ
+        logger.warning(f"Markdown送信失敗(status={r.status_code}): "
+                       f"{r.text[:160]} → プレーンで再送")
+    except Exception as e:
+        logger.warning(f"Telegram送信例外: {e} → プレーンで再送")
+
+    # ② プレーンテキストで再送（parse_mode なし）
+    try:
+        r = requests.post(url, json={"chat_id": _cid, "text": text}, timeout=15)
+        r.raise_for_status()
+        logger.info("Telegram テキスト送信 ✅（プレーン）")
+        _rec("text", True)
+        return True
+    except Exception as e:
+        logger.error(f"Telegram 送信失敗（プレーンも不可）: {e}")
+        _rec("text", False)
+        return False
+
+
+def send_photo(image_path: str, caption: str = "",
+               chat_id: str = None, bot_token: str = None) -> bool:
+    _tok = bot_token or os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
+    _cid = str(chat_id) if chat_id is not None else os.getenv("TELEGRAM_CHAT_ID", "").strip()
+    if not _tok or not _cid:
+        return False
+    url = f"https://api.telegram.org/bot{_tok}/sendPhoto"
+    cap = caption[:1024]
+
+    # ① Markdown キャプションで送信
+    try:
+        with open(image_path, "rb") as f:
+            r = requests.post(
+                url,
+                data={"chat_id": _cid, "caption": cap, "parse_mode": "Markdown"},
+                files={"photo": f},
+                timeout=30,
+            )
+        if r.status_code == 200:
+            logger.info(f"Telegram 画像送信 ✅: {image_path}")
+            return True
+        logger.warning(f"画像Markdown送信失敗(status={r.status_code}): "
+                       f"{r.text[:160]} → プレーンで再送")
+    except Exception as e:
+        logger.warning(f"Telegram 画像送信例外: {e} → プレーンで再送")
+
+    # ② プレーンキャプションで再送
+    try:
+        with open(image_path, "rb") as f:
+            r = requests.post(
+                url,
+                data={"chat_id": _cid, "caption": cap},
+                files={"photo": f},
+                timeout=30,
+            )
+        r.raise_for_status()
+        logger.info(f"Telegram 画像送信 ✅（プレーン）: {image_path}")
+        return True
+    except Exception as e:
+        logger.error(f"Telegram 画像送信失敗（プレーンも不可）: {e}")
+        return False
+
+
+def send_video(video_path: str, caption: str = "",
+               chat_id: str = None, bot_token: str = None) -> bool:
+    """MP4動画を送信（通知③・要約ナレーション動画）"""
+    _tok = bot_token or os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
+    _cid = str(chat_id) if chat_id is not None else os.getenv("TELEGRAM_CHAT_ID", "").strip()
+    if not _tok or not _cid or not video_path or not os.path.exists(video_path):
+        return False
+    url = f"https://api.telegram.org/bot{_tok}/sendVideo"
+    try:
+        with open(video_path, "rb") as f:
+            r = requests.post(
+                url,
+                data={"chat_id": _cid, "caption": caption[:1024],
+                      "parse_mode": "HTML", "supports_streaming": True},
+                files={"video": f},
+                timeout=120,
+            )
+        r.raise_for_status()
+        logger.info(f"Telegram 動画送信 ✅: {video_path}")
+        return True
+    except Exception as e:
+        logger.error(f"Telegram 動画送信失敗: {e}")
+        return False
+
+
+# ── 通知②の読みやすさ強化: Markdown風テキスト → Telegram HTML（カテゴリ折りたたみ） ──
+_CAT = "\x00CAT\x00"   # カテゴリ区切りセンチネル（_to_html_message が blockquote に変換）
+
+
+def _esc_html(t: str) -> str:
+    return t.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+
+def _md_to_tg_html(t: str) -> str:
+    """*bold* と [text](url) を Telegram HTML に変換（stray * はそのまま安全）"""
+    t = _esc_html(t)
+    t = re.sub(r"\[([^\]]+)\]\((https?://[^)\s]+)\)", r'<a href="\2">\1</a>', t)
+    t = re.sub(r"\*([^*\n]+)\*", r"<b>\1</b>", t)
+    t = re.sub(r"`([^`\n]+)`", r"<code>\1</code>", t)
+    return t
+
+
+def _to_html_message(raw: str) -> str:
+    """
+    センチネル区切りを「┏━ 太字下線タイトル ＋ 枠ブロック」へ変換する。
+    Telegramの<blockquote>は色付き背景＋左バーで描画される＝カテゴリの枠。
+    センチネル直後の1文字: "0"=常時表示の枠 / "1"=タップで展開する枠（長い データ用）
+    """
+    parts = raw.split(_CAT)
+    out = [_md_to_tg_html(parts[0].strip())]
+    for p in parts[1:]:
+        head, _, body = p.partition("\n")
+        body = body.strip()
+        if not body:
+            continue   # 中身のないカテゴリは枠ごと表示しない
+        flag  = head[:1]
+        title = head[1:].strip() if flag in "01" else head.strip()
+        tag   = "<blockquote expandable>" if flag == "1" else "<blockquote>"
+        out.append(f"\n┏━ <b><u>{_esc_html(title)}</u></b>")
+        out.append(f"{tag}{_md_to_tg_html(body)}</blockquote>")
+    msg = "\n".join(out)
+    if len(msg) > 4000:   # タグ途中で切れるとHTML全体が壊れるため枠の境界で切る
+        cut = msg.rfind("</blockquote>", 0, 4000)
+        msg = msg[:cut + 13] if cut != -1 else msg[:4000]
+    return msg + "\n\n📌 チャート・全データは下のボタンからフルレポートへ"
+
+
+def send_message_with_button(text: str, button_text: str, button_url: str,
+                             chat_id: str = None, bot_token: str = None,
+                             parse_modes=("Markdown", None)) -> bool:
+    """インラインキーボードボタン付きのメッセージを送信"""
+    _tok = bot_token or os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
+    _cid = str(chat_id) if chat_id is not None else os.getenv("TELEGRAM_CHAT_ID", "").strip()
+    if not _tok or not _cid:
+        return False
+    url = f"https://api.telegram.org/bot{_tok}/sendMessage"
+    markup = {"inline_keyboard": [[{"text": button_text, "url": button_url}]]}
+
+    for parse_mode in parse_modes:
+        body = text
+        if parse_mode is None and "<" in text:
+            # HTML失敗時のプレーン再送: タグを剥がして可読性を保つ
+            body = re.sub(r"<[^>]+>", "", text)
+            body = body.replace("&amp;", "&").replace("&lt;", "<").replace("&gt;", ">")
+        payload = {"chat_id": _cid, "text": body[:4096], "reply_markup": markup}
+        if parse_mode:
+            payload["parse_mode"] = parse_mode
+        try:
+            r = requests.post(url, json=payload, timeout=15)
+            if r.status_code == 200:
+                logger.info("Telegram ボタン付きメッセージ送信 ✅")
+                return True
+            if parse_mode:
+                logger.warning(f"Markdown失敗({r.status_code}) → プレーンで再送")
+        except Exception as e:
+            logger.warning(f"Telegram送信例外: {e}")
+    logger.error("Telegram ボタン付きメッセージ 送信失敗")
+    return False
+
+
+def send_photo_with_button(image_path: str, caption: str,
+                           button_text: str, button_url: str,
+                           chat_id: str = None, bot_token: str = None) -> bool:
+    """
+    画像＋キャプション＋インラインボタンを「1通」で送る。
+    通知を1本にまとめたいときに使う（FX午後レポート等）。
+    Markdown失敗時はプレーンで自動再送する。
+    """
+    _tok = bot_token or os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
+    _cid = str(chat_id) if chat_id is not None else os.getenv("TELEGRAM_CHAT_ID", "").strip()
+    if not _tok or not _cid:
+        return False
+    url    = f"https://api.telegram.org/bot{_tok}/sendPhoto"
+    cap    = (caption or "")[:1024]
+    markup = json.dumps({"inline_keyboard": [[{"text": button_text, "url": button_url}]]})
+
+    for parse_mode in ("Markdown", None):
+        data = {"chat_id": _cid, "caption": cap, "reply_markup": markup}
+        if parse_mode:
+            data["parse_mode"] = parse_mode
+        try:
+            with open(image_path, "rb") as f:
+                r = requests.post(url, data=data, files={"photo": f}, timeout=40)
+            if r.status_code == 200:
+                logger.info(f"Telegram 画像+ボタン送信 ✅: {image_path}")
+                return True
+            logger.warning(f"画像+ボタン送信失敗(status={r.status_code}): "
+                           f"{r.text[:160]}" + ("→ プレーンで再送" if parse_mode else ""))
+        except Exception as e:
+            logger.warning(f"Telegram 画像+ボタン送信例外: {e}")
+    logger.error("Telegram 画像+ボタン 送信失敗")
+    return False
+
+
+def send_document(file_path: str, caption: str = "") -> bool:
+    if not _is_configured():
+        return False
+    token   = os.getenv("TELEGRAM_BOT_TOKEN")
+    chat_id = os.getenv("TELEGRAM_CHAT_ID")
+    try:
+        with open(file_path, "rb") as f:
+            r = requests.post(
+                f"https://api.telegram.org/bot{token}/sendDocument",
+                data={"chat_id": chat_id, "caption": caption[:1024]},
+                files={"document": f},
+                timeout=30,
+            )
+        r.raise_for_status()
+        return True
+    except Exception as e:
+        logger.error(f"Telegram ファイル送信失敗: {e}")
+        return False
+
+
+# ────────────────────────────────────────────────────────────────
+# メイン実行
+# ────────────────────────────────────────────────────────────────
+
+def _p(prices, sym, unit="", digits=2):
+    """price + arrow + pct を1行テキストで返す（キャプション用）"""
+    d   = prices.get(sym, {})
+    v   = d.get("latest")
+    chg = d.get("change_pct")
+    if v is None:
+        return "---"
+    arrow = "▲" if (chg or 0) >= 0 else "▼"
+    chg_s = f"{abs(chg):.2f}%" if chg is not None else ""
+    return f"{v:,.{digits}f}{unit} {arrow}{chg_s}"
+
+
+def _build_overview_caption(risk, prices, fear_greed, news, ai_summary) -> str:
+    """
+    通知①のキャプション（1024文字以内の全体俯瞰）
+    写真送信時のキャプションとして使う
+    """
+    from datetime import date as _date
+    today   = get_today_str()
+    weekday = ["月", "火", "水", "木", "金", "土", "日"][_date.today().weekday()]
+
+    score    = risk.get("score", 0)
+    tl, mood = _mood(score)
+    score_s  = f"+{score:.1f}" if score >= 0 else f"{score:.1f}"
+
+    vix_val = prices.get("^VIX", {}).get("latest") or 0
+    vix_icon = "🟢" if vix_val < 15 else "🟡" if vix_val < 20 else "🟠" if vix_val < 30 else "🔴"
+    vix_txt  = "安定" if vix_val < 15 else "やや不安" if vix_val < 20 else "警戒" if vix_val < 30 else "危険！"
+
+    fg  = fear_greed.get("score") or 50
+    fg_n = int(fg)
+    bar = "█" * round(fg_n / 10) + "░" * (10 - round(fg_n / 10))
+    if fg_n >= 75:   fg_lbl = "超強欲"
+    elif fg_n >= 55: fg_lbl = "強欲"
+    elif fg_n >= 45: fg_lbl = "中立"
+    elif fg_n >= 25: fg_lbl = "恐怖"
+    else:            fg_lbl = "超恐怖"
+
+    # ニュース上位3件
+    sorted_news = sorted(news or [], key=lambda x: {"A":0,"B":1,"C":2}.get(x.get("importance","C"),2))
+    imp_icon = {"A": "🔴", "B": "🟡", "C": "⚪"}
+    news_lines = []
+    for item in sorted_news[:3]:
+        icon  = imp_icon.get(item.get("importance","C"), "⚪")
+        title = item.get("title","")[:38]
+        news_lines.append(f"{icon} {title}")
+
+    # AIの一言（中立見解の先頭100字）
+    ai_one = ""
+    if (ai_summary or {}).get("available"):
+        ai_one = ((ai_summary.get("neutral_view") or "")[:100]).strip()
+
+    lines = [
+        f"🤖 *市場AI秘書* | {today}（{weekday}）",
+        "━━━━━━━━━━━━━━━━━━━━",
+        f"{tl} *{mood}*  スコア `{score_s}`",
+        "",
+        "📈 *株価*",
+        f"🇯🇵 日経  {_p(prices,'^N225','円',0)}",
+        f"🇺🇸 S&P  {_p(prices,'^GSPC','',2)}",
+        f"🇺🇸 NAS  {_p(prices,'^IXIC','',2)}",
+        "",
+        "💱 *為替・商品*",
+        f"💵 ドル円 {_p(prices,'USDJPY=X','円',2)}",
+        f"🥇 金    {_p(prices,'GC=F','$',0)}",
+        f"🛢 原油  {_p(prices,'CL=F','$',2)}",
+        f"₿ BTC   {_p(prices,'BTC-USD','$',0)}",
+        "",
+        f"⚡ VIX `{vix_val:.1f}` {vix_icon} {vix_txt}",
+        f"😱 F&G `{bar}` {fg_n} ({fg_lbl})",
+    ]
+    if news_lines:
+        lines += ["", "📰 *注目ニュース*"] + news_lines
+    if ai_one:
+        lines += ["", f"⚖️ *AIの一言*", ai_one]
+
+    return "\n".join(lines)
+
+
+# 33業種の名前は長いものが多く、そのまま並べると1行に収まらない。
+# 機械的に切ると意味が変わるので、よく出るものだけ短い言い方を決めておく。
+def _score_context(score) -> str:
+    """スコアが過去のどのあたりかを短く返す。
+
+    「スコア -4.3」だけでは、それが少し弱いのか、めったにない弱さなのかが
+    分からない。日経VIと同じ考え方で、**過去の中での位置**を添える。
+    記録が少ないうちは位置を出さず、取りうる幅だけ示す。
+    """
+    # ⚠️ risk["score"] は None や欠損で来ることがある。数値でなければ何も言わない。
+    try:
+        score = float(score)
+    except (TypeError, ValueError):
+        return ""
+    if score != score:          # NaN。比較が常に偽になり「下から0%」と出てしまう
+        return ""
+    try:
+        import json
+        from src.utils import BASE_DIR
+        d = json.loads((BASE_DIR / "data" / "predictions.json")
+                       .read_text(encoding="utf-8"))
+        vals = [p["score"] for p in d.get("predictions", [])
+                if isinstance(p.get("score"), (int, float))]
+    except Exception:
+        return ""
+    if len(vals) < 30:
+        return ""
+    below = sum(1 for v in vals if v < score)
+    pct = below / len(vals) * 100
+    if pct >= 85:
+        w = f"過去{len(vals)}日で上から{100 - pct:.0f}%と強い"
+    elif pct <= 15:
+        w = f"過去{len(vals)}日で下から{pct:.0f}%と弱い"
+    else:
+        w = f"過去{len(vals)}日で下から{pct:.0f}%"
+    return w
+
+
+_SECTOR_SHORT = {
+    "エネルギー資源": "エネルギー",
+    "金融（除く銀行）": "金融",
+    "金融": "金融",
+    "建設・資材": "建設",
+    "鉄鋼・非鉄": "鉄鋼",
+    "電機・精密": "電機",
+    "情報通信・サービスその他": "情報通信",
+    "自動車・輸送機": "自動車",
+    "運輸・物流": "運輸",
+    "食品": "食品",
+    "医薬品": "医薬品",
+    "小売": "小売",
+    "銀行": "銀行",
+    "商社・卸売": "商社",
+    "不動産": "不動産",
+    "electric_power": "電力・ガス",
+    "電力・ガス": "電力",
+}
+
+
+def _build_unified_caption(risk, prices, fear_greed, ai_summary,
+                           setups=None, prediction_tracker=None,
+                           us_afterhours=None, pts=None, adr=None,
+                           kabudragon=None, valuation=None, macro_watch=None,
+                           market_signals=None, macro_regime=None,
+                           policy=None, market_driver=None, sentiment=None,
+                           risk_sentiment=None, hot_stocks=None,
+                           stocktwits=None, retail_heat=None,
+                           earnings_brief=None, earnings_preview=None,
+                           upcoming=None, shareholder=None,
+                           sector_ranking=None, rating=None,
+                           technical=None, holdings=None,
+                           daytrade=None) -> str:
+    """
+    朝レポートを1通に集約したときのキャプション（Telegram上限1024字）。
+
+    価格・F&G・VIX・ニュース・AI3視点・キャラクターは
+    サマリーカード画像に載っているため重複させない。
+    ここでは「カードに写らない・かつ寄り付き前に効く」情報を優先する。
+    優先度の低いブロックから順に落として1024字に収める。
+    """
+    from datetime import date as _date
+    today   = get_today_str()
+    weekday = ["月", "火", "水", "木", "金", "土", "日"][_date.today().weekday()]
+
+    score    = (risk or {}).get("score", 0)
+    tl, mood = _mood(score)
+    score_s  = f"+{score:.1f}" if score >= 0 else f"{score:.1f}"
+
+    head = [
+        f"🤖 *市場AI秘書* | {today}（{weekday}）",
+        "━━━━━━━━━━━━━━",
+        f"{tl} *{mood}*　スコア `{score_s}`",
+    ]
+    _sc = _score_context(score)
+    if _sc:
+        head.append(f"　{_sc}")
+
+    # ── 寄り付きの見当と緊張度（最優先）──────────────────────
+    # 朝いちばんに知りたいのは「今日どう始まるか」と「警戒すべきか」。
+    # スコアの次、他のどのブロックより前に置く。
+    # 1024字の制限があるため2行に抑え、詳細はレポート本編へ譲る。
+    try:
+        from src.morning_brief import run as _mb
+        _b = _mb()
+        _o, _r = _b.get("outlook") or {}, _b.get("risk") or {}
+        if _o.get("available"):
+            _ar = "🔺" if _o["diff_yen"] > 0 else "🔻"
+            head.append(f"{_ar} 寄り付き目安 *{_o['diff_yen']:+,}円*（{_o['band']}）")
+        if _r.get("available"):
+            _ic = {"警戒": "🔴", "やや警戒": "🟠",
+                   "やや高い": "🟡", "普通": "⚪"}.get(_r["level"], "🟢")
+            # 日本株を見ているのだから日本の計器を先に出す。
+            # VIXだけで判定していた頃、日経が週-4.6%下げた5日間ずっと
+            # 「平常」を出し続けていた（2026-08-25に判明）。
+            #
+            # ⚠️ さらに 2026-09-10、「日経VI 31.6」を🟢平常と表示していた。
+            #    31.6は過去3年で上から14%の高さで、すぐ上の行の
+            #    「🔴 弱気！慎重に」と真っ向から矛盾していた。
+            #    数字だけ出しても高いか低いか分からないので、
+            #    **過去の中での位置**を言葉で添える。
+            _g = _r.get("nvi_words") or (
+                f"日経VI {_r['nvi']:.1f}" if _r.get("nvi") is not None else "")
+            head.append(f"{_ic} 緊張度 *{_r['level']}*")
+            if _g:
+                head.append(f"　{_g}")
+            head.append(f"　VIX {_r['vix']:.1f} / ドル円 {_r['fx']:.2f}"
+                        f"（{_r['fx_chg']:+.1f}%）")
+    except Exception:
+        # ここで落ちても朝の通知そのものは止めない
+        logger.error("寄り付き目安を通知に載せられませんでした", exc_info=True)
+
+    # ── バリュエーション節目（滅多に出ないが出たら最重要なので先頭付近に置く）──
+    vw = valuation or {}
+    if vw.get("available"):
+        head.append("")
+        for e in vw.get("events", [])[:2]:
+            short = e["label"].split("（")[0]
+            head.append(f"{e['emoji']} *{short} {e['value']:.2f}{e['unit']}*"
+                        f"「{e['prev_zone']}」→「{e['zone']}」")
+
+    # ── 景気・信用の先行シグナル（滅多に変わらないが変われば最重要）──
+    mw = macro_watch or {}
+    if mw.get("available"):
+        head.append("")
+        for e in mw.get("events", [])[:2]:
+            short = e["label"].split("（")[0]
+            head.append(f"{e['emoji']} *{short} {e['value']:.2f}{e['unit']}*"
+                        f"「{e['prev_zone']}」→「{e['zone']}」")
+
+    # ── 極端なリスクオフ/オン（市場全体の資金の向きが変わった日）──
+    rsx = risk_sentiment or {}
+    if rsx.get("available"):
+        icon = "🔴" if rsx["direction"] == "risk_off" else "🟢"
+        head += ["", f"{icon} *{rsx['title']}*",
+                 f"　{len(rsx.get('factors', []))}資産が同じ方向（一致度 {rsx['score']:.1f}）"]
+
+    # ── 市場心理の極値・反転（底/天井のサインは最優先で伝える）──
+    se = sentiment or {}
+    for e in (se.get("events") or [])[:2]:
+        head += ["", f"{e['emoji']} *{e['title']}*", f"　{e['detail']}"]
+
+    # ── 相場を動かした要因（大きく動いた日だけ・最も知りたい情報なので最上部）──
+    md = market_driver or {}
+    if md.get("available") and md.get("summary"):
+        first = md["summary"].split(chr(10))[0][:60]
+        head += ["", f"🔍 *{first}*"]
+
+    # ── 政策金利に変更があった日 ──
+    pol = policy or {}
+    for e in (pol.get("events") or [])[:2]:
+        head.append(f"{e['emoji']} *{e['name']}が{e['direction']}* "
+                    f"{e['prev_rate']:.2f}% → {e['rate']:.2f}%")
+
+    # ── 市場内部シグナル（SOXは寄り付きに直結するので上に出す）──
+    ms = market_signals or {}
+    if ms.get("available"):
+        head.append("")
+        for e in ms.get("events", [])[:2]:
+            short = e["label"].split("（")[0]
+            head.append(f"{e['emoji']} *{short}* {e['zone']}")
+
+    # ── 寄り付き前チェック（最優先：時間が経つと価値が消える情報） ──
+    pre = []
+    ua = us_afterhours or {}
+    if ua.get("available"):
+        movers = ua.get("movers", [])
+        if movers:
+            top = movers[0]
+            e = "⬆️" if top["chg_pct"] >= 0 else "⬇️"
+            pre.append(f"🇺🇸 米時間外: {e}{top['name']} {top['chg_pct']:+.1f}%")
+            semis = [m for m in movers if m.get("sector") == "半導体"
+                     and abs(m.get("chg_pct") or 0) >= 2.0]
+            if semis:
+                big = max(semis, key=lambda x: abs(x["chg_pct"]))
+                pre.append(f"　→ 日本の半導体株に{'追い風' if big['chg_pct']>0 else '逆風'}")
+        else:
+            pre.append("🇺🇸 米時間外: 大きな変動なし")
+
+    pt = pts or {}
+    if pt.get("available"):
+        u = (pt.get("up") or [])[:1]
+        d = (pt.get("down") or [])[:1]
+        seg = []
+        if u: seg.append(f"⬆️{u[0]['name']} {u[0]['chg_pct']:+.1f}%")
+        if d: seg.append(f"⬇️{d[0]['name']} {d[0]['chg_pct']:+.1f}%")
+        if seg:
+            pre.append("🌙 PTS夜間: " + " / ".join(seg))
+
+    ad = adr or {}
+    if ad.get("available") and ad.get("major_avg_divergence") is not None:
+        div = ad["major_avg_divergence"]
+        pre.append(f"🌏 ADR乖離 {div:+.2f}%（寄り付き示唆）")
+
+    kd = kabudragon or {}
+    if kd.get("available"):
+        ups = ((kd.get("rankings") or {}).get("age") or {}).get("items", [])[:1]
+        if ups and ups[0].get("chg_pct") is not None:
+            pre.append(f"🐉 前日値上がり1位: {ups[0]['name']} {ups[0]['chg_pct']:+.1f}%")
+
+    # ── シグナル ──
+    sig = []
+    st = setups or {}
+    if st.get("available") and st.get("setups"):
+        s0 = st["setups"][0]
+        line = f"🎯 {s0.get('name','')}: {s0.get('label','')}"
+        if s0.get("mtf_note"):
+            line += f"（{s0['mtf_note']}）"
+        sig.append(line)
+
+    # ── 予測の実績と、今日の信頼度 ──
+    # この案件で唯一、検証で裏が取れているのが |score| 別の信頼度ランク
+    # （|score|3-6で勝率50.0% → 15+で85.1%。src/failure_analysis.py）。
+    # 検証済みのものは、検証していない観測より前に出す（src/priority.py）。
+    acc = []
+    ptk = prediction_tracker or {}
+    if ptk.get("available"):
+        st = ptk.get("stats") or {}
+
+        # ①昨日の予測が当たったか。率より「直近の1件」の方が実感しやすい
+        recent = st.get("recent5") or []
+        if recent:
+            last = recent[0]
+            ok = last.get("correct")
+            if ok is not None:
+                dj = {"bull": "上げ", "bear": "下げ",
+                      "neutral": "横ばい"}.get(last.get("direction"), "—")
+                acc.append(f"{'⭕' if ok else '❌'} 前回の予測「{dj}」は"
+                           f"{'当たり' if ok else 'はずれ'}（{last.get('date','')}）")
+
+        # ②方向別の的中率。
+        #   ⚠️ 全体の的中率（41%前後）は出さない。中立予測は相場が凪いだ日
+        #   （実測22.8%）しか正解にならず、構造的に低く出る数字で、
+        #   実力の指標として読むと誤解する（CLAUDE.md 2026-08-17の分析）。
+        #   「上げと言ったとき/下げと言ったときに当たるか」の方が判断に効く。
+        r90 = st.get("90d") or {}
+        if r90.get("total", 0) >= 20:
+            ba, be = r90.get("bull_acc"), r90.get("bear_acc")
+            parts = []
+            if ba is not None:
+                parts.append(f"上げ予想 {ba:.0f}%")
+            if be is not None:
+                parts.append(f"下げ予想 {be:.0f}%")
+            if parts:
+                acc.append(f"🧠 直近90日 " + " / ".join(parts))
+
+        # ③今日の信頼度ランク。「当てにしてよい日か」が一目で分かる
+        try:
+            from src.signal_confidence import evaluate
+            c = evaluate(ptk.get("direction", ""), ptk.get("adjusted_score", 0))
+            if c.get("available"):
+                acc.append(f"{c['stars']} 今日の信頼度 *{c['rank']}* "
+                           f"— {c['advice']}")
+        except Exception:
+            logger.error("信頼度ランクを出せませんでした", exc_info=True)
+
+    # ── 話題株（数字×株クラの声・Gemini不使用） ──
+    hot = []
+    hs = hot_stocks or {}
+    for s in (hs.get("stocks") or [])[:2]:
+        if not s.get("has_voice"):
+            continue
+        arrow = "▲" if s["chg_pct"] >= 0 else "▼"
+        hot.append(f"{s['verdict_emoji']} {s['name']}({s['code']}) "
+                   f"{arrow}{abs(s['chg_pct']):.0f}% — {s['verdict']}"
+                   f"（株クラ強気{s['sentiment']['bull_ratio']:.0f}%）")
+
+    # ── 個人投資家の過熱度＋米国SNS感情（いずれもGemini不使用） ──
+    ret = []
+    rh = retail_heat or {}
+    if rh.get("available"):
+        ret.append(f"🌡 個人の過熱度 {rh['emoji']} *{rh['label']}*（{rh['score']:.0f}/100）")
+    stw = stocktwits or {}
+    if stw.get("available"):
+        # 平均から大きく外れた銘柄だけ（＝情報価値がある方）
+        odd = [s for s in stw.get("stocks", []) if abs(s.get("diff", 0)) >= 15]
+        if odd:
+            s = odd[0]
+            ret.append(f"🇺🇸 米SNS: {s['emoji']} {s['name']} {s['label']}"
+                       f"（基準比{s['diff']:+.0f}pt）")
+
+    # ── マクロ環境（歴史的に実績のあるファンダ指標） ──
+    mac = []
+    mr = macro_regime or {}
+    if mr.get("available"):
+        for s in (mr.get("signals") or [])[:2]:
+            mac.append(f"{s.get('emoji','')} {s.get('title','')}　{s.get('value','')}")
+
+    # ── AIの一言 ──
+    ai_one = ""
+    if (ai_summary or {}).get("available"):
+        ai_one = ((ai_summary.get("neutral_view") or "")[:110]).strip()
+    ai_blk = [f"⚖️ {ai_one}"] if ai_one else []
+
+    # ── 決算（出た結果と、これから出るもの）──
+    # 2026-08-26まで、決算の分析はどこにも表示されていなかった。
+    # ここには件数と銘柄名だけを置き、中身は公開レポートへ誘導する
+    # （1024字の制約があるうえ、決算の要約は数行では収まらない）。
+    # 優先順位は参考の観測帯（src/priority.py の42番）。
+    earn = []
+    eb, ep = earnings_brief or {}, earnings_preview or {}
+    briefs = eb.get("briefs") or []
+    if eb.get("available") and briefs:
+        names = "・".join(b.get("name", "") for b in briefs[:3])
+        more = f" 他{len(briefs)-3}件" if len(briefs) > 3 else ""
+        earn.append(f"📑 *決算が出ました*: {names}{more}")
+    ups = ep.get("previews") or ep.get("upcoming") or []
+    if ep.get("available") and ups:
+        today = [u for u in ups if u.get("days_until") == 0]
+        if today:
+            earn.append(f"📅 *今日の決算*: "
+                        + "・".join(u.get("name", "") for u in today[:3]))
+        elif ups:
+            u = ups[0]
+            d = u.get("days_until")
+            when = f"あと{d}日" if isinstance(d, int) else u.get("earnings_date", "")
+            earn.append(f"📅 次の決算 {u.get('name','')}（{when}）")
+
+    # ── 今日・明日の重要イベント ──
+    # 2026-08-26まで、経済イベントは公開レポートには出ていたが
+    # 通知には一度も出ていなかった（引数すら無かった）。
+    # 「今夜FOMC」は今日の行動が変わる情報で、レポートを開かないと
+    # 分からないのでは遅い。優先順位は20番台（確定した事実）。
+    #
+    # ⚠️ 先の予定まで並べない。「7日後に雇用統計」は今日の行動を変えない。
+    #    毎日出ると読み飛ばされ、本当に今日の日に気づけなくなる。
+    ev = []
+    for e in ((upcoming or {}).get("events") or []):
+        d = e.get("days_to")
+        if not isinstance(d, int) or d > 1:
+            continue
+        if d == 1 and e.get("importance") != "high":
+            continue          # 明日ぶんは重要なものだけ
+        if d == 0 and e.get("importance") == "low":
+            continue          # 今日でも満月などは載せない
+        when = "今日" if d == 0 else "明日"
+        ev.append(f"{e.get('icon','📅')} *{when}* {e.get('label','')}")
+        if len(ev) >= 2:
+            break
+
+    # ── 株主還元・M&A/TOB（緊急のものだけ）──
+    # TOBの対象になると株価は買付価格まで跳ぶ。予想ではなく決まった事実なので、
+    # 検証済みかを問う必要がなく、確定した事実の帯（20番台）に置ける。
+    # 毎日出る自社株買い・増配まで並べると読み飛ばされるため、
+    # 通知は TOB対象・MBO・上場廃止・減配 に絞り、残りはレポートへ送る。
+    shr = []
+    try:
+        from src.shareholder_actions import notify_lines
+        shr = notify_lines(shareholder or {})
+    except Exception:
+        logger.error("株主還元の行を作れませんでした", exc_info=True)
+
+    # ── 業種別ランキング（上位3・下位3だけ）──
+    # 17業種を全部並べると読めないのでオーナー指示で上下3つずつ。
+    # 「どこに資金が向かっているか」は毎日変わる事実なので、
+    # 毎日出す価値がある（20番台＝確定した事実）。
+    #
+    # ⚠️ この数字は2026-08-23まで17業種すべて誤っていた（医薬品は符号まで逆）。
+    #    原因はYahooの chartPreviousClose。quote_util で修正済みだが、
+    #    毎朝 data_audit が別経路で検算し続けている。
+    sec_rank = []
+    sr = sector_ranking or {}
+    rk = sr.get("ranking") or []
+    if sr.get("available") and len(rk) >= 6:
+        # ⚠️ 6字で機械的に切ると「金融(除く銀」「エネルギー資」のように
+        #    途中で切れて意味が分からなくなる。括弧の前で切り、
+        #    それでも長いものは短い通称に置き換える。
+        def _sec(nm: str) -> str:
+            nm = (nm or "").split("（")[0].split("(")[0].strip()
+            return _SECTOR_SHORT.get(nm, nm)[:7]
+        up = "　".join(f"{_sec(x['name'])} {x['pct']:+.1f}%" for x in rk[:3])
+        dn = "　".join(f"{_sec(x['name'])} {x['pct']:+.1f}%" for x in rk[-3:])
+        sec_rank = [f"📈 *強い業種*　{up}", f"📉 *弱い業種*　{dn}"]
+
+    # ── 起きた日だけ出すもの ────────────────────────────
+    # オーナー指示「重要な場合や緊急性と信頼性が高い時だけ」。
+    # 毎日鳴るものを足すと全部読まれなくなるので、条件を厳しくする。
+    rare = []
+
+    # ①52週移動平均（年線）の上抜け／下抜け。
+    #   日本で最も意識される長期線で、抜けた日は年に数回しかない。
+    #   ⚠️ 検証では52週高値・移動平均の優位性は確認できていない
+    #      （ドリフト調整後 p=0.29）。「起きた事実」として出し、
+    #      「当たりやすい」とは書かない。
+    for s in ((technical or {}).get("signals") or [])[:8]:
+        if s.get("type") in ("ma52w_up", "ma52w_down"):
+            rare.append(f"{s.get('emoji','🌅')} *{s.get('label','')}*"
+                        f"　{s.get('name', s.get('symbol',''))}")
+            break
+
+    # ②上方修正。TDnetの分類をそのまま使う（Gemini不要）
+    for r_ in ((shareholder or {}).get("all") or []):
+        if "上方修正" in (r_.get("title") or ""):
+            rare.append(f"🚀 *上方修正*: {r_.get('name','')}（{r_.get('code','')}）")
+            break
+
+    # ③レーティング。目標株価が現値より大きく上なものだけ。
+    #   ⚠️ アナリスト予想の的中率はこちらで検証していない。
+    #      並べると「推奨」に読まれるので、上値余地が飛び抜けた1件だけ。
+    rr = (rating or {}).get("ranked_upside") or []
+    if rr:
+        top = max(rr, key=lambda x: x.get("upside") or 0)
+        if (top.get("upside") or 0) >= 30:
+            rare.append(f"🎯 *目標株価との差*: {top.get('code','')} "
+                        f"上値余地{top['upside']:.0f}%（アナリスト予想）")
+
+    # ── 保有銘柄アラート ──────────────────────────────
+    # 一番上に置く。相場全体の話より、自分が持っている株がどうなったかの方が
+    # 行動が変わる。鳴るのは損切り・利確ラインに届いた日と、
+    # 前日比が設定値を超えて動いた日だけなので、毎日は出ない。
+    hold = []
+    try:
+        ha = (holdings or {}).get("alerts") or []
+        seen_sym = set()
+        for a_ in ha:
+            if not isinstance(a_, dict):
+                continue
+            sym = a_.get("symbol")
+            if not sym or sym in seen_sym:
+                continue
+            seen_sym.add(sym)
+            pnl = a_.get("unrealized_pnl_pct")
+            pnl_s = f"（{pnl:+.1f}%）" if isinstance(pnl, (int, float)) else ""
+            hold.append(f"💼 *{a_.get('name', sym)}*{pnl_s}　{a_.get('message', '')}")
+            if len(hold) >= 3:
+                break
+        if hold:
+            hold = ["💼 *持ち株のお知らせ*"] + hold
+    except Exception:
+        logger.error("保有銘柄の行を作れませんでした", exc_info=True)
+
+    # ── 今日動きやすい銘柄（上位2つだけ）─────────────────
+    # ⚠️ 「当たりやすい銘柄」ではない。ボラ・出来高・材料から
+    #    **値動きが大きくなりやすい**順に並べただけで、方向は示していない。
+    #    詳しい価格レベルと注意点はレポート側に置き、ここは名前だけ。
+    dts = []
+    try:
+        dt = daytrade or {}
+        if dt.get("available") and dt.get("top"):
+            # ⚠️ 7字で機械的に切ると「ソフトバンクグ」のようになる。
+            #    よくある長い語尾を短くしてから、必要なら切る。
+            def _nm(x):
+                n = (x.get("name") or "")
+                for a_, b_ in (("グループ", "G"), ("ホールディングス", "HD"),
+                               ("株式会社", ""), ("・", "")):
+                    n = n.replace(a_, b_)
+                return n[:8]
+            names = "　".join(_nm(x) for x in dt["top"][:2] if isinstance(x, dict))
+            if names:
+                dts = [f"🎰 *今日 値動きが大きくなりやすい*　{names}",
+                       "　（方向の予想ではありません。詳細はレポート）"]
+    except Exception:
+        logger.error("デイトレ候補の行を作れませんでした", exc_info=True)
+
+    foot = ["👇 3シナリオ・チャート・全データはレポートへ"]
+
+    # 優先度の低い順に落として1024字に収める
+    # 並びは src/priority.py の帯に合わせる。
+    # ev(20番台の予定) → acc(30番台の予測) → earn(40番台の決算) の順。
+    # 並びは src/priority.py の帯に合わせる。
+    # 事実（TOB・52週線・業種）→ 予定 → 予測 → 参考 の順。
+    # ⚠️ 1024字を超えると**後ろから**削られる。ここに ai_blk を最後に
+    #    置いていたため、混み合った日は「AIの一言」が真っ先に捨てられていた。
+    #    3視点をまとめた結論の1行は、決算やマクロの列挙より価値が高い。
+    #    事実（持ち株・寄り付き・TOB・業種）を前に置く方針は変えず、
+    #    読み物寄りのブロックより前へ移す。
+    blocks = [hold, pre, shr, rare, sec_rank, ev, sig, acc, ai_blk,
+              hot, ret, earn, mac, dts]
+    while True:
+        parts = [head]
+        parts += [b for b in blocks if b]
+        parts.append(foot)
+        text = "\n\n".join("\n".join(p) for p in parts)
+        if len(text) <= 1024:
+            return text
+        # 後ろのブロックから削る（AI一言 → 精度 → シグナル の順）
+        for i in range(len(blocks) - 1, -1, -1):
+            if blocks[i]:
+                blocks[i] = []
+                break
+        else:
+            return text[:1024]
+
+
+def _build_detail_message(risk, prices, fear_greed, news,
+                          ai_summary, scenario, technical,
+                          sector_analysis, prediction_tracker,
+                          autonomous_plan, multi_consensus,
+                          character_comments, macro,
+                          nikkei_internals, adr, setups,
+                          stock_dossier=None, ensemble=None,
+                          kabudragon=None, pts=None,
+                          us_afterhours=None, cfd_sq=None,
+                          upcoming=None, theme_ranking=None,
+                          valuation=None) -> str:
+    """
+    通知②の詳細テキスト（4096文字以内・ボタン付きで送る）
+    AIの3視点・シナリオ・テクニカル・セクター・予測精度・自律AIミッション
+    """
+    lines = [
+        "📊 *本日の詳細AI分析*",
+        "━━━━━━━━━━━━━━━━━━━━",
+    ]
+
+    # ── カテゴリA: AI分析（3視点・キャラ・シナリオ） ──
+    lines += [_CAT + "0🤖 AI分析（3視点・シナリオ）"]
+
+    # ── AI 3視点 ──
+    ai = ai_summary or {}
+    if ai.get("available"):
+        bull = (ai.get("bull_view") or "")[:160].strip()
+        bear = (ai.get("bear_view") or "")[:160].strip()
+        neut = (ai.get("neutral_view") or "")[:200].strip()
+        _blk = [
+            "🤖 *AI 3視点分析*",
+            f"📈 *強気派:* {bull}" if bull else "",
+            f"📉 *弱気派:* {bear}" if bear else "",
+            f"⚖️ *総合判断:* {neut}" if neut else "",
+        ]
+        lines += [""] + [l for l in _blk if l]
+
+    # ── キャラクターコメント ──
+    cc = character_comments or {}
+    if cc.get("available"):
+        if cc.get("ganesha"):
+            lines += ["", f"🐘 *ガネーシャ:* {cc['ganesha'][:120]}"]
+        if cc.get("otter"):
+            lines += [f"🦦 *カワウソ:* {cc['otter'][:120]}"]
+
+    # ── 3シナリオ ──
+    sc = scenario or {}
+    if sc.get("available"):
+        bull_sc = sc.get("bull", {}); base_sc = sc.get("base", {}); bear_sc = sc.get("bear", {})
+        lines += [
+            "",
+            "🎭 *3シナリオ分析*",
+            f"🟢 楽観 {bull_sc.get('prob','?')}% — {(bull_sc.get('text','')[:70] or '---')}",
+            f"🟡 基本 {base_sc.get('prob','?')}% — {(base_sc.get('text','')[:70] or '---')}",
+            f"🔴 悲観 {bear_sc.get('prob','?')}% — {(bear_sc.get('text','')[:70] or '---')}",
+        ]
+        if sc.get("top_risk"):
+            lines.append(f"⚡ 最大リスク: {sc['top_risk'][:80]}")
+
+    # ── カテゴリB: シグナル・テクニカル・AI精度 ──
+    lines += [_CAT + "0📊 シグナル・テクニカル・AI精度"]
+
+    # ── マルチエージェント合議 ──
+    mc = multi_consensus or {}
+    if mc.get("available"):
+        v   = mc.get("verdict", {})
+        dir_icon = {"bull": "📈", "bear": "📉", "neutral": "➡️"}.get(v.get("direction",""), "")
+        lines += [
+            "",
+            f"🤝 *4AI合議:* {dir_icon} {v.get('direction','---')} | {v.get('consensus_level','')} | 確信度 {v.get('consensus_confidence', '?')}",
+        ]
+
+    # ── アンサンブル予測 ──
+    ens = ensemble or {}
+    if ens.get("available"):
+        dir_icon = {"bull": "📈", "bear": "📉", "neutral": "➡️"}.get(ens.get("direction",""), "")
+        conf_icon = {"high": "🟢", "mid": "🟡", "low": "🔴"}.get(ens.get("confidence",""), "")
+        brier = ens.get("brier_score")
+        brier_s = f" | Brier={brier:.3f}" if brier is not None else ""
+        lines += [
+            "",
+            f"🎯 *アンサンブル予測:* {dir_icon} *{ens.get('direction','---')}*"
+            f" 一致率={ens.get('agreement_pct',0):.0f}% {conf_icon}{brier_s}",
+        ]
+
+    # ── テクニカル（日経225のみ） ──
+    tech = technical or {}
+    if tech.get("available"):
+        results = tech.get("results", [])
+        nk_res  = next((r for r in results if "225" in r.get("label","") or "N225" in r.get("symbol","")), None)
+        if not nk_res and results:
+            nk_res = results[0]
+        if nk_res and "error" not in nk_res:
+            rsi    = nk_res.get("rsi", 50)
+            bb_pct = nk_res.get("bb_pct", 50)
+            macd_h = nk_res.get("macd_hist", 0)
+            rsi_s  = nk_res.get("rsi_signal", "")
+            bb_s   = nk_res.get("bb_signal", "")
+            rsi_e  = "🔴" if rsi > 70 else "🟢" if rsi < 30 else "🟡"
+            lines += [
+                "",
+                "📐 *テクニカル（日経225）*",
+                f"RSI: {rsi:.0f} {rsi_e} {rsi_s}　BB: {bb_pct:.0f}%　MACD: {macd_h:+.3f}",
+            ]
+        if tech.get("ai_comment"):
+            lines.append(f"💬 {tech['ai_comment'][:100]}")
+
+    # ── セクターローテーション ──
+    sec = sector_analysis or {}
+    if sec.get("available"):
+        rot  = sec.get("rotation", {})
+        top3 = sec.get("top3", [])
+        top_str = "  ".join(f"{s['name']} {s['chg_1d']:+.1f}%" for s in top3[:2])
+        _blk = [
+            f"🌐 *セクター:* {rot.get('phase','---')}",
+            f"🟢 強いセクター: {top_str}" if top_str else "",
+        ]
+        lines += [""] + [l for l in _blk if l]
+
+    # ── テーマ株ランキング（上位3＋前回からの変動） ──
+    th = theme_ranking or {}
+    if th.get("available") and th.get("top5"):
+        medals = ["🥇", "🥈", "🥉"]
+        _blk = ["🔥 *人気テーマ*"]
+        for i, r in enumerate(th["top5"][:3]):
+            arrow = "▲" if r.get("perf_5d", 0) > 0 else "▼" if r.get("perf_5d", 0) < 0 else "➡"
+            _blk.append(f"{medals[i]} {r['theme']} {arrow}{abs(r.get('perf_5d', 0)):.1f}% (ニュース{r.get('news_count', 0)}件)")
+        for m in (th.get("movers") or [])[:3]:
+            if m.get("kind") == "new":
+                _blk.append(f"🆕 急浮上: *{m['theme']}*（圏外 → {m['rank']}位）")
+            else:
+                _blk.append(f"⬆️ 上昇中: *{m['theme']}*（{m['prev']}位 → {m['rank']}位）")
+        lines += [""] + _blk
+        if sec.get("ai_comment"):
+            lines.append(f"💬 {sec['ai_comment'][:100]}")
+
+    # ── 手法シグナル（押し目等） ──
+    st = setups or {}
+    if st.get("available") and st.get("setups"):
+        top_setup = st["setups"][0] if st["setups"] else None
+        if top_setup:
+            lines += [
+                "",
+                f"🎯 *シグナル:* {top_setup.get('name','---')} / {top_setup.get('symbol','')} {top_setup.get('reason','')[:60]}",
+            ]
+
+    # ── AI予測精度 ──
+    pt = prediction_tracker or {}
+    if pt.get("available"):
+        stats = pt.get("stats", {})
+        r10   = stats.get("10d", {})
+        rate  = r10.get("rate")
+        today_pred = pt.get("today_prediction", {})
+        dir_icon_map = {"bull":"📈 強気（上昇）","bear":"📉 弱気（下落）","neutral":"➡️ 中立（横ばい）"}
+        dir_str = dir_icon_map.get(today_pred.get("direction",""), "")
+
+        _blk = []
+        if rate is not None:
+            bar_e = "🎯" if rate >= 65 else "🔶" if rate >= 50 else "⚠️"
+            bar_t = "█" * round(rate/10) + "░" * (10 - round(rate/10))
+            _blk += [
+                f"🧠 *AI予測精度* (直近10日)",
+                f"{bar_e} `{bar_t}` {rate}%  ({r10.get('correct',0)}/{r10.get('total',0)}日正解)",
+            ]
+        if dir_str:
+            _blk.append(f"🎯 今日の予測: {dir_str}")
+
+        # 信頼度ランク。同じ「下げ」でも過去の勝率が50%と83%では
+        # 受け取り方が変わるため、方向だけでなくクラスを必ず添える。
+        conf = today_pred.get("signal_confidence") or {}
+        if conf.get("available"):
+            _mark = {"S": "🟢", "A": "🔵", "B": "🟡", "C": "⚪"}.get(conf["rank"], "⚪")
+            _d = "上げ" if conf["direction"] == "bull" else "下げ"
+            _n = "参考値" if conf.get("estimated") else f"n={conf['sample_n']}"
+            _blk.append(f"{_mark} 信頼度 *{conf['rank']}ランク* {conf['stars']}")
+            _blk.append(f"　└ 同じ強さの{_d}予想は過去 *{conf['win_rate']}%* 的中 ({_n})")
+            if conf["rank"] == "C":
+                _blk.append("　└ ⚠️ ほぼコイン投げ。この日は当てにしないでください")
+
+        if _blk:
+            lines += [""] + _blk
+
+    # ── カテゴリC: マクロ・市場内部データ ──
+    lines += [_CAT + "1🏛 マクロ・市場内部データ"]
+
+    # ── 自律AIの今日のミッション ──
+    ap = autonomous_plan or {}
+    if ap.get("available") and ap.get("todays_mission"):
+        lines += [
+            "",
+            f"🤖 *自律AIのミッション*",
+            f"{ap['todays_mission'][:150]}",
+        ]
+
+    # ── マクロ一言 ──
+    ma = macro or {}
+    if ma.get("available") and ma.get("summary"):
+        lines += [
+            "",
+            f"🌍 *マクロ:* {ma['summary'][:120]}",
+        ]
+
+    # ── 日経内部データ（騰落レシオ） ──
+    nd = nikkei_internals or {}
+    if nd.get("available") and nd.get("trk25"):
+        trk = nd.get("trk25"); short = nd.get("short_ratio")
+        trk_e = "🔴" if trk and trk > 120 else "🟢" if trk and trk < 80 else "🟡"
+        lines += [
+            "",
+            f"📊 *東証内部:* 騰落レシオ25日={trk} {trk_e}" +
+            (f"  空売り比率={short}%" if short else ""),
+        ]
+
+    # ── カテゴリD: 予定・イベント ──
+    lines += [_CAT + "0📅 予定・イベント・先物"]
+
+    up = upcoming or {}
+    if up.get("available") and up.get("telegram_block"):
+        lines += ["", up["telegram_block"]]
+
+    # ── CFD/24時間先物・SQ（CME日経ギャップ・SQ日程） ──
+    cf = cfd_sq or {}
+    if cf.get("available") and cf.get("telegram_block"):
+        lines += ["", cf["telegram_block"]]
+
+    # ── カテゴリE: 夜間市場チェック ──
+    lines += [_CAT + "1🌙 夜間市場チェック（寄り付き先行）"]
+
+    # ── ADR（寄り付き先行ヒント） ──
+    ad = adr or {}
+    if ad.get("available") and ad.get("major_avg_divergence") is not None:
+        div = ad["major_avg_divergence"]
+        div_e = "🟢" if div > 0.5 else "🔴" if div < -0.5 else "🟡"
+        lines += [
+            "",
+            f"🌙 *ADR寄り付き先行:* 主要平均乖離 {div:+.2f}% {div_e}",
+        ]
+
+    # ── 米国時間外ムーバー（ザラ場先行シグナル） ──
+    us_ah = us_afterhours or {}
+    if us_ah.get("available") and us_ah.get("telegram_block"):
+        lines += ["", us_ah["telegram_block"]]
+
+    # ── PTS夜間の急騰・急落（寄り付き先行ヒント） ──
+    pt_data = pts or {}
+    if pt_data.get("available") and pt_data.get("telegram_block"):
+        lines += ["", pt_data["telegram_block"]]
+
+    # ── 株ドラゴン デイトレランキング ──
+    kd = kabudragon or {}
+    if kd.get("available") and kd.get("telegram_block"):
+        lines += ["", kd["telegram_block"]]
+
+    # ── カテゴリF: 注目銘柄カルテ TOP3（合わせ技スコア順） ──
+    lines += [_CAT + "0🎯 今日の注目銘柄カルテ"]
+    sd = stock_dossier or {}
+    top_dossiers = [d for d in sd.get("dossiers", []) if d.get("confluence", 0) >= 5][:3]
+    if top_dossiers:
+        for d in top_dossiers:
+            chg = d.get("change_pct")
+            chg_s = f"{chg:+.2f}%" if chg is not None else "---"
+            close = d.get("close")
+            close_s = f"{close:,.0f}円" if close else "---"
+            conf = d.get("confluence", 0)
+            tv = d.get("tv_link", "")
+            _blk = [
+                f"📌 *{d.get('name','?')}* ({d.get('code','')}) {close_s} {chg_s}",
+                f"合わせ技スコア: *{conf}/10* | "
+                f"目標: {d['target']:,.0f}円(+{d['upside']:.0f}%)" if d.get('target') else f"合わせ技スコア: *{conf}/10*",
+                f"エントリー: {d.get('entry_zone','')}",
+                f"損切り: {d.get('stop_loss','')}",
+                f"[📈 TradingViewで確認]({tv})" if tv else "",
+            ]
+            lines += [""] + [l for l in _blk if l]
+
+    return "\n".join(lines)
+
+
+def _send_character_messages(character_comments: dict) -> None:
+    """ガネーシャとカワウソのコメントをTelegramに送信"""
+    if not character_comments or not character_comments.get("available"):
+        return
+    ganesha = character_comments.get("ganesha", "")
+    otter = character_comments.get("otter", "")
+    if ganesha or otter:
+        msg = "🐘 *AIガネーシャ＆🦦 AIカワウソ*\n━━━━━━━━━━━━━━━\n"
+        if ganesha:
+            msg += f"🐘 *ガネーシャ*\n{ganesha}\n\n"
+        if otter:
+            msg += f"🦦 *カワウソ*\n{otter}"
+        send_message(msg)
+        logger.info("✅ キャラクターコメント送信")
+
+
+def run(risk, analysis, report_paths, mode,
+        prices=None, news=None,
+        fear_greed=None, ai_summary=None,
+        historical_analysis=None,
+        chart_paths=None,
+        weekly_calendar=None,
+        agent_report=None,
+        technical=None,
+        portfolio=None,
+        scenario=None,
+        prediction_tracker=None,
+        sector_analysis=None,
+        fred_data=None,
+        correlation=None,
+        backtest=None,
+        sentiment_data=None,
+        monte_carlo=None,
+        fomc_sentiment=None,
+        congress_trades=None,
+        multi_consensus=None,
+        autonomous_plan=None,
+        rl_result=None,
+        multimodal=None,
+        self_critique=None,
+        reddit_sentiment=None,
+        earnings_preview=None,
+        market_chain=None,
+        jquants=None,
+        character_comments=None,
+        macro=None, tdnet=None, earnings_brief=None, anomaly=None,
+        catalyst=None,
+        theme_ranking=None, financial_analysis=None,
+        supply_demand=None, kabuyoho=None, sector_heatmap=None,
+        nikkei_internals=None, adr=None, setups=None,
+        stock_dossier=None, ensemble=None, kabudragon=None,
+        pts=None, us_afterhours=None, cfd_sq=None, upcoming=None,
+        valuation=None, macro_watch=None, market_signals=None,
+        macro_regime=None, policy=None, market_driver=None,
+        sentiment=None, risk_sentiment=None,
+        hot_stocks=None, stocktwits=None, retail_heat=None,
+        holdings=None, daytrade=None,
+        shareholder=None, sector_ranking=None,
+        video_path=None,
+        # ⚠️ **_extra を必ず残すこと。
+        #    cloud_run 側だけ先に新しい引数を渡すと TypeError になり、
+        #    朝の通知が丸ごと落ちる。引数が60個を超えていて
+        #    片側だけ直す事故が起きやすいため、受け皿を用意しておく。
+        **_extra) -> bool:
+
+    if not _is_configured():
+        logger.info("Telegram 設定なし。スキップします。")
+        return False
+
+    verify_bot()
+
+    prices       = prices       or {}
+    news         = news         or []
+    fear_greed   = fear_greed   or {}
+    ai_summary   = ai_summary   or {}
+    chart_paths  = chart_paths  or {}
+    report_paths = report_paths or {}
+
+    try:
+        # ════════════════════════════════════════════════════════
+        # 朝レポート ─ 1通に集約
+        #   サマリーカード画像 ＋ 寄り付き前チェックのキャプション
+        #   ＋「フルレポートを開く」インラインボタン
+        #   ※詳細（3シナリオ/合議/セクター/株ドラゴン等）はレポート側に集約
+        # ════════════════════════════════════════════════════════
+        caption = _build_unified_caption(
+            risk, prices, fear_greed, ai_summary,
+            setups=setups, prediction_tracker=prediction_tracker,
+            us_afterhours=us_afterhours, pts=pts, adr=adr,
+            kabudragon=kabudragon, valuation=valuation, macro_watch=macro_watch,
+            market_signals=market_signals, macro_regime=macro_regime,
+            policy=policy, market_driver=market_driver, sentiment=sentiment,
+            risk_sentiment=risk_sentiment, hot_stocks=hot_stocks,
+            stocktwits=stocktwits, retail_heat=retail_heat,
+            holdings=holdings, daytrade=daytrade,
+            # 2026-08-26: この2つは引数で受け取るだけで一度も使っていなかった。
+            # 決算PDFをGeminiで要約しては捨てていたことになる。
+            earnings_brief=earnings_brief, earnings_preview=earnings_preview,
+            upcoming=upcoming, shareholder=shareholder,
+            sector_ranking=sector_ranking, rating=kabuyoho,
+            technical=technical,
+        )
+
+        report_url = report_paths.get("url", "").strip()
+        if not report_url:
+            # ⚠️ os.getenv(名前, 既定値) は、変数が「空文字で設定されている」と
+            #    既定値を使わず "" を返す（GitHubは未登録のSecretを空文字で渡す）。
+            #    そうなると URL が "/daily_report.html" になり、Telegramが
+            #    ボタン付きの送信を拒否する。publish_check で同じ事故を一度直している。
+            _base = ((os.getenv("GITHUB_PAGES_URL") or "").strip()
+                     or "https://youn24.github.io/market-ai-secretary").rstrip("/")
+            report_url = _base + "/daily_report.html"
+
+        card_path = None
+        try:
+            from src.summary_card import make_summary_card
+            card_path = make_summary_card(
+                prices=prices, fear_greed=fear_greed, risk=risk,
+                ai_summary=ai_summary, news=list(news),
+                character_comments=character_comments,
+            )
+        except Exception:
+            logger.error("サマリーカード生成エラー")
+            logger.debug(traceback.format_exc())
+
+        # 画像が作れなければ既存チャートで代替
+        if not (card_path and os.path.exists(str(card_path))):
+            for key in ("overview", "prices", "indices"):
+                p = chart_paths.get(key, "")
+                if p and os.path.exists(str(p)):
+                    card_path = str(p)
+                    break
+
+        sent = False
+        if card_path and os.path.exists(str(card_path)):
+            sent = send_photo_with_button(
+                str(card_path), caption=caption,
+                button_text="📊 フルレポートを開く →",
+                button_url=report_url,
+            )
+        if not sent:
+            # 画像がまったく無い場合もテキスト1通で必ず届ける（無音を回避）
+            sent = send_message_with_button(
+                text=caption,
+                button_text="📊 フルレポートを開く →",
+                button_url=report_url,
+            )
+
+        logger.info(f"{'✅' if sent else '❌'} 朝レポート送信（1通）")
+        return True
+
+    except Exception as e:
+        logger.error(f"Telegram通知エラー: {e}")
+        logger.debug(traceback.format_exc())
+        return False

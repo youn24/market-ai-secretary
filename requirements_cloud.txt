@@ -1,0 +1,14 @@
+# GitHub Actions用（軽量版）
+pandas>=2.0.0
+numpy>=1.24.0
+requests>=2.31.0
+feedparser>=6.0.10
+beautifulsoup4>=4.12.0
+lxml>=4.9.0
+python-dotenv>=1.0.0
+PyYAML>=6.0
+yfinance>=0.2.40
+matplotlib>=3.7.0
+google-generativeai>=0.5.0
+playwright>=1.40.0   # noteカバー画像のHTML→PNG描画用（要: playwright install chromium）
+edge-tts>=6.1.0      # 要約ナレーション動画の日本語音声（通知③・無料/APIキー不要・要ffmpeg）
