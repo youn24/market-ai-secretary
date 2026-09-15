@@ -1,0 +1,425 @@
+[
+  {
+    "question": "Will JD Vance win the 2028 US Presidential Election?",
+    "yes_prob": 23.1,
+    "no_prob": 76.9,
+    "volume": "16363552.649258984",
+    "end_date": "2028-11-07T00:00:00Z",
+    "url": "https://polymarket.com/event/will-jd-vance-win-the-2028-us-presidential-election",
+    "fetch_time": "2026-09-16T08:37:10.769312+09:00"
+  },
+  {
+    "question": "Will Gavin Newsom win the 2028 US Presidential Election?",
+    "yes_prob": 8.1,
+    "no_prob": 91.9,
+    "volume": "18315177.441154",
+    "end_date": "2028-11-07T00:00:00Z",
+    "url": "https://polymarket.com/event/will-gavin-newsom-win-the-2028-us-presidential-election",
+    "fetch_time": "2026-09-16T08:37:10.769326+09:00"
+  },
+  {
+    "question": "Will Alexandria Ocasio-Cortez win the 2028 US Presidential Election?",
+    "yes_prob": 13.2,
+    "no_prob": 86.8,
+    "volume": "13642839.581595993",
+    "end_date": "2028-11-07T00:00:00Z",
+    "url": "https://polymarket.com/event/will-alexandria-ocasio-cortez-win-the-2028-us-presidential-election",
+    "fetch_time": "2026-09-16T08:37:10.769334+09:00"
+  },
+  {
+    "question": "Will Pete Buttigieg win the 2028 US Presidential Election?",
+    "yes_prob": 2.5,
+    "no_prob": 97.5,
+    "volume": "8241862.100345995",
+    "end_date": "2028-11-07T00:00:00Z",
+    "url": "https://polymarket.com/event/will-pete-buttigieg-win-the-2028-us-presidential-election",
+    "fetch_time": "2026-09-16T08:37:10.769340+09:00"
+  },
+  {
+    "question": "Will Josh Shapiro win the 2028 US Presidential Election?",
+    "yes_prob": 3.5,
+    "no_prob": 96.5,
+    "volume": "7550636.065037001",
+    "end_date": "2028-11-07T00:00:00Z",
+    "url": "https://polymarket.com/event/will-josh-shapiro-win-the-2028-us-presidential-election",
+    "fetch_time": "2026-09-16T08:37:10.769346+09:00"
+  },
+  {
+    "question": "Will Marco Rubio win the 2028 US Presidential Election?",
+    "yes_prob": 11.1,
+    "no_prob": 88.9,
+    "volume": "12491458.652509004",
+    "end_date": "2028-11-07T00:00:00Z",
+    "url": "https://polymarket.com/event/will-marco-rubio-win-the-2028-us-presidential-election",
+    "fetch_time": "2026-09-16T08:37:10.769352+09:00"
+  },
+  {
+    "question": "Will Wes Moore win the 2028 US Presidential Election?",
+    "yes_prob": 0.9,
+    "no_prob": 99.1,
+    "volume": "12615349.372722002",
+    "end_date": "2028-11-07T00:00:00Z",
+    "url": "https://polymarket.com/event/will-wes-moore-win-the-2028-us-presidential-election",
+    "fetch_time": "2026-09-16T08:37:10.769361+09:00"
+  },
+  {
+    "question": "Will Gretchen Whitmer win the 2028 US Presidential Election?",
+    "yes_prob": 0.4,
+    "no_prob": 99.6,
+    "volume": "15588462.868075002",
+    "end_date": "2028-11-07T00:00:00Z",
+    "url": "https://polymarket.com/event/will-gretchen-whitmer-win-the-2028-us-presidential-election",
+    "fetch_time": "2026-09-16T08:37:10.769367+09:00"
+  },
+  {
+    "question": "Will Andy Beshear win the 2028 US Presidential Election?",
+    "yes_prob": 1.1,
+    "no_prob": 98.9,
+    "volume": "19182007.480305005",
+    "end_date": "2028-11-07T00:00:00Z",
+    "url": "https://polymarket.com/event/will-andy-beshear-win-the-2028-us-presidential-election",
+    "fetch_time": "2026-09-16T08:37:10.769373+09:00"
+  },
+  {
+    "question": "Will Glenn Youngkin win the 2028 US Presidential Election?",
+    "yes_prob": 0.2,
+    "no_prob": 99.8,
+    "volume": "27464668.575142995",
+    "end_date": "2028-11-07T00:00:00Z",
+    "url": "https://polymarket.com/event/will-glenn-youngkin-win-the-2028-us-presidential-election",
+    "fetch_time": "2026-09-16T08:37:10.769378+09:00"
+  },
+  {
+    "question": "Will Kamala Harris win the 2028 US Presidential Election?",
+    "yes_prob": 4.3,
+    "no_prob": 95.7,
+    "volume": "9021220.129772013",
+    "end_date": "2028-11-07T00:00:00Z",
+    "url": "https://polymarket.com/event/will-kamala-harris-win-the-2028-us-presidential-election",
+    "fetch_time": "2026-09-16T08:37:10.769384+09:00"
+  },
+  {
+    "question": "Will Stephen Smith win the 2028 US Presidential Election?",
+    "yes_prob": 0.1,
+    "no_prob": 99.9,
+    "volume": "33473992.473494038",
+    "end_date": "2028-11-07T00:00:00Z",
+    "url": "https://polymarket.com/event/will-stephen-smith-win-the-2028-us-presidential-election",
+    "fetch_time": "2026-09-16T08:37:10.769389+09:00"
+  },
+  {
+    "question": "Will JB Pritzker win the 2028 US Presidential Election?",
+    "yes_prob": 0.4,
+    "no_prob": 99.6,
+    "volume": "12973354.579233004",
+    "end_date": "2028-11-07T00:00:00Z",
+    "url": "https://polymarket.com/event/will-jb-pritzker-win-the-2028-us-presidential-election",
+    "fetch_time": "2026-09-16T08:37:10.769395+09:00"
+  },
+  {
+    "question": "Will Tulsi Gabbard win the 2028 US Presidential Election?",
+    "yes_prob": 0.1,
+    "no_prob": 99.9,
+    "volume": "35364376.87234402",
+    "end_date": "2028-11-07T00:00:00Z",
+    "url": "https://polymarket.com/event/will-tulsi-gabbard-win-the-2028-us-presidential-election",
+    "fetch_time": "2026-09-16T08:37:10.769400+09:00"
+  },
+  {
+    "question": "Will Donald Trump win the 2028 US Presidential Election?",
+    "yes_prob": 1.8,
+    "no_prob": 98.2,
+    "volume": "10224081.546692",
+    "end_date": "2028-11-07T00:00:00Z",
+    "url": "https://polymarket.com/event/will-donald-trump-win-the-2028-us-presidential-election",
+    "fetch_time": "2026-09-16T08:37:10.769405+09:00"
+  },
+  {
+    "question": "Will Donald Trump Jr. win the 2028 US Presidential Election?",
+    "yes_prob": 0.4,
+    "no_prob": 99.6,
+    "volume": "13800064.960548006",
+    "end_date": "2028-11-07T00:00:00Z",
+    "url": "https://polymarket.com/event/will-donald-trump-jr-win-the-2028-us-presidential-election",
+    "fetch_time": "2026-09-16T08:37:10.769410+09:00"
+  },
+  {
+    "question": "Will Nikki Haley win the 2028 US Presidential Election?",
+    "yes_prob": 0.1,
+    "no_prob": 99.9,
+    "volume": "30102034.317046996",
+    "end_date": "2028-11-07T00:00:00Z",
+    "url": "https://polymarket.com/event/will-nikki-haley-win-the-2028-us-presidential-election",
+    "fetch_time": "2026-09-16T08:37:10.769415+09:00"
+  },
+  {
+    "question": "Will Ron DeSantis win the 2028 US Presidential Election?",
+    "yes_prob": 1.8,
+    "no_prob": 98.2,
+    "volume": "12587808.752481",
+    "end_date": "2028-11-07T00:00:00Z",
+    "url": "https://polymarket.com/event/will-ron-desantis-win-the-2028-us-presidential-election",
+    "fetch_time": "2026-09-16T08:37:10.769420+09:00"
+  },
+  {
+    "question": "Will Tim Walz win the 2028 US Presidential Election?",
+    "yes_prob": 0.1,
+    "no_prob": 99.9,
+    "volume": "44724482.445103005",
+    "end_date": "2028-11-07T00:00:00Z",
+    "url": "https://polymarket.com/event/will-tim-walz-win-the-2028-us-presidential-election",
+    "fetch_time": "2026-09-16T08:37:10.769425+09:00"
+  },
+  {
+    "question": "Will Vivek Ramaswamy win the 2028 US Presidential Election?",
+    "yes_prob": 0.1,
+    "no_prob": 99.9,
+    "volume": "37947101.39918996",
+    "end_date": "2028-11-07T00:00:00Z",
+    "url": "https://polymarket.com/event/will-vivek-ramaswamy-win-the-2028-us-presidential-election",
+    "fetch_time": "2026-09-16T08:37:10.769430+09:00"
+  },
+  {
+    "question": "Will Greg Abbott win the 2028 US Presidential Election?",
+    "yes_prob": 0.9,
+    "no_prob": 99.1,
+    "volume": "35373108.62170509",
+    "end_date": "2028-11-07T00:00:00Z",
+    "url": "https://polymarket.com/event/will-greg-abbott-win-the-2028-us-presidential-election",
+    "fetch_time": "2026-09-16T08:37:10.769435+09:00"
+  },
+  {
+    "question": "Will Elon Musk win the 2028 US Presidential Election?",
+    "yes_prob": 0.1,
+    "no_prob": 99.9,
+    "volume": "27125800.141821023",
+    "end_date": "2028-11-07T00:00:00Z",
+    "url": "https://polymarket.com/event/will-elon-musk-win-the-2028-us-presidential-election",
+    "fetch_time": "2026-09-16T08:37:10.769440+09:00"
+  },
+  {
+    "question": "Will LeBron James win the 2028 US Presidential Election?",
+    "yes_prob": 0.1,
+    "no_prob": 99.9,
+    "volume": "54776383.60410809",
+    "end_date": "2028-11-07T00:00:00Z",
+    "url": "https://polymarket.com/event/will-lebron-james-win-the-2028-us-presidential-election",
+    "fetch_time": "2026-09-16T08:37:10.769445+09:00"
+  },
+  {
+    "question": "Will Dwayne 'The Rock' Johnson win the 2028 US Presidential Election?",
+    "yes_prob": 1.5,
+    "no_prob": 98.5,
+    "volume": "8381775.268134999",
+    "end_date": "2028-11-07T00:00:00Z",
+    "url": "https://polymarket.com/event/will-dwayne-the-rock-johnson-win-the-2028-us-presidential-election",
+    "fetch_time": "2026-09-16T08:37:10.769451+09:00"
+  },
+  {
+    "question": "Will Tucker Carlson win the 2028 US Presidential Election?",
+    "yes_prob": 1.5,
+    "no_prob": 98.5,
+    "volume": "14243673.879877988",
+    "end_date": "2028-11-07T00:00:00Z",
+    "url": "https://polymarket.com/event/will-tucker-carlson-win-the-2028-us-presidential-election",
+    "fetch_time": "2026-09-16T08:37:10.769456+09:00"
+  },
+  {
+    "question": "Will Kim Kardashian win the 2028 US Presidential Election?",
+    "yes_prob": 0.1,
+    "no_prob": 99.9,
+    "volume": "40269509.15361601",
+    "end_date": "2028-11-07T00:00:00Z",
+    "url": "https://polymarket.com/event/will-kim-kardashian-win-the-2028-us-presidential-election",
+    "fetch_time": "2026-09-16T08:37:10.769461+09:00"
+  },
+  {
+    "question": "Will Ivanka Trump win the 2028 US Presidential Election?",
+    "yes_prob": 0.4,
+    "no_prob": 99.6,
+    "volume": "8219633.705941",
+    "end_date": "2028-11-07T00:00:00Z",
+    "url": "https://polymarket.com/event/will-ivanka-trump-win-the-2028-us-presidential-election",
+    "fetch_time": "2026-09-16T08:37:10.769465+09:00"
+  },
+  {
+    "question": "Will Zohran Mamdani win the 2028 US Presidential Election?",
+    "yes_prob": 0.1,
+    "no_prob": 99.9,
+    "volume": "22190375.83891299",
+    "end_date": "2028-11-07T00:00:00Z",
+    "url": "https://polymarket.com/event/will-zohran-mamdani-win-the-2028-us-presidential-election",
+    "fetch_time": "2026-09-16T08:37:10.769470+09:00"
+  },
+  {
+    "question": "Will Michelle Obama win the 2028 US Presidential Election?",
+    "yes_prob": 0.1,
+    "no_prob": 99.9,
+    "volume": "19246011.898160003",
+    "end_date": "2028-11-07T00:00:00Z",
+    "url": "https://polymarket.com/event/will-michelle-obama-win-the-2028-us-presidential-election",
+    "fetch_time": "2026-09-16T08:37:10.769475+09:00"
+  },
+  {
+    "question": "Will Jamie Dimon win the 2028 US Presidential Election?",
+    "yes_prob": 0.4,
+    "no_prob": 99.6,
+    "volume": "10975267.373153005",
+    "end_date": "2028-11-07T00:00:00Z",
+    "url": "https://polymarket.com/event/will-jamie-dimon-win-the-2028-us-presidential-election",
+    "fetch_time": "2026-09-16T08:37:10.769480+09:00"
+  },
+  {
+    "question": "Will Ro Khanna win the 2028 US Presidential Election?",
+    "yes_prob": 0.9,
+    "no_prob": 99.1,
+    "volume": "10792275.672549997",
+    "end_date": "2028-11-07T00:00:00Z",
+    "url": "https://polymarket.com/event/will-ro-khanna-win-the-2028-us-presidential-election",
+    "fetch_time": "2026-09-16T08:37:10.769487+09:00"
+  },
+  {
+    "question": "Will Thomas Massie win the 2028 US Presidential Election?",
+    "yes_prob": 0.8,
+    "no_prob": 99.2,
+    "volume": "8373941.437414003",
+    "end_date": "2028-11-07T00:00:00Z",
+    "url": "https://polymarket.com/event/will-thomas-massie-win-the-2028-us-presidential-election",
+    "fetch_time": "2026-09-16T08:37:10.769492+09:00"
+  },
+  {
+    "question": "Will Jon Ossoff win the 2028 US Presidential Election?",
+    "yes_prob": 11.6,
+    "no_prob": 88.4,
+    "volume": "5679015.860588",
+    "end_date": "2028-11-07T00:00:00Z",
+    "url": "https://polymarket.com/event/will-jon-ossoff-win-the-2028-us-presidential-election",
+    "fetch_time": "2026-09-16T08:37:10.769498+09:00"
+  },
+  {
+    "question": "Will James Talarico win the 2028 US Presidential Election?",
+    "yes_prob": 0.8,
+    "no_prob": 99.2,
+    "volume": "7161783.561755002",
+    "end_date": "2028-11-07T00:00:00Z",
+    "url": "https://polymarket.com/event/will-james-talarico-win-the-2028-us-presidential-election",
+    "fetch_time": "2026-09-16T08:37:10.769503+09:00"
+  },
+  {
+    "question": "Will Eric Trump win the 2028 US Presidential Election?",
+    "yes_prob": 0.1,
+    "no_prob": 99.9,
+    "volume": "18826860.980761003",
+    "end_date": "2028-11-07T00:00:00Z",
+    "url": "https://polymarket.com/event/will-eric-trump-win-the-2028-us-presidential-election",
+    "fetch_time": "2026-09-16T08:37:10.769507+09:00"
+  },
+  {
+    "question": "Will Pete Hegseth win the 2028 US Presidential Election?",
+    "yes_prob": 0.1,
+    "no_prob": 99.9,
+    "volume": "10339084.636485998",
+    "end_date": "2028-11-07T00:00:00Z",
+    "url": "https://polymarket.com/event/will-pete-hegseth-win-the-2028-us-presidential-election",
+    "fetch_time": "2026-09-16T08:37:10.769512+09:00"
+  },
+  {
+    "question": "Will Jalen Brunson win the 2028 US Presidential Election?",
+    "yes_prob": 0.1,
+    "no_prob": 99.9,
+    "volume": "2710473.044674",
+    "end_date": "2028-11-07T00:00:00Z",
+    "url": "https://polymarket.com/event/will-jalen-brunson-win-the-2028-us-presidential-election",
+    "fetch_time": "2026-09-16T08:37:10.769518+09:00"
+  },
+  {
+    "question": "Will Abigail Spanberger win the 2028 US Presidential Election?",
+    "yes_prob": 0.1,
+    "no_prob": 99.9,
+    "volume": "631523.3720000001",
+    "end_date": "2028-11-07T00:00:00Z",
+    "url": "https://polymarket.com/event/will-abigail-spanberger-win-the-2028-us-presidential-election",
+    "fetch_time": "2026-09-16T08:37:10.769523+09:00"
+  },
+  {
+    "question": "Will Hakeem Jeffries win the 2028 US Presidential Election?",
+    "yes_prob": 0.1,
+    "no_prob": 99.9,
+    "volume": "259721.70700000002",
+    "end_date": "2028-11-07T00:00:00Z",
+    "url": "https://polymarket.com/event/will-hakeem-jeffries-win-the-2028-us-presidential-election",
+    "fetch_time": "2026-09-16T08:37:10.769528+09:00"
+  },
+  {
+    "question": "Will Elissa Slotkin win the 2028 US Presidential Election?",
+    "yes_prob": 0.1,
+    "no_prob": 99.9,
+    "volume": "502377.987666",
+    "end_date": "2028-11-07T00:00:00Z",
+    "url": "https://polymarket.com/event/will-elissa-slotkin-win-the-2028-us-presidential-election",
+    "fetch_time": "2026-09-16T08:37:10.769534+09:00"
+  },
+  {
+    "question": "Will Adam Schiff win the 2028 US Presidential Election?",
+    "yes_prob": 0.1,
+    "no_prob": 99.9,
+    "volume": "933000.297",
+    "end_date": "2028-11-07T00:00:00Z",
+    "url": "https://polymarket.com/event/will-adam-schiff-win-the-2028-us-presidential-election",
+    "fetch_time": "2026-09-16T08:37:10.769554+09:00"
+  },
+  {
+    "question": "Will Josh Stein win the 2028 US Presidential Election?",
+    "yes_prob": 0.1,
+    "no_prob": 99.9,
+    "volume": "1023066.764",
+    "end_date": "2028-11-07T00:00:00Z",
+    "url": "https://polymarket.com/event/will-josh-stein-win-the-2028-us-presidential-election",
+    "fetch_time": "2026-09-16T08:37:10.769559+09:00"
+  },
+  {
+    "question": "Will Alex Padilla win the 2028 US Presidential Election?",
+    "yes_prob": 0.1,
+    "no_prob": 99.9,
+    "volume": "835611.452",
+    "end_date": "2028-11-07T00:00:00Z",
+    "url": "https://polymarket.com/event/will-alex-padilla-win-the-2028-us-presidential-election",
+    "fetch_time": "2026-09-16T08:37:10.769564+09:00"
+  },
+  {
+    "question": "Will Candace Owens win the 2028 US Presidential Election?",
+    "yes_prob": 0.1,
+    "no_prob": 99.9,
+    "volume": "519464.477",
+    "end_date": "2028-11-07T00:00:00Z",
+    "url": "https://polymarket.com/event/will-candace-owens-win-the-2028-us-presidential-election",
+    "fetch_time": "2026-09-16T08:37:10.769569+09:00"
+  },
+  {
+    "question": "Will Tim Scott win the 2028 US Presidential Election?",
+    "yes_prob": 0.1,
+    "no_prob": 99.9,
+    "volume": "378977.880833",
+    "end_date": "2028-11-07T00:00:00Z",
+    "url": "https://polymarket.com/event/will-tim-scott-win-the-2028-us-presidential-election",
+    "fetch_time": "2026-09-16T08:37:10.769574+09:00"
+  },
+  {
+    "question": "Will Mike Johnson win the 2028 US Presidential Election?",
+    "yes_prob": 0.1,
+    "no_prob": 99.9,
+    "volume": "363010.176",
+    "end_date": "2028-11-07T00:00:00Z",
+    "url": "https://polymarket.com/event/will-mike-johnson-win-the-2028-us-presidential-election",
+    "fetch_time": "2026-09-16T08:37:10.769579+09:00"
+  },
+  {
+    "question": "Will Doug Burgum win the 2028 US Presidential Election?",
+    "yes_prob": 0.1,
+    "no_prob": 99.9,
+    "volume": "385978.18633299996",
+    "end_date": "2028-11-07T00:00:00Z",
+    "url": "https://polymarket.com/event/will-doug-burgum-win-the-2028-us-presidential-election",
+    "fetch_time": "2026-09-16T08:37:10.769583+09:00"
+  }
+]
