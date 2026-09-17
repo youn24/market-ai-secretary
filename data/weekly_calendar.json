@@ -1,15 +1,6 @@
 {
  "saved_at": "2026-09-14",
- "events": [
-  {
-   "date": "2026-09-16",
-   "time": "",
-   "event": "FOMC結果発表（日本時間は翌朝未明）",
-   "country": "",
-   "importance": "high",
-   "category": "FRB"
-  }
- ],
+ "events": [],
  "upcoming_earnings": [
   {
    "date": "2026-10-08",
