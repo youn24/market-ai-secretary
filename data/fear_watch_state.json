@@ -1,8 +1,8 @@
 {
   "in_alert": false,
   "zone": "normal",
-  "pctile": 33.4,
-  "nvi": 20.3,
-  "at": "2026-09-28T15:37:02.184711+09:00",
-  "jump_session": null
+  "pctile": 71.9,
+  "nvi": 27.51,
+  "at": "2026-09-28T23:55:01.872890+09:00",
+  "jump_session": "2026-09-28"
 }
