@@ -1,0 +1,812 @@
+[
+  {
+    "keyword": "日銀 政策金利 利上げ",
+    "label": "🏦 日銀",
+    "importance": "A",
+    "title": "日銀、物価上振れの兆候なら「利上げペース速める」 9月会合主な意見 - 日本経済新聞",
+    "url": "https://news.google.com/rss/articles/CBMibEFVX3lxTE9mQ294VVcyX1cxcXlYdWVyc3hfRXNEN3ZTV1VMemdCVHVDTFN2OU9tWkRFbEV5ejFXSUhWdV9rTjRyaFpjMFRVUGpqMDFfMExlV1V0R3JPU3RWUGdwSXlKSWF3ZGd1Z3lfeUlDNw?oc=5",
+    "source": "日本経済新聞",
+    "published_jst": "2026-10-01 10:11 JST",
+    "fetch_time": "2026-10-02T09:56:08.908251+09:00"
+  },
+  {
+    "keyword": "日銀 政策金利 利上げ",
+    "label": "🏦 日銀",
+    "importance": "A",
+    "title": "日銀の最終到達金利は不変も次回利上げ「12月」に前倒し!?確度でなく“リスク”が促した9月利上げ加速 - ダイヤモンド・オンライン",
+    "url": "https://news.google.com/rss/articles/CBMiTEFVX3lxTE5NS0VkX3AyaG8za2VZSlJRLTBvbXk3eHVBeGtRSFFhZlk0dDc4STBGdzhSb0VNNkVHc3BvaHBQazR1R0xibDVnbHNfclHSAU9BVV95cUxNOVlZZF94YmZLeFpPbFNUc2hfdkZxbVhqUXhmcmFkck14SDFGUmhwbHFnaWhpbmJwMS1jOVpyVi1FN2xuM2w5UHo2TGdIRXhz?oc=5",
+    "source": "ダイヤモンド・オンライン",
+    "published_jst": "2026-09-30 04:25 JST",
+    "fetch_time": "2026-10-02T09:56:08.908272+09:00"
+  },
+  {
+    "keyword": "日銀 政策金利 利上げ",
+    "label": "🏦 日銀",
+    "importance": "A",
+    "title": "日銀は「普通」の利上げペースへ 2027年の利上げ局面終了後、超長期金利の低下を予想 野村證券・宍戸知暁 - nomura.co.jp",
+    "url": "https://news.google.com/rss/articles/CBMiX0FVX3lxTE9MZWVXNWxHQ1VPREtUZmFGQ3Q2U0M2Wmx1QmJtTXpNaGR6OGNFanlwMVdqUDdXcHpKWVEtd3ktZ3ZBRHVCLWVldGd3WHE0QzVkN01rVENmVUpqREdGOTZZ?oc=5",
+    "source": "nomura.co.jp",
+    "published_jst": "2026-10-01 15:00 JST",
+    "fetch_time": "2026-10-02T09:56:08.908283+09:00"
+  },
+  {
+    "keyword": "FRB 利上げ 利下げ 政策金利",
+    "label": "🏦 FRB",
+    "importance": "A",
+    "title": "FRBが突きつけた「28年まで利下げなし」の強い意志、米金利上昇でドル円160円再接近へ - ダイヤモンド・オンライン",
+    "url": "https://news.google.com/rss/articles/CBMiTEFVX3lxTFBJNUFXM0ZZWEdaejJUM2VRYzZKOWZPN3VrWDZEVEZTX3Z5VlkzVWMtVElZNURjNkU1UnBTVXRCQ3B5dDhLYXhKZ2Y0RlHSAU9BVV95cUxQc3N3dlNWa25rcGtHRjg2bzVwc20tQmQ1dER1LUNzbTB3Qkc5d1R6NXhWY2NZcl9kQnZtZ0U4Snc5Z0dmbjFsWlQtNGhlMDd3?oc=5",
+    "source": "ダイヤモンド・オンライン",
+    "published_jst": "2026-10-01 04:30 JST",
+    "fetch_time": "2026-10-02T09:56:10.384310+09:00"
+  },
+  {
+    "keyword": "FRB 利上げ 利下げ 政策金利",
+    "label": "🏦 FRB",
+    "importance": "A",
+    "title": "FRBは全会一致で利上げ決定 ウォーシュ議長は物価安定の信認維持に成功 野村證券・小清水直和 - nomura.co.jp",
+    "url": "https://news.google.com/rss/articles/CBMiX0FVX3lxTFBEM3FyZWVMX1B6Rkx5STg2WGJHMXVkaDVTUWRzSlRPczhXbUY0Ml8zQU5iSi14cXdpOHA2YVFUbktVWUFTUTB2eWNCcXdpWUhuVU1lLXN5RVBPNWUtVVVZ?oc=5",
+    "source": "nomura.co.jp",
+    "published_jst": "2026-09-17 16:00 JST",
+    "fetch_time": "2026-10-02T09:56:10.384332+09:00"
+  },
+  {
+    "keyword": "FRB 利上げ 利下げ 政策金利",
+    "label": "🏦 FRB",
+    "importance": "A",
+    "title": "米FRBが3年以上ぶりに利上げ、インフレ率の高止まりに警鐘 - BBC",
+    "url": "https://news.google.com/rss/articles/CBMiYEFVX3lxTFBfbXVMZlhBLTJSV3VQZGNtM3Y1dVVCWmNwVk5ueXZxc1BxN3Y4NThjQWpaZ1ptNGFhNmQwQjJFSkRQZ2FoVmlyZ2xsQ2h1aUQ2cnRiaFRWM3Y1TWFIWHJnLdIBZkFVX3lxTE9GSEl6RXRXRkc5dk03UlRvMnNfVTJFdko0NWhDNW16WkpLb0oxRWxVdFhoNkg0Qkd5TUdEZTg1b3dlOWxTVVNWSWRQZkk5QjdraVFlR0cwci00eUhmQnQwbEFOblh2Zw?oc=5",
+    "source": "BBC",
+    "published_jst": "2026-09-17 16:00 JST",
+    "fetch_time": "2026-10-02T09:56:10.384344+09:00"
+  },
+  {
+    "keyword": "米国 CPI インフレ 消費者物価",
+    "label": "📊 米CPI",
+    "importance": "A",
+    "title": "米消費者物価、8月3.4%上昇とインフレ根強く FRBが利上げ是非判断 - 日本経済新聞",
+    "url": "https://news.google.com/rss/articles/CBMibEFVX3lxTE85RlRYbWRwUmp5V3h6Y1NTSUJaTlRwNFNCX2FtejI1TkFtUlFwTWJtUVQ0Q3I3Y3NQNmRmdFktekFaSGJTNXV0UzRQX2FvcXdCM05CZFpHYzFiRWtobVMteUtBNDJFc1BzU2cweQ?oc=5",
+    "source": "日本経済新聞",
+    "published_jst": "2026-09-11 16:00 JST",
+    "fetch_time": "2026-10-02T09:56:11.875433+09:00"
+  },
+  {
+    "keyword": "米国 CPI インフレ 消費者物価",
+    "label": "📊 米CPI",
+    "importance": "A",
+    "title": "今週の予定：米CPIとPPIに注目、市場はCRWVとAMATの決算を注視 - TradingKey",
+    "url": "https://news.google.com/rss/articles/CBMi4AFBVV95cUxOOUNMbVlUNlItWS1fbkxSQlp1dUFsRVBSVTk4djVNSWpuTDBjNzloSHlYWGNZRzFHWXpQbjNGelRSdmt2N3JTOE5YT1RRVjdNckRIWnFGUm0yNmNSaXBTQm1Td0lIMXhfLW9EZk1hWmlVX1MyXzNtaE9adUFod0dmcFkzU1VUNDNudERVUDVHTXZEd19tWkVkUHl4aE5YNnVZNjYzLXBuclV1MWpTRmcyVllmTVEyMVBuVEhJcHA1eUFFTm5iU0pqTTd6dm40YVQ0NHktcnZoLVV5VDRUd205dA?oc=5",
+    "source": "TradingKey",
+    "published_jst": "2026-10-01 20:50 JST",
+    "fetch_time": "2026-10-02T09:56:11.875458+09:00"
+  },
+  {
+    "keyword": "米国 CPI インフレ 消費者物価",
+    "label": "📊 米CPI",
+    "importance": "A",
+    "title": "米国7月の消費者物価指数、前年同月比3.4%上昇 市場予想と一致 - 朝日新聞",
+    "url": "https://news.google.com/rss/articles/CBMiZ0FVX3lxTE9iWngyQUphMkhEVlJuVXN4UGNTVHpTOG9ZbHZnOTNwU2pMNUFPbWV1QS1UbzdEYXFRMC1kajIwdzdpbk16VUZkelEwQzlSSnJtT2F1SExrU2h2R1hsVHU4S3hDTS1SY0k?oc=5",
+    "source": "朝日新聞",
+    "published_jst": "2026-08-12 16:00 JST",
+    "fetch_time": "2026-10-02T09:56:11.875471+09:00"
+  },
+  {
+    "keyword": "雇用統計 非農業部門 失業率",
+    "label": "📊 雇用統計",
+    "importance": "A",
+    "title": "【米雇用統計】9月分の注目点：利上げ後初の雇用統計、10月の追加利上げ観測を左右するか（2026年10月2日21:30発表） - oanda.jp",
+    "url": "https://news.google.com/rss/articles/CBMid0FVX3lxTE5XbHlxYUh3QW0xekFTWDBBcUZ2YnRMT2lhOXFXX0pHcVBSb3lMYlBsdWxSQVloY3J1LWh3cmR6S3pWbjh5dlk0NFB3S1VDLTVSUjBpejBSUHRTOWpPYV9hNmc5TTNOT21SOEk0SW11dWxUUkZRTGN3?oc=5",
+    "source": "oanda.jp",
+    "published_jst": "2026-10-02 07:05 JST",
+    "fetch_time": "2026-10-02T09:56:13.365294+09:00"
+  },
+  {
+    "keyword": "雇用統計 非農業部門 失業率",
+    "label": "📊 雇用統計",
+    "importance": "A",
+    "title": "米雇用統計とは？ なぜドル円が動く？ 非農業部門雇用者数・失業率・平均時給の見方 - 外為どっとコム",
+    "url": "https://news.google.com/rss/articles/CBMiY0FVX3lxTE43cW50eFRMVERiTC1ZLTNYTmFLZ1hhN0xaQllvVU5YM3ZJd2lXaVlpVEZ1R3ZQX2lmQzUtcXg3aDFuYWJ1VExhaDJCZno4MWxRT0g3bW9VU21hUmdLQTZHWS13RQ?oc=5",
+    "source": "外為どっとコム",
+    "published_jst": "2026-09-29 10:00 JST",
+    "fetch_time": "2026-10-02T09:56:13.365316+09:00"
+  },
+  {
+    "keyword": "雇用統計 非農業部門 失業率",
+    "label": "📊 雇用統計",
+    "importance": "A",
+    "title": "今週の展望：7月米非農業部門雇用者数に注目；PLTR、サンディスク、AMD、スペースXの決算発表を控える - TradingKey",
+    "url": "https://news.google.com/rss/articles/CBMihwJBVV95cUxPUnp4YkRVSGNSbV93MWpTMDhqSDBESXcxV09ydkZDNXg5aC0yZkhILUJLaGl1dC1uY1kwYl9adTFBQzF3dlFESXlUTzctV2hLaEdzY2Q0ZWttOHpLMU5odGhNZTZHaC1EUnhITENqYzF6alBNb0FNS0czc0syV1Y3aTRxU2NQSDBnTFJrM21sZmJzRkRnM3U0Y0todER5ZHJuLWYzSDVRa3NBeFF2SFp4VlkwNGxtb2w4Zkw0enkwamZvM2c1OXFPdUFyVy1QT0dGWjdibWp6dm9NLVR2aWhSZDktTDItLVoxVy1PRGZRV0Y0M3lVeFpiWHlMcGg4Q3RfSUREMlBtSQ?oc=5",
+    "source": "TradingKey",
+    "published_jst": "2026-10-02 03:43 JST",
+    "fetch_time": "2026-10-02T09:56:13.365328+09:00"
+  },
+  {
+    "keyword": "GDP 経済成長率 景気",
+    "label": "📊 GDP",
+    "importance": "A",
+    "title": "2026～2027年度日本経済見通し（2026年9月）（2026年4-6月期GDP2次速報後改定） - dlri.co.jp",
+    "url": "https://news.google.com/rss/articles/CBMiW0FVX3lxTE45Yk5rSzRsYXRQNlVzTFFYUEpaUmI5cW9nVm9tWDNxZ0ZhX1A2TzkyWXpUMWwwT2pkbndkdkJaVFZkSXBXdElGeFdRRk9ROVdYQ3pBUHZVbDdEcXM?oc=5",
+    "source": "dlri.co.jp",
+    "published_jst": "2026-09-08 16:00 JST",
+    "fetch_time": "2026-10-02T09:56:14.829755+09:00"
+  },
+  {
+    "keyword": "GDP 経済成長率 景気",
+    "label": "📊 GDP",
+    "importance": "A",
+    "title": "マレーシアGDP（2026年4-6月期）～6％成長に加速、AI需要と輸出が景気を牽引 - nli-research.co.jp",
+    "url": "https://news.google.com/rss/articles/CBMib0FVX3lxTE85MDVOYmtQcXlnQmFqbHhtT2xNelU2bXFHbDhSQmV4c3BMVzBpdEc3WnZEbVpWZ05vT0VUcWRTS3JTOXZYei1jX25pNEExbFpqeWxtb25wMUEzWVhhV3l0TjltOWlDTWVqam5meFl0SdIBf0FVX3lxTE8xVEFkNlF1bFRfYnFVNEVYbHRnSHYzWWNETkl3ODFmSEw5SS1NRmZWX0x0MEFFXy1RZnlGNFpVV0NPOU5SRkRtX1JONUtRdnQyR2R4RE5LZFZjWGl0aHBUQkFYUnk2UC11eTUtMUhQRC1OTXZoOFc5d3FhWDRyYjg?oc=5",
+    "source": "nli-research.co.jp",
+    "published_jst": "2026-08-14 16:00 JST",
+    "fetch_time": "2026-10-02T09:56:14.829776+09:00"
+  },
+  {
+    "keyword": "GDP 経済成長率 景気",
+    "label": "📊 GDP",
+    "importance": "A",
+    "title": "GDPによる日本経済の定期健康診断～2026年7-9月期「要注意」（愛宕伸康） - トウシル",
+    "url": "https://news.google.com/rss/articles/CBMiWkFVX3lxTE9aOWlnaG5GZWdlUGRvTDRjcEtPei13SGlzclJvQTNXT3ZxajZVXzBJaElVenFqN0xEamkwVER1UEhxRktKUlE1LUQ2c0NEelZ2V1pKS1JRUzBzUQ?oc=5",
+    "source": "トウシル",
+    "published_jst": "2026-08-26 16:00 JST",
+    "fetch_time": "2026-10-02T09:56:14.829787+09:00"
+  },
+  {
+    "keyword": "PMI 製造業 景気指数",
+    "label": "📊 PMI",
+    "importance": "B",
+    "title": "米ＩＳＭ製造業景気指数、9月は54.5と横ばい 投入価格は急騰 - Reuters",
+    "url": "https://news.google.com/rss/articles/CBMihgFBVV95cUxNS0FMd2Y1bGdqbW9ld0txcURSd05jc1I4T2U4OHR3ZkxTcXhMQXBUd01XRTBVUTExczIwZTdUY1hlYXlWX3ZzRVQxUWZlbHZ4a0s2c0Jlb1pWZ0RfREt0UVNuV0k3STZadGk2a1JxQlVjZ1lUQnZ4UTZiWk42RmhLZllaSlNTdw?oc=5",
+    "source": "Reuters",
+    "published_jst": "2026-10-02 02:34 JST",
+    "fetch_time": "2026-10-02T09:56:16.314256+09:00"
+  },
+  {
+    "keyword": "PMI 製造業 景気指数",
+    "label": "📊 PMI",
+    "importance": "B",
+    "title": "米ＩＳＭ製造業景気指数、9月は54.5と横ばい 投入価格は急騰（ロイター） - Yahoo!ニュース",
+    "url": "https://news.google.com/rss/articles/CBMif0FVX3lxTE14UjdsNTNJbFBaZHhWLUtUdFRSTFplakdiTThxVmZDWTBidFB1WHJ0dlNxUUhkYkkzM2o5RnZKZDMwb21SSEJiNU81czZjbDJRakttc1RWLWI4Vi1iU0NYSGxQdDFJS0R6NGtYNDJ0eTh0aEZ4aDNMVTRkMG5aSUk?oc=5",
+    "source": "Yahoo!ニュース",
+    "published_jst": "2026-10-01 23:44 JST",
+    "fetch_time": "2026-10-02T09:56:16.314278+09:00"
+  },
+  {
+    "keyword": "PMI 製造業 景気指数",
+    "label": "📊 PMI",
+    "importance": "B",
+    "title": "米経済指標【PMI（購買担当者景気指数・確報値）】 - みんかぶ FX/為替",
+    "url": "https://news.google.com/rss/articles/CBMiSEFVX3lxTE5GeDNiY211MWN2NllQdkcxZ2pWTi1ic1RzaThTZzh5QlpqWl9Kd1ZVclZrY1ZIZkoyRHJURTltR2J2a2JrZWJNMg?oc=5",
+    "source": "みんかぶ FX/為替",
+    "published_jst": "2026-10-01 22:46 JST",
+    "fetch_time": "2026-10-02T09:56:16.314288+09:00"
+  },
+  {
+    "keyword": "日経平均 株価 急落 急騰",
+    "label": "📈 日本株",
+    "importance": "A",
+    "title": "日経平均株価が急落、金利急騰の余波 よみがえる13年前の記憶 - 日本経済新聞",
+    "url": "https://news.google.com/rss/articles/CBMibEFVX3lxTFBxNkU1d1VIUmpydGFIRzBjM3o4S0RuT1M4MHF3aWsxcHkyTkd1cUpJR0dVaW8wdUJzdTNMampWcGh5a3c5SHF1SnZ3XzNuVG4tdE1fQVFicnl1b1RBVWxEWVJGTXNSU2o3c3ozeg?oc=5",
+    "source": "日本経済新聞",
+    "published_jst": "2026-05-15 16:00 JST",
+    "fetch_time": "2026-10-02T09:56:17.771189+09:00"
+  },
+  {
+    "keyword": "日経平均 株価 急落 急騰",
+    "label": "📈 日本株",
+    "importance": "A",
+    "title": "急騰・急落のサインを見逃すな！「裁定買い残」で読み解く日本株の潮目（窪田真之） - トウシル",
+    "url": "https://news.google.com/rss/articles/CBMiWkFVX3lxTE83azNOWnVxMmhSOHd4ZDBOakZ4ZWJaZWo5dGFrNzg3QmpfYklBanVvMDBlX3VHY1BoQWJiM3JWVzAtclUtR1VTQ3BqQ3U1R2dULXF0LTZDWFZGZw?oc=5",
+    "source": "トウシル",
+    "published_jst": "2026-09-05 16:00 JST",
+    "fetch_time": "2026-10-02T09:56:17.771211+09:00"
+  },
+  {
+    "keyword": "日経平均 株価 急落 急騰",
+    "label": "📈 日本株",
+    "importance": "A",
+    "title": "日経平均株価が一時2000円超の急落 原油高騰でインフレ長引く懸念 長期金利も再び3％に迫る - TBS NEWS DIG",
+    "url": "https://news.google.com/rss/articles/CBMiV0FVX3lxTE1lU0xHLVcxUl94c0Fub0w3R0tHZHFyQlRSSWxBU005TTFyVWphcnNlZFY0Z1l6ZkxYYkhiSnA4ZkhacjV2LUNhajZ4c0ZxQWRyN0RDWUZXdw?oc=5",
+    "source": "TBS NEWS DIG",
+    "published_jst": "2026-09-11 16:00 JST",
+    "fetch_time": "2026-10-02T09:56:17.771221+09:00"
+  },
+  {
+    "keyword": "米国株 ニューヨーク ダウ S&P",
+    "label": "📈 米国株",
+    "importance": "A",
+    "title": "S＆P 500の指数情報・推移 - Yahoo!ファイナンス",
+    "url": "https://news.google.com/rss/articles/CBMiU0FVX3lxTE5CYUlyUG83cXdIaU84Q1g4dlhEbjJvNlJROFBNYWFKUzJYTmVTRXY1aVo5Sld6emQ1MzcwR29jUWg4Y2FqTlR1d2FZd2hhMU9uX0I0?oc=5",
+    "source": "Yahoo!ファイナンス",
+    "published_jst": "2026-10-02 08:00 JST",
+    "fetch_time": "2026-10-02T09:56:19.245840+09:00"
+  },
+  {
+    "keyword": "米国株 ニューヨーク ダウ S&P",
+    "label": "📈 米国株",
+    "importance": "A",
+    "title": "米国株式市場＝ダウ連日最高値、Ｓ＆Ｐ・ナスダック20年以来最大の四半期上昇率 | ロイター - Reuters",
+    "url": "https://news.google.com/rss/articles/CBMihgFBVV95cUxNQVZSc1ktaWRVU2ZVSzVtdEhDWHhPQ1NYUXV3NGZzRkVCVkt6VTZEcHJtbkhTcDlQUi1jenFLQVRHbE5kU0U1TkJ3b19HVk04TDdvUnVyUS1MSHVJbGo1dHpha0ROT0JqVEw1MHEzMXYwWkktR0pfazB6UVZuMDBDSEJVYUNmUQ?oc=5",
+    "source": "Reuters",
+    "published_jst": "2026-06-30 16:00 JST",
+    "fetch_time": "2026-10-02T09:56:19.245861+09:00"
+  },
+  {
+    "keyword": "米国株 ニューヨーク ダウ S&P",
+    "label": "📈 米国株",
+    "importance": "A",
+    "title": "米国株式市場＝ダウ連日最高値、ナスダック・Ｓ＆Ｐ反落 スペースＸは時価総額5位 | ロイター - Reuters",
+    "url": "https://news.google.com/rss/articles/CBMihgFBVV95cUxNd2Q0bnEyaGpXT29hek1BbkhHXzR5M2lpZHZ6LVJfdlMxNVBtU3dvT0dsLS1xbUo2WVNWazFVSWxaY1Nna2o3bFFoTnhVSEpVWVVCWV96UVZQaUR0c29iUzlTZmh4TTdDSFBPWG1mRzFoTURDUm90aVRBb005WWdwVVlCR0laQQ?oc=5",
+    "source": "Reuters",
+    "published_jst": "2026-06-16 16:00 JST",
+    "fetch_time": "2026-10-02T09:56:19.245871+09:00"
+  },
+  {
+    "keyword": "ナスダック テック株 AI株",
+    "label": "📈 テック株",
+    "importance": "B",
+    "title": "ナスダック総合3カ月半ぶり最高値、原油安とAI期待 メタが11%高 - 日本経済新聞",
+    "url": "https://news.google.com/rss/articles/CBMibEFVX3lxTE1WNGktM2V0YVF4Y3RERzAwLWlhSDVQMzUxdkZXOUxEbXNYbm1MQWw0RDg2SHRIRzJfLXFmNnFxUFh4N1ZfQTZtb1ZqaF9JVXdoTnV4TTFYdU5qdlQ3cUR5ZXhtNWFGcFpMVmU4RQ?oc=5",
+    "source": "日本経済新聞",
+    "published_jst": "2026-09-22 16:00 JST",
+    "fetch_time": "2026-10-02T09:56:20.684011+09:00"
+  },
+  {
+    "keyword": "ナスダック テック株 AI株",
+    "label": "📈 テック株",
+    "importance": "B",
+    "title": "AIによる「終末」への懸念が広がるなか、テック株が急落している（海外）（BUSINESS INSIDER JAPAN） - Yahoo!ニュース",
+    "url": "https://news.google.com/rss/articles/CBMif0FVX3lxTE5lSk1BVnV4Mm5wSWV6MUJVVUlrM2lIMzJqNEJ6RUJ1bXo1UlJDY2xpTm1DZVFSSnBCM2RxckwyYnIzVk1NZVpkYzA5ajBZbmlRM3RRSTRwbnhjVkhtU29maGFYTlNLakZaaWJfVnBuOTRGQktmeU11VUl2WnlKNVE?oc=5",
+    "source": "Yahoo!ニュース",
+    "published_jst": "2026-09-15 16:00 JST",
+    "fetch_time": "2026-10-02T09:56:20.684031+09:00"
+  },
+  {
+    "keyword": "ナスダック テック株 AI株",
+    "label": "📈 テック株",
+    "importance": "B",
+    "title": "ウォールストリート最新情報：AI懸念がMU、NVDA、AVGOなどの大型テック株を直撃し、ダウ工業平均、S&P500、ナスダック総合は下落 - Moomoo",
+    "url": "https://news.google.com/rss/articles/CBMipgFBVV95cUxQSzA0cWJBUlBfc3B4N0JZU1RvamRCaHNIajZtb2g2MWd6YmlwalkzTVVTbFo4QzY2YzdmY0RXb2hlUEh5YUlxV2o5TGYwSFVQY29LLTN6aWhhSC1qRUU1UC1JQ09jRGwwX2JVaTNEQ1dFOHFZRW5TSGZ4R2h6a0JGRVNBVG5GWmJUMmo0M0NjQXI4Qm1ZcVc2bEpJLV9JYUFkempYY3Rn?oc=5",
+    "source": "Moomoo",
+    "published_jst": "2026-09-14 16:00 JST",
+    "fetch_time": "2026-10-02T09:56:20.684042+09:00"
+  },
+  {
+    "keyword": "ドル円 為替 円安 円高",
+    "label": "💱 為替",
+    "importance": "A",
+    "title": "米ドル円、160円超での上振れ余地は限定的 円買い介入が10月利上げへのカタリストとなる可能性 野村證券・後藤祐二朗 - nomura.co.jp",
+    "url": "https://news.google.com/rss/articles/CBMiX0FVX3lxTE5XVVJhcDAyVWV0VkJidkNPN3VoaTYzWFhLNFRSbUc2bjFITmZialNLVm1CS0p0dmJQdDVvR0RCNGUzM2tJQjAxY0ZFNXJ3WDM0MEJoWUZUMXJMbjdTNktn?oc=5",
+    "source": "nomura.co.jp",
+    "published_jst": "2026-09-29 16:00 JST",
+    "fetch_time": "2026-10-02T09:56:22.343977+09:00"
+  },
+  {
+    "keyword": "ドル円 為替 円安 円高",
+    "label": "💱 為替",
+    "importance": "A",
+    "title": "2026年米中間選挙でドル円はどう動く？ 勝敗シナリオと円相場へのインパクト 2026年10月1日 - 外為どっとコム",
+    "url": "https://news.google.com/rss/articles/CBMiY0FVX3lxTE9JUDJsb09ZLTFpZGVBUXBtcnE4Sk5XeE1jMGRoT3dLdW5pT096VUtfRGNvWXVyUHVrLWNTcndLSllDak5kRGZWTnVtc2VVcTlJNzBDT1RpR2pmUWlrUG9ranRrMA?oc=5",
+    "source": "外為どっとコム",
+    "published_jst": "2026-10-01 09:25 JST",
+    "fetch_time": "2026-10-02T09:56:22.343999+09:00"
+  },
+  {
+    "keyword": "ドル円 為替 円安 円高",
+    "label": "💱 為替",
+    "importance": "A",
+    "title": "ドル/円見通し(為替/FX ニュース )：ドル円は円安で158円台前半｜一時急落の場面があるも円安の勢い衰えず(2026年10月2日) - oanda.jp",
+    "url": "https://news.google.com/rss/articles/CBMic0FVX3lxTE1oN2Y3WldESlpHOVhSU19pLS1oQnN2RXB2dGNaTlE4c19UNWItRnY4OVVXNkNYNE9jX0RlSmlWMk1NcEdzTE1EUDNOUWxEb19rTFhIaEFmdUE4c013dUNkZUdKYnNFNWRacEZTUU9LZ2NyeFk?oc=5",
+    "source": "oanda.jp",
+    "published_jst": "2026-10-02 08:09 JST",
+    "fetch_time": "2026-10-02T09:56:22.344010+09:00"
+  },
+  {
+    "keyword": "米国債 長期金利 10年債",
+    "label": "📊 米金利",
+    "importance": "A",
+    "title": "米長期金利、一時５．３４％ １０年債、２４年ぶり高水準 - 時事ドットコム",
+    "url": "https://news.google.com/rss/articles/CBMiY0FVX3lxTFBMY1VpSHo0YXBQaUNScHkzVGZQRC1FZ3ZpUjZubWpITUx4N04zaHBJanllNE5pVUVCbVNVQzFsZzJPMXNIQlVib2twcDNkTWI2Tm9rSFI1WjRPQjBWYkNnbW96Yw?oc=5",
+    "source": "時事ドットコム",
+    "published_jst": "2026-10-01 18:42 JST",
+    "fetch_time": "2026-10-02T09:56:23.861404+09:00"
+  },
+  {
+    "keyword": "米国債 長期金利 10年債",
+    "label": "📊 米金利",
+    "importance": "A",
+    "title": "米国債、売りが売り招く「悪循環」 9月長期金利は4年ぶり上昇幅 - 日本経済新聞",
+    "url": "https://news.google.com/rss/articles/CBMid0FVX3lxTE9xdGRfRUpmVDBNazZQOFhMdnF6QWVxeWpVNDNaM0VkWVFiSGpZLXJaRjd2NVVsVGhUbmYzN09oVWRnNU0yTVRMckdjR0p5OWdHS29rZDQzT1NTbmpURTJaUFNzNnJqOHJneDhfd2xYR3gwWHF6MFdJ?oc=5",
+    "source": "日本経済新聞",
+    "published_jst": "2026-10-02 00:00 JST",
+    "fetch_time": "2026-10-02T09:56:23.861425+09:00"
+  },
+  {
+    "keyword": "米国債 長期金利 10年債",
+    "label": "📊 米金利",
+    "importance": "A",
+    "title": "米長期金利、一時約24年ぶりの高水準（共同通信） - Yahoo!ニュース",
+    "url": "https://news.google.com/rss/articles/CBMif0FVX3lxTE1VajYzazFjeTdoM0hsbXpMMW93Q2F2VGJlWkxTakcxYV9qc014S2MzYTB5ZHE1OHFsZlhYRm5Lel9LZGY3SkZaWnRGODVvbUV6OXJJQ1lZZUNQa201dXRnd0NUbGx6WTVzbGJOdUNnM1NfWE5YM1hGWGFreVkxbnc?oc=5",
+    "source": "Yahoo!ニュース",
+    "published_jst": "2026-10-01 20:40 JST",
+    "fetch_time": "2026-10-02T09:56:23.861437+09:00"
+  },
+  {
+    "keyword": "中東 紛争 戦争 地政学リスク",
+    "label": "⚠️ 中東情勢",
+    "importance": "A",
+    "title": "焦点：中東戦争、市場は想定以上の混乱覚悟 - Reuters",
+    "url": "https://news.google.com/rss/articles/CBMihgFBVV95cUxQS0RPa0FnSTE0LXhMM2hTajdiazZLcHl6TkR5Z0oxQXVIVXJ6bHpiRlRUdVZXREI2RGJBWUdGT1pFeTFwRHJGRmNfRlpzZVV3VEVLRzJoODFyWmtkcXRxUDdfTkxlZ2tGMGFid0pMa3p6WV9KOUN3TFU4RlRTWWxOdzByZXJCQQ?oc=5",
+    "source": "Reuters",
+    "published_jst": "2026-03-01 17:00 JST",
+    "fetch_time": "2026-10-02T09:56:25.227012+09:00"
+  },
+  {
+    "keyword": "中東 紛争 戦争 地政学リスク",
+    "label": "⚠️ 中東情勢",
+    "importance": "A",
+    "title": "イラン攻撃が金融市場に与える影響 これまでの中東紛争と何が違うのか 野村證券・山口正章 - nomura.co.jp",
+    "url": "https://news.google.com/rss/articles/CBMiX0FVX3lxTE5JU1FxUVFyZm9LODNxRzFTNGpPRVk5a21yWGxlcWdYcU5fcEFRbWpJV21NWnhtazhvWmJUeFFBV1RqenlSWmhtbWRrTldNVFlhODAtdmtzbUIySDlBTlh3?oc=5",
+    "source": "nomura.co.jp",
+    "published_jst": "2026-03-05 17:00 JST",
+    "fetch_time": "2026-10-02T09:56:25.227033+09:00"
+  },
+  {
+    "keyword": "中東 紛争 戦争 地政学リスク",
+    "label": "⚠️ 中東情勢",
+    "importance": "A",
+    "title": "原油高と地政学で揺れる日本株、中東紛争「短期」「中長期」視点の有望株と避けるべき業種 - ダイヤモンド・オンライン",
+    "url": "https://news.google.com/rss/articles/CBMiTEFVX3lxTFBSY1cxZDdOanBxOGFCUlkwd2JpZFppQzlWakpBQndETnNqQWdhTC1hUm1VQjJEVHV3NmRBQmRnTTlWSVU5cm53UlB1dkTSAU9BVV95cUxNX1VQZklzbVE4VkRMZ0NSUUhUb3BMbUtNUjlSQ3JVM0pYaG1aNDA0SGsyRnJJUENFVks3aWN6dDJzNHp1clRFWlZpZTI2SFBF?oc=5",
+    "source": "ダイヤモンド・オンライン",
+    "published_jst": "2026-04-02 16:00 JST",
+    "fetch_time": "2026-10-02T09:56:25.227044+09:00"
+  },
+  {
+    "keyword": "ウクライナ ロシア 戦争",
+    "label": "⚠️ ロシア・ウクライナ",
+    "importance": "A",
+    "title": "ウクライナ危機、識者の分析 - 読売新聞",
+    "url": "https://news.google.com/rss/articles/CBMiYkFVX3lxTFBRQV92ZWxVZzY2c1drUUlyWWhHMmN2NVFDTHZ0aWJ1d1B0OXhmNkltdnRTb0YxeEdUMkludGx6alVGUVRfTXZfWERYSTRnVjhsRWo0dTNmbUt3U0xIeGw3T0VR?oc=5",
+    "source": "読売新聞",
+    "published_jst": "2026-09-26 15:00 JST",
+    "fetch_time": "2026-10-02T09:56:27.038888+09:00"
+  },
+  {
+    "keyword": "ウクライナ ロシア 戦争",
+    "label": "⚠️ ロシア・ウクライナ",
+    "importance": "A",
+    "title": "ロシアで重大犯罪が急増 顕在化する「ウクライナ帰還兵」問題 - Yahoo!ニュース",
+    "url": "https://news.google.com/rss/articles/CBMif0FVX3lxTE44bzVpcWQ1WnNFS2RBS2h4b2Y1Xzd2VzlvV1FOM0NlazExN0Q5eDcwWnBMQWhEd3lNek4ta1MyeTV3UXYyZTRTaWtQUzB6TktPXzlkbVRLckZ2VXZ1d1ByT0ZEMVlBVWF2NGhHY0J5S2s2YXh6YWo2aE92RXNoSFU?oc=5",
+    "source": "Yahoo!ニュース",
+    "published_jst": "2026-09-30 07:00 JST",
+    "fetch_time": "2026-10-02T09:56:27.038909+09:00"
+  },
+  {
+    "keyword": "ウクライナ ロシア 戦争",
+    "label": "⚠️ ロシア・ウクライナ",
+    "importance": "A",
+    "title": "ウクライナ戦争から始まった「新しい戦い方」 日本への影響とは [高市政権の安保見直し][安全保障関連3文書] - 朝日新聞",
+    "url": "https://news.google.com/rss/articles/CBMiZ0FVX3lxTE9qS1N5ZEdscFk3RjNQbFk2Q29iNTBLa0UwTG1MaUZZLXdEZmpGUkxCU3plOGtzS21KN0EwZTZwY2ZiZnpDMllRVFJRUEFBNXZDeVg2aDFhRW9zc1YtUnB4TzNkOFQ1U2c?oc=5",
+    "source": "朝日新聞",
+    "published_jst": "2026-09-30 06:00 JST",
+    "fetch_time": "2026-10-02T09:56:27.038919+09:00"
+  },
+  {
+    "keyword": "中国 台湾 米中関係 対立",
+    "label": "⚠️ 米中・台湾",
+    "importance": "A",
+    "title": "米中首脳会談「作り笑いの緊張緩和」 日本に迫る三兎追う難題 - 日経ビジネス電子版",
+    "url": "https://news.google.com/rss/articles/CBMiZ0FVX3lxTE9VQUFFMEttd0duNldQQkh4N0ljd3hBNmdOQzlaXzZzSkxSR0ZzZC0tbjNLbURiXzVvUjBHV0tvNV96RHhiUWxWWGtwb2hfdWFNaVBrYUUxVWlVdXFVTmxzSVJHbXlXb0U?oc=5",
+    "source": "日経ビジネス電子版",
+    "published_jst": "2026-09-30 17:00 JST",
+    "fetch_time": "2026-10-02T09:56:28.502983+09:00"
+  },
+  {
+    "keyword": "中国 台湾 米中関係 対立",
+    "label": "⚠️ 米中・台湾",
+    "importance": "A",
+    "title": "米中首脳が会談 習氏がトランプ氏に「台湾独立反対」の立場求める - 朝日新聞",
+    "url": "https://news.google.com/rss/articles/CBMiZ0FVX3lxTFBBXzc0ZnJ5TzB0VUh2d3BQYWw2Y2NtMjA4VTl5aHZjeVhUY2NOVjk4NWx3amdSYncyT3NVbF9kSVdkUElTbEM2MnBIRHlWMmpXRUFHRWIwOFlrVkZkRklKeDFzdldDNms?oc=5",
+    "source": "朝日新聞",
+    "published_jst": "2026-09-25 03:42 JST",
+    "fetch_time": "2026-10-02T09:56:28.503003+09:00"
+  },
+  {
+    "keyword": "中国 台湾 米中関係 対立",
+    "label": "⚠️ 米中・台湾",
+    "importance": "A",
+    "title": "中国の駐米大使、首脳会談前に「レッドライン」警告 台湾や人権巡り - Reuters",
+    "url": "https://news.google.com/rss/articles/CBMihAFBVV95cUxPMjJOLXUtMjlYTHF2UF9yMkUwS3dmQlRCNkk4ajBCQWtBdWNFSWdSUDFDN1p2WF9LYUZwVi1ENjNVdHh3LTNkelZKQ0xBOGlUVU8wU01pRUw5NTEzUU5aR3N5NEV5TjN3d2szd1ZJTXVvUkJNMkh6VFVFenZGSEFrTmFQSTE?oc=5",
+    "source": "Reuters",
+    "published_jst": "2026-09-22 16:00 JST",
+    "fetch_time": "2026-10-02T09:56:28.503013+09:00"
+  },
+  {
+    "keyword": "トランプ 関税 貿易 経済政策",
+    "label": "🇺🇸 米経済政策",
+    "importance": "B",
+    "title": "トランプ関税は何を揺るがすのか？分業化する世界経済を考える - meiji.net",
+    "url": "https://news.google.com/rss/articles/CBMiaEFVX3lxTFA1R3g5ZXFYWm4wRHVGRVRreHdPMEZmU1pJcEc2b0g0T09sTzBoVXRNbmlwOXM4NDd2dTk4ZFh6amZNb0JzOEJLc2FXNFM2ZUJkRlFzQ096LVFjLXZFeTkzamZEaEJSY2NC?oc=5",
+    "source": "meiji.net",
+    "published_jst": "2026-07-30 11:02 JST",
+    "fetch_time": "2026-10-02T09:56:29.959623+09:00"
+  },
+  {
+    "keyword": "トランプ 関税 貿易 経済政策",
+    "label": "🇺🇸 米経済政策",
+    "importance": "B",
+    "title": "トランプ政権、新たな関税を発動　強制労働対策が不十分として60の国・地域に - BBC",
+    "url": "https://news.google.com/rss/articles/CBMiX0FVX3lxTE5LTVhnWVB3clowR0gzNXhjSVhONzlFdElCcDZ2R01Bc0N6ZWRsTkxRVURraVpLNEhLRWI0V3J1Tzl4X3RlOWNranJXeHIyaWhlaHVMbW1URXZiNGlJbTJB0gFkQVVfeXFMTlVaUkJONXdQa1FVWWhLbnFrcXhPeG1rUmZzazhZVnFLMTdwS2tSUmdzUkp5WHp2VkdHX0UxSkhKd19DLTRfYVhQUk5aUm5aN2hpaTRONmc2N3lIUFRZNVJONlhpbA?oc=5",
+    "source": "BBC",
+    "published_jst": "2026-07-24 16:00 JST",
+    "fetch_time": "2026-10-02T09:56:29.959644+09:00"
+  },
+  {
+    "keyword": "トランプ 関税 貿易 経済政策",
+    "label": "🇺🇸 米経済政策",
+    "importance": "B",
+    "title": "迷走するトランプ政権の経済政策がたどり着いた日米協調介入：日本の経済政策への介入を強めるか？ - Yahoo!ニュース",
+    "url": "https://news.google.com/rss/articles/CBMif0FVX3lxTFB1LV9oNXdGejlLYV9UMDFOcEhZalJTWTZGdzBnWWxYTnY4b2xkX3JySjliQUJxUW4ycV9TX1VzeE5BeTRBaTYtUWxkQUQ1WGJVMWlQYXRRNVZ6U0g4TWFUTEZlaHpESUw3akdpVUl4REhFeHZhYkxvTW5YUm1kS0U?oc=5",
+    "source": "Yahoo!ニュース",
+    "published_jst": "2026-08-19 16:00 JST",
+    "fetch_time": "2026-10-02T09:56:29.959654+09:00"
+  },
+  {
+    "keyword": "米国 財政赤字 国債 予算",
+    "label": "🇺🇸 米財政",
+    "importance": "B",
+    "title": "政府、補正財源に赤字国債検討 高市首相がきょう実質的な編成指示＝関係者 - Reuters",
+    "url": "https://news.google.com/rss/articles/CBMigwFBVV95cUxPbThXU09CTVlEX1pTRTdPRjFKcEltdkl0bGZnV0hJa19UUEZkdUpfd0FQaTllRGhTbnREVEp4QWU4ZDc3UThINVdKQUVwQUNNU1ozT2o4T1dlX1NfZlRBYjdBbllsS1g0d0lHQ3ZTYVpRY0YzOE9XdklDNExPZENzYVNyVQ?oc=5",
+    "source": "Reuters",
+    "published_jst": "2026-05-17 16:00 JST",
+    "fetch_time": "2026-10-02T09:56:31.369757+09:00"
+  },
+  {
+    "keyword": "米国 財政赤字 国債 予算",
+    "label": "🇺🇸 米財政",
+    "importance": "B",
+    "title": "米国債投資家は仏国債リスクの伝播に警戒を ストラテジスト：米国の財政ファンダメンタルズはフランスより脆弱 - BigGo ファイナンス",
+    "url": "https://news.google.com/rss/articles/CBMidEFVX3lxTE1WNzVNTTI3bmtRTm1hanJLdFF0RWpuV3RlcEhHY1ZUSTc1Nnp4Rzk3S2RQa2NQMDcwSDhUWnk2UHFEZ2VHZGdqRmN0VVBTdFRVNUxvY1lGaW5CQnVZQ1c0Mmx1TnpNVjdjZ2I2TFJxMlB0dWZG?oc=5",
+    "source": "BigGo ファイナンス",
+    "published_jst": "2026-08-27 16:00 JST",
+    "fetch_time": "2026-10-02T09:56:31.369778+09:00"
+  },
+  {
+    "keyword": "米国 財政赤字 国債 予算",
+    "label": "🇺🇸 米財政",
+    "importance": "B",
+    "title": "「最も恐ろしい点は負債悪循環が始まっているということだ」 米国の国家負債が40兆ドルという天文学的な水準まで増え、警告の声が出ている。 マーク·ゴールドワイン責任連邦予算委員会首席理事は「米国は依然と.. - 매일경제",
+    "url": "https://news.google.com/rss/articles/CBMiT0FVX3lxTFB6TVZBSEVMNVBPNkxiU1NVYkdzZDRUSVcxRklGZmVubXlzQWZVZFBLaFVZNXp5V2VBYVJPZGhlV3ZYaTBxWlNUOHlvd0RZSjA?oc=5",
+    "source": "매일경제",
+    "published_jst": "2026-08-20 16:00 JST",
+    "fetch_time": "2026-10-02T09:56:31.369789+09:00"
+  },
+  {
+    "keyword": "決算 増益 減益 業績予想",
+    "label": "🏢 企業決算",
+    "importance": "B",
+    "title": "国内株式決算の注目点 期初会社計画で増益・減益となりやすいセクター 野村證券ストラテジストが解説 - nomura.co.jp",
+    "url": "https://news.google.com/rss/articles/CBMiX0FVX3lxTE4xc0hFZU9vbkR2R0JSbXpoUWxVZnZmMm9BZHJsdU02WV9UTTh1SXNVd1ZzZ21PbVpMRnEzdVBkMXhFN2NzYlE0alNRUm5RQ0E3ZnNRRUFBZ2RPX0FlWFFr?oc=5",
+    "source": "nomura.co.jp",
+    "published_jst": "2026-04-21 18:07 JST",
+    "fetch_time": "2026-10-02T09:56:32.768451+09:00"
+  },
+  {
+    "keyword": "決算 増益 減益 業績予想",
+    "label": "🏢 企業決算",
+    "importance": "B",
+    "title": "決算発表ピーク 業績予想の「減益」「未定」増加 イラン情勢で - NHKニュース",
+    "url": "https://news.google.com/rss/articles/CBMiX0FVX3lxTE1DU25iWXJ1blhFVkhFNWtMNGxoV0c1S2hCM2pqbjlZdmxVNUdQM1lVcTNxdHdzNEpPWkNCcnhMcnk3cHQyVURqVnVySFR0eFFJR0pUdmh2NjlQQlhEX1Iw?oc=5",
+    "source": "NHKニュース",
+    "published_jst": "2026-05-13 16:00 JST",
+    "fetch_time": "2026-10-02T09:56:32.768472+09:00"
+  },
+  {
+    "keyword": "決算 増益 減益 業績予想",
+    "label": "🏢 企業決算",
+    "importance": "B",
+    "title": "5月1日に業績・配当予想を修正した会社はこちら - 四季報オンライン",
+    "url": "https://news.google.com/rss/articles/CBMiV0FVX3lxTE9CMkF3bXZnV2lNTGZ0c2psRE9PR0ZnT0tleFJBeTR3OHhlVzh2U1owQ3pBVFZsMlV2OEJsZHE5bG1CYTJNVkQ2Tjg4SWc1Wm9OWnd4aUl6QQ?oc=5",
+    "source": "四季報オンライン",
+    "published_jst": "2026-05-01 16:51 JST",
+    "fetch_time": "2026-10-02T09:56:32.768483+09:00"
+  },
+  {
+    "keyword": "Apple Google Microsoft Meta 決算 業績",
+    "label": "🏢 GAFA決算",
+    "importance": "B",
+    "title": "【GAFAM最新決算比較】マイクロソフト・AWS圧勝？市場が見抜く「AI投資」の決定差 - ビジネス+IT",
+    "url": "https://news.google.com/rss/articles/CBMiU0FVX3lxTE5GdDVPRnNnUTR6cERGcG5admZpR2VQRUVBWlZzdG4zMWhFUjY1MDI3ODhVeHE3MEhmRG81MGRuaUFkWThSUG5HOEpTc2MzZG5SYlZZ?oc=5",
+    "source": "ビジネス+IT",
+    "published_jst": "2026-07-31 16:00 JST",
+    "fetch_time": "2026-10-02T09:56:34.184043+09:00"
+  },
+  {
+    "keyword": "Apple Google Microsoft Meta 決算 業績",
+    "label": "🏢 GAFA決算",
+    "importance": "B",
+    "title": "【徹底解剖】ハイパースケーラー決算とAI競争の最前線：Googleの独走とMeta・Microsoftが直面する壁 - ブルーモ証券",
+    "url": "https://news.google.com/rss/articles/CBMiakFVX3lxTE1wd09WemY3RnEydDVWaGJyN0tvbG9BYzl0eGl1UXJRMElMaXlJQl9QV3JLNC1SVVdSTkJLM0RFUGE4c2xueXJwUE9fVkZtcGVyMWVkdW8xTlEtbzIyRzg4dlFSX2tQME1HYXc?oc=5",
+    "source": "ブルーモ証券",
+    "published_jst": "2026-05-08 17:32 JST",
+    "fetch_time": "2026-10-02T09:56:34.184064+09:00"
+  },
+  {
+    "keyword": "Apple Google Microsoft Meta 決算 業績",
+    "label": "🏢 GAFA決算",
+    "importance": "B",
+    "title": "AI投資の大試練！クラウド3強の時価総額が1週間で1.5兆ドル急増、アップルとメタは売り浴びせられる - BigGo ファイナンス",
+    "url": "https://news.google.com/rss/articles/CBMidEFVX3lxTFBxSXhuZzFwcllZT0VCMkxwaXIwZTRHUm1la245MHNtcC0zZEtEQzlweTVPQW5JNkFuSXdHOTFqZU5IMWMwODAwbE5DQ1Z0S0dSZmtQNmo5RTNYeFY5d1ZqN1NtR3J1V29TN2dJR3JlZUVPbURl?oc=5",
+    "source": "BigGo ファイナンス",
+    "published_jst": "2026-08-01 16:00 JST",
+    "fetch_time": "2026-10-02T09:56:34.184075+09:00"
+  },
+  {
+    "keyword": "トヨタ ソニー ソフトバンク 決算 業績",
+    "label": "🏢 日本大企業",
+    "importance": "B",
+    "title": "ソフトバンクグループ(株)【9984】：株価・株式情報（夜間PTS含む） - finance.yahoo.co.jp",
+    "url": "https://news.google.com/rss/articles/CBMiUkFVX3lxTE55YWlQaEwwWXc5TW9lVHVuTGxCY2hKTnRLZjZTZFRoNVJZenhZUERYZWdxaDJreVdfa3p4Sk9zTHNaRkhHb3FHWUp3MVhmLVJGVEE?oc=5",
+    "source": "finance.yahoo.co.jp",
+    "published_jst": "2026-10-02 04:34 JST",
+    "fetch_time": "2026-10-02T09:56:35.583649+09:00"
+  },
+  {
+    "keyword": "トヨタ ソニー ソフトバンク 決算 業績",
+    "label": "🏢 日本大企業",
+    "importance": "B",
+    "title": "いよいよ来週決算。三菱ＵＦＪ、トヨタ、三菱重工、三菱商事、ＩＨＩ、伊藤忠、三井物産、日本製鉄、丸紅、ソフトバンク、アステラス製薬、太陽誘電、イビデン。８月１日:土曜版～あす上がる株。最新の日本株情報～ Electoral Roll (jG0diqKDp9) - Unisba Media",
+    "url": "https://news.google.com/rss/articles/CBMiggFBVV95cUxQXzZINjNzQnItZndVbG13ZUxhaGFWWHlTMHFmOTY5T014WGEwU0NrSXl3OEo1dzZyc1gzZzR2ZXVlbUhLTWtjQ2xldm9YOFpFRFUyZkRLdG9ZZlpSYURsUFRKSENQWFlrVW41MGc2Y1NsZkFaMnBWTjVoelFMOVBqZlp3?oc=5",
+    "source": "Unisba Media",
+    "published_jst": "2026-09-30 18:10 JST",
+    "fetch_time": "2026-10-02T09:56:35.583669+09:00"
+  },
+  {
+    "keyword": "トヨタ ソニー ソフトバンク 決算 業績",
+    "label": "🏢 日本大企業",
+    "importance": "B",
+    "title": "ソフトバンク決算、宮川社長「これからクラウドサービスの会社になる」 - ケータイ Watch",
+    "url": "https://news.google.com/rss/articles/CBMiZ0FVX3lxTE91cnVlSlUyc08wWElJOGgwWkJoUklYdm5adHBHU1ZVaDBfaGR1WlV0VGxZWFdSbTNrckR5UXJUUHR6d29CWC1JeEUtYzVRTFBRNzJ2RXJHTDkxamNxYXZxNms5Y200emc?oc=5",
+    "source": "ケータイ Watch",
+    "published_jst": "2026-02-10 17:00 JST",
+    "fetch_time": "2026-10-02T09:56:35.583679+09:00"
+  },
+  {
+    "keyword": "エヌビディア NVIDIA 半導体 AI",
+    "label": "💻 AI・半導体",
+    "importance": "B",
+    "title": "エヌビディア、11月にソウルで「AIデイ」開催へ…フィジカル・エージェンティックAIが結集 - 亜州日報",
+    "url": "https://news.google.com/rss/articles/CBMiXEFVX3lxTE9nQjBSZVNuZkpzb2tVcE1ram1OWnBjeWJRWWxTOVp6VlZoNExobV9wWWNtSWd5UUNqa1MzS1JyeGVqUV9pb0VxTi0zNlN1ZmM5em9udDd5S09ZSjJn?oc=5",
+    "source": "亜州日報",
+    "published_jst": "2026-09-30 10:29 JST",
+    "fetch_time": "2026-10-02T09:56:37.041107+09:00"
+  },
+  {
+    "keyword": "エヌビディア NVIDIA 半導体 AI",
+    "label": "💻 AI・半導体",
+    "importance": "B",
+    "title": "AI半導体「変革期を占う」LIVE 予習・復習に役立つ11本 - 日本経済新聞",
+    "url": "https://news.google.com/rss/articles/CBMihwFBVV95cUxQbmtYSzVfOEpWTlVWbHU1dzlFZjFURktoUjZXd1p2SjUwdUlkQnZ1SjItUDg3VE81TDVEb3VHLUxGbGxyb25WeFlESFFmYVgyeVNJWHdmaXJBaVh2dW0yaThrdUluUnhvMGJHemNLMmttdHBKNWVma3JrMG4yZHlWNUJiS01udXc?oc=5",
+    "source": "日本経済新聞",
+    "published_jst": "2026-09-26 08:00 JST",
+    "fetch_time": "2026-10-02T09:56:37.041128+09:00"
+  },
+  {
+    "keyword": "エヌビディア NVIDIA 半導体 AI",
+    "label": "💻 AI・半導体",
+    "importance": "B",
+    "title": "NVIDIA、ハギングフェイス買収で狙う「オープン型AI経済圏」の防衛 - jbpress.ismedia.jp",
+    "url": "https://news.google.com/rss/articles/CBMiVkFVX3lxTE55bjlTSFhxM2VQYnFFWkdGTnlNWURGOS15bmtCUHJNWmtHRERXVzV2djNnY0h2Qm5pTVNtUXY0a1lvbWZnalFJc0ExTmxMU0FxWENTMnV3?oc=5",
+    "source": "jbpress.ismedia.jp",
+    "published_jst": "2026-09-25 06:00 JST",
+    "fetch_time": "2026-10-02T09:56:37.041138+09:00"
+  },
+  {
+    "keyword": "原油 WTI 価格 OPEC",
+    "label": "🛢 原油",
+    "importance": "B",
+    "title": "26年の原油価格は下落へ、供給増で＝ゴールドマン - Reuters",
+    "url": "https://news.google.com/rss/articles/CBMijgFBVV95cUxOaThZMnBLZ0Y2aDI0RUtaMzUxUWlGMmZlNEVkemVkdkNMbmx4MHFVZ0c5bGZlNDlkUUs2cXVlYnJINGM4WTdVakRWVEgyZEpLOHJHdHZWcG5nMUNZYUx1WTRMM0l4STZmeG43aU8tZDRNWW16R1MzWWNpMWZjMHpUR293Szkzd1FmSW82b1d3?oc=5",
+    "source": "Reuters",
+    "published_jst": "2026-01-11 17:00 JST",
+    "fetch_time": "2026-10-02T09:56:38.416421+09:00"
+  },
+  {
+    "keyword": "原油 WTI 価格 OPEC",
+    "label": "🛢 原油",
+    "importance": "B",
+    "title": "【原油ウォッチ】UAEのOPEC脱退、ホルムズ封鎖が背中押す…足元では需要減退が広がりはじめ原油価格の大幅調整迫る(1/3) - jbpress.ismedia.jp",
+    "url": "https://news.google.com/rss/articles/CBMiVkFVX3lxTFA1eHBWV3NrbmVJS0I1dTE3dGhPcTdTUzBDYlFqU1Z6a3hoMndHQzAtaGItN05SYVEyaGZVeDVhMkNRUWg3UGZ4WTVBcEFjeDEwVTlDU3hn?oc=5",
+    "source": "jbpress.ismedia.jp",
+    "published_jst": "2026-05-02 16:00 JST",
+    "fetch_time": "2026-10-02T09:56:38.416442+09:00"
+  },
+  {
+    "keyword": "原油 WTI 価格 OPEC",
+    "label": "🛢 原油",
+    "importance": "B",
+    "title": "ホルムズ再開に備え、5月に原油増産で合意 OPECプラスの8カ国 - 朝日新聞",
+    "url": "https://news.google.com/rss/articles/CBMiZ0FVX3lxTE9nTTVfWFhNN29PR3IwQ2k4OWJVN05yZHhWakMxZXZnMDk0c2NqV2pfNTV3ajd2a2MwaGthV1M0VjQyaURCemRUeEQxNzJ3WUJ6Smo0eVh5b1NRNURqR2c2eWJKMWZzZzQ?oc=5",
+    "source": "朝日新聞",
+    "published_jst": "2026-04-06 16:00 JST",
+    "fetch_time": "2026-10-02T09:56:38.416453+09:00"
+  },
+  {
+    "keyword": "金 ゴールド 価格 安全資産",
+    "label": "🥇 金",
+    "importance": "B",
+    "title": "金価格、四半世紀で20倍 紛争や経済不況で買われた「安全資産」 - 日本経済新聞",
+    "url": "https://news.google.com/rss/articles/CBMibEFVX3lxTFByVDdiMXRvNmRkOUhnY2x1LWtpNk9VeFRSZGkzbi1lZFN5RlhCTF84NUQ2OHlwRkZBMXJaMVBrcXlBZlRza2E1MGxUWmt6dWl2cEhycHU3UU4zY2VPYjRRRDM4TXFBOTAtVXNSOQ?oc=5",
+    "source": "日本経済新聞",
+    "published_jst": "2026-09-29 05:00 JST",
+    "fetch_time": "2026-10-02T09:56:39.904051+09:00"
+  },
+  {
+    "keyword": "金 ゴールド 価格 安全資産",
+    "label": "🥇 金",
+    "importance": "B",
+    "title": "インフレに負けない！金＆暗号資産：金は価値不変の安全資産 価格はニクソンショックから55年で160倍 池水雄一 - 週刊エコノミスト Online",
+    "url": "https://news.google.com/rss/articles/CBMif0FVX3lxTE5ZZ04yUTh2TllzQjgtLTFPcDZxYXdNZmxEcXQwYmtiaTVzbDlSdFlBU2l4UjcyNDJfYWNwU0VoSlM5cVQyazRrQ3JwSEo3dlJFN3dpbzFRTWNZWVhOOUlKMVVkUllJdFpYSzN6blV0NFFMVkppaUYzazB4VEFCLTA?oc=5",
+    "source": "週刊エコノミスト Online",
+    "published_jst": "2026-09-29 12:03 JST",
+    "fetch_time": "2026-10-02T09:56:39.904075+09:00"
+  },
+  {
+    "keyword": "金 ゴールド 価格 安全資産",
+    "label": "🥇 金",
+    "importance": "B",
+    "title": "[写真]金価格、半年で約10%下落 モルガン・スタンレーが見る3つの支え - 財経新聞",
+    "url": "https://news.google.com/rss/articles/CBMiVEFVX3lxTE1mV1VtV0JpaVRaSDFXc0c1Unl4MGprWTBrUzU2ajRtejlnNWI3SFNUSjJZQzF0a01kZ2FhLVRudDhCUG84UWJKZjlRbjB0SXVqVkcxQg?oc=5",
+    "source": "財経新聞",
+    "published_jst": "2026-10-01 13:50 JST",
+    "fetch_time": "2026-10-02T09:56:39.904086+09:00"
+  },
+  {
+    "keyword": "ビットコイン 仮想通貨 暗号資産",
+    "label": "₿ 仮想通貨",
+    "importance": "C",
+    "title": "【9/29話題】Bitcoin Japanがビットコイン初取得、シティがトークン化預金の送金サービスを日本に展開、JPYCがHTXに上場など（音声ニュース） - あたらしい経済",
+    "url": "https://news.google.com/rss/articles/CBMiT0FVX3lxTE9tcm54ZHg5czFXWTA1U3pnOHVkZjloTHNOTkw3V1VITDVxem9zSkpYSER5aVhwbldCc1pSTkZ6eHhyUHYwdDhCUjZzMHo3c1U?oc=5",
+    "source": "あたらしい経済",
+    "published_jst": "2026-09-29 21:54 JST",
+    "fetch_time": "2026-10-02T09:56:41.586018+09:00"
+  },
+  {
+    "keyword": "ビットコイン 仮想通貨 暗号資産",
+    "label": "₿ 仮想通貨",
+    "importance": "C",
+    "title": "仮想通貨投資商品に年初来最大の週間流入、約5600億円＝コインシェアーズ - CoinPost",
+    "url": "https://news.google.com/rss/articles/CBMiQ0FVX3lxTE9tSzR3MlhibjdKMlViY2FVVkpjMmRLY0FyMi1nSjFVTEc4UmtLbG9iVzRsbGtkV1Vrajd0MG4yRGszRW8?oc=5",
+    "source": "CoinPost",
+    "published_jst": "2026-10-01 13:30 JST",
+    "fetch_time": "2026-10-02T09:56:41.586038+09:00"
+  },
+  {
+    "keyword": "ビットコイン 仮想通貨 暗号資産",
+    "label": "₿ 仮想通貨",
+    "importance": "C",
+    "title": "ビットコイン税制の確認ポイント5つを解説 - bitbank",
+    "url": "https://news.google.com/rss/articles/CBMiiAFBVV95cUxOdWg4QnZlYW5RcTZId251WTE4elhfTXJITWd0RFJobmlMdlNYNDdqQXZZaEZXVnZNT2pxRDFCc0VCRUp2TW9YdWxHTG5vQlFxZEtXOVRtYVRQbE5DS2ItVUt2M1g0S3h6dzJwbEdmY1EydHoyTXpxQmN1MVRYNnhmcWtWRUQtY0Vi?oc=5",
+    "source": "bitbank",
+    "published_jst": "2026-10-01 13:28 JST",
+    "fetch_time": "2026-10-02T09:56:41.586048+09:00"
+  },
+  {
+    "keyword": "中国 経済 景気 不動産 不況",
+    "label": "🇨🇳 中国経済",
+    "importance": "B",
+    "title": "池上彰氏「中国景気の減速続く 長引く不動産不況で消費伸び悩み」 - 毎日新聞",
+    "url": "https://news.google.com/rss/articles/CBMif0FVX3lxTFBUTVVXcHZrYXVWcnpUWVlfdXNmUTBNRXRoQWhtRnc4QUpsMXlyZFFHZUN2ejBaeTJscDJ2NkMtanA1QTlvLVJTdXlmU1JUR1JFbDBxZ196dlB6c28yNTkxbGR6S2Nkdy1manlROUc0WlRJYnp6b25vNkRfZDJ0eEU?oc=5",
+    "source": "毎日新聞",
+    "published_jst": "2026-03-07 17:00 JST",
+    "fetch_time": "2026-10-02T09:56:42.998575+09:00"
+  },
+  {
+    "keyword": "中国 経済 景気 不動産 不況",
+    "label": "🇨🇳 中国経済",
+    "importance": "B",
+    "title": "「家売れず、厳しい」苦境の中国・家具産業集積地 景気減速で倒産も - 朝日新聞",
+    "url": "https://news.google.com/rss/articles/CBMiZ0FVX3lxTFBnVTdpZHBkaC1EWTlVODI3Rm9HM3N5Y3pWVW91Ui02S2Y1RFBmSHVmQW9sQW5JX1lfM2EzZEx6T2piZmlRVndzQWxOUEw3eV9VSVBLODdlWEtiYWtfZmNId2ZzY0JVTTQ?oc=5",
+    "source": "朝日新聞",
+    "published_jst": "2026-07-15 16:00 JST",
+    "fetch_time": "2026-10-02T09:56:42.998596+09:00"
+  },
+  {
+    "keyword": "中国 経済 景気 不動産 不況",
+    "label": "🇨🇳 中国経済",
+    "importance": "B",
+    "title": "最近の中国経済の注目点（4）－厳しい地方財政と過当競争是正を巡る状況 - nli-research.co.jp",
+    "url": "https://news.google.com/rss/articles/CBMib0FVX3lxTE5KN1J6bWhhcjRPY3ZSM2pSVUU4VHBhZTkzdThRcUtINnloSkVPckZWRHc0YTVSM3hQZmRSVWM0YmFSTnlHOHIzcUUwdU5JQ0MwSHRWajM2eDFPTEEza1dmc0NLNFBBM21YcjFqbDJhVdIBf0FVX3lxTFBlZk5QVXZDMEF4NWNOaExoYTlqeDA3RGxTZ3d3S25IYnYyV2lhY3VZdkJsajVhWHRSTlNYakhsTUdTQmN3d2JhOEdTckFfM0pDYWlUQVZ0aDdMQTZDVF9NYVBudEZsLTZkRzJZRzU0eFhPM3A5VUY0dWJ2a29mV00?oc=5",
+    "source": "nli-research.co.jp",
+    "published_jst": "2026-07-14 16:00 JST",
+    "fetch_time": "2026-10-02T09:56:42.998607+09:00"
+  },
+  {
+    "keyword": "欧州 ECB ユーロ圏 景気",
+    "label": "🇪🇺 欧州経済",
+    "importance": "B",
+    "title": "インフレ警戒を強めるＥＣＢ ～来年以降も利上げを継続へ～ | 田中 理 | 第一ライフ資産運用経済研究所 - dlri.co.jp",
+    "url": "https://news.google.com/rss/articles/CBMiW0FVX3lxTFBqSy1vay0wdmtzeWZ4SzZNS0E0QmdycjBsT0tmZDRKZndtcUZnMkJua0lVODdZa29jazJ0MERGSG5lN19xc0MtVFlrdDF6a3pJZmwwTk54ZjI4dmM?oc=5",
+    "source": "dlri.co.jp",
+    "published_jst": "2026-09-11 16:00 JST",
+    "fetch_time": "2026-10-02T09:56:44.509907+09:00"
+  },
+  {
+    "keyword": "欧州 ECB ユーロ圏 景気",
+    "label": "🇪🇺 欧州経済",
+    "importance": "B",
+    "title": "ECB4月の理事会プレビュー：何に注目すべきか - ピクテ・ジャパン",
+    "url": "https://news.google.com/rss/articles/CBMif0FVX3lxTE5sV1FaRm8xZ0ZGRHNBei1Wbl9nRjd3WDJiT05TSUZQZnRtemt6U1pjODlIRHBLRG1tT3dMSFF2X0NNLTh5UllCc0oxbDhGcWJ6SHY0T1hkOEpuNE14UG5fVVQ1QnBMWGljUjVjOWxrQXRNbWNUU2lSRS16RF83eDQ?oc=5",
+    "source": "ピクテ・ジャパン",
+    "published_jst": "2026-04-24 16:00 JST",
+    "fetch_time": "2026-10-02T09:56:44.509928+09:00"
+  },
+  {
+    "keyword": "欧州 ECB ユーロ圏 景気",
+    "label": "🇪🇺 欧州経済",
+    "importance": "B",
+    "title": "【欧州インフレ再燃】イラン情勢悪化でエネルギー価格高騰、ECB追加利上げが現実味【伊藤忠総研レポート】2026年6月2日 - 外為どっとコム",
+    "url": "https://news.google.com/rss/articles/CBMiY0FVX3lxTE13aE5JOFRlajIwcmd5MWUxYXpsWEkyYjZBTGU0N2dHcGFoZzhQTmFFV2RHUk5DRmZPV2cwdG1BaTVqaUFoMmV0VTI4QXpDZXhBdk1tZmtacEN0YjRVYzhQTElndw?oc=5",
+    "source": "外為どっとコム",
+    "published_jst": "2026-06-02 16:00 JST",
+    "fetch_time": "2026-10-02T09:56:44.509939+09:00"
+  },
+  {
+    "keyword": "日本経済 景気 インフレ 物価上昇",
+    "label": "🇯🇵 日本経済",
+    "importance": "B",
+    "title": "金利上昇とインフレがもたらす日本経済および家計への影響と構造転換 | 永濱 利廣 - dlri.co.jp",
+    "url": "https://news.google.com/rss/articles/CBMiW0FVX3lxTE1mTUR0LTZPV2RDUE1yUnFpdjJlbEtCWFNHYmNkV2hUNTN0ZXhFMHp0dVlHU2FMdlhURkwwOUg2VW9DcmVwTUpyOFIzdmZVdzM5V3MyZmxkZG1RZWs?oc=5",
+    "source": "dlri.co.jp",
+    "published_jst": "2026-06-18 16:00 JST",
+    "fetch_time": "2026-10-02T09:56:45.978632+09:00"
+  },
+  {
+    "keyword": "日本経済 景気 インフレ 物価上昇",
+    "label": "🇯🇵 日本経済",
+    "importance": "B",
+    "title": "利上げとは 物価上昇を抑制、景気冷やすリスクも - 日本経済新聞",
+    "url": "https://news.google.com/rss/articles/CBMibEFVX3lxTE5kQnpFTHBuUFZDRnRacFg4R1lkeXhjRGFoWGNudGlHanNBbkRVX1RSdk44V054blJucjVzREY4cnh6RG8tTzg3OG1zUzcyUFJPN0p5Y2JoOHZyZGgzZGRvU2RvUFhGcUJzSUJ0Vg?oc=5",
+    "source": "日本経済新聞",
+    "published_jst": "2026-06-11 16:00 JST",
+    "fetch_time": "2026-10-02T09:56:45.978652+09:00"
+  },
+  {
+    "keyword": "日本経済 景気 インフレ 物価上昇",
+    "label": "🇯🇵 日本経済",
+    "importance": "B",
+    "title": "日本経済見通しを修正 原油高踏まえ、物価見通しを大幅に上方修正 野村證券・森田京平 - nomura.co.jp",
+    "url": "https://news.google.com/rss/articles/CBMiX0FVX3lxTE9WWldSZDRDeEZfMmJod01SVThUS09ST25rN0NkcGZmaDY0aE9ObGM3MDR2bmdnOUhYSmQ3clgtcjhEWW1NeHVnV3FQUklWX0lLdndFNnlGS045eTBjakdJ?oc=5",
+    "source": "nomura.co.jp",
+    "published_jst": "2026-03-11 16:00 JST",
+    "fetch_time": "2026-10-02T09:56:45.978663+09:00"
+  },
+  {
+    "keyword": "倒産 破綻 経営危機",
+    "label": "⚠️ 倒産情報",
+    "importance": "B",
+    "title": "北海道のニュース - TBS NEWS DIG",
+    "url": "https://news.google.com/rss/articles/CBMiZ0FVX3lxTE9JaEk1N2NaWTRMZVZOVkRuLThzTzdOTEtkaUVmcE1tYVVteDZYbFRrZU1jLXJvRHQ2QUJvNjdwT0FHbUxNZE5fOTMzdU4wVmQ2VnFhVDJfQTlsaGNoWUgzSkJhSEN6RFk?oc=5",
+    "source": "TBS NEWS DIG",
+    "published_jst": "2026-07-09 16:00 JST",
+    "fetch_time": "2026-10-02T09:56:47.524304+09:00"
+  },
+  {
+    "keyword": "倒産 破綻 経営危機",
+    "label": "⚠️ 倒産情報",
+    "importance": "B",
+    "title": "写真集出版の名門シュタイデルが経営危機。予備的破産手続きの対象に - ARTnews JAPAN",
+    "url": "https://news.google.com/rss/articles/CBMiT0FVX3lxTE5ibGhib090TzNzM3dERklra1pYWDFLUWZiak93MU41eV8yNEZCUzRXQ2dwNWE1UnpHVDhnU000RkpQVXNrX0ZHcjZybW9lVVE?oc=5",
+    "source": "ARTnews JAPAN",
+    "published_jst": "2026-07-21 16:00 JST",
+    "fetch_time": "2026-10-02T09:56:47.524325+09:00"
+  },
+  {
+    "keyword": "倒産 破綻 経営危機",
+    "label": "⚠️ 倒産情報",
+    "importance": "B",
+    "title": "「ナフサショック」で今夏にも倒産急増か…4万6741社を襲う「調達危機」の深刻度【最新調査】 - ダイヤモンド・オンライン",
+    "url": "https://news.google.com/rss/articles/CBMiTEFVX3lxTFA5aGdqV0p6ZjdSaDVVd29RaXN4M0JrMTMxZ0tGTFhJcXo4dkVubHhrVUR2NXMxSXZHY1UwRlBEel9DNGZhRHZVcXpqZXPSAU9BVV95cUxObDJYNkFPeHIzS2YxVTF3WTFjVmk3V3pJUDFTQVFxY2E1ZUdWODlBMHdMRVJzQXItY055RDgxdlJ0a2h4ZDIzTXFsQy00ZTg4?oc=5",
+    "source": "ダイヤモンド・オンライン",
+    "published_jst": "2026-05-11 16:00 JST",
+    "fetch_time": "2026-10-02T09:56:47.524336+09:00"
+  }
+]
