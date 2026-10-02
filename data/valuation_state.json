@@ -2,21 +2,21 @@
  "per": {
   "zone": 3,
   "name": "やや割高",
-  "value": 17.25
+  "value": 17.55
  },
  "pbr": {
   "zone": 3,
   "name": "高評価",
-  "value": 1.89
+  "value": 1.92
  },
  "dividend_yield": {
   "zone": 3,
   "name": "高利回り",
-  "value": 3.05
+  "value": 3.095
  },
  "spread": {
   "zone": 2,
   "name": "株が割安",
-  "value": 4.05
+  "value": 4.0
  }
 }
