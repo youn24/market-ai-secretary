@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>市場レポート 2026-06-05</title>
+<!-- Plotly.js -->
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js" charset="utf-8"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#f0f2f5;color:#212529;
+     font-family:'Meiryo','MS Gothic','Segoe UI',sans-serif;
+     font-size:14px;line-height:1.7}
+a{color:#2563eb;text-decoration:none}
+a:hover{text-decoration:underline}
+.ticker-wrap{position:sticky;top:0;z-index:100;
+             box-shadow:0 2px 6px rgba(0,0,0,0.1)}
+.header{background:linear-gradient(135deg,#1e3a8a 0%,#2563eb 60%,#3b82f6 100%);
+        color:white;padding:22px 32px}
+.header h1{font-size:21px;font-weight:700}
+.header .meta{font-size:12px;opacity:.8;margin-top:4px}
+.disc{background:rgba(255,255,255,0.15);border-left:3px solid #fbbf24;
+      padding:7px 14px;font-size:12px;color:#fef3c7;margin-top:10px;border-radius:4px}
+.container{max-width:1100px;margin:0 auto;padding:20px 14px}
+.sec-h{font-size:16px;font-weight:700;color:#1e3a8a;
+       margin:26px 0 10px;padding:7px 14px;
+       background:white;border-left:4px solid #2563eb;
+       border-radius:0 6px 6px 0;box-shadow:0 1px 3px rgba(0,0,0,.07)}
+.card{background:white;border-radius:10px;padding:18px;
+      margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+.card-title{font-size:15px;font-weight:700;color:#1e3a8a;
+            margin-bottom:12px;padding-bottom:7px;
+            border-bottom:1px solid #e9ecef}
+.ltag{display:inline-block;font-size:11px;font-weight:700;
+      padding:2px 8px;border-radius:4px;margin:7px 0 3px}
+.ftag{background:#e8f4fd;color:#1e6ea6}
+.htag{background:#f0fdf4;color:#15803d}
+.ctag{background:#fff7ed;color:#c2410c}
+.ful li,.hul li{font-size:13px;margin:3px 0;padding-left:2px}
+.cul{list-style:none}
+.caut-li{font-size:13px;color:#c2410c;padding:4px 8px;
+         background:#fff7ed;border-radius:4px;margin:3px 0}
+.sent-wrap{display:flex;gap:14px;margin-bottom:12px;flex-wrap:wrap}
+.sent-main{flex:1;min-width:230px;background:white;border-radius:10px;
+           padding:22px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+.sent-icon{font-size:50px;margin-bottom:6px}
+.sent-lbl{font-size:13px;color:#6b7280;margin-bottom:5px}
+.sent-val{font-size:22px;font-weight:700}
+.sent-sc{font-size:12px;color:#9ca3af;margin-top:4px}
+.sig-tbl{width:100%;border-collapse:collapse;font-size:13px;margin-top:10px}
+.sig-tbl td{padding:5px 7px;border-bottom:1px solid #f3f4f6}
+.sig-tbl td:first-child{font-weight:600;color:#374151}
+.fg-box{background:white;border-radius:10px;padding:18px;text-align:center;
+        box-shadow:0 1px 4px rgba(0,0,0,.07);border:2px solid #e5e7eb;
+        flex:1;min-width:180px}
+.fg-label{font-size:12px;color:#6b7280;margin-bottom:6px}
+.fg-score{font-size:40px;font-weight:700;margin:3px 0}
+.market-grid{display:grid;
+             grid-template-columns:repeat(auto-fill,minmax(125px,1fr));
+             gap:9px;margin-bottom:14px}
+.mcard{background:white;border-radius:8px;padding:11px 9px;
+       text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.mcard-name{font-size:11px;color:#6b7280;margin-bottom:3px}
+.mcard-val{font-size:14px;font-weight:700;color:#212529;margin-bottom:3px}
+.plotly-wrap{background:white;border-radius:10px;padding:14px;
+             margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+.plotly-wrap h3{font-size:13px;color:#6b7280;margin-bottom:8px}
+.tv-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px}
+.tv-card{background:white;border-radius:10px;padding:12px;
+         box-shadow:0 1px 4px rgba(0,0,0,.07)}
+.tv-card h3{font-size:12px;color:#6b7280;margin-bottom:6px}
+.tv-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.tbl-title{font-size:13px;font-weight:700;color:#374151;margin-bottom:5px}
+.stk-tbl{width:100%;border-collapse:collapse;font-size:13px}
+.stk-tbl td{padding:5px 7px;border-bottom:1px solid #f3f4f6}
+.stk-tbl tr:hover{background:#f9fafb}
+.ng{background:white;border-radius:8px;margin-bottom:9px;
+    overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.ng-title{padding:9px 13px;font-size:13px;font-weight:700;
+          color:#374151;background:#f9fafb;
+          border-bottom:1px solid #e9ecef;
+          display:flex;align-items:center;gap:7px}
+.ibadge{display:inline-block;padding:2px 7px;border-radius:4px;
+        font-size:11px;font-weight:700}
+.ni{padding:9px 13px;border-bottom:1px solid #f3f4f6}
+.ni:last-child{border-bottom:none}
+.nl{font-size:13px;color:#1d4ed8;line-height:1.5;display:block;margin-bottom:2px}
+.nl:hover{color:#1e40af}
+.nm{font-size:11px;color:#9ca3af}
+.footer{text-align:center;color:#9ca3af;font-size:11px;
+        padding:18px;border-top:1px solid #e9ecef;
+        margin-top:22px;background:white}
+</style>
+</head>
+<body>
+
+<!-- ティッカーテープ（リアルタイム価格） -->
+<div class="ticker-wrap">
+<div class="tradingview-widget-container" style="margin-bottom:0">
+  <div class="tradingview-widget-container__widget"></div>
+  <script type="text/javascript"
+    src="https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js"
+    async>
+  {
+    "symbols": [
+      {"proName":"OSAKA:NI225","title":"日経平均"},
+      {"proName":"SP:SPX","title":"S&P500"},
+      {"proName":"NASDAQ:NDX","title":"NASDAQ"},
+      {"proName":"FX:USDJPY","title":"ドル円"},
+      {"proName":"TVC:US10Y","title":"米10年金利"},
+      {"proName":"OANDA:XAUUSD","title":"金"},
+      {"proName":"TVC:USOIL","title":"WTI原油"},
+      {"proName":"BITSTAMP:BTCUSD","title":"Bitcoin"},
+      {"proName":"CBOE:VIX","title":"VIX"}
+    ],
+    "showSymbolLogo": true,
+    "isTransparent": false,
+    "displayMode": "adaptive",
+    "colorTheme": "light",
+    "locale": "ja"
+  }
+  </script>
+</div></div>
+
+<div class="header">
+  <h1>📊 投資経済レポート　2026-06-05
+      <small style="opacity:.7;font-size:13px">[MORNING]</small></h1>
+  <div class="meta">🕐 2026-06-05 18:10 JST　|　Yahoo Finance / CNN / Google News / TradingView（APIキー不要）</div>
+  <div class="disc">⚠️ 本レポートは情報提供を目的とした分析補助資料です。投資助言ではありません。すべての投資判断はご自身の責任で行ってください。データ取得失敗・遅延・誤差がある可能性があります。</div>
+</div>
+
+<div class="container">
+
+  <!-- A. 今日の結論 -->
+  <div class="sec-h">A. 今日の結論</div>
+  <div class="sent-wrap">
+    <div class="sent-main">
+      <div class="sent-icon">📉</div>
+      <div class="sent-lbl">本日の地合い</div>
+      <div class="sent-val" style="color:#4a90d9">🛡️ 弱気 (リスクオフ)</div>
+      <div class="sent-sc">リスクスコア: -2.06　（-5=リスクオフ ／ +5=リスクオン）</div>
+      <table class="sig-tbl">
+        <thead><tr style="color:#9ca3af;font-size:11px">
+          <th style="text-align:left;padding:3px 7px">指標</th>
+          <th style="text-align:left;padding:3px 7px">動向</th>
+          <th style="text-align:right;padding:3px 7px">変化率</th>
+        </tr></thead>
+        <tbody><tr><td>S&P500</td><td>上昇</td><td><span style="color:#e05252;font-weight:700;font-size:14px">▲ 0.41%</span></td></tr><tr><td>NASDAQ</td><td>下落</td><td><span style="color:#4a90d9;font-weight:700;font-size:14px">▼ 0.09%</span></td></tr><tr><td>日経平均</td><td>下落</td><td><span style="color:#4a90d9;font-weight:700;font-size:14px">▼ 1.31%</span></td></tr><tr><td>VIX</td><td>上昇(不安増大)</td><td><span style="color:#e05252;font-weight:700;font-size:14px">▲ 1.95%</span></td></tr><tr><td>金</td><td>上昇(安全資産買い)</td><td><span style="color:#e05252;font-weight:700;font-size:14px">▲ 0.32%</span></td></tr><tr><td>ドル円</td><td>円高(リスクオフ方向)</td><td><span style="color:#e05252;font-weight:700;font-size:14px">▲ 0.00%</span></td></tr></tbody>
+      </table>
+    </div>
+    <div class="fg-box" style="border-color:#74c69d">
+      <div class="fg-label">😨 Crypto Fear &amp; Greed <span style="font-size:10px;color:#aaa">by alternative.me</span></div>
+      <div class="fg-score" style="color:#74c69d">🙂 55</div>
+      <div style="font-size:15px;font-weight:700;color:#74c69d">中立 😐</div>
+    </div>
+  </div>
+
+  <!-- Plotly: Fear & Greed + リスクメーター -->
+  <div class="tv-grid-2">
+    <div><div class="plotly-wrap"><div style="height:300px; width:100%;">                            <div id="9e1be55c-055c-403c-a21c-524c044b28f3" class="plotly-graph-div" style="height:100%; width:100%;"></div>            <script>                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("9e1be55c-055c-403c-a21c-524c044b28f3")) {                    Plotly.newPlot(                        "9e1be55c-055c-403c-a21c-524c044b28f3",                        [{"gauge":{"axis":{"range":[0,100],"tickcolor":"#6c757d","tickfont":{"size":11},"tickwidth":1},"bar":{"color":"#74c69d","thickness":0.25},"bgcolor":"#f8f9fa","borderwidth":0,"steps":[{"color":"rgba(224,82,82,0.2)","range":[0,25]},{"color":"rgba(255,140,66,0.2)","range":[25,45]},{"color":"rgba(170,170,170,0.2)","range":[45,55]},{"color":"rgba(116,198,157,0.2)","range":[55,75]},{"color":"rgba(45,154,107,0.2)","range":[75,100]}],"threshold":{"line":{"color":"#74c69d","width":4},"thickness":0.8,"value":55.0}},"mode":"gauge+number+delta","number":{"font":{"color":"#74c69d","size":52},"suffix":""},"title":{"font":{"color":"#212529","size":14},"text":"😨 Fear & Greed Index\u003cbr\u003e\u003cspan style='font-size:18px;color:#74c69d'\u003e中立 😐\u003c\u002fspan\u003e\u003cbr\u003e\u003cspan style='font-size:11px;color:#9ca3af'\u003e出典: alternative.me \u002f 暗号資産市場の心理指標\u003c\u002fspan\u003e"},"value":55.0,"type":"indicator"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermap":[{"type":"scattermap","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"}}},"annotations":[{"font":{"color":"#e05252","size":9},"showarrow":false,"text":"極度の\n恐怖","x":0.08,"xref":"paper","y":-0.12,"yref":"paper"},{"font":{"color":"#ff8c42","size":9},"showarrow":false,"text":"恐怖","x":0.28,"xref":"paper","y":-0.12,"yref":"paper"},{"font":{"color":"#aaaaaa","size":9},"showarrow":false,"text":"中立","x":0.5,"xref":"paper","y":-0.12,"yref":"paper"},{"font":{"color":"#74c69d","size":9},"showarrow":false,"text":"強欲","x":0.72,"xref":"paper","y":-0.12,"yref":"paper"},{"font":{"color":"#2d9a6b","size":9},"showarrow":false,"text":"極度の\n強欲","x":0.92,"xref":"paper","y":-0.12,"yref":"paper"}],"margin":{"l":20,"r":20,"t":20,"b":50},"paper_bgcolor":"#ffffff","plot_bgcolor":"#ffffff","height":300},                        {"displayModeBar": false, "responsive": true}                    )                };            </script>        </div></div></div>
+    <div><div class="plotly-wrap"><div style="height:300px; width:100%;">                            <div id="9dca1c76-a350-445e-9ee9-1439d7e710b4" class="plotly-graph-div" style="height:100%; width:100%;"></div>            <script>                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("9dca1c76-a350-445e-9ee9-1439d7e710b4")) {                    Plotly.newPlot(                        "9dca1c76-a350-445e-9ee9-1439d7e710b4",                        [{"gauge":{"axis":{"range":[0,100],"tickfont":{"color":"#6c757d","size":9},"ticktext":["完全\nリスクオフ","オフ寄り","中立","オン寄り","完全\nリスクオン"],"tickvals":[0,25,50,75,100]},"bar":{"color":"#4a90d9","thickness":0.25},"bgcolor":"#f8f9fa","borderwidth":0,"steps":[{"color":"rgba(74,144,217,0.2)","range":[0,30]},{"color":"rgba(74,144,217,0.1)","range":[30,45]},{"color":"rgba(170,170,170,0.15)","range":[45,55]},{"color":"rgba(224,82,82,0.1)","range":[55,70]},{"color":"rgba(224,82,82,0.2)","range":[70,100]}],"threshold":{"line":{"color":"#4a90d9","width":4},"thickness":0.8,"value":29.4}},"mode":"gauge+number","number":{"font":{"color":"#ffffff","size":1},"suffix":""},"title":{"font":{"color":"#212529","size":14},"text":"⚖️ リスクオン \u002f オフ 判定\u003cbr\u003e\u003cspan style='font-size:20px;font-weight:bold;color:#4a90d9'\u003e弱気 (リスクオフ)\u003c\u002fspan\u003e\u003cbr\u003e\u003cspan style='font-size:12px;color:#9ca3af'\u003eスコア: -2.06\u003c\u002fspan\u003e"},"value":29.4,"type":"indicator"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermap":[{"type":"scattermap","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"}}},"margin":{"l":20,"r":20,"t":20,"b":20},"paper_bgcolor":"#ffffff","plot_bgcolor":"#ffffff","height":300},                        {"displayModeBar": false, "responsive": true}                    )                };            </script>        </div></div></div>
+  </div>
+
+  <!-- B. 市場全体 数値 -->
+  <div class="sec-h">B. 市場全体の数値</div>
+  <div class="market-grid"><div class="mcard" style="background:rgba(74,144,217,0.06);border-top:3px solid #4a90d9">
+          <div class="mcard-name">日経平均</div>
+          <div class="mcard-val">¥66,588.12</div>
+          <div><span style="color:#4a90d9;font-weight:700;font-size:14px">▼ 1.31%</span></div>
+        </div><div class="mcard" style="background:rgba(224,82,82,0.06);border-top:3px solid #e05252">
+          <div class="mcard-name">S&P500</div>
+          <div class="mcard-val">7,584.3101</div>
+          <div><span style="color:#e05252;font-weight:700;font-size:14px">▲ 0.41%</span></div>
+        </div><div class="mcard" style="background:rgba(74,144,217,0.06);border-top:3px solid #4a90d9">
+          <div class="mcard-name">NASDAQ</div>
+          <div class="mcard-val">26,830.9609</div>
+          <div><span style="color:#4a90d9;font-weight:700;font-size:14px">▼ 0.09%</span></div>
+        </div><div class="mcard" style="background:rgba(224,82,82,0.06);border-top:3px solid #e05252">
+          <div class="mcard-name">ダウ</div>
+          <div class="mcard-val">51,561.9297</div>
+          <div><span style="color:#e05252;font-weight:700;font-size:14px">▲ 1.73%</span></div>
+        </div><div class="mcard" style="background:rgba(224,82,82,0.06);border-top:3px solid #e05252">
+          <div class="mcard-name">ドル円</div>
+          <div class="mcard-val">¥159.94</div>
+          <div><span style="color:#e05252;font-weight:700;font-size:14px">▲ 0.00%</span></div>
+        </div><div class="mcard" style="background:rgba(224,82,82,0.06);border-top:3px solid #e05252">
+          <div class="mcard-name">ユーロドル</div>
+          <div class="mcard-val">1.1641</div>
+          <div><span style="color:#e05252;font-weight:700;font-size:14px">▲ 0.28%</span></div>
+        </div><div class="mcard" style="background:rgba(74,144,217,0.06);border-top:3px solid #4a90d9">
+          <div class="mcard-name">米10年金利</div>
+          <div class="mcard-val">4.477%</div>
+          <div><span style="color:#4a90d9;font-weight:700;font-size:14px">▼ 0.31%</span></div>
+        </div><div class="mcard" style="background:rgba(224,82,82,0.06);border-top:3px solid #e05252">
+          <div class="mcard-name">VIX</div>
+          <div class="mcard-val">15.7000</div>
+          <div><span style="color:#e05252;font-weight:700;font-size:14px">▲ 1.95%</span></div>
+        </div><div class="mcard" style="background:rgba(224,82,82,0.06);border-top:3px solid #e05252">
+          <div class="mcard-name">金</div>
+          <div class="mcard-val">$4,490.30</div>
+          <div><span style="color:#e05252;font-weight:700;font-size:14px">▲ 0.32%</span></div>
+        </div><div class="mcard" style="background:rgba(74,144,217,0.06);border-top:3px solid #4a90d9">
+          <div class="mcard-name">原油</div>
+          <div class="mcard-val">$92.87</div>
+          <div><span style="color:#4a90d9;font-weight:700;font-size:14px">▼ 0.18%</span></div>
+        </div><div class="mcard" style="background:rgba(74,144,217,0.06);border-top:3px solid #4a90d9">
+          <div class="mcard-name">Bitcoin</div>
+          <div class="mcard-val">$62,611.49</div>
+          <div><span style="color:#4a90d9;font-weight:700;font-size:14px">▼ 1.87%</span></div>
+        </div></div>
+
+  <!-- Plotly: 主要指数 -->
+  <div class="plotly-wrap"><div style="height:360px; width:100%;">                            <div id="b0038fb4-90f0-4152-a422-1a40c73cf9e6" class="plotly-graph-div" style="height:100%; width:100%;"></div>            <script>                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("b0038fb4-90f0-4152-a422-1a40c73cf9e6")) {                    Plotly.newPlot(                        "b0038fb4-90f0-4152-a422-1a40c73cf9e6",                        [{"hoverinfo":"text","hovertext":["\u003cb\u003e日経平均\u003c\u002fb\u003e\u003cbr\u003e現在値: 66,588.12\u003cbr\u003e前日比: ▼1.31%\u003cbr\u003e\u003ci\u003e※投資助言ではありません\u003c\u002fi\u003e","\u003cb\u003eTOPIX\u003c\u002fb\u003e\u003cbr\u003e取得失敗","\u003cb\u003eS&P500\u003c\u002fb\u003e\u003cbr\u003e現在値: 7,584.31\u003cbr\u003e前日比: ▲0.41%\u003cbr\u003e\u003ci\u003e※投資助言ではありません\u003c\u002fi\u003e","\u003cb\u003eNASDAQ\u003c\u002fb\u003e\u003cbr\u003e現在値: 26,830.96\u003cbr\u003e前日比: ▼0.09%\u003cbr\u003e\u003ci\u003e※投資助言ではありません\u003c\u002fi\u003e","\u003cb\u003eダウ\u003c\u002fb\u003e\u003cbr\u003e現在値: 51,561.93\u003cbr\u003e前日比: ▲1.73%\u003cbr\u003e\u003ci\u003e※投資助言ではありません\u003c\u002fi\u003e","\u003cb\u003eVIX\u003c\u002fb\u003e\u003cbr\u003e現在値: 15.70\u003cbr\u003e前日比: ▲1.95%\u003cbr\u003e\u003ci\u003e※投資助言ではありません\u003c\u002fi\u003e"],"marker":{"color":["#4a90d9","#6c757d","#e05252","#4a90d9","#e05252","#e05252"],"line":{"width":0}},"orientation":"h","text":["▼1.31%","―","▲0.41%","▼0.09%","▲1.73%","▲1.95%"],"textfont":{"color":["#4a90d9","#6c757d","#e05252","#4a90d9","#e05252","#e05252"],"size":12},"textposition":"outside","x":[-1.31,0,0.41,-0.09,1.73,1.95],"y":["日経平均","TOPIX","S&P500","NASDAQ","ダウ","VIX"],"type":"bar"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermap":[{"type":"scattermap","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"}}},"shapes":[{"line":{"color":"#e9ecef","width":2},"type":"line","x0":0,"x1":0,"xref":"x","y0":0,"y1":1,"yref":"y domain"}],"title":{"font":{"size":16,"color":"#212529"},"text":"📊 主要指数 前日比　2026-06-05","x":0.02},"xaxis":{"tickfont":{"color":"#6c757d"},"title":{"text":"変化率 (%)"},"gridcolor":"#e9ecef","zeroline":false},"yaxis":{"tickfont":{"size":13,"color":"#212529"},"autorange":"reversed"},"margin":{"l":10,"r":80,"t":60,"b":40},"hoverlabel":{"font":{"size":13},"bgcolor":"white","bordercolor":"#e9ecef"},"plot_bgcolor":"#f8f9fa","paper_bgcolor":"#ffffff","height":360,"showlegend":false},                        {"displayModeBar": false, "responsive": true}                    )                };            </script>        </div></div>
+
+  <!-- TradingView リアルタイムチャート -->
+  <div class="sec-h">📡 TradingView リアルタイムチャート</div>
+  <p style="font-size:12px;color:#9ca3af;margin-bottom:10px">
+    ※インターネット接続が必要です。クリックするとTradingViewで大きなチャートを表示できます。
+  </p>
+  <div class="tv-grid"><div class="tv-card"><h3>📈 日経平均</h3>
+<div class="tradingview-widget-container" style="height:220px;width:100%">
+  <div class="tradingview-widget-container__widget"></div>
+  <script type="text/javascript"
+    src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js"
+    async>
+  {
+    "symbol": "OSAKA:NI225",
+    "width": "100%",
+    "height": 220,
+    "locale": "ja",
+    "dateRange": "1M",
+    "colorTheme": "light",
+    "isTransparent": false,
+    "autosize": true,
+    "largeChartUrl": "https://www.tradingview.com/chart/?symbol=OSAKA:NI225"
+  }
+  </script>
+</div></div><div class="tv-card"><h3>📈 S&P500</h3>
+<div class="tradingview-widget-container" style="height:220px;width:100%">
+  <div class="tradingview-widget-container__widget"></div>
+  <script type="text/javascript"
+    src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js"
+    async>
+  {
+    "symbol": "SP:SPX",
+    "width": "100%",
+    "height": 220,
+    "locale": "ja",
+    "dateRange": "1M",
+    "colorTheme": "light",
+    "isTransparent": false,
+    "autosize": true,
+    "largeChartUrl": "https://www.tradingview.com/chart/?symbol=SP:SPX"
+  }
+  </script>
+</div></div><div class="tv-card"><h3>📈 ドル円</h3>
+<div class="tradingview-widget-container" style="height:220px;width:100%">
+  <div class="tradingview-widget-container__widget"></div>
+  <script type="text/javascript"
+    src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js"
+    async>
+  {
+    "symbol": "FX:USDJPY",
+    "width": "100%",
+    "height": 220,
+    "locale": "ja",
+    "dateRange": "1M",
+    "colorTheme": "light",
+    "isTransparent": false,
+    "autosize": true,
+    "largeChartUrl": "https://www.tradingview.com/chart/?symbol=FX:USDJPY"
+  }
+  </script>
+</div></div></div><div class="tv-grid"><div class="tv-card"><h3>📈 金(GOLD)</h3>
+<div class="tradingview-widget-container" style="height:220px;width:100%">
+  <div class="tradingview-widget-container__widget"></div>
+  <script type="text/javascript"
+    src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js"
+    async>
+  {
+    "symbol": "OANDA:XAUUSD",
+    "width": "100%",
+    "height": 220,
+    "locale": "ja",
+    "dateRange": "1M",
+    "colorTheme": "light",
+    "isTransparent": false,
+    "autosize": true,
+    "largeChartUrl": "https://www.tradingview.com/chart/?symbol=OANDA:XAUUSD"
+  }
+  </script>
+</div></div><div class="tv-card"><h3>📈 Bitcoin</h3>
+<div class="tradingview-widget-container" style="height:220px;width:100%">
+  <div class="tradingview-widget-container__widget"></div>
+  <script type="text/javascript"
+    src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js"
+    async>
+  {
+    "symbol": "BITSTAMP:BTCUSD",
+    "width": "100%",
+    "height": 220,
+    "locale": "ja",
+    "dateRange": "1M",
+    "colorTheme": "light",
+    "isTransparent": false,
+    "autosize": true,
+    "largeChartUrl": "https://www.tradingview.com/chart/?symbol=BITSTAMP:BTCUSD"
+  }
+  </script>
+</div></div><div class="tv-card"><h3>📈 米10年金利</h3>
+<div class="tradingview-widget-container" style="height:220px;width:100%">
+  <div class="tradingview-widget-container__widget"></div>
+  <script type="text/javascript"
+    src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js"
+    async>
+  {
+    "symbol": "TVC:US10Y",
+    "width": "100%",
+    "height": 220,
+    "locale": "ja",
+    "dateRange": "1M",
+    "colorTheme": "light",
+    "isTransparent": false,
+    "autosize": true,
+    "largeChartUrl": "https://www.tradingview.com/chart/?symbol=TVC:US10Y"
+  }
+  </script>
+</div></div></div>
+
+  <!-- AI要約 -->
+  <div class="sec-h">🤖 AI要約（Ollama）</div>
+  <div class="card" style="border-left:3px solid #7c3aed">
+      <div class="card-title">🤖 AI要約　<span style="font-size:11px;color:#9ca3af">by Ollama / qwen2.5:3b</span></div>
+      <div style="background:#faf5ff;border-radius:8px;padding:14px;margin-bottom:12px">
+        <div style="font-size:12px;font-weight:700;color:#7c3aed;margin-bottom:6px">📰 本日のニュース要約</div>
+        <div style="font-size:13px;color:#374151;line-height:1.8"></div>
+      </div>
+      <div style="background:#f0fdf4;border-radius:8px;padding:14px">
+        <div style="font-size:12px;font-weight:700;color:#15803d;margin-bottom:6px">📊 今日の市場コメント</div>
+        <div style="font-size:13px;color:#374151;line-height:1.8">今日の市場は弱気の地合いで、特に金やビットコインなどの避難資産が上昇しています。リスク回避の動きが広がる中、日経平均とS&P500は小幅な上下となりました。ドル円も上値を抑える動きを見せています。VIX指数は一時的に上昇しましたが、市場全体への警戒感は中立的なFear & Greedスコアから見ればやや過敏に感じられます。投資者は慎重になりつつありますので、リスク資産に対する注意が必要です。</div>
+      </div>
+      <p style="font-size:11px;color:#9ca3af;margin-top:8px">
+        ⚠️ AIが生成したコメントです。事実確認を行い、投資判断の参考にしないでください。
+      </p>
+    </div>
+
+  <!-- 主要銘柄 -->
+  <div class="sec-h">📋 主要銘柄の動向</div>
+  <div class="card">
+    <div class="card-title">米国・日本 主要銘柄 前日比</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div><div class="tbl-title">🗽 米国 主要銘柄</div>
+           <table class="stk-tbl"><tbody><tr style="background:rgba(224,82,82,0.05)"><td>🟢 NVIDIA</td><td style="text-align:right;font-weight:600">218.66</td><td style="text-align:right"><span style="color:#e05252;font-weight:700;font-size:14px">▲ 1.94%</span></td></tr><tr style="background:rgba(224,82,82,0.05)"><td>🍎 Apple</td><td style="text-align:right;font-weight:600">311.23</td><td style="text-align:right"><span style="color:#e05252;font-weight:700;font-size:14px">▲ 0.31%</span></td></tr><tr style="background:rgba(74,144,217,0.05)"><td>⚡ Tesla</td><td style="text-align:right;font-weight:600">418.45</td><td style="text-align:right"><span style="color:#4a90d9;font-weight:700;font-size:14px">▼ 1.24%</span></td></tr><tr style="background:rgba(224,82,82,0.05)"><td>🪟 Microsoft</td><td style="text-align:right;font-weight:600">428.05</td><td style="text-align:right"><span style="color:#e05252;font-weight:700;font-size:14px">▲ 0.17%</span></td></tr><tr style="background:rgba(224,82,82,0.05)"><td>📦 Amazon</td><td style="text-align:right;font-weight:600">253.79</td><td style="text-align:right"><span style="color:#e05252;font-weight:700;font-size:14px">▲ 1.51%</span></td></tr><tr style="background:rgba(224,82,82,0.05)"><td>💬 Meta</td><td style="text-align:right;font-weight:600">622.98</td><td style="text-align:right"><span style="color:#e05252;font-weight:700;font-size:14px">▲ 4.24%</span></td></tr></tbody></table></div>
+      <div><div class="tbl-title">🗾 日本 主要銘柄</div>
+           <table class="stk-tbl"><tbody><tr style="background:rgba(224,82,82,0.05)"><td>🚗 トヨタ</td><td style="text-align:right;font-weight:600">2,850.00</td><td style="text-align:right"><span style="color:#e05252;font-weight:700;font-size:14px">▲ 0.41%</span></td></tr><tr style="background:rgba(224,82,82,0.05)"><td>📱 SBG</td><td style="text-align:right;font-weight:600">7,426.00</td><td style="text-align:right"><span style="color:#e05252;font-weight:700;font-size:14px">▲ 0.66%</span></td></tr><tr style="background:rgba(224,82,82,0.05)"><td>🎮 ソニーG</td><td style="text-align:right;font-weight:600">3,559.00</td><td style="text-align:right"><span style="color:#e05252;font-weight:700;font-size:14px">▲ 0.54%</span></td></tr><tr style="background:rgba(224,82,82,0.05)"><td>🏦 三菱UFJ</td><td style="text-align:right;font-weight:600">3,219.00</td><td style="text-align:right"><span style="color:#e05252;font-weight:700;font-size:14px">▲ 1.58%</span></td></tr><tr style="background:rgba(74,144,217,0.05)"><td>💾 アドバンテスト</td><td style="text-align:right;font-weight:600">26,765.00</td><td style="text-align:right"><span style="color:#4a90d9;font-weight:700;font-size:14px">▼ 4.99%</span></td></tr><tr style="background:rgba(74,144,217,0.05)"><td>🔬 信越化学</td><td style="text-align:right;font-weight:600">7,350.00</td><td style="text-align:right"><span style="color:#4a90d9;font-weight:700;font-size:14px">▼ 3.81%</span></td></tr></tbody></table></div>
+    </div>
+  </div>
+  <div class="plotly-wrap"><div style="height:380px; width:100%;">                            <div id="4a68b919-3a25-4d22-81cc-cc6ef6932e45" class="plotly-graph-div" style="height:100%; width:100%;"></div>            <script>                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("4a68b919-3a25-4d22-81cc-cc6ef6932e45")) {                    Plotly.newPlot(                        "4a68b919-3a25-4d22-81cc-cc6ef6932e45",                        [{"hoverinfo":"text","hovertext":["\u003cb\u003eNVIDIA\u003c\u002fb\u003e (NVDA)\u003cbr\u003e現在値: 218.66\u003cbr\u003e前日比: ▲1.94%","\u003cb\u003eApple\u003c\u002fb\u003e (AAPL)\u003cbr\u003e現在値: 311.23\u003cbr\u003e前日比: ▲0.31%","\u003cb\u003eTesla\u003c\u002fb\u003e (TSLA)\u003cbr\u003e現在値: 418.45\u003cbr\u003e前日比: ▼1.24%","\u003cb\u003eMicrosoft\u003c\u002fb\u003e (MSFT)\u003cbr\u003e現在値: 428.05\u003cbr\u003e前日比: ▲0.17%","\u003cb\u003eAmazon\u003c\u002fb\u003e (AMZN)\u003cbr\u003e現在値: 253.79\u003cbr\u003e前日比: ▲1.51%","\u003cb\u003eMeta\u003c\u002fb\u003e (META)\u003cbr\u003e現在値: 622.98\u003cbr\u003e前日比: ▲4.24%"],"marker":{"color":["#e05252","#e05252","#4a90d9","#e05252","#e05252","#e05252"],"line":{"width":0}},"orientation":"h","showlegend":false,"text":["▲1.94%","▲0.31%","▼1.24%","▲0.17%","▲1.51%","▲4.24%"],"textfont":{"color":["#e05252","#e05252","#4a90d9","#e05252","#e05252","#e05252"],"size":11},"textposition":"outside","x":[1.94,0.31,-1.24,0.17,1.51,4.24],"y":["NVIDIA","Apple","Tesla","Microsoft","Amazon","Meta"],"type":"bar","xaxis":"x","yaxis":"y"},{"hoverinfo":"text","hovertext":["\u003cb\u003eトヨタ\u003c\u002fb\u003e (7203.T)\u003cbr\u003e現在値: 2,850.00\u003cbr\u003e前日比: ▲0.41%","\u003cb\u003eSBG\u003c\u002fb\u003e (9984.T)\u003cbr\u003e現在値: 7,426.00\u003cbr\u003e前日比: ▲0.66%","\u003cb\u003eソニーG\u003c\u002fb\u003e (6758.T)\u003cbr\u003e現在値: 3,559.00\u003cbr\u003e前日比: ▲0.54%","\u003cb\u003e三菱UFJ\u003c\u002fb\u003e (8306.T)\u003cbr\u003e現在値: 3,219.00\u003cbr\u003e前日比: ▲1.58%","\u003cb\u003eアドバンテスト\u003c\u002fb\u003e (6857.T)\u003cbr\u003e現在値: 26,765.00\u003cbr\u003e前日比: ▼4.99%","\u003cb\u003e信越化学\u003c\u002fb\u003e (4063.T)\u003cbr\u003e現在値: 7,350.00\u003cbr\u003e前日比: ▼3.81%"],"marker":{"color":["#e05252","#e05252","#e05252","#e05252","#4a90d9","#4a90d9"],"line":{"width":0}},"orientation":"h","showlegend":false,"text":["▲0.41%","▲0.66%","▲0.54%","▲1.58%","▼4.99%","▼3.81%"],"textfont":{"color":["#e05252","#e05252","#e05252","#e05252","#4a90d9","#4a90d9"],"size":11},"textposition":"outside","x":[0.41,0.66,0.54,1.58,-4.99,-3.81],"y":["トヨタ","SBG","ソニーG","三菱UFJ","アドバンテスト","信越化学"],"type":"bar","xaxis":"x2","yaxis":"y2"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermap":[{"type":"scattermap","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"}}},"xaxis":{"anchor":"y","domain":[0.0,0.44],"tickfont":{"color":"#6c757d"},"title":{"text":"変化率 (%)"},"gridcolor":"#e9ecef","zeroline":false},"yaxis":{"anchor":"x","domain":[0.0,1.0],"tickfont":{"size":12,"color":"#212529"},"autorange":"reversed"},"xaxis2":{"anchor":"y2","domain":[0.56,1.0],"tickfont":{"color":"#6c757d"},"title":{"text":"変化率 (%)"},"gridcolor":"#e9ecef","zeroline":false},"yaxis2":{"anchor":"x2","domain":[0.0,1.0],"tickfont":{"size":12,"color":"#212529"},"autorange":"reversed"},"annotations":[{"font":{"size":16},"showarrow":false,"text":"🗽 米国 主要銘柄","x":0.22,"xanchor":"center","xref":"paper","y":1.0,"yanchor":"bottom","yref":"paper"},{"font":{"size":16},"showarrow":false,"text":"🗾 日本 主要銘柄","x":0.78,"xanchor":"center","xref":"paper","y":1.0,"yanchor":"bottom","yref":"paper"}],"shapes":[{"line":{"color":"#e9ecef","width":1.5},"type":"line","x0":0,"x1":0,"xref":"x","y0":0,"y1":1,"yref":"y domain"},{"line":{"color":"#e9ecef","width":1.5},"type":"line","x0":0,"x1":0,"xref":"x2","y0":0,"y1":1,"yref":"y2 domain"}],"title":{"font":{"size":16,"color":"#212529"},"text":"📋 主要銘柄 前日比　2026-06-05","x":0.02},"margin":{"l":10,"r":80,"t":70,"b":40},"hoverlabel":{"font":{"size":13},"bgcolor":"white","bordercolor":"#e9ecef"},"plot_bgcolor":"#f8f9fa","paper_bgcolor":"#ffffff","height":380},                        {"displayModeBar": false, "responsive": true}                    )                };            </script>        </div></div>
+
+  <!-- コモディティ -->
+  <div class="sec-h">⛽ コモディティ・仮想通貨</div>
+  <div class="plotly-wrap"><div style="height:220px; width:100%;">                            <div id="aa45af92-37ba-4c1b-9ce9-6b6f2f7af2c9" class="plotly-graph-div" style="height:100%; width:100%;"></div>            <script>                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("aa45af92-37ba-4c1b-9ce9-6b6f2f7af2c9")) {                    Plotly.newPlot(                        "aa45af92-37ba-4c1b-9ce9-6b6f2f7af2c9",                        [{"delta":{"decreasing":{"color":"#4a90d9"},"increasing":{"color":"#e05252"},"prefix":"$","reference":4475.7998,"valueformat":".2f"},"mode":"number+delta","number":{"font":{"color":"#c9a84c","size":28},"prefix":"$","valueformat":",.2f"},"title":{"font":{"size":13},"text":"\u003cb\u003e金 (GOLD)\u003c\u002fb\u003e\u003cbr\u003e\u003cspan style='color:#e05252;font-size:16px'\u003e▲0.32%\u003c\u002fspan\u003e"},"value":4490.2998,"type":"indicator","domain":{"x":[0.0,0.2888888888888889],"y":[0.0,1.0]}},{"delta":{"decreasing":{"color":"#4a90d9"},"increasing":{"color":"#e05252"},"prefix":"$","reference":93.04,"valueformat":".2f"},"mode":"number+delta","number":{"font":{"color":"#5c8a5c","size":28},"prefix":"$","valueformat":",.2f"},"title":{"font":{"size":13},"text":"\u003cb\u003eWTI原油\u003c\u002fb\u003e\u003cbr\u003e\u003cspan style='color:#4a90d9;font-size:16px'\u003e▼0.18%\u003c\u002fspan\u003e"},"value":92.87,"type":"indicator","domain":{"x":[0.35555555555555557,0.6444444444444445],"y":[0.0,1.0]}},{"delta":{"decreasing":{"color":"#4a90d9"},"increasing":{"color":"#e05252"},"prefix":"$","reference":63801.5742,"valueformat":".2f"},"mode":"number+delta","number":{"font":{"color":"#f7931a","size":28},"prefix":"$","valueformat":",.2f"},"title":{"font":{"size":13},"text":"\u003cb\u003eBitcoin\u003c\u002fb\u003e\u003cbr\u003e\u003cspan style='color:#4a90d9;font-size:16px'\u003e▼1.87%\u003c\u002fspan\u003e"},"value":62611.4883,"type":"indicator","domain":{"x":[0.7111111111111111,1.0],"y":[0.0,1.0]}}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermap":[{"type":"scattermap","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"}}},"annotations":[{"font":{"size":16},"showarrow":false,"text":"金 (GOLD)","x":0.14444444444444446,"xanchor":"center","xref":"paper","y":1.0,"yanchor":"bottom","yref":"paper"},{"font":{"size":16},"showarrow":false,"text":"WTI原油","x":0.5,"xanchor":"center","xref":"paper","y":1.0,"yanchor":"bottom","yref":"paper"},{"font":{"size":16},"showarrow":false,"text":"Bitcoin","x":0.8555555555555556,"xanchor":"center","xref":"paper","y":1.0,"yanchor":"bottom","yref":"paper"}],"title":{"font":{"size":16,"color":"#212529"},"text":"⛽ コモディティ・仮想通貨　2026-06-05","x":0.02},"margin":{"l":10,"r":10,"t":60,"b":10},"paper_bgcolor":"#ffffff","plot_bgcolor":"#ffffff","height":220},                        {"displayModeBar": false, "responsive": true}                    )                };            </script>        </div></div>
+
+  <!-- 分析 -->
+  <div class="sec-h">C〜G. 各市場の分析</div>
+  <div class="card">
+      <div class="card-title">💱 為替</div>
+      <div class='ltag ftag'>📊 事実</div><ul class='ful'><li>ドル円: 159.94円 (+0.00%)</li><li>ユーロドル: 1.16 (+0.28%)</li><li>米10年金利: 4.48% (-0.31%)</li></ul>
+      <div class='ltag htag'>💭 推測・考察</div><ul class='hul'><li>ドル円は小幅な動きにとどまっている（推測：方向感なし）。</li></ul>
+      <div class='ltag ctag'>⚠️ 注意点</div><ul class='cul'><li class='caut-li'>為替は政策変更・要人発言・経済指標で急変する場合があります。</li></ul>
+    </div><div class="card">
+      <div class="card-title">🗽 米国株</div>
+      <div class='ltag ftag'>📊 事実</div><ul class='ful'><li>S&P500: 7,584.31 (+0.41%)</li><li>NASDAQ: 26,830.96 (-0.09%)</li><li>ダウ: 51,561.93 (+1.73%)</li><li>VIX: 15.70 (+1.95%)</li></ul>
+      
+      <div class='ltag ctag'>⚠️ 注意点</div><ul class='cul'><li class='caut-li'>米国株は決算・経済指標・FRB発言に大きく反応します。個別の動きに注意してください。</li></ul>
+    </div><div class="card">
+      <div class="card-title">🗾 日本株</div>
+      <div class='ltag ftag'>📊 事実</div><ul class='ful'><li>日経平均: 66,588.12円 (-1.31%)</li><li>TOPIX: 取得失敗</li><li>ドル円参考: 159.94円 (+0.00%)</li></ul>
+      
+      <div class='ltag ctag'>⚠️ 注意点</div><ul class='cul'><li class='caut-li'>日本株は米国株の動向・為替・日銀政策の影響を強く受けます。</li></ul>
+    </div><div class="card">
+      <div class="card-title">📈 金利</div>
+      <div class='ltag ftag'>📊 事実</div><ul class='ful'><li>米10年金利(^TNX): 4.48% (-0.31%)</li></ul>
+      <div class='ltag htag'>💭 推測・考察</div><ul class='hul'><li>米金利が低下傾向にある。景気不安や安全資産への逃避が反映されている可能性がある（推測）。</li></ul>
+      <div class='ltag ctag'>⚠️ 注意点</div><ul class='cul'><li class='caut-li'>金利は日次で大きく動くことがあります。FRBの声明や雇用統計に注意してください。</li></ul>
+    </div><div class="card">
+      <div class="card-title">⛽ コモディティ・仮想通貨</div>
+      <div class='ltag ftag'>📊 事実</div><ul class='ful'><li>金(GOLD): 4,490.30USD (+0.32%)</li><li>WTI原油: 92.87USD (-0.18%)</li><li>Bitcoin: 62,611.49USD (-1.87%)</li></ul>
+      
+      <div class='ltag ctag'>⚠️ 注意点</div><ul class='cul'><li class='caut-li'>コモディティは地政学リスク・需給・為替の影響を受けます。Bitcoinは価格変動が非常に大きいです。</li></ul>
+    </div>
+
+  <!-- ニュース -->
+  <div class="sec-h">I. 注目ニュース（キーワード別）</div>
+  <div class="card" style="padding:12px">
+    <div class="card-title">📰 本日のニュース一覧</div>
+    <div class="ng"><div class="ng-title"><span class="ibadge" style="background:#fff0f0;color:#e05252;border:1px solid #ffcccc">A</span> トランプ動向</div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiUEFVX3lxTE9ydEtRcWhJaWtBUmttWlZCY3EyWTdDeVJqcmpYOW1HUzdTQ1hSQU1TYTc4VzRpWnBhTHBzQmNtZ1RyY0hOTGtXQ1piaV90a1lh?oc=5" target="_blank" class="nl">トランプ氏、物議醸す住宅政策担当高官を国家情報長官代行に指名 - CNN</a>
+              <span class="nm">CNN · 2026-06-03 16:23 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiX0FVX3lxTFBEazhibjVfZjl0eWhad1NMdkZJR0N0OFBXaWRjVE45NmprTEtNeUllajIwMU1xZnFGa3BZNGlSdklaT1RHZ2wxWGxxMW5VUFpSYmVOTjV1aTRKRkNWS0tj0gFkQVVfeXFMT3pHa2RaeXJXaERsNGtadWFuWXlFTVJTU3ZEa1VyZFdhelgyREs1ZVZ5QnVEWVBvd0lENUswVWtGYjN0S09GOGVDbG1CdTBZWGV2cWM4UEZoQzYyc0F4emMxcXpEaw?oc=5" target="_blank" class="nl">習氏との会談終えたトランプ氏、台湾の独立望んでいないと発言　合意の詳細は明かされず - BBC</a>
+              <span class="nm">BBC · 2026-05-16 16:00 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiZ0FVX3lxTE5uX3NiSVpScXM1azY1WUl2dDFidFNtTko2QXVJeXBpblduUTV4ZjJ0RDNKUWZXbkRkbUNLbjJ0RWNqM0ZmNTJKS3o0dWdEV2I1cElqblplckx1eWhqS2RGUllIMXpqN2s?oc=5" target="_blank" class="nl">トランプ大統領就任1年、これだけ変わった世界 発言と数字でたどる - 朝日新聞</a>
+              <span class="nm">朝日新聞 · 2026-01-20 17:00 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiY0FVX3lxTE1ZRWxsdmUyMFJhMm1VS3Q4aGJYOFhYRjRTekNzMGU0Und4Vk1peWxRdjg2M2U4RjJxdGxHeF9DNDJUUV9XTmVUWW1DWk1MTW95bzhVX2Q4NklmclF4QlBjbU1DNA?oc=5" target="_blank" class="nl">台湾有事発言、外交政策の争点に トランプ政権対応も―高市政権を問う「外交」【２０２６衆院選】 - 時事ドットコム</a>
+              <span class="nm">時事ドットコム · 2026-02-04 17:00 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMieEFVX3lxTFBzRnR4NkNRb015Znh1ZkxLQ1VmNDBFa3VpNk52QVYzSEFRQl93dXFaYWV3SjF3NWdkUlRSd2pQdFJ5aHp5eVZ6RnUxa1lYZU03aVZVanhvNXBlOUt4S0wxckpqVVBiVVRkejd5YUN2MWRnY3FVME5RRA?oc=5" target="_blank" class="nl">ドル全面安、トランプ氏の発言受け：識者はこうみる - Reuters</a>
+              <span class="nm">Reuters · 2026-01-27 17:00 JST</span>
+            </div></div><div class="ng"><div class="ng-title"><span class="ibadge" style="background:#fff0f0;color:#e05252;border:1px solid #ffcccc">A</span> トランプ関税・貿易</div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiX0FVX3lxTE9YeXlFdF91dHRWdUVwU2pET3NSZF9QUUlVMkxUbUctcUZLQ3czWVpTaWdvREpFaUllZDBaWWUxNWltelZBZUItNG1haHJ1T1FtRGJrRzdQaEJfY2tjWnBF0gFkQVVfeXFMUHVmSFVOZkxIa0QxYjEwQU1UTDJ2djIxTU4wVTVXREQ0R0NUWlVSMnMxZnJweGVkRTdIM0s3OTNtQzNHU1VzMHc3WmxrOEhWZHJOcGhkbWFldlN0dVE2enpueVBKeA?oc=5" target="_blank" class="nl">アメリカ、日本など60カ国・地域に最大12.5％の追加関税を検討　強制労働への懸念を理由に - BBC</a>
+              <span class="nm">BBC · 2026-06-04 14:58 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMidEFVX3lxTE5wZlZRR2R3U0Voa2EySjBPM0xRN1lXakdwTVN0c2RfTHRRMmRfTUJkUW1jaTJaWWZ2RlAtbnJGTzMtVlRfd21FbUVIUXVOdWt6QmpxSlJYeHoyR1BsTnllX2d4QTJ3NHg0bllYa2Z6cGxSVHFW?oc=5" target="_blank" class="nl">トランプ関税と米国の貿易額、ノートPC・スマホ輸入で進む脱中国 | 地域・分析レポート - 海外ビジネス情報 - jetro.go.jp</a>
+              <span class="nm">jetro.go.jp · 2026-05-13 16:00 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMibEFVX3lxTE5nQUhFelpwdVNzdUZKRFdtcGtTTzJDODJZZUFFQUhwdTFNT0VqYVpnWl9wZUpUMW5nMzdodVNuU0dvZHd2R2t4MkdwY2FOc2piY0Y2SF9jX3pXSTZWZktnSVktbTVXYzlQMHV2Mg?oc=5" target="_blank" class="nl">「中国は変えられぬ」悟ったトランプ政権 貿易戦争、探り始めた終幕 - 日本経済新聞</a>
+              <span class="nm">日本経済新聞 · 2026-05-31 10:46 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMif0FVX3lxTE9xRTR6aUF6Mk9PTWJsMjN3ZWQ3NzJJVmMwR1V0MHdDX0FDeFFyd28yUnNUZEIyQWZ6cld2ZVhxRE1LYVZPRVRjeEFtRHoyUkdLeHcxQ1VCZExrZVE4R2ttLWRVRWhOeTVMNnplTmd1WWdKeWpZS2xFZkZobk9Cem8?oc=5" target="_blank" class="nl">米が60カ国・地域に新関税提案、日本には12.5%－違憲判決受け代替策（Bloomberg） - Yahoo!ニュース</a>
+              <span class="nm">Yahoo!ニュース · 2026-06-03 12:02 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiZ0FVX3lxTE9yNkd0UjN6ZjB3VXMzclhJczN1YlQ4U1BZcDlIQk16cWR2WllDbFJaWTdBT0syamdGd21sMVF4c0hHVU5GR3lVeUVOMFFyUTJEUHRQZ2d3N21Uakh1TnpEamtTanZrWGM?oc=5" target="_blank" class="nl">米中、一部品目で関税の引き下げ合意 貿易の拡大も 中国商務省発表 [トランプ関税][トランプ再来] - 朝日新聞</a>
+              <span class="nm">朝日新聞 · 2026-05-17 16:00 JST</span>
+            </div></div><div class="ng"><div class="ng-title"><span class="ibadge" style="background:#fff0f0;color:#e05252;border:1px solid #ffcccc">A</span> Trump(英語)</div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMisgFBVV95cUxNQ1N0eVRiNDBIV29WTVVxQklQZzdkcEdYZy1FV2FuQkd2U1JxM0c5U2wtRnM0MzBfVllTa281VGxLbk1EZk9NVEZZWS1qcXRfREpOSDRoWVBEWEhRcTJwVTZfMjJFQ1lrNDl6U1Z3dWFndkRvVzdnNHBzQlpBX3Rxc19mbHprOHF1WmNkSXJJakloSTd0X0FsN1k0c0w4d3k5VzZMcFh2dHJCOGtrVG9CZEFB?oc=5" target="_blank" class="nl">Pressure on the US dollar continues, market confidence yet to recover - IDNFinancials</a>
+              <span class="nm">IDNFinancials · 2026-02-09 17:00 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiUkFVX3lxTFBJYVF1RVhnUXhjQzVlekxrM1BSekM3WDROSHRlQUZnOXBuU0lEcmZzVkpabGdicDFZQ2huUXcwMUhSSFJLT2tOWEpreFFPeXpPamc?oc=5" target="_blank" class="nl">Nintendo Sues U.S. Govt over Reciprocal Tariffs - 時事通信ニュース</a>
+              <span class="nm">時事通信ニュース · 2026-03-07 17:00 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMisAFBVV95cUxOY1o0NDdOTWRLeW40TGJSMTZZaTZkYmRSWm5XdUVtU0QxMnZQN2NhckdDajgtNlRBY2VfXzQ3dmtXcFJNRXVOZ2E2OEh4UF9iODBQQi1sRklOOXdBN0RUbTRmcE1aSl9VOVVZdkNVbXhxenloYk5lUVlkYlpVWHpQSEpiQU9kanZMUEEzcmtJZWhNTDhVT09uRUZZWjJyRHV4eFhYLXRRS1IyWkJla2J5Ug?oc=5" target="_blank" class="nl">（世界はトランプ関税にどう対応したか）第1回 総論――第2次トランプ政権の関税政策の衝撃と世界経済 - ide.go.jp</a>
+              <span class="nm">ide.go.jp · 2025-10-21 16:00 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiU0FVX3lxTFA4bmlTRmhjVXdHMnR2Y2FaZnM1UFNhcUpfT0FoRGFLakhTVVdNN2dFR3FWMTViMm1NUVZ0cWhxR0RHdzl4bnRrQVRaLTljNFZzLXVR?oc=5" target="_blank" class="nl">EDITORIAL: Trump’s reckless and idiotic tariffs threaten the global economy （社説）トランプ関税 経済の混乱広げる愚行 - 朝日新聞</a>
+              <span class="nm">朝日新聞 · 2025-03-20 16:00 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMib0FVX3lxTE1MMzdRR1Judk1vblNmTGxBRHRlUG9MZTZ6ZmFZMFM3clV5bmRxa0lzN2ZSQUs5NTF0WXRSZDZyM1Y5UXROTGpmQWJ2NjFZenJ2NW9YbHNVTmhnY3pwdzVqRFhTbXlRMks4YkFuTTd4Z9IBf0FVX3lxTFByMHlzTV9ONFdNR1cycHV5ckNiLUVlbzRsZjEwRlVHNF9UQUZ2UDhTeUhpRkNEel94WC14VHRZcm1uVnBCeF9DMkFvRXpfbWFQaUR4bnJRWUpsMDdsRXp4VEtQZTlJZlVqN1hYUkl0U3lhNUlyaTVUUzk3bzJEMkE?oc=5" target="_blank" class="nl">Japan’s Economic Outlook for Fiscal Years 2025-2026 (August 2025) - nli-research.co.jp</a>
+              <span class="nm">nli-research.co.jp · 2025-08-25 16:00 JST</span>
+            </div></div><div class="ng"><div class="ng-title"><span class="ibadge" style="background:#fff0f0;color:#e05252;border:1px solid #ffcccc">A</span> トランプ経済政策</div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMibEFVX3lxTE1nVEYzRDY3dHc5LUEtcXA5eUo0cEltY0ZYUVBHX3VoUG1keGJBRTU2eVJWQVNvWV9NZEZWX2lFYS1mSEZySUpCWUFzbnpnRy1QbkRDaXZzVVVXUDE1a25sdE5KMmhPVmVpRm94LQ?oc=5" target="_blank" class="nl">トランプ政権、日本などに最大12.5%の代替関税案 60カ国・地域対象 - 日本経済新聞</a>
+              <span class="nm">日本経済新聞 · 2026-06-03 13:17 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMif0FVX3lxTE1CUWFSVHNrMVRhOTl4eFJYNDlwaFdxc0JwNVktRnFXeWNjYlVlSGVVUzhKM1REWmZTTW10eUV6NV9WYXUycHZCNHQtWGtFbm9fOXhoa2RpeUplUjN4dE11WnBsd0NSc3RYRlUxVjdoLXVzUTRKaEpKRTVNUEtYems?oc=5" target="_blank" class="nl">米ノーベル賞経済学者、トランプを徹底的に否定する「非MAGA化」を訴える。「さもなくば再び同じことが起きる」 - Yahoo!ニュース</a>
+              <span class="nm">Yahoo!ニュース · 2026-06-02 20:10 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMijgFBVV95cUxQYmlFMGwyNUxLbWM1NUdBSEtWZEhxYmQxOHRHN1MtLXVHNjI4dnd1MGs3bVR3U2lKdlJvWUxFZFFWRnVNcU1KVnZCTmd5RWlRQzcyTXV1MGJMYjZHRVpqNXNaend4ay0zb3EyUmZ5ZVc4WjY4dExFcG5vTmFDTnN2M2RmU0FQVEk2Si1UaVRB?oc=5" target="_blank" class="nl">米国経済は衰退しているのに、トランプ大統領は「心配していないし、プレッシャーも感じていない」のか？ - Vietnam.vn</a>
+              <span class="nm">Vietnam.vn · 2026-06-03 07:35 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiY0FVX3lxTFBhbm9Ic0taSFZ0YkVXeVpuMXZSdDlzYjRsNzdHeVUwTXIyZ25FM19iQWxxYzA2LTFoX04yZzU4TmVBNk1pUk5hbXpFSHV4SkFPc2VPN1B6eDNXbFdyOGFfNFdubw?oc=5" target="_blank" class="nl">経済優先、危うい「Ｇ２」 トランプ氏、台湾問題には無言―９年ぶり訪中終了 - 時事ドットコム</a>
+              <span class="nm">時事ドットコム · 2026-05-16 16:00 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiX0FVX3lxTFA1OGJyUnFCY2ZFWXpOaU40bmxJTE91TlNKb3F4ZHdrbV9KcFVzLU8zTUNHUFpSREQxdnItNzNSZ2pxd0M0N2Q3TGtZTHp1MU9ZTExyY2hzWnNfM0FWY2tV0gFkQVVfeXFMTkN0NldMSmF2c3RPODlCeTRTQ25DT1I4cXVYdHFzNmstNmtMd1FhM2dlOF9zSXBOQ2JwbkhhbUFSTlBVdTIydDZKVXdRMTZGVzZ3RS14TkNzeFJUdTNTR3FJQ2dKeA?oc=5" target="_blank" class="nl">【解説】 トランプ氏、中国訪問へ　もろい「貿易休戦」は維持されるのか - BBC</a>
+              <span class="nm">BBC · 2026-05-12 16:00 JST</span>
+            </div></div><div class="ng"><div class="ng-title"><span class="ibadge" style="background:#fff0f0;color:#e05252;border:1px solid #ffcccc">A</span> 日銀政策</div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiX0FVX3lxTFB4VG9icG5OSTdsSmhoeHdGSi1uRldtQVlCZHIwZjFqY1pqaVJBU0RndWRycEN1bkhGRUc5RVlQNTNpTGczQ1hYMExhYTJDUy1sNWI1bWpmdy1MdVVlNU84?oc=5" target="_blank" class="nl">日銀植田総裁 “利上げ是非の議論が必要” 中東情勢不安定でも - NHKニュース</a>
+              <span class="nm">NHKニュース · 2026-06-03 18:04 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMif0FVX3lxTE45dUI5RklXdW85dHBaa1FadkZxMDNFM2tjYU9Gd1B5aDlIQWhkRFlVTDJvZVpfSm4yM2lpYmF2aGRpZWhnTng5MmFLcVo1MTB1Rno2R3lEanZPZTR5b2pZeVJ4NVVYNU5zc3FLcFRZd1lRaWc3dENXUm02LUI4ZHc?oc=5" target="_blank" class="nl">円安阻止には大幅利上げ必要、日銀臨時会合も排除せず－三菱UFJAM（Bloomberg） - Yahoo!ニュース</a>
+              <span class="nm">Yahoo!ニュース · 2026-06-05 17:22 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMibEFVX3lxTE8tMkdhN0M4WFc5aG5PUnltcVdYZzBnN1BFTDdaYmx0dVRZcXpNcjRudU9FSWJIYkZoN3pyX0xIaEhSWTJYdVcyR1I1bXlHb0Y2MVpDelczQS10X0tiaE5qQm1Kb0FHRGNmSnUtUA?oc=5" target="_blank" class="nl">日銀、中部3県の6月景気判断据え置き 中東混乱で調達に影響の声も - 日本経済新聞</a>
+              <span class="nm">日本経済新聞 · 2026-06-05 13:40 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiggFBVV95cUxNcllJRFFRbHg2Y3JXcW9vZzNmOWdTQXpwcVkxUm8tdEZ4dEd2Y091NzM3emxZTkJBQW9zQ1JsSzU5TmtUOFFwVWZBWG0weUhTWlk4S243RW9wa3hScmY1OHdUNjRrdDU5UTVyZ0VEelRJZElza3k3cTlFRmN0NWxJU3ln0gF0QVVfeXFMTjJRNkJJZXZsWE9jVG5kdWJIUVB2cFg4d0tOVlFmUEpDeHZKbDJBM3RYTExSMFRVc3JYY2xsNHUzcFF6bE9JYmpqU2pDd3ZVN3hrWjcteTMtdk03cTJvZm5IOWpVRE5ZTF9WMDA2Vl9ORDUySm4?oc=5" target="_blank" class="nl">日銀大分支店「腰折れさせるまでには至っていない」　8か月連続で景気動向判断据え置き - ｄメニューニュース</a>
+              <span class="nm">ｄメニューニュース · 2026-06-05 17:25 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiUkFVX3lxTE9vUmJ4cnNGSFNNX1Fyc0pjMmhsem9CRXhGeHFuY3dOWlp6ZThMYmlxb2NTZ0FFVlItLUxpTWQ1VDZJcm04WXc1M3VQT3pEV3NKQ2c?oc=5" target="_blank" class="nl">「緩やかな回復基調」判断維持 日銀広島支店が金融経済月報 - 山陽新聞</a>
+              <span class="nm">山陽新聞 · 2026-06-05 15:21 JST</span>
+            </div></div><div class="ng"><div class="ng-title"><span class="ibadge" style="background:#fff0f0;color:#e05252;border:1px solid #ffcccc">A</span> FRB政策</div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiiAFBVV95cUxQUllfRUV1M3lIY1Z5MkdKV1FBamx3MkJNVGZzOURBYWNBZktISmJEVEl6alN5SjgwT3JMeWR4UTlxZW9YMGhTRWdzYl96SlcweEVWX0V3QTctbFJCTXNpdHFuV3NHWEhGSGNfcDN4clZWZ2tWQ0JKdEU4OUxMb0F3ZmlnWEVJb0ZO?oc=5" target="_blank" class="nl">コラム：新議長下でドル高圧力高まるＦＲＢ、日銀が取り得る「適切な」金融政策とは＝尾河眞樹氏 - Reuters</a>
+              <span class="nm">Reuters · 2026-06-03 17:32 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiTEFVX3lxTE5pR2tRX2FSRUQzX0U4WWJWWWhXUHQ3aGMyNU1WME1oekFURkhFSTU3M2ZMTnBfYTFLVFllY0p0QnJrYi1NeWlPTVVoWEHSAU9BVV95cUxOdUFkaXZHZUhwd3o1a19HYllFZnNRRFNDczZsbFk5QTh1SFl5Qmt4M1oySDBEY2I3WEU2dEtiSVVSLVRUTkJoMDJKTnJvX0U0?oc=5" target="_blank" class="nl">パウエルFRBはなぜインフレ加速を「一時的」と見誤ったのか？低インフレ時代の枠組みが招いた判断の遅れ - ダイヤモンド・オンライン</a>
+              <span class="nm">ダイヤモンド・オンライン · 2026-06-05 04:40 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMif0FVX3lxTE5YVC1sUUk5dGxqaV9xVS16aVhjdGJybGNYd2RJNld5aVNMbWNqU19ycTdYR0xyRG9ybGdvYVFsTTNjTVNoT3Y2UWNVUkRLV0tBY2FXemZnZm9lUmRZdXhKNW1RT2VGcjl0X2hsUHpoSFlJemw2cXhzUTRwQ3B2QVU?oc=5" target="_blank" class="nl">独眼経眼：ウォーシュ新FRB議長の政策を読む 渡辺浩志 | 週刊エコノミスト Online - 週刊エコノミスト Online</a>
+              <span class="nm">週刊エコノミスト Online · 2026-06-05 07:55 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMifEFVX3lxTE5SMEg4MzRQRTFLY196d0JZRVFzU29qWW11dUdQTFUxeXBCUXVpb3FDYWk3NFp1R0pIU1IxYXh2UWw3bW1leS1fT0ctU0I1ZTZtOEJ4Z1RqNDBUV2lQOWtUNmhmd1ViSkhjNHlmWXd2R1JCR3M0RFVvUlBLa0k?oc=5" target="_blank" class="nl">2026年6月の注目イベント 日米の金融政策に注目 - smd-am.co.jp</a>
+              <span class="nm">smd-am.co.jp · 2026-05-27 16:00 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiX0FVX3lxTE00bHlidmhreUtHYVVJQ1ItVjc1cTBZei1kbjBfMks3eUhnRHh0ampqS3BqXzJqeWlxbHBvc2FlY3VwR2JsVUtRVDlXRGFLMXMxQVdONWV1RzdGTDZnZlZz?oc=5" target="_blank" class="nl">米金融政策見通しを変更 年2回の利下げから据え置きへ 米国野村證券・雨宮愛知 - nomura.co.jp</a>
+              <span class="nm">nomura.co.jp · 2026-05-27 16:00 JST</span>
+            </div></div><div class="ng"><div class="ng-title"><span class="ibadge" style="background:#fff0f0;color:#e05252;border:1px solid #ffcccc">A</span> FedWatch利上げ確率</div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMibEFVX3lxTE5fNFgzeW12RGFKWVhrRDc2ODdJVWVpU3UwRThGQm9VTVJBT3l3Y2F1bmozc0IzRm5QRXVtQ1hTdy1qWTBKLTNvczU2MEtMVEF0WGpwamw0Sy1La3pqOHZhWS1qSkxtUngzQW5LTg?oc=5" target="_blank" class="nl">米年内利上げ観測、確率一時5割超える 原油高止まりで - 日本経済新聞</a>
+              <span class="nm">日本経済新聞 · 2026-05-18 16:00 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiYkFVX3lxTE9lOFBMdE42S0M2dHk5RVpOdU5aT1BIbzEtVmtRT2dPc1pULWZac0hMc09tMklkOTRVUXVJV1cydHBSYXJTdk5lUUtWcS02WjZwd2RqMXdIMnlQZzdWNm1UMXVB0gFnQVVfeXFMTWEtcjdyNTVoRkJmNGUtX3dYWWFpbmpIXzVOMWFVQnRTaGs4eHlKMGZvNHpwUENFQ0M3RUlpTVdZNHRSQkxidW03QTVJeGJCYVE0b2dkVHNJbFZVWlZPXzBqWGNwcjMxYw?oc=5" target="_blank" class="nl">CME FedWatch：今年のFed利上げ確率が48％に減少 - Bitget</a>
+              <span class="nm">Bitget · 2026-05-31 04:27 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiX0FVX3lxTFBCQnZoSEZlY3NrNHBlM1pZQkRxRjNGR1MwSWc3S3VGLUVzQmFUM1M1Ulo0MTBtVDYzaHZNWFNRSlVadHZpRXd5OGI3RXBIamRQc2o3eU5WSG16TWhWSFhV?oc=5" target="_blank" class="nl">米イラン交渉をめぐる情報錯綜が貴金属市場を揺さぶる、金価格は急落後に米雇用統計待ち - finance.biggo.jp</a>
+              <span class="nm">finance.biggo.jp · 2026-06-03 08:27 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiZEFVX3lxTE52TXNKWUs2a0VnTF9YcGJGbnc5UVo4czFQMDNWMHZ3YVhNM004X3pRMDZXRThXdmR3Wmd0S2lQXzg5SzY1WDdpNVBqZDYySmlHYlNhNXIxWTJwbk84T2d5TFRzWko?oc=5" target="_blank" class="nl">NY債券：米長期債相場はもみ合い、イールドカーブは平坦化 - TradingView</a>
+              <span class="nm">TradingView · 2026-05-23 06:37 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiZ0FVX3lxTE5mYjNuV05xSGY4OWJVZ3YyNk85WHJ0X0UtaWpBRWIzUzcyTVdUSFVmbV9LeHQzbUNmQTlHR08yWjNCUERyVXlLSXNSM0dWYU9QcGtpWnhBcTlFZFJUUENpYnBpbkNKSzjSAWdBVV95cUxOZmIzbldOcUhmODliVWd2MjZPOVhydF9FLWlqQUViM1M3Mk1XVEhVZm1fS3h0M21DZkE5R0dPMlozQlBEclV5S0lzUjNHVmFPUHBraVp4QXE5RWRSVFBDaWJwaW5DSks4?oc=5" target="_blank" class="nl">アメリカの5月非農業雇用統計予想：AIによる「雇用の終末」が近づいているのか？ - Bitget</a>
+              <span class="nm">Bitget · 2026-06-05 01:18 JST</span>
+            </div></div><div class="ng"><div class="ng-title"><span class="ibadge" style="background:#fff0f0;color:#e05252;border:1px solid #ffcccc">A</span> 日銀公式</div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMicEFVX3lxTFBpUzh2WlV0UklMT3JTUU5XTVNkekdRRi1pZmgwdEhzUWdPTDF6NlJ6OVRIdnlLdXNsT2RsVTNLeklEMnlSbUxDTkg4dklYbDJfa2Q2Q0d5X0dPNl9PNXhzMkJmYlloWUhRa0JpdGRSQXM?oc=5" target="_blank" class="nl">最近の経済・物価情勢と金融政策運営 - boj.or.jp</a>
+              <span class="nm">boj.or.jp · 2026-06-03 17:43 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiakFVX3lxTE9odFliS1B1dWRkRE1KcXZObnRQRUVCaElVa1czbW9EcFRGRnE1eHEyQjJVV3V3RHNXLUo5OHdRei1UeERpczNzM29MX1lyQTh6UlVmRTduOUx4Y05RVThKelh5WGd5WUtxeVE?oc=5" target="_blank" class="nl">（論文）企業物価指数・2025年基準改定の基本方針 - boj.or.jp</a>
+              <span class="nm">boj.or.jp · 2026-06-03 14:47 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiXkFVX3lxTE1KVjlxMUt1dnZpSHVHOXRnd2N5NFlKeV9NNi1DZlVpVG9IZ0FUMTdodkhOOTA5QlEzVG1OWUtXZ1ZrWW5JNzJiTnJCUFlFZjFVd1JXMDZTNkFha0FMR0E?oc=5" target="_blank" class="nl">CBDCフォーラム 各Discussion Groupの今後の進め方 - boj.or.jp</a>
+              <span class="nm">boj.or.jp · 2026-06-04 17:11 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMickFVX3lxTE9DWXR0bng5UEtNdGdoTXVqZ2ljV0FROThDYW11QWJOMW8tRHA0aVRZTk9LSlhNZ1BRWF82VkhYRGZiZ3pqVzVndmlNbEh5cUVKeFlNUzQyQU9nN04tLUZTbi14Z3lIUXpETGYtQXRQMTJIQQ?oc=5" target="_blank" class="nl">総裁：植田和男（うえだかずお） - boj.or.jp</a>
+              <span class="nm">boj.or.jp · 2023-04-10 13:09 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiakFVX3lxTE5nWnNOeHhQemFyQzduSFN0NkFqT3h1X20xbDF2VDltRGhPR0huV0cxV2ViSVp3SXgya2NQemMyLW9YQ1lsNE5kYlVZMGtvaUhCRWFaRkgxSjU3eGhnNlBUZW15TWNqLTZiU3c?oc=5" target="_blank" class="nl">為替介入（外国為替市場介入）とは何ですか？ 誰が為替介入の実施を決定し、誰が為替介入を行うのですか？ - boj.or.jp</a>
+              <span class="nm">boj.or.jp · 2023-01-01 16:43 JST</span>
+            </div></div><div class="ng"><div class="ng-title"><span class="ibadge" style="background:#fff0f0;color:#e05252;border:1px solid #ffcccc">A</span> 首相官邸</div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMib0FVX3lxTE5ZR0RoVHBYRTBuVDU5TDdROXBoeWJpOW1oZnFnaHEtZFdlWWVIa0wtUFY4RENaZ1ZtS3A1TFIyeG1vdkpDMGFDbzFMWXVtd1ctWWdQM0lzVzJUWURBSmwzeUtTRUo2NGJONWRlaGJsOA?oc=5" target="_blank" class="nl">中東情勢を踏まえた令和８年度補正予算等についての会見 - 首相官邸</a>
+              <span class="nm">首相官邸 · 2026-05-25 16:00 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMib0FVX3lxTE5PbDFXWGVXN1Z0dHdFcjVaM01pWjNXRHFqV1g3aXk2ZVAwTFFPcV90WTdkMFpDZkhlRFN2Vy0xVEJnNVpQclE5eVlRdmkyVFpZRGZzd1EzVXRUWlRlVHJJcXZuWVYtdkk1eW9Wbk5Fbw?oc=5" target="_blank" class="nl">日本経済団体連合会定時総会 高市総理ビデオメッセージ - 首相官邸</a>
+              <span class="nm">首相官邸 · 2026-06-03 18:01 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiZEFVX3lxTE5zYm54X2JVWGpLbVRiU2o3cWZnZ0xsSzJ2UkxLQ1VIRFg4YXZfeUNLVDdadHA2TldnMHZfZmVfUmF4ZEtsS0tYUDRDYVMxa0VMUHZUWS15RFlZbVdDVXFRS1JZdUc?oc=5" target="_blank" class="nl">動画で知る高市内閣の重要政策 - 首相官邸</a>
+              <span class="nm">首相官邸 · 2026-05-25 16:00 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiPkFVX3lxTE9iY0VmVFdMSFpCMEg5N0taMGZPc0hISWhWRVE2OVJBQ2lqUmEtVk1Jak5oSXFIQXBuRnlETFV3?oc=5" target="_blank" class="nl">首相官邸 - 首相官邸</a>
+              <span class="nm">首相官邸 · 2016-04-25 12:34 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiZ0FVX3lxTE90UlN6YnRxRUlyV2RRYy1fTVJiT0N3OUg1Z2V6Ujk0RFFZY1FVY1E0SDZkNG1BTDVEUG54MEJjRkdXSVBxNmhtdzktTjRQekxmRUhoYjUxZmNLTzFkbDFLV3BFc2ZIX3c?oc=5" target="_blank" class="nl">令和8年6月3日（水）午前 - 首相官邸</a>
+              <span class="nm">首相官邸 · 2026-06-03 23:26 JST</span>
+            </div></div><div class="ng"><div class="ng-title"><span class="ibadge" style="background:#fff0f0;color:#e05252;border:1px solid #ffcccc">A</span> 財務省</div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMihgFBVV95cUxQM1Qza3QyRm5TYlljSC03aTFkVC1OVW50TTNoVjU5MFZ5Ty1iRDlqNThRT0JJdEh5alJ6T1JsVEZJYWE0M2pibUZDYW5rdHlVR2xORWI1ZVZQdkdKM2E4NUpneWNBZlh1SW5oU3JzVkZra3plSFV0U2xLOW5UZ1UwczN3MjlNUQ?oc=5" target="_blank" class="nl">令和８年度補正予算 - mof.go.jp</a>
+              <span class="nm">mof.go.jp · 2026-06-03 09:13 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiiwFBVV95cUxOcnRWYWhEcGlfbDRXNG9QVUREMG5vWDVSbEZTVVphYXY4QkdnMmZTc01SZXB4anF4OC0zYjhLZF9CeWR5UUZaQkpMb0pCaHZOMjNwUkE5dFZ1TTk4b19qRElhUVhmMUpqd3ItbEFPRkdfWGpQMkk4ZDVFYV9ZSXJRUEl6cDZfMzRIcW5z?oc=5" target="_blank" class="nl">第221回国会における片山財務大臣の財政演説（令和8年6月3日） - mof.go.jp</a>
+              <span class="nm">mof.go.jp · 2026-06-03 16:40 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMinwFBVV95cUxPbFR1OVRMNnQ4TWMxRGRVcGc4RWNGR1IyQUg1TDlPZmtFd0ZDeFNIVXFjSHJ0R1Z0dGstSmlXWUlPQ0hOazdwck96MkI5UlFkZDNfYl9teVJQR2dkTzRMT2lMSS1lb2l6YVNDUGh4ejlTYll1c2VpUnVzZXhIZWtOb19lQnF3a0Z2QzBPcEpZeVhmVjN6d0NoalVmbG9fcjA?oc=5" target="_blank" class="nl">外貨準備等の状況（令和8年5月末現在） - mof.go.jp</a>
+              <span class="nm">mof.go.jp · 2026-06-05 08:52 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiggFBVV95cUxPYk9oUmw4ZVdWYkJQRE81RDFyekVjcTBsZEZIbTJLaEYzbU5VUE9GQTlvRUdCdXhwclVsXzZWV2Rhanl1aEpwdk9GVGRPYjdkdFFXS3dIdGtOYXFxeHZreVVsM1E0SWkxY0ludklIZ1l4czNoZnpaZDMxT0wwUjVqQnpn?oc=5" target="_blank" class="nl">日本と世銀グループの連携対話を開催しました（令和8年6月1日） - mof.go.jp</a>
+              <span class="nm">mof.go.jp · 2026-06-01 17:40 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMigAFBVV95cUxNbFFEcVU1Y05aZjJ0WmhHQlIzd2thNkMtdVo1eUZBdzRqRkJiUlVhdkdmNktxVDBWZEdYUjdmM0hqd1VqeC0xdVYxMkdtZVd3WkRFV2tmcFQ3WjB1aEZuY0RDcnN6UGtfMkxnZ01oR3lVUWpvNHlwUXRJSjVoaS1XNQ?oc=5" target="_blank" class="nl">報 道 発 表 - mof.go.jp</a>
+              <span class="nm">mof.go.jp · 2026-06-03 09:13 JST</span>
+            </div></div><div class="ng"><div class="ng-title"><span class="ibadge" style="background:#fff0f0;color:#e05252;border:1px solid #ffcccc">A</span> 米国株市場</div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiVEFVX3lxTE5ZWElHNFR1OWdOdEptVmZpTjBQa0xaenRrdXJFNFlZZW1VWW42V1NCNUI2UWZaQkJDeXRwU0ZPQm1Oa1BwRlJlRW14WjlIVXR0WVNiZtIBV0FVX3lxTE9ISTktSkFMM0JxOGtDUV9CMXc0N1ZVVk9LbXRMaXhpMUc2anNBOHJNZjFzSElNZUxqekk3VFZMMWl2VTRCeldaT25ndGZxYnVFSl9qSHk2MA?oc=5" target="_blank" class="nl">【米国株動向】アマゾン株［AMZN］はまだ上がるのか？AIが切り開く次の成長ステージ - マネクリ</a>
+              <span class="nm">マネクリ · 2026-06-04 13:50 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMihwFBVV95cUxQRDRYakRqb080TXFFaF9Yamp1RWFpQVJGQk5rc0FBcjJVYmpYNEd3Q1RzUGNxVzUyZWRUMi1SZDJjZHVVX0JybU8yVFJ4U0FKRm9HcTFXTDBpU2dDZ3VKN09FcmhyYWFMS0EybFBTcFBzSllBRmFLSHpzeHpHMmptdnU1bVN4ZU0?oc=5" target="_blank" class="nl">米国株情報＞クオンティニュアム、公開価格を１３％上回る６８ドルで初値形成(ウエルスアドバイザー) - Yahoo!ファイナンス</a>
+              <span class="nm">Yahoo!ファイナンス · 2026-06-05 10:02 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiWkFVX3lxTE5seGhJVGhpQkpDNDFZNlVtTXdJTTNkV3A4U2JYRFZhbW9FZGxINXFLNVRDMWN2VklDZkYxODUzWUNaSUp4cVRTenhOSWh3MGw2R3RTOFhhaFpPdw?oc=5" target="_blank" class="nl">米国株市場のIPOで知っておきたいコト（土信田雅之） - トウシル</a>
+              <span class="nm">トウシル · 2026-06-05 08:00 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiSEFVX3lxTFBNWWtjdmhxWEdGN19jWGQ2ZFVoVzFqVWI0NXI0N1N0c0dPYmktdkx4MFZ2LW1NUUlXSUFTUUVJb2ZMTDBUUVhHTg?oc=5" target="_blank" class="nl">ダウ平均は大幅反発 ナスダックはマイナス圏 ブロードコムが大幅安＝米国株概況 - みんかぶ FX/為替</a>
+              <span class="nm">みんかぶ FX/為替 · 2026-06-05 05:25 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMi3AFBVV95cUxORnFiQ3VBM2liSzdXc3h6ZjlDYVJIZ0RvX1ZNUnEyRF9PME9Wc0dqR3Bya1dNT0ZJeUFtZmNWR1Rfb3dJejhraTA3SkdjR0FHdC1UOVg4eVUtN1REcTRZZDYyQXVLRHFTZU9ESFJCWTlkM1NhelJoaFNnenZHZ0JBeUp5SF9fdVB4MEx1WUpKcEFva3pfMFRXa2p6LWJTeVlZemNhN19ILWRqV2dsWnNXakU4REhtcHRRZHZ3MEtJOEp5eEdSMXRubnIyQTNjeW93UHgxckY5akN4S09x0gGMAUFVX3lxTE5lek1wcDRTemRoVnhKcnZ1UWxMUVNYMXlsT1hjZEx6Q3pyWUVaSE4wSUFMay1UNGhnMzIyNy1ZTmZHaDhGTERTSnhDQjQxX1BXQmw3dG8xdDU0cEFXRmNLNnMtSnV5NFJDSkR5MWh3Q01uUXcyaS14NkRXS1lWNk1uRWZiVTVfQV9jWllV?oc=5" target="_blank" class="nl">米国株見通し：弱含みか、中東情勢に根強い不透明感 - ｄメニューニュース</a>
+              <span class="nm">ｄメニューニュース · 2026-06-05 11:08 JST</span>
+            </div></div><div class="ng"><div class="ng-title"><span class="ibadge" style="background:#fff0f0;color:#e05252;border:1px solid #ffcccc">A</span> 日本株市場</div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiWkFVX3lxTFBYT01DaG55X3lIZDBrSDgzYkRaWGdya1lkNzh0TDVOV0FMY3lFcmdyb1BhcmNERXlSN1RHQ19semlmNHJoN3VaT2E2UEtBSy0ya3BYNlM3cXhuZw?oc=5" target="_blank" class="nl">米国・日本株：超速AI相場の「トリセツ」は？ - トウシル</a>
+              <span class="nm">トウシル · 2026-06-05 07:30 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMid0FVX3lxTE9mMDVUVnlMVXJMbkxRSS1xSzVHc3lKZV9mTWYxYUZ3V1VqRTR6YllKYzR1bjcxcmxpcHNMSWM0bm9GMXVhU3M4UnlHRkRYdVBaWmVRN0FIRzdCbTg4WlNXTklsUnhjUzV2OTY5N2I3N1k0Qy1RSUE0?oc=5" target="_blank" class="nl">日本株は反発へ、原油価格の下落を好感－景気敏感や銀行に買い - Bloomberg.com</a>
+              <span class="nm">Bloomberg.com · 2026-06-05 07:54 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiV0FVX3lxTE5wOHhnQ1VvS1lKRmwyR0lIUGJKdFBtRUNzNGFTcUdQY3h2Um51UEJWYmhNcllmX2Ryemxfd3hYMXRjb3E0OVNaS3Naam1Fd0FuU21WT3pyRQ?oc=5" target="_blank" class="nl">5日の日本株は続落､AI相場の息切れを警戒 - 四季報オンライン</a>
+              <span class="nm">四季報オンライン · 2026-06-05 16:48 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMibEFVX3lxTE1wZm91MXE4X2FQZkZMaFZ4RGZYcFVwTERma0h5MjJOdVZtREJmb055cU5rLTlyT3hFaThyVVhJak5wd0t4a0pwU0JzdXQ1LVk5cEhKeVNJVVNoR0ttN2pnbEdYeU1sOHQwa1pGLQ?oc=5" target="_blank" class="nl">三井住友FG株が上場来高値、日銀利上げ観測で（5日の株式市場） - 日本経済新聞</a>
+              <span class="nm">日本経済新聞 · 2026-06-05 16:30 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiVkFVX3lxTFBVLVd5R3Q5aHF3VEdpOXhvZHZMSkhESEtEb2d1QWlTcF9vYWZOVUNHNTF3WFJHRE5ScXFobU9PZFZkajhfOTlOTnRrOWJqTkwzWGZPbkpR0gFPQVVfeXFMT2JGaFlGb2RmNDd2cDBqY2RZcU9wcGVfQmVVYk1CN0xWcERQRXJRN3lQSEpXR3hwaTQ5TEJ6OGQ0R0xwb3d3RFhjT1IzQzJzTQ?oc=5" target="_blank" class="nl">残念ですが日経平均10万円でも日本人は豊かになれません。銀行の収益構造を見ればわかる「日本型経営の搾取システム」 - ダイヤモンド・オンライン</a>
+              <span class="nm">ダイヤモンド・オンライン · 2026-06-05 08:05 JST</span>
+            </div></div><div class="ng"><div class="ng-title"><span class="ibadge" style="background:#fff0f0;color:#e05252;border:1px solid #ffcccc">A</span> 金利動向</div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiW0FVX3lxTE5JNVUwbGZsWk90VHdmZUhXOWEwVERxcWdUS0hxa2dqRzd0bTJIX2JoX0VzT0o5WTJrYVlHbUs5MUlXMU1DLVYtQ2tNbnZ1ZE9fLXFGRTRBU1ZNdHM?oc=5" target="_blank" class="nl">長期金利が上がっているのになぜ円安になるのか - アゴラ 言論プラットフォーム</a>
+              <span class="nm">アゴラ 言論プラットフォーム · 2026-06-05 07:01 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiYEFVX3lxTFB2eU1UYVF6WUJoSUViZ1I5bWRkZ185TFFHS1hTcmF0TVVTdjl5VVV5NnNTRFROWWg5VlhON3VTWHRzVVY2WU1zQktJeHd1ZnlWamZhX1ZrbXYxYmJjOXZUaw?oc=5" target="_blank" class="nl">【通貨】 東京為替：ドル・円は変わらず、米金利・原油相場にらみ - 株探（かぶたん）</a>
+              <span class="nm">株探（かぶたん） · 2026-06-05 16:12 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiZ0FVX3lxTE1OZ05jb0ZGRzNEVEtqYURqQ1EzTEZ6dEJUY3hkb2VQS1l5cjJiV0txckdRRjFUZlVTZkthcVNYUHNhVWRrUlhPb2s5RnJiNjJzMUVOLVVtSnRqOVQySzhyWmV3cUE4eDA?oc=5" target="_blank" class="nl">ECBは6月利上げが濃厚 株価と長期金利のバランスが芳しくない情勢の日本 - 日経ビジネス電子版</a>
+              <span class="nm">日経ビジネス電子版 · 2026-06-05 17:00 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMihwFBVV95cUxOY0t0VDdCQnd1MGdmTmVjclgwTkU1U09RSDBoY0NGd2NLVmZtNzJIaExMVVpLYTdOWWpLRFJzU2tkT2ZpUVYyRC1fOWFkNVpGRm1fcEpHNmUzeENNemJvZXpvczhiQUpBLV92d1B4TWNublAtT015WExtRXg3dllIOFlLY3pDeGM?oc=5" target="_blank" class="nl">【2026年6月】100万円を1年、定期預金に預けるならどの銀行がいい？おすすめの定期預金(あるじゃん（All About マネー）) - Yahoo!ファイナンス</a>
+              <span class="nm">Yahoo!ファイナンス · 2026-06-05 18:00 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMihwFBVV95cUxQYlBpX1pmWno4X2ZQdWJFaFFnbWxfMUVYMjJfMVhheS1qX0hBa1hzUlBBTl8zTDEwZmhnWEo2eW1MRHlKZ2kzWHBiRXVIZm1ibVZBcFV2X295SGIzdEVfODNLVHNXVm9VWE9DbDRURlVTc09kLXlRdWdnU2VXZ0Rha0NRS1RBdWM?oc=5" target="_blank" class="nl">インド中銀、政策金利を据え置き－通貨防衛の利上げに慎重姿勢(Bloomberg) - Yahoo!ファイナンス</a>
+              <span class="nm">Yahoo!ファイナンス · 2026-06-05 13:57 JST</span>
+            </div></div><div class="ng"><div class="ng-title"><span class="ibadge" style="background:#fff0f0;color:#e05252;border:1px solid #ffcccc">A</span> 地政学リスク</div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiZ0FVX3lxTE1ORG5tLWswYnFDQkRxNUhJUnIyY3ZhQnpxcGd1ZlZ6b0hGR1pIcmdSYmdLNTU1QzJZakFiX1BCbXhRU0JUem9uWXVXTVFFOGlyV2YtWXBlYlkzcmE4aEdySER0NUdWcEk?oc=5" target="_blank" class="nl">＜6/16新刊＞『日経ムック 最新動向で読み解く 地政学リスクと経済安全保障』 - 日経BOOKプラス</a>
+              <span class="nm">日経BOOKプラス · 2026-06-03 00:00 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiWkFVX3lxTFBTeGV1M25sb2lXcU5IMmpDV1hGNmdwTUpKYjlvVjdpYV9IMzRjZGNqX1ctODV3bTl6bVdsdl81a3NVcGlGVURRdkNoT2o5WHZ0TDhQbFJ3NkJ6QQ?oc=5" target="_blank" class="nl">常態化する地政学リスクへの対応～リスクインテリジェンス向上のすすめ～ - 三菱UFJリサーチ&コンサルティング</a>
+              <span class="nm">三菱UFJリサーチ&コンサルティング · 2026-06-02 10:03 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiiAFBVV95cUxPZWY2T1EwcTJjVDJtZ29oUG9PM280R0NweHdRRDdkakphQXhKMEhianRhU3dWZWVPQTBOeTJNbndreGFtTEVtT190NGJvRDNCVTViSjExMEYyUWhjeDVSWE1RQkIwY0pOOHlubG1XX0ZlNDFNN29xM1RYRGFiZGpDY1FmMkNCY3R3?oc=5" target="_blank" class="nl">AI特需と地政学リスクにどう向き合うか。東京エレクトロン デバイス新社長に聞く半導体・IT市場の最前線（ハフポスト日本版） - Yahoo!ニュース</a>
+              <span class="nm">Yahoo!ニュース · 2026-06-05 07:55 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiWEFVX3lxTE9RTnRsS3hPNkZ5ZXd5S0pqV0UzYl8tQkJSc1pVTTRkaFNocEdxeUZJQk1QUjloQnR3OENhc25pTGhlOE1HdlVIUFFsVThNSjJhTklzWWtUMjI?oc=5" target="_blank" class="nl">地政学リスクに対処せよ 製造業の9割が直面する原材料値上げの過酷 - Forbes JAPAN</a>
+              <span class="nm">Forbes JAPAN · 2026-06-05 10:15 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMic0FVX3lxTE1lZVRyUEdKeUdsVGxjYXpoSE5MdFNqZW80dWI2YmtHUUk4ZG1XSW9ZS21tTjZTYVdBWk5LNENLMWVhSXlzZ2x2aU5CaHpuVnVhTUxfUUs3b2JyaEFvSjJXZ0FKcnlkcklTTGVBWjdyMUxfZWc?oc=5" target="_blank" class="nl">デロイト トーマツ グループ、地政学リスク・経済安全保障に対するガバナンス・対応力を強化する専門部署を設置 - Deloitte</a>
+              <span class="nm">Deloitte · 2026-06-02 14:34 JST</span>
+            </div></div><div class="ng"><div class="ng-title"><span class="ibadge" style="background:#fff0f0;color:#e05252;border:1px solid #ffcccc">A</span> 為替（ドル円）</div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiVEFVX3lxTE84VUJRbzEzWnYzalVqOV9CVzFHUnIzVXlWeXMzNWJWYmVSX0Y0R0RmVUNvYUdtVEFrS1RRSV8tQ1RyMG95MHI1NG1fa1MtTTBzRl9KZNIBV0FVX3lxTE9CTXdST1BLT0pQYWdFWV9pQ2NKUDI0OEFfLWZISTljUFUwQ3VVVEhDWGZzQlNmeFdRNEppVllpZ1FqNXlvSnFlUU85TV9mMHk4a2hncXV1UQ?oc=5" target="_blank" class="nl">【為替】円安160円阻止方針の舞台裏 - マネクリ</a>
+              <span class="nm">マネクリ · 2026-06-02 09:05 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMihwFBVV95cUxOZk1CbU5ib1k5U0t6MmZ5d3lQT21OcmVISkRFYzFRVGZ1dENaLVFvcHFVdVNtUnMtc2F0TXRhLVNnRDZFTEpqNURJc0RBOFdSM2pDZzE3WEpZNHhaWTFNcC1KVDVwZ0ZTTmV5eUxycFhURjhudXdEbWF0V0xhZXpXY0NXVmd1MjQ?oc=5" target="_blank" class="nl">東京為替：ドル・円は動意薄、様子見ムードで(フィスコ) - Yahoo!ファイナンス</a>
+              <span class="nm">Yahoo!ファイナンス · 2026-06-05 15:33 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiYEFVX3lxTE9DRHYxdldXaXdxMU9OUW1CUXVMMFFUeFBjNTFmaTZDTkdhVmU2TEVkX00tSVQ2cnl5UWFMdVgxUGIySm5rRklKck5GSTM5NF8zOE9kR29CdFUyX0dOU2VzdA?oc=5" target="_blank" class="nl">【通貨】 欧米為替見通し: ドル・円は伸び悩みか、ドル買い継続も160円台は介入に警戒 - 株探（かぶたん）</a>
+              <span class="nm">株探（かぶたん） · 2026-06-05 17:28 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiY0FVX3lxTE5BSUxyb0p6SVMyTlAySzhoQnlBV3oxYW0zTHFZT0UtbFY4UXFURGc2R2I0cjAzX2tMZHZJOER6RFNobjRWXzRFdkcxZGtPYkJjVUF1aEtDOVRGMmNNVXJkeklFRQ?oc=5" target="_blank" class="nl">FX/為替「ドル/円今日の予想」 外為どっとコム トゥデイ 2026年6月5日号 - 外為どっとコム</a>
+              <span class="nm">外為どっとコム · 2026-06-05 08:29 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMihwFBVV95cUxQeDVMYUhrY2VianVWMG5DcUV1S3N0ZEhJRGRwMG9ZNkJwLWpUVVhLMk5iTEJTNnVoM0VBdjNpWWRUUjVhMmZ0cElKTEpEUHB0ZXgwcHYzOTVzc3BVdzliNmV1UWg2X24tOTVUSmhVZFBXd1p2ZURyaHF2TVdtdV9USno5bWFPOVXSAYwBQVVfeXFMT1B1dTZjLUpHU0hzbGxwN2JiSVZyTmFBSmo3enpNaGd2Q01RSG5sTXB4elUxN1pCUEc0WWZEUzl5SnRhUlJiY1dfZWF4S3Fma3NNZWdpdXRsUHF1SWliWW4weS1zVWdKMENmeFJvZWxqZjZmUUV1WVpnbVoxbFMzRTBmYXExWGZOVXA1UHE?oc=5" target="_blank" class="nl">東京為替：ドル・円はほぼ横ばい、ドル買い一服 - ｄメニューニュース</a>
+              <span class="nm">ｄメニューニュース · 2026-06-05 14:54 JST</span>
+            </div></div><div class="ng"><div class="ng-title"><span class="ibadge" style="background:#fff0f0;color:#e05252;border:1px solid #ffcccc">A</span> OANDA為替</div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMidkFVX3lxTE9zOU1tOUVteEVvZVV0XzRvc00tUTlJR2RzQmFrR3duVG45eGhLVkRCWHZMWjFhUkVlckF2Um8yejZsb1dXZDF0QzFxX0JUaHZNekxHXzEySmJHS3FXSnlVeHN0ZWlfbXptVy1XV2J6cDhJNDBsb1E?oc=5" target="_blank" class="nl">為替相場 ５日（日本時間１５時） - OANDA</a>
+              <span class="nm">OANDA · 2026-06-05 03:00 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMic0FVX3lxTFBpUzlkNXd6N2x2aDlSSnZrZm1MT1NNRmlNM09TUzUyaTJTbkJnT2Y0d1laa1ZYNTNGcDJvNjNTRGpJeFZGWGE5TnNHX21VNy03TFJqUnA3LUZYSGwzMzZfVDNlWGZEbC0wRWF4RUh3akF3Zlk?oc=5" target="_blank" class="nl">豪ドル/円見通し(為替/FX ニュース)：豪ドル円は円安で114円台前半｜方向感が乏しく上下動(2026年6月5日) - OANDA</a>
+              <span class="nm">OANDA · 2026-06-05 08:28 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMic0FVX3lxTFA2azlsa2lQMXZzWjVMd2VpTVhhelVTYjQ4RXdwOVpSSnpGUXdEbVFJalhsZ3daazYxS1pMbkhGNXZTWjJEanlJWFJBZ2Y5d2l3WjF2YXdldWZfVk54ekVPNTVzVnV1NFJWaG5neHg3WDFNME0?oc=5" target="_blank" class="nl">ユーロ/円見通し(為替/FX ニュース)：ユーロ円は円安で185円台後半｜夜に動意づいて円安が進む(2026年6月5日) - OANDA</a>
+              <span class="nm">OANDA · 2026-06-05 08:23 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMic0FVX3lxTE5EblZnWldqa3cwdUhtdHJPZHR1RlJKQktxUDVrQzVkQXliZC1Va19XcjA5NEl5UXBWUXN5N0dWRVpxdUd3WEhjWG4wWEFOdm9DMU9NaDlsMkRVcjNVWUltN2dIX2ZPbk11TnN4bkpGZzJDWkk?oc=5" target="_blank" class="nl">豪ドル/円見通し(為替/FX ニュース)：豪ドル円は円高で114円台前半｜豪州GDPは市場予想よりも弱い(2026年6月4日) - OANDA</a>
+              <span class="nm">OANDA · 2026-06-04 08:24 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMic0FVX3lxTFBNdHdNX0xOcDZTQkN5RW9EZlY1SlR6Ul9CcEl3eFRqcUNxMTJDbVhPbEZ1YU9TU1FtX2I4ME4xRUlEUEk4cUJhdFYwUUE0TDVsZnNvTVZKWGtwMUpUeXhXcFNZZ2plRDZPOVVvaHVpUWloazA?oc=5" target="_blank" class="nl">ドル/円見通し(為替/FX ニュース )：ドル円は円安で160円台前半｜高市首相の口先介入で円高の場面も(2026年6月4日) - OANDA</a>
+              <span class="nm">OANDA · 2026-06-04 08:10 JST</span>
+            </div></div><div class="ng"><div class="ng-title"><span class="ibadge" style="background:#fff0f0;color:#e05252;border:1px solid #ffcccc">A</span> その他</div><div class="ni">
+              <a href="http://www3.nhk.or.jp/news/html/20260605/k10015137941000.html" target="_blank" class="nl">世界銀行総裁 日本とどう連携？ 途上国の若者の雇用不足に警鐘</a>
+              <span class="nm"> · 2026-06-05 17:12 JST</span>
+            </div><div class="ni">
+              <a href="http://www3.nhk.or.jp/news/html/20260605/k10015141781000.html" target="_blank" class="nl">中国 習近平国家主席が8日から北朝鮮訪問へ 2019年以来</a>
+              <span class="nm"> · 2026-06-05 17:01 JST</span>
+            </div><div class="ni">
+              <a href="http://www3.nhk.or.jp/news/html/20260605/k10015128861000.html" target="_blank" class="nl">【随時更新】ロシア ウクライナに軍事侵攻（6月5日の動き）</a>
+              <span class="nm"> · 2026-06-05 16:11 JST</span>
+            </div><div class="ni">
+              <a href="http://www3.nhk.or.jp/news/html/20260605/k10015142151000.html" target="_blank" class="nl">ゼレンスキー大統領 プーチン大統領に公開書簡 “直接会談を”</a>
+              <span class="nm"> · 2026-06-05 15:58 JST</span>
+            </div><div class="ni">
+              <a href="http://www3.nhk.or.jp/news/html/20260605/k10015141881000.html" target="_blank" class="nl">“敵対行為終わらせる” 米がキューバ大統領らへの制裁を発表</a>
+              <span class="nm"> · 2026-06-05 14:16 JST</span>
+            </div><div class="ni">
+              <a href="http://www3.nhk.or.jp/news/html/20260605/k10015141571000.html" target="_blank" class="nl">レバノン停戦履行合意後も双方攻撃か 米イランの協議見通せず</a>
+              <span class="nm"> · 2026-06-05 12:33 JST</span>
+            </div><div class="ni">
+              <a href="http://www3.nhk.or.jp/news/html/20260605/k10015141751000.html" target="_blank" class="nl">安定的な皇位継承 衆参両院議長・副議長のとりまとめ案が判明</a>
+              <span class="nm"> · 2026-06-05 16:55 JST</span>
+            </div><div class="ni">
+              <a href="http://www3.nhk.or.jp/news/html/20260605/k10015142211000.html" target="_blank" class="nl">中東情勢受けた補正予算案 参院予算委で賛成多数で可決</a>
+              <span class="nm"> · 2026-06-05 17:45 JST</span>
+            </div><div class="ni">
+              <a href="http://www3.nhk.or.jp/news/html/20260605/k10015142331000.html" target="_blank" class="nl">栃木強盗殺人事件 公開手配の1人は中国経由でカンボジア移動か</a>
+              <span class="nm"> · 2026-06-05 18:03 JST</span>
+            </div><div class="ni">
+              <a href="http://www3.nhk.or.jp/news/html/20260605/k10015141701000.html" target="_blank" class="nl">株価 一時1600円超下落 午後は下落幅縮小</a>
+              <span class="nm"> · 2026-06-05 16:10 JST</span>
+            </div><div class="ni">
+              <a href="http://www3.nhk.or.jp/news/html/20260605/k10015141641000.html" target="_blank" class="nl">原発 2040年代までに最大5基 建て替えの必要 経産省が見通し</a>
+              <span class="nm"> · 2026-06-05 17:22 JST</span>
+            </div><div class="ni">
+              <a href="https://www.marketwatch.com/story/actor-tate-donovan-sells-lush-oasis-in-texas-hill-country-after-big-price-cut-84143e3e?mod=mw_rss_topstories" target="_blank" class="nl">Actor Tate Donovan sells lush oasis in Texas Hill Country after big price cut</a>
+              <span class="nm"> · 2026-06-05 18:02 JST</span>
+            </div><div class="ni">
+              <a href="https://www.marketwatch.com/story/it-makes-us-feel-uncomfortable-were-in-our-70s-and-our-only-child-is-40-do-we-tell-her-were-leaving-her-everything-28421776?mod=mw_rss_topstories" target="_blank" class="nl">‘This is a tricky subject’: We’re in our 70s and our only child is 40. Do we leave her everything?</a>
+              <span class="nm"> · 2026-06-05 17:56 JST</span>
+            </div><div class="ni">
+              <a href="https://www.marketwatch.com/story/the-stock-market-is-at-its-frothiest-since-the-global-financial-crisis-proclaims-citi-why-dip-buyers-shouldnt-bail-yet-bd66f5a3?mod=mw_rss_topstories" target="_blank" class="nl">The stock market is at its frothiest since the global financial crisis, proclaims Citi. Why dip buyers shouldn’t bail yet.</a>
+              <span class="nm"> · 2026-06-05 17:44 JST</span>
+            </div><div class="ni">
+              <a href="https://www.marketwatch.com/story/in-wild-twist-spacex-wont-be-allowed-early-entry-to-the-s-p-500-after-all-2c1b8205?mod=mw_rss_topstories" target="_blank" class="nl">In ‘wild’ twist, SpaceX won’t be allowed early entry to the S&P 500 after all</a>
+              <span class="nm"> · 2026-06-05 17:23 JST</span>
+            </div><div class="ni">
+              <a href="https://www.marketwatch.com/story/one-quadrillion-is-the-number-used-to-describe-the-wealth-effect-of-south-koreas-stock-market-miracle-8ecad9dd?mod=mw_rss_topstories" target="_blank" class="nl">One quadrillion is the number used to describe the wealth effect of South Korea’s stock-market miracle</a>
+              <span class="nm"> · 2026-06-05 16:27 JST</span>
+            </div><div class="ni">
+              <a href="https://www.fxstreet.com/news/indian-rupee-ticks-lower-as-rbi-leaves-repo-rate-unchanged-at-525-as-expected-202606050458" target="_blank" class="nl">Indian Rupee gains as RBI leaves Repo Rate steady, warns upside inflation risks</a>
+              <span class="nm"> · 2026-06-05 17:21 JST</span>
+            </div><div class="ni">
+              <a href="https://www.fxstreet.com/news/us-dollar-index-price-forecast-trades-lower-around-9930-ahead-of-us-nfp-data-202606050820" target="_blank" class="nl">US Dollar Index Price Forecast: Trades lower around 99.30 ahead of US NFP data</a>
+              <span class="nm"> · 2026-06-05 17:20 JST</span>
+            </div><div class="ni">
+              <a href="https://www.fxstreet.com/news/japanese-yen-consolidation-inside-tight-range-versus-us-dollar-uob-202606050817" target="_blank" class="nl">Japanese Yen: Consolidation inside tight range versus US Dollar – UOB</a>
+              <span class="nm"> · 2026-06-05 17:17 JST</span>
+            </div><div class="ni">
+              <a href="https://www.fxstreet.com/news/forex-today-focus-shifts-to-nonfarm-payrolls-as-middle-east-tensions-remain-high-202606050808" target="_blank" class="nl">Forex Today: Focus shifts to Nonfarm Payrolls as Middle East tensions remain high</a>
+              <span class="nm"> · 2026-06-05 17:08 JST</span>
+            </div><div class="ni">
+              <a href="https://www.fxstreet.com/news/sp-500-tech-wobble-but-breadth-improves-deutsche-bank-202606050804" target="_blank" class="nl">S&P 500: Tech wobble but breadth improves – Deutsche Bank</a>
+              <span class="nm"> · 2026-06-05 17:04 JST</span>
+            </div><div class="ni">
+              <a href="https://news.yahoo.co.jp/articles/3c19ad0fde5392233144015ee4f33670082d630d?source=rss" target="_blank" class="nl">ボルボ、「XC60」に新たなエントリーモデル「XC60 Plus B5 AWD」導入 価格799万円から(Car Watch)</a>
+              <span class="nm"> · 2026-06-05 18:08 JST</span>
+            </div><div class="ni">
+              <a href="https://news.yahoo.co.jp/articles/edb903124f5aee42e895b83cdf97479807d863fd?source=rss" target="_blank" class="nl">三菱ケミカルグループ（4188）の株主、3か月間でどのくらい株価変動で得したのか？【2026年6月5日】(LIMO)</a>
+              <span class="nm"> · 2026-06-05 18:05 JST</span>
+            </div><div class="ni">
+              <a href="https://news.yahoo.co.jp/articles/2c185da792afdb0a2ac0c15488e110808e4ce008?source=rss" target="_blank" class="nl">掘り出し物は約105万円！　2代目『アウディTT』【UK中古車ガイド】　ポルシェ・ケイマンや BMW Z4を凌ぐ部分とは？(AUTOCAR JAPAN)</a>
+              <span class="nm"> · 2026-06-05 18:05 JST</span>
+            </div><div class="ni">
+              <a href="https://news.yahoo.co.jp/articles/86143973370c188fca700a4709e538dc27351584?source=rss" target="_blank" class="nl">ホンダ シビックに「S＋シフト」を搭載するハイブリッドのRSグレード「e：HEV RS」を追加して発売(スマートモビリティJP)</a>
+              <span class="nm"> · 2026-06-05 18:04 JST</span>
+            </div><div class="ni">
+              <a href="https://news.yahoo.co.jp/articles/0f2aab9d68ba1cb6cdf97664d9dea2caa203caca?source=rss" target="_blank" class="nl">「えっ、大衆車をミッドシップに!?」ルノーが勝利への執念だけで生み出した狂気のラリーカー「5ターボ」の伝説(WEBヤングマシン)</a>
+              <span class="nm"> · 2026-06-05 18:04 JST</span>
+            </div><div class="ni">
+              <a href="https://news.yahoo.co.jp/articles/12885b21d3765ced0e0bce6801724c73ed0cc077?source=rss" target="_blank" class="nl">【価格と装備が見えた】ホンダ「シビック」マイナーチェンジ。新「e:HEV RS」の詳細判明、既存グレードも装備強化(carview！)</a>
+              <span class="nm"> · 2026-06-05 18:03 JST</span>
+            </div><div class="ni">
+              <a href="https://toyokeizai.net/articles/-/946822?utm_source=rss&utm_medium=http&utm_campaign=link_back" target="_blank" class="nl">〈人気ストラテジストに聞く〉日経平均の上値余地は大きい､政府や米財務省による日銀への"注文"が株高を促す | ビジネス | 東洋経済オンライン</a>
+              <span class="nm"> · 2026-06-05 17:02 JST</span>
+            </div><div class="ni">
+              <a href="https://toyokeizai.net/articles/-/946821?utm_source=rss&utm_medium=http&utm_campaign=link_back" target="_blank" class="nl">『会社四季報』＆『プロ500』夏号厳選！有望テーマ株　｢絶好調｣｢AI･半導体｣｢宇宙｣｢原発再稼働｣｢株主提案｣… | ビジネス | 東洋経済オンライン</a>
+              <span class="nm"> · 2026-06-05 17:01 JST</span>
+            </div><div class="ni">
+              <a href="https://toyokeizai.net/articles/-/946814?utm_source=rss&utm_medium=http&utm_campaign=link_back" target="_blank" class="nl">日経平均は7万円台目前､2030年に10万円も！年初より株価が低い銘柄は2100超､出遅れの"お宝銘柄"がザクザク | ビジネス | 東洋経済オンライン</a>
+              <span class="nm"> · 2026-06-05 17:00 JST</span>
+            </div></div><div class="ng"><div class="ng-title"><span class="ibadge" style="background:#fff0f0;color:#e05252;border:1px solid #ffcccc">A</span> 日銀動向</div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMicEFVX3lxTFBpUzh2WlV0UklMT3JTUU5XTVNkekdRRi1pZmgwdEhzUWdPTDF6NlJ6OVRIdnlLdXNsT2RsVTNLeklEMnlSbUxDTkg4dklYbDJfa2Q2Q0d5X0dPNl9PNXhzMkJmYlloWUhRa0JpdGRSQXM?oc=5" target="_blank" class="nl">最近の経済・物価情勢と金融政策運営 - boj.or.jp</a>
+              <span class="nm"> · 2026-06-03 17:43 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiakFVX3lxTE9odFliS1B1dWRkRE1KcXZObnRQRUVCaElVa1czbW9EcFRGRnE1eHEyQjJVV3V3RHNXLUo5OHdRei1UeERpczNzM29MX1lyQTh6UlVmRTduOUx4Y05RVThKelh5WGd5WUtxeVE?oc=5" target="_blank" class="nl">（論文）企業物価指数・2025年基準改定の基本方針 - boj.or.jp</a>
+              <span class="nm"> · 2026-06-03 14:47 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiXkFVX3lxTE1KVjlxMUt1dnZpSHVHOXRnd2N5NFlKeV9NNi1DZlVpVG9IZ0FUMTdodkhOOTA5QlEzVG1OWUtXZ1ZrWW5JNzJiTnJCUFlFZjFVd1JXMDZTNkFha0FMR0E?oc=5" target="_blank" class="nl">CBDCフォーラム 各Discussion Groupの今後の進め方 - boj.or.jp</a>
+              <span class="nm"> · 2026-06-04 17:11 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMickFVX3lxTE9DWXR0bng5UEtNdGdoTXVqZ2ljV0FROThDYW11QWJOMW8tRHA0aVRZTk9LSlhNZ1BRWF82VkhYRGZiZ3pqVzVndmlNbEh5cUVKeFlNUzQyQU9nN04tLUZTbi14Z3lIUXpETGYtQXRQMTJIQQ?oc=5" target="_blank" class="nl">総裁：植田和男（うえだかずお） - boj.or.jp</a>
+              <span class="nm"> · 2023-04-10 13:09 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiakFVX3lxTE5nWnNOeHhQemFyQzduSFN0NkFqT3h1X20xbDF2VDltRGhPR0huV0cxV2ViSVp3SXgya2NQemMyLW9YQ1lsNE5kYlVZMGtvaUhCRWFaRkgxSjU3eGhnNlBUZW15TWNqLTZiU3c?oc=5" target="_blank" class="nl">為替介入（外国為替市場介入）とは何ですか？ 誰が為替介入の実施を決定し、誰が為替介入を行うのですか？ - boj.or.jp</a>
+              <span class="nm"> · 2023-01-01 16:43 JST</span>
+            </div></div><div class="ng"><div class="ng-title"><span class="ibadge" style="background:#fff0f0;color:#e05252;border:1px solid #ffcccc">A</span> 政府動向</div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMib0FVX3lxTE5ZR0RoVHBYRTBuVDU5TDdROXBoeWJpOW1oZnFnaHEtZFdlWWVIa0wtUFY4RENaZ1ZtS3A1TFIyeG1vdkpDMGFDbzFMWXVtd1ctWWdQM0lzVzJUWURBSmwzeUtTRUo2NGJONWRlaGJsOA?oc=5" target="_blank" class="nl">中東情勢を踏まえた令和８年度補正予算等についての会見 - 首相官邸</a>
+              <span class="nm"> · 2026-05-25 16:00 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMib0FVX3lxTE5PbDFXWGVXN1Z0dHdFcjVaM01pWjNXRHFqV1g3aXk2ZVAwTFFPcV90WTdkMFpDZkhlRFN2Vy0xVEJnNVpQclE5eVlRdmkyVFpZRGZzd1EzVXRUWlRlVHJJcXZuWVYtdkk1eW9Wbk5Fbw?oc=5" target="_blank" class="nl">日本経済団体連合会定時総会 高市総理ビデオメッセージ - 首相官邸</a>
+              <span class="nm"> · 2026-06-03 18:01 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiZEFVX3lxTE5zYm54X2JVWGpLbVRiU2o3cWZnZ0xsSzJ2UkxLQ1VIRFg4YXZfeUNLVDdadHA2TldnMHZfZmVfUmF4ZEtsS0tYUDRDYVMxa0VMUHZUWS15RFlZbVdDVXFRS1JZdUc?oc=5" target="_blank" class="nl">動画で知る高市内閣の重要政策 - 首相官邸</a>
+              <span class="nm"> · 2026-05-25 16:00 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiPkFVX3lxTE9iY0VmVFdMSFpCMEg5N0taMGZPc0hISWhWRVE2OVJBQ2lqUmEtVk1Jak5oSXFIQXBuRnlETFV3?oc=5" target="_blank" class="nl">首相官邸 - 首相官邸</a>
+              <span class="nm"> · 2016-04-25 12:34 JST</span>
+            </div></div><div class="ng"><div class="ng-title"><span class="ibadge" style="background:#fff0f0;color:#e05252;border:1px solid #ffcccc">A</span> 財務省動向</div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMihgFBVV95cUxQM1Qza3QyRm5TYlljSC03aTFkVC1OVW50TTNoVjU5MFZ5Ty1iRDlqNThRT0JJdEh5alJ6T1JsVEZJYWE0M2pibUZDYW5rdHlVR2xORWI1ZVZQdkdKM2E4NUpneWNBZlh1SW5oU3JzVkZra3plSFV0U2xLOW5UZ1UwczN3MjlNUQ?oc=5" target="_blank" class="nl">令和８年度補正予算 - mof.go.jp</a>
+              <span class="nm"> · 2026-06-03 09:13 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiiwFBVV95cUxOcnRWYWhEcGlfbDRXNG9QVUREMG5vWDVSbEZTVVphYXY4QkdnMmZTc01SZXB4anF4OC0zYjhLZF9CeWR5UUZaQkpMb0pCaHZOMjNwUkE5dFZ1TTk4b19qRElhUVhmMUpqd3ItbEFPRkdfWGpQMkk4ZDVFYV9ZSXJRUEl6cDZfMzRIcW5z?oc=5" target="_blank" class="nl">第221回国会における片山財務大臣の財政演説（令和8年6月3日） - mof.go.jp</a>
+              <span class="nm"> · 2026-06-03 16:40 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMinwFBVV95cUxPbFR1OVRMNnQ4TWMxRGRVcGc4RWNGR1IyQUg1TDlPZmtFd0ZDeFNIVXFjSHJ0R1Z0dGstSmlXWUlPQ0hOazdwck96MkI5UlFkZDNfYl9teVJQR2dkTzRMT2lMSS1lb2l6YVNDUGh4ejlTYll1c2VpUnVzZXhIZWtOb19lQnF3a0Z2QzBPcEpZeVhmVjN6d0NoalVmbG9fcjA?oc=5" target="_blank" class="nl">外貨準備等の状況（令和8年5月末現在） - mof.go.jp</a>
+              <span class="nm"> · 2026-06-05 08:52 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiggFBVV95cUxPYk9oUmw4ZVdWYkJQRE81RDFyekVjcTBsZEZIbTJLaEYzbU5VUE9GQTlvRUdCdXhwclVsXzZWV2Rhanl1aEpwdk9GVGRPYjdkdFFXS3dIdGtOYXFxeHZreVVsM1E0SWkxY0ludklIZ1l4czNoZnpaZDMxT0wwUjVqQnpn?oc=5" target="_blank" class="nl">日本と世銀グループの連携対話を開催しました（令和8年6月1日） - mof.go.jp</a>
+              <span class="nm"> · 2026-06-01 17:40 JST</span>
+            </div></div><div class="ng"><div class="ng-title"><span class="ibadge" style="background:#fff0f0;color:#e05252;border:1px solid #ffcccc">A</span> FedWatch</div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMibEFVX3lxTE5fNFgzeW12RGFKWVhrRDc2ODdJVWVpU3UwRThGQm9VTVJBT3l3Y2F1bmozc0IzRm5QRXVtQ1hTdy1qWTBKLTNvczU2MEtMVEF0WGpwamw0Sy1La3pqOHZhWS1qSkxtUngzQW5LTg?oc=5" target="_blank" class="nl">米年内利上げ観測、確率一時5割超える 原油高止まりで - 日本経済新聞</a>
+              <span class="nm"> · 2026-05-18 16:00 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiZEFVX3lxTE52TXNKWUs2a0VnTF9YcGJGbnc5UVo4czFQMDNWMHZ3YVhNM004X3pRMDZXRThXdmR3Wmd0S2lQXzg5SzY1WDdpNVBqZDYySmlHYlNhNXIxWTJwbk84T2d5TFRzWko?oc=5" target="_blank" class="nl">NY債券：米長期債相場はもみ合い、イールドカーブは平坦化 - TradingView</a>
+              <span class="nm"> · 2026-05-23 06:37 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMingFBVV95cUxNS3Rfb0N2cmwwdGZhMnhSbk9QdHZYTF9Iel9ZTUN1Z19pU2NmQVFTV1ZOR2RjdndLY2lmdTEyMVV2S1dZekFwZmM5RE91VloyT3JUXzZQS2RKa3BGSUlhZVdtU3FBWVpmdno1ZGd5RlVyTTlRQ0ktZ09UNDJuQVI0bl9DU0IySE1MT3VBRlNWM09BS3A0Mm9KMXlnSVE2QQ?oc=5" target="_blank" class="nl">FOMC議事録でビットコインの「利下げ期待」一転、利上げリスクが新たな重しに - crypto-times.jp</a>
+              <span class="nm"> · 2026-05-25 12:33 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiW0FVX3lxTE5lSjI5YkhiVVg4VElBZUtuZ3FvcTRrb290eV85YndtTElWdk5LSDBKLVlteU1XLXFKb1QyR1RzRGR1aF9zcTZXQnZjQnFEZHUxdk1ObUR6aGpEUkE?oc=5" target="_blank" class="nl">2025年5月FOMCプレビュー ～6月利下げへの布石はあるか？～ | 前田 和馬 | 第一ライフ資産運用経済研究所 - 第一ライフ資産運用経済研究所</a>
+              <span class="nm"> · 2025-05-01 16:00 JST</span>
+            </div></div><div class="ng"><div class="ng-title"><span class="ibadge" style="background:#fff8f0;color:#d97706;border:1px solid #ffd9a0">B</span> 半導体産業</div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMihwFBVV95cUxNbXhlQ3pxek9KdXNLTnNpd3dVWnVkc1JFYnlEV3oyRnFRSGE5clRuMjZnRnJaRjhaUkNDbDl0RkRXTDZSbHBFcGNlWmhoNVJ0cFRVdFpRenBIdUhZbWd2dVFjTzlZUnAxU1hIMUFzQW14YTJLOEpVeFlHZWJjMWlzVlhsVDNhWG8?oc=5" target="_blank" class="nl">日経平均は大幅続落、半導体関連軟調も幅広い銘柄に見直し買い向かう／ランチタイムコメント(フィスコ) - Yahoo!ファイナンス</a>
+              <span class="nm">Yahoo!ファイナンス · 2026-06-05 12:18 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiZ0FVX3lxTE1adS1fSzJtUXZxeG45QWQwUnBKWGVuNWJiOGNINVZqMHNVdTJpRTZFSlBEU05XQ2pqRnRxZTRSQnMwazdDMlZoc2Q3N29kRFhjQ1BaMFV4Z2E0VS1oZGJFWDVBQ0RUbW8?oc=5" target="_blank" class="nl">日経平均が下落、一時6万6000円下回る 半導体株に売りが広がる - 朝日新聞</a>
+              <span class="nm">朝日新聞 · 2026-06-05 11:40 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiYEFVX3lxTE1odmhKdVNIS0VTaFozVnhUSWcxWjhnbTR2NGhiMkhoWXhTVkNFVGx0ckdSQWNPa2dtSWlaR0UxTlFRQ1YzMEhTU3V3UUcxTG9ScVVFa2RBQ3h2aUgyQUdZRA?oc=5" target="_blank" class="nl">【市況】 【↓】日経平均 大引け｜ 続落、半導体関連の一角に利益確定売り (6月5日) - 株探（かぶたん）</a>
+              <span class="nm">株探（かぶたん） · 2026-06-05 16:44 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiYEFVX3lxTE4zN2Fma2xneDFPRFV1S1B4TzBXSEhScDN2b21JckY0UGFXQmRSSXpTZlRVejYwcUdDcVR5VDNObVV5dldSSmRBS3F4T29nb0ZhWWd6VHBla1dRdmViUERoRA?oc=5" target="_blank" class="nl">【市況】 前場に注目すべき3つのポイント～半導体やAI関連株の底堅さを見極め～ - 株探（かぶたん）</a>
+              <span class="nm">株探（かぶたん） · 2026-06-05 08:44 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMihwFBVV95cUxOc3hzWkk2Y0d2U3VSZVR0Mkc4UEkxTUN4ODNXTjlIX25MbmF2dUpYWDV4Y0NZWnlOdXlEUXpwSnp3Q1VOd1NzTUpUR0xqR1VlaVZvTHhvS2FTSHJuSEZhNjJubmRjWWxuZWpFbFVyR0prTjY0cnhueHlkSXVpRVU4c0cxMlhMdDQ?oc=5" target="_blank" class="nl">香港大引：ハンセン１．２％安で３日続落、半導体セクターに売り(サーチナ) - Yahoo!ファイナンス</a>
+              <span class="nm">Yahoo!ファイナンス · 2026-06-05 17:44 JST</span>
+            </div></div><div class="ng"><div class="ng-title"><span class="ibadge" style="background:#fff8f0;color:#d97706;border:1px solid #ffd9a0">B</span> 企業決算</div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiYEFVX3lxTFAtZTd0MDFaZTdLLW9oSEx1ZHdmUl95d29BUFp3VEtMN0U5a2dXQXRMei1IMWFjbTlOaVEyVzVFaDg3TzItZ2w4eDVjT3laMzJnRncwOFdxM1hBbVFnYVVHZw?oc=5" target="_blank" class="nl">【注目】 ★本日の【サプライズ決算】速報 該当銘柄なし (06月04日) - 株探（かぶたん）</a>
+              <span class="nm">株探（かぶたん） · 2026-06-04 17:04 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMif0FVX3lxTFBLc3ZOYWZjdkNjcEtEX1o1Z0VxNW14cjBuY2tjNTZ2SW96U0lidVU3azV5Z2tJM2w3SzJGMEhfVW9CNXBJTGlrZ3lxaUFLekg2WkdBR1FNeDRYSE94Q01hNkp1bGFnOXllblM1T0RJSTNjZTh0R1lGaUZjQ2RxT0E?oc=5" target="_blank" class="nl">IGRいわて銀河鉄道の2026年度決算は3期連続の黒字 運賃の改定、広告料収入の増加によるもの 次期社長には浅沼秀行参与が就任 岩手（IBC岩手放送） - Yahoo!ニュース</a>
+              <span class="nm">Yahoo!ニュース · 2026-06-05 16:47 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiakFVX3lxTE0tX0UyS21heU5yNGlHWHhXRUdvcmZpcEgwMFBrTUwtZFJXVjRUZ0p0aTFMblpWZFpXTG5MaTYyT185dnlrUlVIZy1hc054OFRlWDU0dksxNF9zNllJVlY5WG41eTBqSk9rWHc?oc=5" target="_blank" class="nl">和田興産[8931]：2026年2月期決算 アナリストレポート公開のお知らせ 2026年6月5日(適時開示) ：日経会社情報DIGITAL - 日本経済新聞</a>
+              <span class="nm">日本経済新聞 · 2026-06-05 17:00 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiWkFVX3lxTE9KNjB1S1AycU1GZDlQTEJ5M0Vvd1hzQ0lZMFNPVElzSFltenExSS0zSjB6Q3liRWRXVjd4aVJMWW5qWWtxNGhoTGtNTXFXTm5vUnZFNW82WkxSdw?oc=5" target="_blank" class="nl">IGRいわて銀河鉄道の2026年度決算は3期連続の黒字 運賃の改定、広告料収入の増加によるもの 次期社長には浅沼秀行参与が就任 岩手 - TBS NEWS DIG</a>
+              <span class="nm">TBS NEWS DIG · 2026-06-05 16:45 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMihwFBVV95cUxNMWI2WHY3aS1Lb1A5UnlzMGlVbXJ6bnZaQ2diT1lqWmRSVTBEbEJmNkZUZmZiZnBjLV9YbV9EakJ4UHRiVHBnWEVZZ1NNaHRIc3U0ZWV4Wko4cFhCY2tnTzJoWnJuMUZiUzdDdlhEMWN5NmdpeEdoZjhRSkZHdkFLVE5ldEtvYXc?oc=5" target="_blank" class="nl">【決算速報】エイチーム、8-4月期(3Q累計)経常が68％減益で着地・2-4月期も63％減益(株探ニュース) - Yahoo!ファイナンス</a>
+              <span class="nm">Yahoo!ファイナンス · 2026-06-05 15:32 JST</span>
+            </div></div><div class="ng"><div class="ng-title"><span class="ibadge" style="background:#fff8f0;color:#d97706;border:1px solid #ffd9a0">B</span> 原油市場</div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiigFBVV95cUxNMkNRTExkaEtNTnNaUVVZV3V1dGxiSU5jV3dGSU5QNWVqbkRqcDlhS1g4QWNRTkpENUNpcUtrUTMwNmliLTltNlgwTTF2cFI0cGJSbzlrODBLQ3I2cll6RERUZFljemZudXZ3d1diT1FianNTX1V5SmlhbDR6UmNzMnVHc2cwa3R2VXc?oc=5" target="_blank" class="nl">原油相場は反落、イスラエルとレバノン条件付き停戦合意を受け - Bloomberg.com</a>
+              <span class="nm">Bloomberg.com · 2026-06-04 23:56 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMieEFVX3lxTE01V2RVVEhyekplTHl3WHpLdlVWZmJGMTVzRjctZHA2a205MzMtajBTcHlaOXhYeW5tNlNlQmMxOURjVG1LREJibTlFLTJKN1hSOEpZcTVXa3pvek1Ya0o5eUV0VHFuSzJFMG1QNzlhVDhjMmpCYW5CeQ?oc=5" target="_blank" class="nl">コラム：アジアの米国産原油輸入急増、海峡封鎖による供給不足は穴埋めできず - Reuters</a>
+              <span class="nm">Reuters · 2026-06-03 12:28 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiUEFVX3lxTE1Hemd6UGlZdng0aUlmTTlZc2lwNzRvT2dRcUZUTHU1MkF0clFwaTQtbVU0QUJMdm5HLVhVa3poV1d3eWRFUmFTaFQ1MzRWQzRz?oc=5" target="_blank" class="nl">米アラスカ産原油が６日に到着 - nnn.co.jp</a>
+              <span class="nm">nnn.co.jp · 2026-06-05 17:05 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMibEFVX3lxTE0xUFZoNWRQWGsxOG14VXZqQzFwaDhGMDBXcUdDYWV2UmVrb0NIUUFwN0lKR2JxTE5EdDRPSEFPNVE4bGVaX3ZYbWpxRmJLYmI5QjlVUXduVjVRblU1dHFXczNWSW14MENoWHhhWA?oc=5" target="_blank" class="nl">ブラジル、原油3割増産で世界5位浮上へ 中印に輸出・日本は出遅れ - 日本経済新聞</a>
+              <span class="nm">日本経済新聞 · 2026-06-04 13:26 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiSEFVX3lxTE5BQXZYS0NxNmNZa1hvS0luX3gwb1lra3NkSmFCQzFjRnczbjBwdUdRS2N5TV85UUZhU0M1Qnh5NFhNX3ZZSXRsXw?oc=5" target="_blank" class="nl">原油は３．１０％安＝ＮＹ原油終値 - みんかぶ FX/為替</a>
+              <span class="nm">みんかぶ FX/為替 · 2026-06-05 03:54 JST</span>
+            </div></div><div class="ng"><div class="ng-title"><span class="ibadge" style="background:#fff8f0;color:#d97706;border:1px solid #ffd9a0">B</span> トレーダーズウェブ</div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiP0FVX3lxTE9JSzBnUDZPWmRiVXpsMWlwOUlaLUdEZVlDSGVuZ0dKR2k4bTY4ck04c0M2QkZVRkFuV2wwSG9nQQ?oc=5" target="_blank" class="nl">ホーム | トレーダーズ・ウェブ - トレーダーズ・ウェブ</a>
+              <span class="nm">トレーダーズ・ウェブ · 2006-06-07 07:47 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiREFVX3lxTE53NHEzakd4QVIxYU85VTJlSUROZmN5X1RaZFNOTGN2VHdRay03bFJhLUw4QVROQjZNc0RYeWdMSTBXcnRu?oc=5" target="_blank" class="nl">トップ | IPO - トレーダーズ・ウェブ</a>
+              <span class="nm">トレーダーズ・ウェブ · 2022-01-25 11:21 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiWkFVX3lxTE1ub0RNM0NualNOcDc3bGF1ZW9LbzhhS3U4TWVPaTlYX09ZR1RRc3hjZ2dBZF9jUTZOLW9fekhaaHJYVHRZeVU4bUJ3RTF6VVdXMVh1Qm9ERi1rUQ?oc=5" target="_blank" class="nl">海外市場スケジュール - トレーダーズ・ウェブ</a>
+              <span class="nm">トレーダーズ・ウェブ · 2022-01-25 12:49 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiU0FVX3lxTE94cmFMaE9oQy1wWEt3ZmgzUGwxOVBaT1JRcTBDdy1UOG43QXlLanNvNUt4Tl9qdDUwLW9sNDRmT1QtdkNLZ18wUnZCZFd6M2VvMWpj?oc=5" target="_blank" class="nl">マーケットの話題 - トレーダーズ・ウェブ</a>
+              <span class="nm">トレーダーズ・ウェブ · 2022-01-25 11:11 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiXEFVX3lxTE9TT1hzTWVPcmZZNG83ckRxajdpZjhiRTMtNGd4LWk1Wm1VRXlOb0llNjBMMlAybnpkRU9KQ1Zhalo4SnNYdC1kYkVsT05kQmk1WTB6MDNoWUpVWVhk?oc=5" target="_blank" class="nl">PTSで大きく動いた注目の材料銘柄（6月5日） | 個別記事 | ニュース - トレーダーズ・ウェブ</a>
+              <span class="nm">トレーダーズ・ウェブ · 2026-06-05 07:36 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiP0FVX3lxTE9JSzBnUDZPWmRiVXpsMWlwOUlaLUdEZVlDSGVuZ0dKR2k4bTY4ck04c0M2QkZVRkFuV2wwSG9nQQ?oc=5" target="_blank" class="nl">ホーム | トレーダーズ・ウェブ - トレーダーズ・ウェブ</a>
+              <span class="nm"> · 2006-06-07 07:47 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiREFVX3lxTE53NHEzakd4QVIxYU85VTJlSUROZmN5X1RaZFNOTGN2VHdRay03bFJhLUw4QVROQjZNc0RYeWdMSTBXcnRu?oc=5" target="_blank" class="nl">トップ | IPO - トレーダーズ・ウェブ</a>
+              <span class="nm"> · 2022-01-25 11:21 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiWkFVX3lxTE1ub0RNM0NualNOcDc3bGF1ZW9LbzhhS3U4TWVPaTlYX09ZR1RRc3hjZ2dBZF9jUTZOLW9fekhaaHJYVHRZeVU4bUJ3RTF6VVdXMVh1Qm9ERi1rUQ?oc=5" target="_blank" class="nl">海外市場スケジュール - トレーダーズ・ウェブ</a>
+              <span class="nm"> · 2022-01-25 12:49 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiU0FVX3lxTE94cmFMaE9oQy1wWEt3ZmgzUGwxOVBaT1JRcTBDdy1UOG43QXlLanNvNUt4Tl9qdDUwLW9sNDRmT1QtdkNLZ18wUnZCZFd6M2VvMWpj?oc=5" target="_blank" class="nl">マーケットの話題 - トレーダーズ・ウェブ</a>
+              <span class="nm"> · 2022-01-25 11:11 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiXEFVX3lxTE9TT1hzTWVPcmZZNG83ckRxajdpZjhiRTMtNGd4LWk1Wm1VRXlOb0llNjBMMlAybnpkRU9KQ1Zhalo4SnNYdC1kYkVsT05kQmk1WTB6MDNoWUpVWVhk?oc=5" target="_blank" class="nl">PTSで大きく動いた注目の材料銘柄（6月5日） | 個別記事 | ニュース - トレーダーズ・ウェブ</a>
+              <span class="nm"> · 2026-06-05 07:36 JST</span>
+            </div></div><div class="ng"><div class="ng-title"><span class="ibadge" style="background:#fff8f0;color:#d97706;border:1px solid #ffd9a0">B</span> みんかぶ株</div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiSEFVX3lxTFBNWWtjdmhxWEdGN19jWGQ2ZFVoVzFqVWI0NXI0N1N0c0dPYmktdkx4MFZ2LW1NUUlXSUFTUUVJb2ZMTDBUUVhHTg?oc=5" target="_blank" class="nl">ダウ平均は大幅反発 ナスダックはマイナス圏 ブロードコムが大幅安＝米国株概況 - みんかぶ FX/為替</a>
+              <span class="nm">みんかぶ FX/為替 · 2026-06-05 05:25 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiSEFVX3lxTE8weTZUQ1pGc1o1RDlKMlBBd1ZVVWdWNTJJcWVFdGZoWi1DbnJNVXZsMW1TdUxJMlBhOHhNM3lQRHZtT2NUYnpuUg?oc=5" target="_blank" class="nl">アジア株 韓国ハイテクに雪崩「サムスン・SKハイニックス」頼みの脆弱性が露呈 - みんかぶ米国株</a>
+              <span class="nm">みんかぶ米国株 · 2026-06-04 22:59 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiRkFVX3lxTE00Sjg2WmV6MUcyMXhEUzB1elpJYXhOUTFwUXA5cDNFYUo1M3JGT2hBZFdBWjNwblhEOW1lVFlqc0puVjlYbnc?oc=5" target="_blank" class="nl">香港株 ハンセン指数は１．１５％安の２４９６１．９５で取引終了 - みんかぶ</a>
+              <span class="nm">みんかぶ · 2026-06-05 17:21 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiRkFVX3lxTE9jcld2WFRSd3dJQzJjQjQ5WFlCOFp5WkhBMThRMjRoMnpNemRCVzJvVTl4MjVqWUFvNWF2anpkQVh1ell2VUE?oc=5" target="_blank" class="nl">（訂正）「ＴＣＧ2511 株式会社による日本ドライケミカル株式会社の普通株式に対する公開買付けの開始に関するお知らせ」の訂正に関するお知らせ 投稿日時： 2026/06/05 17:00[適時開示] - みんかぶ</a>
+              <span class="nm">みんかぶ · 2026-06-05 17:00 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiRkFVX3lxTE1ZVWdBSGNPQWthRHpqVGVpRlNlUXVQY3B3VFBUb1ZaNFRXaVJiak5weFAtSmRHS0ZsU1NOWkNyd3RvVDM5Y1E?oc=5" target="_blank" class="nl">欧州株 ユーロストックス５０先物はほぼ横ばい、前日の上昇を踏襲し取引開始へ - みんかぶ</a>
+              <span class="nm">みんかぶ · 2026-06-05 15:50 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiSEFVX3lxTFBNWWtjdmhxWEdGN19jWGQ2ZFVoVzFqVWI0NXI0N1N0c0dPYmktdkx4MFZ2LW1NUUlXSUFTUUVJb2ZMTDBUUVhHTg?oc=5" target="_blank" class="nl">ダウ平均は大幅反発 ナスダックはマイナス圏 ブロードコムが大幅安＝米国株概況 - みんかぶ FX/為替</a>
+              <span class="nm"> · 2026-06-05 05:25 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiSEFVX3lxTE8weTZUQ1pGc1o1RDlKMlBBd1ZVVWdWNTJJcWVFdGZoWi1DbnJNVXZsMW1TdUxJMlBhOHhNM3lQRHZtT2NUYnpuUg?oc=5" target="_blank" class="nl">アジア株 韓国ハイテクに雪崩「サムスン・SKハイニックス」頼みの脆弱性が露呈 - みんかぶ米国株</a>
+              <span class="nm"> · 2026-06-04 22:59 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiRkFVX3lxTE00Sjg2WmV6MUcyMXhEUzB1elpJYXhOUTFwUXA5cDNFYUo1M3JGT2hBZFdBWjNwblhEOW1lVFlqc0puVjlYbnc?oc=5" target="_blank" class="nl">香港株 ハンセン指数は１．１５％安の２４９６１．９５で取引終了 - みんかぶ</a>
+              <span class="nm"> · 2026-06-05 17:21 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiRkFVX3lxTE9jcld2WFRSd3dJQzJjQjQ5WFlCOFp5WkhBMThRMjRoMnpNemRCVzJvVTl4MjVqWUFvNWF2anpkQVh1ell2VUE?oc=5" target="_blank" class="nl">（訂正）「ＴＣＧ2511 株式会社による日本ドライケミカル株式会社の普通株式に対する公開買付けの開始に関するお知らせ」の訂正に関するお知らせ 投稿日時： 2026/06/05 17:00[適時開示] - みんかぶ</a>
+              <span class="nm"> · 2026-06-05 17:00 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiRkFVX3lxTE1ZVWdBSGNPQWthRHpqVGVpRlNlUXVQY3B3VFBUb1ZaNFRXaVJiak5weFAtSmRHS0ZsU1NOWkNyd3RvVDM5Y1E?oc=5" target="_blank" class="nl">欧州株 ユーロストックス５０先物はほぼ横ばい、前日の上昇を踏襲し取引開始へ - みんかぶ</a>
+              <span class="nm"> · 2026-06-05 15:50 JST</span>
+            </div></div><div class="ng"><div class="ng-title"><span class="ibadge" style="background:#fff8f0;color:#d97706;border:1px solid #ffd9a0">B</span> みんかぶFX</div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiSEFVX3lxTFBXUm1QWHl0c1RVWlVOaXQ2RXNNb3BwRDRrdGRlM1VwalgxX085aUZjOE9vbHd5UlhYLUVCR0lMZy1sTGxfU2dBVA?oc=5" target="_blank" class="nl">ドル円一時１５９．５６レベルまで下落、高市首相発言で＝ロンドン為替 - みんかぶ FX/為替</a>
+              <span class="nm">みんかぶ FX/為替 · 2026-06-03 16:40 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiSEFVX3lxTE9RaEJfLUo1N0RYX24tQy1VWmdZeDBwYzBUdHY4bm1fWndJVV8xWEdxNURrbUF0bXF1cE5PMnI4YXJOaUYzODdGeQ?oc=5" target="_blank" class="nl">反発、イスラエルとレバノンの停戦合意で＝ＮＹ金概況 - みんかぶ FX/為替</a>
+              <span class="nm">みんかぶ FX/為替 · 2026-06-05 05:22 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiSEFVX3lxTE5TanFaSmlYdjdOT3o0ZFRoU2ZBbDVoU1Iwd2RUUjhRcTBpVnQtWGZEeXN1TklkVVBRQURLNmJuNzJNYlRmQmJKbg?oc=5" target="_blank" class="nl">反落、米イランの武力衝突で原油高が圧迫＝ＮＹ金概況 - みんかぶ FX/為替</a>
+              <span class="nm">みんかぶ FX/為替 · 2026-06-04 05:22 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiSEFVX3lxTE5lX0FhMkd3bUVadm91RzlXaHJvNW9kLVYtX1d0ajJENEM3NlNweHo0bTZSMG1VOFU1YjdsZTV3dklJeGVIbzNKTA?oc=5" target="_blank" class="nl">反発、原油高一服もドル高で上げ一服＝ＮＹ金概況 - みんかぶ FX/為替</a>
+              <span class="nm">みんかぶ FX/為替 · 2026-06-03 05:22 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiSEFVX3lxTE9kYlRod25IOXV0UnpFMDdFVnVHaG5YYjlqNlZGVFNVeEdRc1lsS01DaE42QUVmM1VPOENkRmFyODhmWXpQeThXWQ?oc=5" target="_blank" class="nl">米１０年債利回り低下 原油下落が利回り押し下げ＝ＮＹ債券 - みんかぶ FX/為替</a>
+              <span class="nm">みんかぶ FX/為替 · 2026-06-05 05:31 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiSEFVX3lxTFBXUm1QWHl0c1RVWlVOaXQ2RXNNb3BwRDRrdGRlM1VwalgxX085aUZjOE9vbHd5UlhYLUVCR0lMZy1sTGxfU2dBVA?oc=5" target="_blank" class="nl">ドル円一時１５９．５６レベルまで下落、高市首相発言で＝ロンドン為替 - みんかぶ FX/為替</a>
+              <span class="nm"> · 2026-06-03 16:40 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiSEFVX3lxTE9RaEJfLUo1N0RYX24tQy1VWmdZeDBwYzBUdHY4bm1fWndJVV8xWEdxNURrbUF0bXF1cE5PMnI4YXJOaUYzODdGeQ?oc=5" target="_blank" class="nl">反発、イスラエルとレバノンの停戦合意で＝ＮＹ金概況 - みんかぶ FX/為替</a>
+              <span class="nm"> · 2026-06-05 05:22 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiSEFVX3lxTE5TanFaSmlYdjdOT3o0ZFRoU2ZBbDVoU1Iwd2RUUjhRcTBpVnQtWGZEeXN1TklkVVBRQURLNmJuNzJNYlRmQmJKbg?oc=5" target="_blank" class="nl">反落、米イランの武力衝突で原油高が圧迫＝ＮＹ金概況 - みんかぶ FX/為替</a>
+              <span class="nm"> · 2026-06-04 05:22 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiSEFVX3lxTE5lX0FhMkd3bUVadm91RzlXaHJvNW9kLVYtX1d0ajJENEM3NlNweHo0bTZSMG1VOFU1YjdsZTV3dklJeGVIbzNKTA?oc=5" target="_blank" class="nl">反発、原油高一服もドル高で上げ一服＝ＮＹ金概況 - みんかぶ FX/為替</a>
+              <span class="nm"> · 2026-06-03 05:22 JST</span>
+            </div></div><div class="ng"><div class="ng-title"><span class="ibadge" style="background:#fff8f0;color:#d97706;border:1px solid #ffd9a0">B</span> 日経225専門</div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiPEFVX3lxTE9UMGZseklEMWk5QWVzcVBQUzJvV1hobjgybTlaNjJ5WXlRUkpaVElSOVQ2RHpreF9xWkM3Sg?oc=5" target="_blank" class="nl">世界の株価と日経先物 リアルタイム チャート - Nikkei225jp.com</a>
+              <span class="nm">Nikkei225jp.com · 2008-12-14 14:08 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiRkFVX3lxTE9JVEUxdUpOSTEtd3N6ZzVxSTVyd3lLTUFmd1ZoZHNIajJyS0pSSGw2YUd1ZWZMVVhxRDVUNjUteklobzdtZ1E?oc=5" target="_blank" class="nl">NYダウ平均株価 米国株ヒートマップ リアルタイムチャート - Nikkei225jp.com</a>
+              <span class="nm">Nikkei225jp.com · 2008-12-15 13:01 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiREFVX3lxTE8xNkVySDRQSXp0RWpxR2g4alNka1diUERUVExnYVRBMW1hUDNXOHQ2c0U5OFpMOTdKdmNNVU5hb3pzdHE4?oc=5" target="_blank" class="nl">日経225 国内市況 リアルタイム チャート - Nikkei225jp.com</a>
+              <span class="nm">Nikkei225jp.com · 2008-12-16 15:35 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiQkFVX3lxTE81eXcycFc5eHFhM1JiMmh0MEI1d19JRF9xaUlfMWRRbWNWaFNDc3ROT1NOcGZHSlVwYTVNdU1yTi1HZw?oc=5" target="_blank" class="nl">日経先物 CME SGX 大取 夜間 リアルタイム チャート - Nikkei225jp.com</a>
+              <span class="nm">Nikkei225jp.com · 2008-12-19 01:58 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiQkFVX3lxTFBibDFoRjZrQ2pyOXlxLU1WQzJuMHpmajZXTVIwYnE3NVlwYmRtbmcyWk5FcG9SSFNYNjV2U0NERWo1dw?oc=5" target="_blank" class="nl">金先物 銀先物 原油価格(WTI原油先物) リアルタイム チャート - Nikkei225jp.com</a>
+              <span class="nm">Nikkei225jp.com · 2008-12-16 20:04 JST</span>
+            </div></div><div class="ng"><div class="ng-title"><span class="ibadge" style="background:#fff8f0;color:#d97706;border:1px solid #ffd9a0">B</span> 帝国DB倒産情報</div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiYEFVX3lxTE9DaVM3ODJLWEN3bUktTDdxYURKd2JUZTFIejJJMHB2ZUxvd25fQThuN3NmTmc3OXROWk9idHFmX25rVzJiM0ZlZGVhcVlGOHViRFJpUUVPWXhTQ2R5c3lvVA?oc=5" target="_blank" class="nl">株式会社サティスホーム - tdb.co.jp</a>
+              <span class="nm">tdb.co.jp · 2026-06-04 15:27 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiV0FVX3lxTE1rRk1fYjEzRlM0bWtlUHNxbkR2ejZQMHVJNzk0UWtuVVplRG45Mm01cEkwNlNqdlVYSmpWVUY2bVNMcC1adjZBRGNicV9wcmw4anlfSm5ycw?oc=5" target="_blank" class="nl">【倒産】ゲームセンター･ホテル･旅館向けにパチスロ機など娯楽機械を卸売･レンタル→飲食店に業態変更の会社が破産開始決定 負債総額は約7800万円【帝国データバンク】 - TBS NEWS DIG</a>
+              <span class="nm">TBS NEWS DIG · 2026-06-04 10:30 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiakFVX3lxTFBWQkx2R1JJMVlNajJFc0hmWWh3bGtpWnB6ZU5jRkFWcGM0ejRnQ2ZIaUcteEwzR1JLbFNGNHJOS1lTaVZUczVtQXhqbXZBdWxsbG82ODU1bDlvYXVQQ0REQ3dHN2JDbjlCSVE?oc=5" target="_blank" class="nl">【帝国データバンクが解説】2026年4月の倒産件数、5カ月連続で前年を上回る～物価高倒産、集計開始以降で最多を記録 - PR TIMES</a>
+              <span class="nm">PR TIMES · 2026-06-04 07:00 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMif0FVX3lxTE1VNkJMcE5pSG1CR1Fsc3BiSTRzTmRPejBhRWwxRTdZQ21VZ3hHblpWdnpfa2UtbVAxLTFDdE1GWDFYX2YzN0xCMUIxeXZEYmhhVzJqVF9ma2F3SnhWbG42dnVEQ1NXMk1ZUC1jOEZlSFczY3ptNk11clRlQkVFZEE?oc=5" target="_blank" class="nl">5月の倒産11件、負債総額15億3700万円【富山県】件数、負債額ともに2か月連続で前年同月を上回る 物価高・人手不足・資材調達難が直撃か【帝国データバンク】（チューリップテレビ） - Yahoo!ニュース</a>
+              <span class="nm">Yahoo!ニュース · 2026-06-03 14:58 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiS0FVX3lxTE9MSEM0dHlIakxYOVVqSFpjbWRfVUpOMW1ZUVBjX3FnTFlZc1JOazZQMTM0T0FaaGlMMXBLNk1VYjRGaTlndll6Qjd6VQ?oc=5" target="_blank" class="nl">５月の県内倒産４件 帝国データバンク福島 負債総額１０００万円以上 - 47NEWS</a>
+              <span class="nm">47NEWS · 2026-06-03 11:00 JST</span>
+            </div></div><div class="ng"><div class="ng-title"><span class="ibadge" style="background:#fff8f0;color:#d97706;border:1px solid #ffd9a0">B</span> 帝国データバンク</div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMickFVX3lxTE5MbWdGN0UwYW9OYUhNNmZ4YjMtQ2poSVA2V3dfV09IZUFuZ1ZtMHdfQUEtTTZFUF9RNHQ2MnFiM3Zwbl91RHdQZVh3M0NuR0hTVlZwOFh4OVdya0ZqUEF4WFc2ZXBXUUx3OXgwZjFhOEQwdw?oc=5" target="_blank" class="nl">「経営コンサルティング業者」の倒産・休廃業解散動向 （2026年1-5月） - tdb.co.jp</a>
+              <span class="nm">tdb.co.jp · 2026-06-05 10:04 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiYEFVX3lxTE9DaVM3ODJLWEN3bUktTDdxYURKd2JUZTFIejJJMHB2ZUxvd25fQThuN3NmTmc3OXROWk9idHFmX25rVzJiM0ZlZGVhcVlGOHViRFJpUUVPWXhTQ2R5c3lvVA?oc=5" target="_blank" class="nl">株式会社サティスホーム - tdb.co.jp</a>
+              <span class="nm">tdb.co.jp · 2026-06-04 15:27 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiYEFVX3lxTE1PNTVvNkxERWptUUZoUzFaOV80QlVMdWM2OWpVM29CS2VmTENrQ0NzbThlci1XMGY1andwNmo0cGdYUVM0akJBenp3S2I1QUhiQ2ZrWExRVGoyS3VzMFNmaA?oc=5" target="_blank" class="nl">カフカ株式会社 - tdb.co.jp</a>
+              <span class="nm">tdb.co.jp · 2026-05-29 15:16 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiYEFVX3lxTE1xdTFKYXM0ZnFmVGNjYWpzSUt1aHp1YVFmaHJJSFRXRnlmZzZhV0JKUDh5bWlmVm5BRXE2bktOV0Q3QjdMYnh1RlZYZWFMMFBfUEJRcEE5dXBDaFZBRDNmaQ?oc=5" target="_blank" class="nl">株式会社広小路キツチンマツヤ - tdb.co.jp</a>
+              <span class="nm">tdb.co.jp · 2026-05-27 16:00 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiXEFVX3lxTE9IVloxZXFCTE84MEV4Ym03YWxybE5KUThlclFYSGNnekd2WnlDcjFtOXF4XzkzWGViblM3eTcyQ042Z05JamRfSEx6V1VxUVlpbXBqNFlGSDhEM0s4?oc=5" target="_blank" class="nl">2026年5月の景気動向調査 - tdb.co.jp</a>
+              <span class="nm">tdb.co.jp · 2026-06-03 13:31 JST</span>
+            </div></div><div class="ng"><div class="ng-title"><span class="ibadge" style="background:#fff8f0;color:#d97706;border:1px solid #ffd9a0">B</span> トレーダーズウェブFX</div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiP0FVX3lxTE9JSzBnUDZPWmRiVXpsMWlwOUlaLUdEZVlDSGVuZ0dKR2k4bTY4ck04c0M2QkZVRkFuV2wwSG9nQQ?oc=5" target="_blank" class="nl">ホーム | トレーダーズ・ウェブ - トレーダーズ・ウェブ</a>
+              <span class="nm"> · 2006-06-07 07:47 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiVkFVX3lxTFBTU200cDJNYmpvX3NIdEtXTkk3NklXd05RYTFEYTI0cV94RGF3X0owUmZDa1J4NVpCdG1fU0wzVExObUppU1MxbFVBczBwSFpLenpJX3V3?oc=5" target="_blank" class="nl">【PR】少額から始める「らくらくFX積立」入門 口座開設から運用スタートまでをやさしく解説 - いまから投資</a>
+              <span class="nm"> · 2026-06-01 16:00 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiREFVX3lxTE53NHEzakd4QVIxYU85VTJlSUROZmN5X1RaZFNOTGN2VHdRay03bFJhLUw4QVROQjZNc0RYeWdMSTBXcnRu?oc=5" target="_blank" class="nl">トップ | IPO - トレーダーズ・ウェブ</a>
+              <span class="nm"> · 2022-01-25 11:21 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiVkFVX3lxTE9hajM5OW1vYXFVNzk1eHJVVXZpMElYUktSV2ZIaVB3N3JYY2lyRUhZOWtJRlM3MWk4WThNZjZIU0w2VWlRMW9IQnI1bm9tUC1qM0wxUFBn?oc=5" target="_blank" class="nl">FX 誰にでもわかるチャート教室 第198回 2026年最新のドル円見通し：上昇トレンド継続中、160円台の荒い値動きには警戒 - いまから投資</a>
+              <span class="nm"> · 2026-06-03 00:20 JST</span>
+            </div></div><div class="ng"><div class="ng-title"><span class="ibadge" style="background:#fff8f0;color:#d97706;border:1px solid #ffd9a0">B</span> 日経225分析</div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiPEFVX3lxTE9UMGZseklEMWk5QWVzcVBQUzJvV1hobjgybTlaNjJ5WXlRUkpaVElSOVQ2RHpreF9xWkM3Sg?oc=5" target="_blank" class="nl">世界の株価と日経先物 リアルタイム チャート - Nikkei225jp.com</a>
+              <span class="nm"> · 2008-12-14 14:08 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiRkFVX3lxTE9JVEUxdUpOSTEtd3N6ZzVxSTVyd3lLTUFmd1ZoZHNIajJyS0pSSGw2YUd1ZWZMVVhxRDVUNjUteklobzdtZ1E?oc=5" target="_blank" class="nl">NYダウ平均株価 米国株ヒートマップ リアルタイムチャート - Nikkei225jp.com</a>
+              <span class="nm"> · 2008-12-15 13:01 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiREFVX3lxTE8xNkVySDRQSXp0RWpxR2g4alNka1diUERUVExnYVRBMW1hUDNXOHQ2c0U5OFpMOTdKdmNNVU5hb3pzdHE4?oc=5" target="_blank" class="nl">日経225 国内市況 リアルタイム チャート - Nikkei225jp.com</a>
+              <span class="nm"> · 2008-12-16 15:35 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiQkFVX3lxTE81eXcycFc5eHFhM1JiMmh0MEI1d19JRF9xaUlfMWRRbWNWaFNDc3ROT1NOcGZHSlVwYTVNdU1yTi1HZw?oc=5" target="_blank" class="nl">日経先物 CME SGX 大取 夜間 リアルタイム チャート - Nikkei225jp.com</a>
+              <span class="nm"> · 2008-12-19 01:58 JST</span>
+            </div></div><div class="ng"><div class="ng-title"><span class="ibadge" style="background:#fff8f0;color:#d97706;border:1px solid #ffd9a0">B</span> OANDA為替情報</div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMidkFVX3lxTE9zOU1tOUVteEVvZVV0XzRvc00tUTlJR2RzQmFrR3duVG45eGhLVkRCWHZMWjFhUkVlckF2Um8yejZsb1dXZDF0QzFxX0JUaHZNekxHXzEySmJHS3FXSnlVeHN0ZWlfbXptVy1XV2J6cDhJNDBsb1E?oc=5" target="_blank" class="nl">為替相場 ５日（日本時間１５時） - OANDA</a>
+              <span class="nm"> · 2026-06-05 03:00 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMic0FVX3lxTFBpUzlkNXd6N2x2aDlSSnZrZm1MT1NNRmlNM09TUzUyaTJTbkJnT2Y0d1laa1ZYNTNGcDJvNjNTRGpJeFZGWGE5TnNHX21VNy03TFJqUnA3LUZYSGwzMzZfVDNlWGZEbC0wRWF4RUh3akF3Zlk?oc=5" target="_blank" class="nl">豪ドル/円見通し(為替/FX ニュース)：豪ドル円は円安で114円台前半｜方向感が乏しく上下動(2026年6月5日) - OANDA</a>
+              <span class="nm"> · 2026-06-05 08:28 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMic0FVX3lxTFA2azlsa2lQMXZzWjVMd2VpTVhhelVTYjQ4RXdwOVpSSnpGUXdEbVFJalhsZ3daazYxS1pMbkhGNXZTWjJEanlJWFJBZ2Y5d2l3WjF2YXdldWZfVk54ekVPNTVzVnV1NFJWaG5neHg3WDFNME0?oc=5" target="_blank" class="nl">ユーロ/円見通し(為替/FX ニュース)：ユーロ円は円安で185円台後半｜夜に動意づいて円安が進む(2026年6月5日) - OANDA</a>
+              <span class="nm"> · 2026-06-05 08:23 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMic0FVX3lxTE5EblZnWldqa3cwdUhtdHJPZHR1RlJKQktxUDVrQzVkQXliZC1Va19XcjA5NEl5UXBWUXN5N0dWRVpxdUd3WEhjWG4wWEFOdm9DMU9NaDlsMkRVcjNVWUltN2dIX2ZPbk11TnN4bkpGZzJDWkk?oc=5" target="_blank" class="nl">豪ドル/円見通し(為替/FX ニュース)：豪ドル円は円高で114円台前半｜豪州GDPは市場予想よりも弱い(2026年6月4日) - OANDA</a>
+              <span class="nm"> · 2026-06-04 08:24 JST</span>
+            </div></div><div class="ng"><div class="ng-title"><span class="ibadge" style="background:#fff8f0;color:#d97706;border:1px solid #ffd9a0">B</span> 帝国DB企業信用</div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMickFVX3lxTE5MbWdGN0UwYW9OYUhNNmZ4YjMtQ2poSVA2V3dfV09IZUFuZ1ZtMHdfQUEtTTZFUF9RNHQ2MnFiM3Zwbl91RHdQZVh3M0NuR0hTVlZwOFh4OVdya0ZqUEF4WFc2ZXBXUUx3OXgwZjFhOEQwdw?oc=5" target="_blank" class="nl">「経営コンサルティング業者」の倒産・休廃業解散動向 （2026年1-5月） - tdb.co.jp</a>
+              <span class="nm"> · 2026-06-05 10:04 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiakFVX3lxTFBWQkx2R1JJMVlNajJFc0hmWWh3bGtpWnB6ZU5jRkFWcGM0ejRnQ2ZIaUcteEwzR1JLbFNGNHJOS1lTaVZUczVtQXhqbXZBdWxsbG82ODU1bDlvYXVQQ0REQ3dHN2JDbjlCSVE?oc=5" target="_blank" class="nl">【帝国データバンクが解説】2026年4月の倒産件数、5カ月連続で前年を上回る～物価高倒産、集計開始以降で最多を記録 - PR TIMES</a>
+              <span class="nm"> · 2026-06-04 07:00 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMid0FVX3lxTE1YRlI1WXRMRFpDQzQxZThLY2NOQWZja2ZwaEpKdFNUNXJoUlg3aTJBU2NoSmR2OTVHeVVlQUZCZ2lxM01pSElSWWVkTjgzMkxDVzlrVmtJX0N3LTJqNUpSVzIweXdheFRCbVNxY2owTlJURDFzNkdZ?oc=5" target="_blank" class="nl">経営コンサルの倒産が過去最多ペース、AI台頭で淘汰加速－帝国データ - Bloomberg.com</a>
+              <span class="nm"> · 2026-06-05 13:17 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiYkFVX3lxTFBJZ0tmRGEzdENtVW0xS3U2MDNfWDJrRnVaUFRVeWwxM0dKQ0NIeGZocUNiUUNZQml0SFZkZkFFSkYtZ1p3bWtqS3ZWUEJUYktIclBEUm5scWdWd0YySU54TGFR?oc=5" target="_blank" class="nl">5月倒産は3件 中東影響を注視 帝国データ沖縄 - 琉球新報デジタル</a>
+              <span class="nm"> · 2026-06-05 05:00 JST</span>
+            </div></div><div class="ng"><div class="ng-title"><span class="ibadge" style="background:#f0f6ff;color:#4a90d9;border:1px solid #c0d8f5">C</span> PayPay証券情報</div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMiYEFVX3lxTE80UWVwam9Iak9RU2ctYUJESmFsMmlrT3B4UE1fUmFGMGQyMmc3enpxXzdObzlXMk9QZ19CV0E1OWFmTGhWODdjSzh5T056X2FZTF83c2NSbGxPNnlCT1RsQQ?oc=5" target="_blank" class="nl">お知らせ - PayPay証券</a>
+              <span class="nm"> · 2026-06-02 02:20 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMibEFVX3lxTFAzS092eWdRMDZJeVN5OFVscjdzZnRXWXlocUs1VUlBZS1JQkNtXzhVdnQ0QjBHSGduWjFpbGtWQjRydWtuMWpycE53RjhLbkQwdHRXeUhFNW53cmR6VElTbDBPemoyVFJGMTJVUQ?oc=5" target="_blank" class="nl">スペースX、国内で上場初日から売買可能に PayPay証券は100円から - 日本経済新聞</a>
+              <span class="nm"> · 2026-06-05 05:00 JST</span>
+            </div><div class="ni">
+              <a href="https://news.google.com/rss/articles/CBMib0FVX3lxTE1lQ25iUmQxejZEcHhFTU9DN0x3aE1MYlN2LWFFVVN0cjc5U3VFeDlRTWRMeEoyVDZzRUxHdGxlTjhCaG9pY3pjNVN3dHcwTUNieVNTMWhXZEFKUEc2d3Vob2FZcHY1Q0RpV002RTVxaw?oc=5" target="_blank" class="nl">「PayPay資産運用」ミニアプリの名称を「PayPay証券」に変更します（2026年2月9日～） - PayPay</a>
+              <span class="nm"> · 2026-01-30 17:00 JST</span>
+            </div></div>
+  </div>
+  <div class="plotly-wrap"><div style="height:320px; width:100%;">                            <div id="4688c7b4-3527-4ff3-960c-3a2c47e0ce69" class="plotly-graph-div" style="height:100%; width:100%;"></div>            <script>                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("4688c7b4-3527-4ff3-960c-3a2c47e0ce69")) {                    Plotly.newPlot(                        "4688c7b4-3527-4ff3-960c-3a2c47e0ce69",                        [{"hovertemplate":"\u003cb\u003e%{y}\u003c\u002fb\u003e\u003cbr\u003e%{x}件\u003cextra\u003e\u003c\u002fextra\u003e","marker":{"color":["#e05252","#e05252","#e05252","#e05252","#e05252","#e05252","#e05252","#e05252","#e05252","#e05252","#e05252","#e05252","#e05252","#e05252","#e05252","#e05252","#ff8c42","#ff8c42","#ff8c42","#ff8c42","#ff8c42","#ff8c42","#ff8c42","#ff8c42","#ff8c42"],"line":{"width":0}},"orientation":"h","text":["5件","5件","5件","5件","5件","5件","5件","5件","5件","5件","5件","5件","5件","5件","5件","5件","5件","5件","5件","5件","5件","5件","5件","5件","5件"],"textposition":"outside","x":[5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5],"y":["トランプ動向","トランプ関税・貿易","Trump(英語)","トランプ経済政策","日銀政策","FRB政策","FedWatch利上げ確率","日銀公式","首相官邸","財務省","米国株市場","日本株市場","金利動向","地政学リスク","為替（ドル円）","OANDA為替","半導体産業","企業決算","原油市場","トレーダーズウェブ","みんかぶ株","みんかぶFX","日経225専門","帝国DB倒産情報","帝国データバンク"],"type":"bar"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermap":[{"type":"scattermap","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"}}},"title":{"font":{"size":15,"color":"#212529"},"text":"📰 ニュース重要度別件数　2026-06-05","x":0.02},"xaxis":{"title":{"text":"件数"},"gridcolor":"#e9ecef","zeroline":false},"yaxis":{"tickfont":{"size":11},"autorange":"reversed"},"margin":{"l":10,"r":60,"t":50,"b":40},"plot_bgcolor":"#f8f9fa","paper_bgcolor":"#ffffff","height":320,"showlegend":false},                        {"displayModeBar": false, "responsive": true}                    )                };            </script>        </div></div>
+
+  <!-- 免責 -->
+  <div class="sec-h">K. 免責事項</div>
+  <div class="card" style="border-left:4px solid #f59e0b">
+    <p style="color:#92400e;font-size:13px">⚠️ 本レポートは情報提供を目的とした分析補助資料です。投資助言ではありません。すべての投資判断はご自身の責任で行ってください。データ取得失敗・遅延・誤差がある可能性があります。</p>
+    <p style="color:#9ca3af;font-size:12px;margin-top:7px">
+      ・断定表現（「必ず上がる」「確実に下がる」など）は使用しません。<br>
+      ・事実・推測・意見を明示的に区別しています。<br>
+      ・データは公開情報から取得しており、遅延・誤差がある可能性があります。
+    </p>
+  </div>
+
+</div>
+
+<div class="footer">
+  📊 投資経済 AI 秘書システム　|　2026-06-05 18:10 JST<br>
+  本レポートは分析補助目的です。投資判断はご自身の責任で行ってください。
+</div>
+</body>
+</html>
