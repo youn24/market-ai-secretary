@@ -1,23 +1,6 @@
 {
- "saved_at": "2026-10-05",
- "events": [
-  {
-   "date": "2026-10-09",
-   "time": "",
-   "event": "オプションSQ",
-   "country": "",
-   "importance": "medium",
-   "category": "指標"
-  },
-  {
-   "date": "2026-10-08",
-   "time": "決算",
-   "country": "JP",
-   "category": "決算",
-   "importance": "high",
-   "event": "決算 ファーストリテイリング"
-  }
- ],
+ "saved_at": "2026-10-12",
+ "events": [],
  "upcoming_earnings": [
   {
    "date": "2026-10-23",
@@ -35,7 +18,7 @@
    "date": "2026-10-28",
    "code": "6501",
    "name": "日立製作所",
-   "rev_avg": 2937522930750
+   "rev_avg": 2934464827330
   },
   {
    "date": "2026-10-28",
@@ -155,7 +138,7 @@
    "date": "2026-11-11",
    "code": "4004",
    "name": "レゾナック",
-   "rev_avg": 305266666670
+   "rev_avg": 334733333330
   },
   {
    "date": "2026-11-13",

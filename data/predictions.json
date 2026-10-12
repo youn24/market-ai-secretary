@@ -1177,6 +1177,23 @@
       "verified": false,
       "correct": null,
       "actual_move": null
+    },
+    {
+      "date": "2026-10-12",
+      "direction": "neutral",
+      "score": 4.17,
+      "adj_score": 4.17,
+      "conf_rank": null,
+      "conf_win_rate": null,
+      "fg": 45.0,
+      "nikkei": 69030.9219,
+      "sp500": 7811.54,
+      "usdjpy": 158.102,
+      "vix": 14.84,
+      "confidence": null,
+      "verified": false,
+      "correct": null,
+      "actual_move": null
     }
   ],
   "accuracy": {}
