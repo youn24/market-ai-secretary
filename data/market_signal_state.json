@@ -2,20 +2,25 @@
  "skew": {
   "zone": 3,
   "name": "強い警戒",
-  "value": 154.74
+  "value": 157.3
  },
  "vvix": {
   "zone": 1,
   "name": "標準",
-  "value": 85.38
+  "value": 94.45
  },
  "dxy": {
   "zone": 1,
   "name": "標準",
-  "value": 102.167
+  "value": 102.213
+ },
+ "nt": {
+  "zone": 3,
+  "name": "極端な偏り",
+  "value": 16.71
  },
  "sox": {
-  "value": 12208.7949,
-  "chg": -0.23
+  "value": 11684.3828,
+  "chg": -4.3
  }
 }
