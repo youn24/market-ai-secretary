@@ -1,6 +1,55 @@
 {
- "saved_at": "2026-10-12",
- "events": [],
+ "saved_at": "2026-10-19",
+ "events": [
+  {
+   "date": "2026-10-21",
+   "time": "",
+   "event": "決算 META（早朝）",
+   "country": "",
+   "importance": "high",
+   "category": "指標"
+  },
+  {
+   "date": "2026-10-21",
+   "time": "",
+   "event": "決算 TSLA（早朝）",
+   "country": "",
+   "importance": "high",
+   "category": "指標"
+  },
+  {
+   "date": "2026-10-23",
+   "time": "",
+   "event": "決算 ファナック（決算）",
+   "country": "",
+   "importance": "high",
+   "category": "指標"
+  },
+  {
+   "date": "2026-10-21",
+   "time": "早朝",
+   "country": "US",
+   "category": "決算",
+   "importance": "high",
+   "event": "決算 META"
+  },
+  {
+   "date": "2026-10-21",
+   "time": "早朝",
+   "country": "US",
+   "category": "決算",
+   "importance": "high",
+   "event": "決算 TSLA"
+  },
+  {
+   "date": "2026-10-23",
+   "time": "決算",
+   "country": "JP",
+   "category": "決算",
+   "importance": "high",
+   "event": "決算 ファナック"
+  }
+ ],
  "upcoming_earnings": [
   {
    "date": "2026-10-23",
@@ -36,7 +85,7 @@
    "date": "2026-10-29",
    "code": "4661",
    "name": "オリエンタルランド",
-   "rev_avg": 161604677890
+   "rev_avg": 161954093160
   },
   {
    "date": "2026-10-30",
@@ -108,7 +157,7 @@
    "date": "2026-11-09",
    "code": "9104",
    "name": "商船三井",
-   "rev_avg": 577048988750
+   "rev_avg": 537241790999
   },
   {
    "date": "2026-11-10",
