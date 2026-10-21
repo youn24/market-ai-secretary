@@ -1,14 +1,14 @@
 {
  "fg": {
-  "idx": 0,
-  "name": "極端な恐怖",
-  "value": 23.1,
-  "streak": 2
+  "idx": 1,
+  "name": "恐怖",
+  "value": 27.2,
+  "streak": 0
  },
  "vix": {
   "idx": 1,
   "name": "標準",
-  "value": 18.44,
+  "value": 17.31,
   "streak": 0
  }
 }
