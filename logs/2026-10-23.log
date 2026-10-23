@@ -1,0 +1,658 @@
+﻿2026-10-23 00:02:59 [INFO] gemini_budget: ✅ Gemini予算管理を有効化（1日20回・予備4回・残り20回）
+﻿2026-10-23 00:02:59 [INFO] cloud_run: ====== クラウド実行開始 [mode=morning] ======
+2026-10-23 00:02:59 [INFO] cloud_run: 実行時刻(JST): 2026-10-23 09:02:59
+2026-10-23 00:02:59 [INFO] cloud_run: --- Step 1: 価格データ取得 ---
+2026-10-23 00:02:59 [INFO] fetch_prices: === 価格データ取得開始 ===
+2026-10-23 00:02:59 [INFO] fetch_prices: [OK] 日経平均(^N225) = 64621.2383 [Yahoo直接API]
+2026-10-23 00:03:00 [WARNING] fetch_prices: 株探 失敗 [0010]: 405 Client Error: Not Allowed for url: https://kabutan.jp/stock/?code=0010
+2026-10-23 00:03:02 [INFO] fetch_prices: [OK] TOPIX(^TOPX) = 3982.78 [Yahoo!Japan(998405.T)]
+2026-10-23 00:03:02 [WARNING] fetch_prices: 株探 失敗 [0012]: 405 Client Error: Not Allowed for url: https://kabutan.jp/stock/?code=0012
+2026-10-23 00:03:03 [INFO] fetch_prices: [OK] グロース250(GROWTH250) = 598.9 [グロース250ETF(2516.T)代替]
+2026-10-23 00:03:03 [INFO] fetch_prices: [OK] 日経225先物(CME)(NIY=F) = 62210.0 [Yahoo直接API]
+2026-10-23 00:03:03 [INFO] fetch_prices: [OK] S&P500(^GSPC) = 7663.4302 [Yahoo直接API]
+2026-10-23 00:03:04 [INFO] fetch_prices: [OK] S&P500先物(ES=F) = 7705.25 [Yahoo直接API]
+2026-10-23 00:03:04 [INFO] fetch_prices: [OK] NASDAQ(^IXIC) = 26008.8594 [Yahoo直接API]
+2026-10-23 00:03:04 [INFO] fetch_prices: [OK] ダウ(^DJI) = 52867.9805 [Yahoo直接API]
+2026-10-23 00:03:05 [INFO] fetch_prices: [OK] 半導体SOX指数(^SOX) = 10731.9775 [Yahoo直接API]
+2026-10-23 00:03:05 [INFO] fetch_prices: [OK] VIX（恐怖指数）(^VIX) = 19.03 [Yahoo直接API]
+2026-10-23 00:03:06 [INFO] fetch_prices: [OK] 日経VI（日本版恐怖指数）(NIKKEI_VI) = 35.97 [日経公式CSV]
+2026-10-23 00:03:07 [INFO] fetch_prices: [OK] VIX9D（超短期）(^VIX9D) = 18.86 [Yahoo直接API]
+2026-10-23 00:03:07 [INFO] fetch_prices: [OK] VIX3M（3ヶ月）(^VIX3M) = 20.12 [Yahoo直接API]
+2026-10-23 00:03:07 [INFO] fetch_prices: [OK] VVIX（VIXのVIX）(^VVIX) = 107.94 [Yahoo直接API]
+2026-10-23 00:03:08 [INFO] fetch_prices: [OK] SKEW（テールリスク）(^SKEW) = 152.39 [Yahoo直接API]
+2026-10-23 00:03:08 [INFO] fetch_prices: [OK] 米10年金利(^TNX) = 4.953 [Yahoo直接API]
+2026-10-23 00:03:09 [INFO] fetch_prices: [OK] ドル円(USDJPY=X) = 156.37 [Yahoo直接API]
+2026-10-23 00:03:09 [INFO] fetch_prices: [OK] ユーロドル(EURUSD=X) = 1.1226 [Yahoo直接API]
+2026-10-23 00:03:09 [INFO] fetch_prices: [OK] ドル指数(DXY)(DX-Y.NYB) = 101.575 [Yahoo直接API]
+2026-10-23 00:03:10 [INFO] fetch_prices: [OK] ユーロ円(EURJPY=X) = 175.482 [Yahoo直接API]
+2026-10-23 00:03:10 [INFO] fetch_prices: [OK] 米3ヶ月金利(^IRX) = 4.022 [Yahoo直接API]
+2026-10-23 00:03:10 [INFO] fetch_prices: [OK] 米2年金利(2YY=F) = 4.75 [Yahoo直接API]
+2026-10-23 00:03:11 [INFO] fetch_prices: [OK] 米5年金利(^FVX) = 4.768 [Yahoo直接API]
+2026-10-23 00:03:11 [INFO] fetch_prices: [OK] 米10年金利(^TNX) = 4.953 [Yahoo直接API]
+2026-10-23 00:03:12 [INFO] fetch_prices: [OK] 米30年金利(^TYX) = 5.287 [Yahoo直接API]
+2026-10-23 00:03:12 [INFO] fetch_prices: [OK] 金(GOLD)(GC=F) = 4037.8 [Yahoo直接API]
+2026-10-23 00:03:12 [INFO] fetch_prices: [OK] WTI原油(CL=F) = 99.34 [Yahoo直接API]
+2026-10-23 00:03:13 [INFO] fetch_prices: [OK] 銀(SILVER)(SI=F) = 54.59 [Yahoo直接API]
+2026-10-23 00:03:13 [INFO] fetch_prices: [OK] 銅(COPPER)(HG=F) = 6.4015 [Yahoo直接API]
+2026-10-23 00:03:14 [INFO] fetch_prices: [OK] Bitcoin(BTC-USD) = 81245.0312 [Yahoo直接API]
+2026-10-23 00:03:14 [INFO] fetch_prices: [OK] NVIDIA(NVDA) = 221.97 [Yahoo直接API]
+2026-10-23 00:03:14 [INFO] fetch_prices: [OK] Apple(AAPL) = 343.99 [Yahoo直接API]
+2026-10-23 00:03:15 [INFO] fetch_prices: [OK] Tesla(TSLA) = 386.47 [Yahoo直接API]
+2026-10-23 00:03:16 [INFO] fetch_prices: [OK] Microsoft(MSFT) = 532.95 [Yahoo直接API]
+2026-10-23 00:03:17 [INFO] fetch_prices: [OK] Amazon(AMZN) = 262.37 [Yahoo直接API]
+2026-10-23 00:03:17 [INFO] fetch_prices: [OK] Meta(META) = 697.52 [Yahoo直接API]
+2026-10-23 00:03:17 [INFO] fetch_prices: [OK] Alphabet(GOOGL) = 334.76 [Yahoo直接API]
+2026-10-23 00:03:18 [INFO] fetch_prices: [OK] AMD(AMD) = 552.72 [Yahoo直接API]
+2026-10-23 00:03:18 [INFO] fetch_prices: [OK] Broadcom(AVGO) = 337.8 [Yahoo直接API]
+2026-10-23 00:03:18 [INFO] fetch_prices: [OK] Micron(メモリ)(MU) = 913.67 [Yahoo直接API]
+2026-10-23 00:03:19 [INFO] fetch_prices: [OK] Arm(ARM) = 226.59 [Yahoo直接API]
+2026-10-23 00:03:20 [INFO] fetch_prices: [OK] 米半導体ETF(SMH)(SMH) = 556.7 [Yahoo直接API]
+2026-10-23 00:03:21 [INFO] fetch_prices: [OK] 米テックETF(XLK)(XLK) = 188.54 [Yahoo直接API]
+2026-10-23 00:03:21 [INFO] fetch_prices: [OK] 米金融ETF(XLF)(XLF) = 56.04 [Yahoo直接API]
+2026-10-23 00:03:21 [INFO] fetch_prices: [OK] 米エネルギーETF(XLE)(XLE) = 68.16 [Yahoo直接API]
+2026-10-23 00:03:22 [INFO] fetch_prices: [OK] 米公益ETF(XLU)(XLU) = 42.0 [Yahoo直接API]
+2026-10-23 00:03:22 [INFO] fetch_prices: [OK] トヨタ(7203.T) = 3084.0 [Yahoo直接API]
+2026-10-23 00:03:24 [INFO] fetch_prices: [OK] ソフトバンクG(9984.T) = 4305.0 [Yahoo直接API]
+2026-10-23 00:03:24 [INFO] fetch_prices: [OK] ソニーG(6758.T) = 4081.0 [Yahoo直接API]
+2026-10-23 00:03:25 [INFO] fetch_prices: [OK] 三菱UFJ(8306.T) = 3373.0 [Yahoo直接API]
+2026-10-23 00:03:25 [INFO] fetch_prices: [OK] アドバンテスト(6857.T) = 32370.0 [Yahoo直接API]
+2026-10-23 00:03:25 [INFO] fetch_prices: [OK] 信越化学(4063.T) = 5804.0 [Yahoo直接API]
+2026-10-23 00:03:26 [INFO] fetch_prices: [OK] 東京エレクトロン(8035.T) = 9450.0 [Yahoo直接API]
+2026-10-23 00:03:26 [INFO] fetch_prices: [OK] レーザーテック(6920.T) = 37250.0 [Yahoo直接API]
+2026-10-23 00:03:27 [INFO] fetch_prices: [OK] ディスコ(6146.T) = 51230.0 [Yahoo直接API]
+2026-10-23 00:03:27 [INFO] fetch_prices: [OK] 日本郵船（BDI代替）(9101.T) = 7267.0 [Yahoo直接API]
+2026-10-23 00:03:27 [INFO] fetch_prices: [OK] 商船三井（BDI代替）(9104.T) = 7375.0 [Yahoo直接API]
+2026-10-23 00:03:28 [INFO] fetch_prices: [OK] 川崎汽船（BDI代替）(9107.T) = 3406.0 [Yahoo直接API]
+2026-10-23 00:03:28 [INFO] fetch_prices: [OK] NT倍率 = 16.23 [計算値]
+2026-10-23 00:03:28 [INFO] fetch_prices: [OK] CNN Fear & Greed: 19.8 (極度の恐怖 😱)
+2026-10-23 00:03:28 [INFO] fetch_prices: 価格データ保存: /home/runner/work/market-ai-secretary/market-ai-secretary/data/raw/2026-10-23_prices.json
+2026-10-23 00:03:28 [INFO] fetch_prices: === 取得完了: 成功58件 / 失敗0件 ===
+2026-10-23 00:03:28 [INFO] cloud_run: 価格取得: 58件
+2026-10-23 00:03:28 [INFO] cloud_run: --- Step 1.5: データ健全性チェック ---
+2026-10-23 00:03:28 [INFO] data_integrity: データ健全性: ok / 全58指標すべて正常
+2026-10-23 00:03:28 [INFO] cloud_run: ✅ 全58指標すべて正常
+2026-10-23 00:03:28 [INFO] cloud_run: --- Step 1.6: 多重ソース照合 ---
+2026-10-23 00:03:29 [INFO] source_verify: [^N225] 単一ソース（未照合）: 64621.2383
+2026-10-23 00:03:29 [INFO] source_verify: [^GSPC] 単一ソース（未照合）: 7663.4302
+2026-10-23 00:03:30 [INFO] source_verify: [^IXIC] 単一ソース（未照合）: 26008.8594
+2026-10-23 00:03:30 [INFO] source_verify: [USDJPY=X] 単一ソース（未照合）: 156.37
+2026-10-23 00:03:31 [INFO] source_verify: [^VIX] 単一ソース（未照合）: 19.03
+2026-10-23 00:03:31 [INFO] source_verify: [GC=F] 単一ソース（未照合）: 4037.8
+2026-10-23 00:03:31 [INFO] source_verify: [CL=F] 単一ソース（未照合）: 99.34
+2026-10-23 00:03:32 [INFO] source_verify: [^TNX] 単一ソース（未照合）: 4.953
+2026-10-23 00:03:32 [INFO] source_verify: 多重ソース照合完了: 一致=0 単独=8 乖離=0 取得不能=0
+2026-10-23 00:03:32 [INFO] cloud_run: ✅ 多重照合OK: 一致=0件
+2026-10-23 00:03:32 [INFO] cloud_run: --- Step 2: ニュース取得 ---
+2026-10-23 00:03:32 [INFO] fetch_news: === ニュース取得開始 ===
+2026-10-23 00:03:32 [INFO] fetch_news: [OK] ニュース取得 [日銀 政策金利 利上げ]: 3件
+2026-10-23 00:03:34 [INFO] fetch_news: [OK] ニュース取得 [FRB 利上げ 利下げ 政策金利]: 3件
+2026-10-23 00:03:35 [INFO] fetch_news: [OK] ニュース取得 [米国 CPI インフレ 消費者物価]: 3件
+2026-10-23 00:03:37 [INFO] fetch_news: [OK] ニュース取得 [雇用統計 非農業部門 失業率]: 3件
+2026-10-23 00:03:38 [INFO] fetch_news: [OK] ニュース取得 [GDP 経済成長率 景気]: 3件
+2026-10-23 00:03:40 [INFO] fetch_news: [OK] ニュース取得 [PMI 製造業 景気指数]: 3件
+2026-10-23 00:03:41 [INFO] fetch_news: [OK] ニュース取得 [日経平均 株価 急落 急騰]: 3件
+2026-10-23 00:03:43 [INFO] fetch_news: [OK] ニュース取得 [米国株 ニューヨーク ダウ S&P]: 3件
+2026-10-23 00:03:44 [INFO] fetch_news: [OK] ニュース取得 [ナスダック テック株 AI株]: 3件
+2026-10-23 00:03:46 [INFO] fetch_news: [OK] ニュース取得 [ドル円 為替 円安 円高]: 3件
+2026-10-23 00:03:47 [INFO] fetch_news: [OK] ニュース取得 [米国債 長期金利 10年債]: 3件
+2026-10-23 00:03:49 [INFO] fetch_news: [OK] ニュース取得 [中東 紛争 戦争 地政学リスク]: 3件
+2026-10-23 00:03:50 [INFO] fetch_news: [OK] ニュース取得 [ウクライナ ロシア 戦争]: 3件
+2026-10-23 00:03:52 [INFO] fetch_news: [OK] ニュース取得 [中国 台湾 米中関係 対立]: 3件
+2026-10-23 00:03:53 [INFO] fetch_news: [OK] ニュース取得 [トランプ 関税 貿易 経済政策]: 3件
+2026-10-23 00:03:55 [INFO] fetch_news: [OK] ニュース取得 [米国 財政赤字 国債 予算]: 3件
+2026-10-23 00:03:56 [INFO] fetch_news: [OK] ニュース取得 [決算 増益 減益 業績予想]: 3件
+2026-10-23 00:03:57 [INFO] fetch_news: [OK] ニュース取得 [Apple Google Microsoft Meta 決算 業績]: 3件
+2026-10-23 00:03:59 [INFO] fetch_news: [OK] ニュース取得 [トヨタ ソニー ソフトバンク 決算 業績]: 3件
+2026-10-23 00:04:00 [INFO] fetch_news: [OK] ニュース取得 [エヌビディア NVIDIA 半導体 AI]: 3件
+2026-10-23 00:04:02 [INFO] fetch_news: [OK] ニュース取得 [原油 WTI 価格 OPEC]: 3件
+2026-10-23 00:04:03 [INFO] fetch_news: [OK] ニュース取得 [金 ゴールド 価格 安全資産]: 3件
+2026-10-23 00:04:05 [INFO] fetch_news: [OK] ニュース取得 [ビットコイン 仮想通貨 暗号資産]: 3件
+2026-10-23 00:04:06 [INFO] fetch_news: [OK] ニュース取得 [中国 経済 景気 不動産 不況]: 3件
+2026-10-23 00:04:08 [INFO] fetch_news: [OK] ニュース取得 [欧州 ECB ユーロ圏 景気]: 3件
+2026-10-23 00:04:09 [INFO] fetch_news: [OK] ニュース取得 [日本経済 景気 インフレ 物価上昇]: 3件
+2026-10-23 00:04:11 [INFO] fetch_news: [OK] ニュース取得 [倒産 破綻 経営危機]: 3件
+2026-10-23 00:04:12 [INFO] fetch_news: ニュース保存: /home/runner/work/market-ai-secretary/market-ai-secretary/data/news/2026-10-23_news.json (81件)
+2026-10-23 00:04:12 [INFO] fetch_news: === ニュース取得完了: 81件 ===
+2026-10-23 00:04:12 [INFO] cloud_run: --- Step 3: 追加ニュース取得 ---
+2026-10-23 00:04:12 [INFO] fetch_extra_news: === 追加ニュース・Polymarket 取得開始 ===
+2026-10-23 00:04:12 [INFO] fetch_extra_news: [OK] NHK 経済: 6件
+2026-10-23 00:04:13 [INFO] fetch_extra_news: [OK] NHK トップ: 5件
+2026-10-23 00:04:15 [INFO] fetch_extra_news: [OK] Yahoo! ファイナンス: 6件
+2026-10-23 00:04:16 [INFO] fetch_extra_news: [OK] 東洋経済: 5件
+2026-10-23 00:04:18 [INFO] fetch_extra_news: [OK] テレ東WBS（ワールドビジネスサテライト）: 6件
+2026-10-23 00:04:19 [INFO] fetch_extra_news: [OK] MarketWatch: 5件
+2026-10-23 00:04:20 [INFO] fetch_extra_news: [OK] FXStreet（FX専門）: 0件
+2026-10-23 00:04:21 [INFO] fetch_extra_news: [OK] Investing.com: 5件
+2026-10-23 00:04:22 [INFO] fetch_extra_news: [OK] Yahoo Finance: 0件
+2026-10-23 00:04:23 [INFO] fetch_extra_news: [OK] 日銀公式: 5件
+2026-10-23 00:04:25 [INFO] fetch_extra_news: [OK] 首相官邸: 4件
+2026-10-23 00:04:26 [INFO] fetch_extra_news: [OK] 財務省: 4件
+2026-10-23 00:04:28 [INFO] fetch_extra_news: [OK] トレーダーズウェブ: 5件
+2026-10-23 00:04:29 [INFO] fetch_extra_news: [OK] トレーダーズウェブFX: 4件
+2026-10-23 00:04:31 [INFO] fetch_extra_news: [OK] みんかぶ: 5件
+2026-10-23 00:04:32 [INFO] fetch_extra_news: [OK] みんかぶFX: 4件
+2026-10-23 00:04:34 [INFO] fetch_extra_news: [OK] 日経225専門: 4件
+2026-10-23 00:04:35 [INFO] fetch_extra_news: [OK] OANDA為替: 4件
+2026-10-23 00:04:36 [INFO] fetch_extra_news: [OK] 帝国データバンク: 4件
+2026-10-23 00:04:38 [INFO] fetch_extra_news: [OK] FedWatch利上げ確率: 4件
+2026-10-23 00:04:39 [INFO] fetch_extra_news: [OK] PayPay証券: 3件
+2026-10-23 00:04:40 [INFO] fetch_extra_news: [OK] Polymarket: 45件（金融・経済関連）
+2026-10-23 00:04:40 [INFO] fetch_extra_news: 追加ニュース保存: 88件 / Polymarket: 45件
+2026-10-23 00:04:40 [INFO] fetch_extra_news: === 完了: ニュース88件 / Polymarket45件 ===
+2026-10-23 00:04:40 [INFO] cloud_run: ニュース合計: 169件
+2026-10-23 00:04:40 [INFO] cloud_run: --- Step 4: 指標計算 ---
+2026-10-23 00:04:40 [INFO] indicators: リスク判定: 弱気 (リスクオフ) (スコア=-24.03) [実績較正]
+2026-10-23 00:04:40 [INFO] cloud_run: --- Step 4.5: 爆速通知 → 停止中（朝は1通の決まり。EARLY_NOTIFY=1 で再開）
+2026-10-23 00:04:40 [INFO] cloud_run: --- Step 5: 分析 ---
+2026-10-23 00:04:40 [INFO] analyze: === 分析開始 ===
+2026-10-23 00:04:40 [INFO] analyze: === 分析完了 ===
+2026-10-23 00:04:40 [INFO] cloud_run: --- Step UM: 米国ザラ場ムーバー ---
+2026-10-23 00:04:40 [INFO] us_movers: === 米国ザラ場ムーバー（市場は closed）===
+2026-10-23 00:04:42 [INFO] us_movers: ✅ 73銘柄 / 大きく動いた 20件 / セクター単位 7件
+2026-10-23 00:04:42 [INFO] cloud_run: ✅ 米国ムーバー 20件 / 業界 7件
+2026-10-23 00:04:42 [INFO] cloud_run: --- Step ADR: 日本株ADR（夜間NY） ---
+2026-10-23 00:04:43 [INFO] adr_data: ✅ ADR: 205銘柄 / 主要平均乖離=+0.88%
+2026-10-23 00:04:43 [INFO] cloud_run: ✅ ADR: 205銘柄 主要平均乖離=0.88%
+2026-10-23 00:04:43 [INFO] cloud_run: --- Step US: 米国時間外ムーバー ---
+2026-10-23 00:04:45 [INFO] us_afterhours: ✅ 米国時間外: 8銘柄が大きく変動
+2026-10-23 00:04:45 [INFO] cloud_run: ✅ 米国時間外: 8銘柄が大きく変動
+2026-10-23 00:04:45 [INFO] cloud_run: --- Step AIB: 統合AI解釈（3視点＋シナリオ＋要因）---
+2026-10-23 00:05:03 [INFO] ai_brief: ✅ 統合AI解釈（1回の呼び出しで 4項目＋シナリオ3件）
+2026-10-23 00:05:03 [INFO] cloud_run: ✅ 統合AI解釈完了
+2026-10-23 00:05:03 [INFO] cloud_run: --- Step 5b.5: 校閲ループ ---
+2026-10-23 00:05:03 [INFO] cloud_run: 校閲: 修正なし
+2026-10-23 00:05:03 [INFO] cloud_run: --- Step 5c: 経済指標分析 ---
+2026-10-23 00:05:03 [INFO] economic_indicators: === 経済指標分析開始 ===
+2026-10-23 00:05:07 [INFO] economic_indicators: 経済指標ニュース取得: 16件
+2026-10-23 00:05:07 [INFO] gemini_budget: ⏭ economic_indicators: 停止中（market_driver の入力用。market_driver 自身がニュースを読むので無くても成立）
+2026-10-23 00:05:07 [ERROR] economic_indicators: 経済指標分析エラー: Gemini予算のためスキップ（economic_indicators）
+2026-10-23 00:05:07 [INFO] cloud_run: --- Step 5d: YouTube動画要約 ---
+2026-10-23 00:05:07 [INFO] youtube_summary: === YouTube動画 本格分析開始 ===
+2026-10-23 00:05:09 [INFO] youtube_summary: YouTube最新動画: 0件（直近30時間以内）
+2026-10-23 00:05:09 [INFO] youtube_summary: 対象の最新動画なし
+2026-10-23 00:05:09 [INFO] cloud_run: --- Step L3a: 自律AIエージェント ---
+2026-10-23 00:05:09 [WARNING] gemini_budget: ai_agent: 予算表に未登録。とりあえず通します
+2026-10-23 00:05:09 [ERROR] ai_agent: エージェントエラー: 400 * GenerateContentRequest.tools[0].function_declarations[0].parameters.properties[symbols].items: missing field.
+
+2026-10-23 00:05:09 [INFO] cloud_run: --- Step L3b: テクニカル分析 ---
+2026-10-23 00:05:09 [INFO] technical_ai: === テクニカル分析開始 ===
+2026-10-23 00:05:09 [INFO] technical_ai:   計算中: 日経平均(^N225)
+2026-10-23 00:05:09 [INFO] technical_ai:   計算中: S&P500(^GSPC)
+2026-10-23 00:05:09 [INFO] technical_ai:   計算中: ドル円(USDJPY=X)
+2026-10-23 00:05:09 [INFO] technical_ai:   計算中: Bitcoin(BTC-USD)
+2026-10-23 00:05:11 [INFO] technical_ai: ✅ テクニカルチャート: /home/runner/work/market-ai-secretary/market-ai-secretary/reports/charts/technical_2026-10-23.png
+2026-10-23 00:05:18 [INFO] technical_ai: ✅ テクニカル分析完了: 4銘柄
+2026-10-23 00:05:18 [INFO] cloud_run: ✅ テクニカル分析完了
+2026-10-23 00:05:18 [INFO] cloud_run: --- Step L3b2: 手法シグナル・スキャナー ---
+2026-10-23 00:05:19 [INFO] setup_scanner: ✅ 手法スキャナー完了（3銘柄・マルチタイムフレーム対応）
+2026-10-23 00:05:19 [INFO] cloud_run: ✅ 手法スキャナー完了（3銘柄）
+2026-10-23 00:05:19 [INFO] cloud_run: --- Step L3b3: 銘柄カルテ ---
+2026-10-23 00:05:19 [INFO] financial_analyzer: 財務分析: トヨタ(7203.T)
+2026-10-23 00:05:20 [INFO] gemini_budget: ⏭ financial_analyzer: 今日は順番待ち（月曜に実行）
+2026-10-23 00:05:20 [WARNING] financial_analyzer: Gemini分析失敗 7203.T: Gemini予算のためスキップ（financial_analyzer）
+2026-10-23 00:05:20 [INFO] financial_analyzer: 財務分析: ソフトバンクG(9984.T)
+2026-10-23 00:05:21 [INFO] gemini_budget: ⏭ financial_analyzer: 今日は順番待ち（月曜に実行）
+2026-10-23 00:05:21 [WARNING] financial_analyzer: Gemini分析失敗 9984.T: Gemini予算のためスキップ（financial_analyzer）
+2026-10-23 00:05:21 [INFO] financial_analyzer: 財務分析: ソニーG(6758.T)
+2026-10-23 00:05:22 [INFO] gemini_budget: ⏭ financial_analyzer: 今日は順番待ち（月曜に実行）
+2026-10-23 00:05:22 [WARNING] financial_analyzer: Gemini分析失敗 6758.T: Gemini予算のためスキップ（financial_analyzer）
+2026-10-23 00:05:22 [INFO] financial_analyzer: 財務分析: 三菱UFJ(8306.T)
+2026-10-23 00:05:23 [INFO] gemini_budget: ⏭ financial_analyzer: 今日は順番待ち（月曜に実行）
+2026-10-23 00:05:23 [WARNING] financial_analyzer: Gemini分析失敗 8306.T: Gemini予算のためスキップ（financial_analyzer）
+2026-10-23 00:05:23 [INFO] financial_analyzer: 財務分析: アドバンテスト(6857.T)
+2026-10-23 00:05:24 [INFO] gemini_budget: ⏭ financial_analyzer: 今日は順番待ち（月曜に実行）
+2026-10-23 00:05:24 [WARNING] financial_analyzer: Gemini分析失敗 6857.T: Gemini予算のためスキップ（financial_analyzer）
+2026-10-23 00:05:24 [INFO] financial_analyzer: 財務分析: 信越化学(4063.T)
+2026-10-23 00:05:25 [INFO] gemini_budget: ⏭ financial_analyzer: 今日は順番待ち（月曜に実行）
+2026-10-23 00:05:25 [WARNING] financial_analyzer: Gemini分析失敗 4063.T: Gemini予算のためスキップ（financial_analyzer）
+2026-10-23 00:05:25 [INFO] financial_analyzer: 財務分析: 東京エレクトロン(8035.T)
+2026-10-23 00:05:26 [INFO] gemini_budget: ⏭ financial_analyzer: 今日は順番待ち（月曜に実行）
+2026-10-23 00:05:26 [WARNING] financial_analyzer: Gemini分析失敗 8035.T: Gemini予算のためスキップ（financial_analyzer）
+2026-10-23 00:05:26 [INFO] financial_analyzer: 財務分析: レーザーテック(6920.T)
+2026-10-23 00:05:27 [INFO] gemini_budget: ⏭ financial_analyzer: 今日は順番待ち（月曜に実行）
+2026-10-23 00:05:27 [WARNING] financial_analyzer: Gemini分析失敗 6920.T: Gemini予算のためスキップ（financial_analyzer）
+2026-10-23 00:05:27 [INFO] financial_analyzer: 財務分析: ディスコ(6146.T)
+2026-10-23 00:05:28 [INFO] gemini_budget: ⏭ financial_analyzer: 今日は順番待ち（月曜に実行）
+2026-10-23 00:05:28 [WARNING] financial_analyzer: Gemini分析失敗 6146.T: Gemini予算のためスキップ（financial_analyzer）
+2026-10-23 00:05:28 [INFO] stock_dossier: stock_dossier 完了: 9銘柄 → 上位9件 最高スコア=6
+2026-10-23 00:05:28 [INFO] cloud_run: ✅ 銘柄カルテ完了 9銘柄 最高スコア=6
+2026-10-23 00:05:28 [INFO] cloud_run: --- Step L3c: ポートフォリオ管理 ---
+2026-10-23 00:05:28 [INFO] portfolio: === ポートフォリオ管理開始 ===
+2026-10-23 00:05:28 [INFO] portfolio: ✅ ポートフォリオチャート: /home/runner/work/market-ai-secretary/market-ai-secretary/reports/charts/portfolio_2026-10-23.png
+2026-10-23 00:05:28 [INFO] portfolio: ✅ ポートフォリオ完了: 2銘柄
+2026-10-23 00:05:28 [INFO] cloud_run: ✅ ポートフォリオ完了 2銘柄
+2026-10-23 00:05:28 [INFO] cloud_run: --- Step L3d: シナリオ分析 ---
+2026-10-23 00:05:28 [INFO] cloud_run: ✅ シナリオ分析完了（統合AI解釈から取得）
+2026-10-23 00:05:28 [INFO] cloud_run: --- Step L3e: 予測トラッカー（自己学習） ---
+2026-10-23 00:05:28 [INFO] prediction_tracker: === 予測トラッカー開始 ===
+2026-10-23 00:05:28 [INFO] prediction_tracker: ❌ 検証: 2026-10-22 予測=neutral 実際=bull(+0.85%) → 不正解
+2026-10-23 00:05:28 [INFO] prediction_tracker: 正解率: 10日=37.5% / 30日=27.3% / Brier30日=None / 検証済=79件
+2026-10-23 00:05:28 [INFO] prediction_tracker: 予測記録: 2026-10-23 → bear (スコア:-24.03 補正後-27.03) / 信頼度S(82.9%)
+2026-10-23 00:05:28 [INFO] prediction_tracker: 正解率: 10日=37.5% / 30日=27.3% / Brier30日=None / 検証済=79件
+2026-10-23 00:05:28 [INFO] prediction_tracker: 正解率: 10日=37.5% / 30日=27.3% / Brier30日=None / 検証済=79件
+2026-10-23 00:05:41 [INFO] prediction_tracker: ✅ 学習フィードバック分析完了
+2026-10-23 00:05:41 [INFO] prediction_tracker: 正解率: 10日=37.5% / 30日=27.3% / Brier30日=None / 検証済=79件
+2026-10-23 00:05:41 [INFO] prediction_tracker: ✅ 予測トラッカー完了 (検証済:79件)
+2026-10-23 00:05:41 [INFO] cloud_run: ✅ 予測トラッカー完了 (直近10日正解率:37.5%)
+2026-10-23 00:05:41 [INFO] cloud_run: --- Step L4a: セクター分析・ローテーション ---
+2026-10-23 00:05:47 [INFO] cloud_run: ✅ セクター分析完了: リスクオン
+2026-10-23 00:05:47 [INFO] cloud_run: --- Step L4a2: 日本業種別ランキング ---
+2026-10-23 00:05:47 [INFO] sector_ranking_jp: --- 日本業種別ランキング取得 ---
+2026-10-23 00:05:49 [INFO] sector_ranking_jp: ✅ docs/sector_ranking.json 書き出し（17業種）
+2026-10-23 00:05:49 [INFO] sector_ranking_jp: 首位: エネルギー資源 +2.87% / 最下位: 鉄鋼・非鉄 -4.18%
+2026-10-23 00:05:49 [INFO] cloud_run: ✅ セクターチャート生成: /home/runner/work/market-ai-secretary/market-ai-secretary/reports/charts/sector_analysis.png
+2026-10-23 00:05:49 [INFO] cloud_run: --- Step L4b: 長期歴史データ分析 ---
+2026-10-23 00:05:50 [INFO] cloud_run: ✅ 歴史分析完了: 強気相場
+2026-10-23 00:05:50 [INFO] cloud_run: --- Step L4c: FRED経済指標 ---
+2026-10-23 00:06:17 [INFO] cloud_run: ✅ FRED取得完了: FF金利4.02% / イールドカーブ0.93bp(正常)
+2026-10-23 00:06:17 [INFO] cloud_run: --- Step L4d: 相関分析 ---
+2026-10-23 00:06:18 [INFO] cloud_run: ✅ 相関分析完了: 日経-ドル円r=-0.085
+2026-10-23 00:06:18 [INFO] cloud_run: バックテスト: 月曜以外のためスキップ
+2026-10-23 00:06:18 [INFO] cloud_run: --- Step L4f: センチメントデータ ---
+2026-10-23 00:06:18 [INFO] cloud_run: ✅ センチメント: 🟡 センチメント中立
+2026-10-23 00:06:18 [INFO] cloud_run: --- Step L5f: Reddit感情分析 ---
+2026-10-23 00:06:18 [INFO] cloud_run: --- Step L5g: 決算前AI分析 ---
+2026-10-23 00:06:20 [INFO] cloud_run: ✅ 決算前分析: 今週の主要決算なし
+2026-10-23 00:06:20 [INFO] cloud_run: --- Step L5h: グローバル市場連鎖 ---
+2026-10-23 00:06:20 [INFO] cloud_run: ✅ 市場連鎖: S&P500翌日予測=neutral (+0.02%)
+2026-10-23 00:06:20 [INFO] cloud_run: J-Quants: 月曜以外のためスキップ
+2026-10-23 00:06:20 [INFO] cloud_run: --- Step L5a.6: 情報源クロスチェック ---
+2026-10-23 00:06:20 [INFO] cross_check: クロスチェック: 2つの分析手法のうち2つが「下落」で一致（完全一致）
+2026-10-23 00:06:20 [INFO] cloud_run: ✅ 2つの分析手法のうち2つが「下落」で一致（完全一致）
+2026-10-23 00:06:20 [INFO] cloud_run: --- Step L5a.7: 較正アンサンブル ---
+2026-10-23 00:06:20 [INFO] ensemble: アンサンブル完了: neutral 一致率=71% 信頼度=mid Brier=None
+2026-10-23 00:06:20 [INFO] cloud_run: ✅ アンサンブル: neutral 一致率=71% 信頼度=mid
+2026-10-23 00:06:20 [INFO] cloud_run: --- Step L5c: 強化学習ループ ---
+2026-10-23 00:06:20 [INFO] cloud_run: 強化学習: データ蓄積中（まだ予測データがありません）
+2026-10-23 00:06:20 [INFO] cloud_run: 週次カレンダー: 月曜以外のためスキップ
+2026-10-23 00:06:20 [INFO] cloud_run: --- Step 5e: AI記憶更新 ---
+2026-10-23 00:06:20 [INFO] ai_memory: 記憶更新: 2026-10-23 (合計69日分)
+2026-10-23 00:06:20 [INFO] cloud_run: ✅ AI記憶を更新
+2026-10-23 00:06:20 [INFO] cloud_run: --- Step 6: チャート生成 ---
+2026-10-23 00:06:20 [INFO] visualize: === チャート生成開始（プレミアムデザイン）===
+2026-10-23 00:06:22 [INFO] visualize: ✅ overview: /home/runner/work/market-ai-secretary/market-ai-secretary/reports/charts/overview_2026-10-23.png
+2026-10-23 00:06:22 [INFO] visualize: チャート完了: 3件
+2026-10-23 00:06:22 [INFO] cloud_run: チャート生成: 3件
+2026-10-23 00:06:22 [INFO] cloud_run: --- Step L5i: LINE通知 ---
+2026-10-23 00:06:22 [INFO] notify_line: LINE Notify 未設定 — スキップ
+2026-10-23 00:06:22 [INFO] cloud_run: --- Step TD: TDnet適時開示ウォッチャー ---
+2026-10-23 00:06:23 [INFO] tdnet_watcher: TDnet 20261022: 全127件取得
+2026-10-23 00:06:23 [INFO] cloud_run: ✅ 適時開示: 1件
+2026-10-23 00:06:23 [INFO] cloud_run: --- Step SH2: 株主還元・M&A/TOB ---
+2026-10-23 00:06:24 [INFO] shareholder_actions: ✅ 株主還元・M&A: 19件（全127件から抽出・20261022） TOB対象2件
+2026-10-23 00:06:24 [INFO] cloud_run: ✅ 株主還元・M&A 19件（TOB対象2件・自社株買い4件）
+2026-10-23 00:06:24 [INFO] cloud_run: --- Step EB: 決算ブリーフ ---
+2026-10-23 00:06:24 [INFO] cloud_run: --- Step CA: 材料分析AI ---
+2026-10-23 00:06:48 [WARNING] catalyst_analyzer: 材料の一括分析: JSONを解析できませんでした
+2026-10-23 00:07:01 [INFO] gemini_budget: ⏭ catalyst_analyzer: 本日の割当2回を使い切りました
+2026-10-23 00:07:01 [WARNING] catalyst_analyzer: 材料分析失敗 [ＧＭＯＦＨＤ]: Gemini予算のためスキップ（catalyst_analyzer）
+2026-10-23 00:07:01 [INFO] gemini_budget: ⏭ catalyst_analyzer: 本日の割当2回を使い切りました
+2026-10-23 00:07:01 [WARNING] catalyst_analyzer: 材料分析失敗 [日本調理機]: Gemini予算のためスキップ（catalyst_analyzer）
+2026-10-23 00:07:01 [INFO] gemini_budget: ⏭ catalyst_analyzer: 本日の割当2回を使い切りました
+2026-10-23 00:07:01 [WARNING] catalyst_analyzer: 材料分析失敗 [ＪＡＣ]: Gemini予算のためスキップ（catalyst_analyzer）
+2026-10-23 00:07:01 [INFO] gemini_budget: ⏭ catalyst_analyzer: 本日の割当2回を使い切りました
+2026-10-23 00:07:01 [WARNING] catalyst_analyzer: 材料分析失敗 [ＩＧポート]: Gemini予算のためスキップ（catalyst_analyzer）
+2026-10-23 00:07:01 [INFO] gemini_budget: ⏭ catalyst_analyzer: 本日の割当2回を使い切りました
+2026-10-23 00:07:01 [WARNING] catalyst_analyzer: 材料分析失敗 [ＳＥ　Ｈ＆Ｉ]: Gemini予算のためスキップ（catalyst_analyzer）
+2026-10-23 00:07:01 [INFO] catalyst_analyzer: ✅ 材料分析: 1件（妙味高 0件）
+2026-10-23 00:07:01 [INFO] cloud_run: ✅ 材料分析: 1件（妙味高 0件）
+2026-10-23 00:07:01 [INFO] cloud_run: --- Step AN: アノマリーカレンダー ---
+2026-10-23 00:07:01 [INFO] cloud_run: ✅ アノマリー: 4件
+2026-10-23 00:07:01 [INFO] cloud_run: --- Step TR: テーマ株人気ランキング ---
+2026-10-23 00:07:07 [INFO] theme_ranker: テーマ変動: 1件（前回=2026-10-22比）
+2026-10-23 00:07:11 [INFO] cloud_run: ✅ テーマランキング完了
+2026-10-23 00:07:11 [INFO] cloud_run: --- Step SH: 業種ヒートマップ ---
+2026-10-23 00:07:16 [INFO] sector_heatmap: ✅ 業種ヒートマップ: 17業種 / 最強=エネルギー資源
+2026-10-23 00:07:16 [INFO] cloud_run: ✅ 業種ヒートマップ: 17業種
+2026-10-23 00:07:16 [INFO] cloud_run: --- Step ND: 日経225 内部データ ---
+2026-10-23 00:07:17 [WARNING] nikkei_market_data: daily2year取得失敗: 404 Client Error: Not Found for url: https://nikkei225jp.com/_data/_nfsDATA/DAY/daily2year.json
+2026-10-23 00:07:17 [INFO] cloud_run: --- Step VW: バリュエーション節目 ---
+2026-10-23 00:07:17 [INFO] cloud_run: --- Step MW: 景気・信用シグナル ---
+2026-10-23 00:07:17 [INFO] macro_watch: マクロ: ゾーン変化なし（0指標を監視）
+2026-10-23 00:07:17 [INFO] cloud_run: --- Step KW: 株価注意報 ---
+2026-10-23 00:07:17 [INFO] kabutan_warning: === 株探・株価注意報 ===
+2026-10-23 00:07:18 [ERROR] kabutan_warning: 取得できませんでした: https://kabutan.jp/warning/?mode=3_3
+Traceback (most recent call last):
+  File "/home/runner/work/market-ai-secretary/market-ai-secretary/src/kabutan_warning.py", line 61, in _get
+    return urllib.request.urlopen(req, context=ctx, timeout=25).read().decode(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/urllib/request.py", line 216, in urlopen
+    return opener.open(url, data, timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/urllib/request.py", line 525, in open
+    response = meth(req, response)
+               ^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/urllib/request.py", line 634, in http_response
+    response = self.parent.error(
+               ^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/urllib/request.py", line 563, in error
+    return self._call_chain(*args)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/urllib/request.py", line 496, in _call_chain
+    result = func(*args)
+             ^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/urllib/request.py", line 643, in http_error_default
+    raise HTTPError(req.full_url, code, msg, hdrs, fp)
+urllib.error.HTTPError: HTTP Error 405: Not Allowed
+2026-10-23 00:07:18 [ERROR] kabutan_warning: 取得できませんでした: https://kabutan.jp/warning/?mode=3_4
+Traceback (most recent call last):
+  File "/home/runner/work/market-ai-secretary/market-ai-secretary/src/kabutan_warning.py", line 61, in _get
+    return urllib.request.urlopen(req, context=ctx, timeout=25).read().decode(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/urllib/request.py", line 216, in urlopen
+    return opener.open(url, data, timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/urllib/request.py", line 525, in open
+    response = meth(req, response)
+               ^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/urllib/request.py", line 634, in http_response
+    response = self.parent.error(
+               ^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/urllib/request.py", line 563, in error
+    return self._call_chain(*args)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/urllib/request.py", line 496, in _call_chain
+    result = func(*args)
+             ^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/urllib/request.py", line 643, in http_error_default
+    raise HTTPError(req.full_url, code, msg, hdrs, fp)
+urllib.error.HTTPError: HTTP Error 405: Not Allowed
+2026-10-23 00:07:19 [ERROR] kabutan_warning: 取得できませんでした: https://kabutan.jp/warning/?mode=3_2
+Traceback (most recent call last):
+  File "/home/runner/work/market-ai-secretary/market-ai-secretary/src/kabutan_warning.py", line 61, in _get
+    return urllib.request.urlopen(req, context=ctx, timeout=25).read().decode(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/urllib/request.py", line 216, in urlopen
+    return opener.open(url, data, timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/urllib/request.py", line 525, in open
+    response = meth(req, response)
+               ^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/urllib/request.py", line 634, in http_response
+    response = self.parent.error(
+               ^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/urllib/request.py", line 563, in error
+    return self._call_chain(*args)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/urllib/request.py", line 496, in _call_chain
+    result = func(*args)
+             ^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/urllib/request.py", line 643, in http_error_default
+    raise HTTPError(req.full_url, code, msg, hdrs, fp)
+urllib.error.HTTPError: HTTP Error 405: Not Allowed
+2026-10-23 00:07:19 [ERROR] kabutan_warning: 取得できませんでした: https://kabutan.jp/warning/?mode=7_2
+Traceback (most recent call last):
+  File "/home/runner/work/market-ai-secretary/market-ai-secretary/src/kabutan_warning.py", line 61, in _get
+    return urllib.request.urlopen(req, context=ctx, timeout=25).read().decode(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/urllib/request.py", line 216, in urlopen
+    return opener.open(url, data, timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/urllib/request.py", line 525, in open
+    response = meth(req, response)
+               ^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/urllib/request.py", line 634, in http_response
+    response = self.parent.error(
+               ^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/urllib/request.py", line 563, in error
+    return self._call_chain(*args)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/urllib/request.py", line 496, in _call_chain
+    result = func(*args)
+             ^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/urllib/request.py", line 643, in http_error_default
+    raise HTTPError(req.full_url, code, msg, hdrs, fp)
+urllib.error.HTTPError: HTTP Error 405: Not Allowed
+2026-10-23 00:07:20 [ERROR] kabutan_warning: 取得できませんでした: https://kabutan.jp/warning/?mode=7_1
+Traceback (most recent call last):
+  File "/home/runner/work/market-ai-secretary/market-ai-secretary/src/kabutan_warning.py", line 61, in _get
+    return urllib.request.urlopen(req, context=ctx, timeout=25).read().decode(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/urllib/request.py", line 216, in urlopen
+    return opener.open(url, data, timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/urllib/request.py", line 525, in open
+    response = meth(req, response)
+               ^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/urllib/request.py", line 634, in http_response
+    response = self.parent.error(
+               ^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/urllib/request.py", line 563, in error
+    return self._call_chain(*args)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/urllib/request.py", line 496, in _call_chain
+    result = func(*args)
+             ^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/urllib/request.py", line 643, in http_error_default
+    raise HTTPError(req.full_url, code, msg, hdrs, fp)
+urllib.error.HTTPError: HTTP Error 405: Not Allowed
+2026-10-23 00:07:20 [ERROR] kabutan_warning: 取得できませんでした: https://kabutan.jp/warning/?mode=8_1
+Traceback (most recent call last):
+  File "/home/runner/work/market-ai-secretary/market-ai-secretary/src/kabutan_warning.py", line 61, in _get
+    return urllib.request.urlopen(req, context=ctx, timeout=25).read().decode(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/urllib/request.py", line 216, in urlopen
+    return opener.open(url, data, timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/urllib/request.py", line 525, in open
+    response = meth(req, response)
+               ^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/urllib/request.py", line 634, in http_response
+    response = self.parent.error(
+               ^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/urllib/request.py", line 563, in error
+    return self._call_chain(*args)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/urllib/request.py", line 496, in _call_chain
+    result = func(*args)
+             ^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/urllib/request.py", line 643, in http_error_default
+    raise HTTPError(req.full_url, code, msg, hdrs, fp)
+urllib.error.HTTPError: HTTP Error 405: Not Allowed
+2026-10-23 00:07:20 [INFO] cloud_run: --- Step GAP: 窓開けスキャン ---
+2026-10-23 00:07:20 [INFO] gap_scanner: === 窓開けスキャン ===
+2026-10-23 00:07:21 [INFO] gap_scanner: ✅ 27銘柄 / 大きな窓 0件（上0・下0）
+2026-10-23 00:07:21 [INFO] cloud_run: ✅ 窓開け 0件
+2026-10-23 00:07:21 [INFO] cloud_run: --- Step MB: 朝の3分ブリーフ ---
+2026-10-23 00:07:21 [INFO] morning_brief: === 朝の3分ブリーフ ===
+2026-10-23 00:07:22 [INFO] us_movers: === 米国ザラ場ムーバー（市場は closed）===
+2026-10-23 00:07:23 [INFO] us_movers: ✅ 73銘柄 / 大きく動いた 20件 / セクター単位 7件
+2026-10-23 00:07:23 [INFO] economic_calendar: === 週次カレンダー生成開始 ===
+2026-10-23 00:07:23 [INFO] economic_calendar: 対象週: 2026-10-19 〜 2026-10-23
+2026-10-23 00:07:23 [INFO] gemini_budget: ⏭ economic_calendar: 今日は順番待ち（木曜に実行）
+2026-10-23 00:07:23 [ERROR] economic_calendar: Geminiカレンダー取得エラー: Gemini予算のためスキップ（economic_calendar）
+2026-10-23 00:07:23 [INFO] upcoming_events: ✅ 今後のイベント: 2件（10日先まで）
+2026-10-23 00:07:23 [INFO] economic_calendar: 確定日程イベント: 1件（FOMC・SQ・雇用統計など）
+2026-10-23 00:07:25 [INFO] economic_calendar: ウォッチリスト決算: 今週1件 / 今後24件
+2026-10-23 00:07:25 [INFO] economic_calendar: 天体イベント: 今週0件 / 水星逆行中=False
+2026-10-23 00:07:25 [INFO] economic_calendar: ✅ カレンダー画像生成: /home/runner/work/market-ai-secretary/market-ai-secretary/reports/charts/weekly_calendar_20261019.png
+2026-10-23 00:07:25 [INFO] economic_calendar: 週次カレンダーを永続化: weekly_calendar.json (4件)
+2026-10-23 00:07:25 [INFO] economic_calendar: カレンダー完了: 4件
+2026-10-23 00:07:25 [INFO] morning_brief: ✅ 寄り付きは約683円安く始まる見込み ／ リスク 警戒
+2026-10-23 00:07:25 [INFO] cloud_run: ✅ 寄り付きは約683円安く始まる見込み ／ リスク 警戒
+2026-10-23 00:07:25 [INFO] cloud_run: --- Step AUDIT: データ正確性の監査 ---
+2026-10-23 00:07:25 [INFO] data_audit: === データ正確性の監査 ===
+2026-10-23 00:07:28 [INFO] data_audit:   業種別ランキング: 8件中 異常0件
+2026-10-23 00:07:30 [INFO] data_audit:   米国ムーバー: 8件中 異常0件
+2026-10-23 00:07:32 [INFO] data_audit:   日経寄与度: 8件中 異常0件
+2026-10-23 00:07:32 [INFO] fetch_prices: === 価格データ取得開始 ===
+2026-10-23 00:07:32 [INFO] fetch_prices: [OK] 日経平均(^N225) = 64621.2383 [Yahoo直接API]
+2026-10-23 00:07:33 [WARNING] fetch_prices: 株探 失敗 [0010]: 405 Client Error: Not Allowed for url: https://kabutan.jp/stock/?code=0010
+2026-10-23 00:07:34 [WARNING] fetch_prices: Yahoo!Japan 失敗 [998405.T]: 500 Server Error: Internal Server Error for url: https://finance.yahoo.co.jp/quote/998405.T
+2026-10-23 00:07:34 [WARNING] fetch_prices: Yahoo直接API 失敗 [^TOPX]: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/%5ETOPX?interval=1d&range=5d
+2026-10-23 00:07:34 [ERROR] fetch_prices: [FAIL] TOPIX(^TOPX): 全ソースで取得失敗
+2026-10-23 00:07:35 [WARNING] fetch_prices: 株探 失敗 [0012]: 405 Client Error: Not Allowed for url: https://kabutan.jp/stock/?code=0012
+2026-10-23 00:07:35 [INFO] fetch_prices: [OK] グロース250(GROWTH250) = 598.9 [グロース250ETF(2516.T)代替]
+2026-10-23 00:07:35 [INFO] fetch_prices: [OK] 日経225先物(CME)(NIY=F) = 62205.0 [Yahoo直接API]
+2026-10-23 00:07:36 [INFO] fetch_prices: [OK] S&P500(^GSPC) = 7663.4302 [Yahoo直接API]
+2026-10-23 00:07:36 [INFO] fetch_prices: [OK] S&P500先物(ES=F) = 7705.0 [Yahoo直接API]
+2026-10-23 00:07:36 [INFO] fetch_prices: [OK] NASDAQ(^IXIC) = 26008.8594 [Yahoo直接API]
+2026-10-23 00:07:37 [INFO] fetch_prices: [OK] ダウ(^DJI) = 52867.9805 [Yahoo直接API]
+2026-10-23 00:07:37 [INFO] fetch_prices: [OK] 半導体SOX指数(^SOX) = 10731.9775 [Yahoo直接API]
+2026-10-23 00:07:37 [INFO] fetch_prices: [OK] VIX（恐怖指数）(^VIX) = 19.03 [Yahoo直接API]
+2026-10-23 00:07:38 [INFO] fetch_prices: [OK] 日経VI（日本版恐怖指数）(NIKKEI_VI) = 35.97 [日経公式CSV]
+2026-10-23 00:07:38 [INFO] fetch_prices: [OK] VIX9D（超短期）(^VIX9D) = 18.86 [Yahoo直接API]
+2026-10-23 00:07:39 [INFO] fetch_prices: [OK] VIX3M（3ヶ月）(^VIX3M) = 20.12 [Yahoo直接API]
+2026-10-23 00:07:39 [INFO] fetch_prices: [OK] VVIX（VIXのVIX）(^VVIX) = 107.94 [Yahoo直接API]
+2026-10-23 00:07:39 [INFO] fetch_prices: [OK] SKEW（テールリスク）(^SKEW) = 152.39 [Yahoo直接API]
+2026-10-23 00:07:40 [INFO] fetch_prices: [OK] 米10年金利(^TNX) = 4.953 [Yahoo直接API]
+2026-10-23 00:07:40 [INFO] fetch_prices: [OK] ドル円(USDJPY=X) = 156.256 [Yahoo直接API]
+2026-10-23 00:07:41 [INFO] fetch_prices: [OK] ユーロドル(EURUSD=X) = 1.1226 [Yahoo直接API]
+2026-10-23 00:07:41 [INFO] fetch_prices: [OK] ドル指数(DXY)(DX-Y.NYB) = 101.563 [Yahoo直接API]
+2026-10-23 00:07:41 [INFO] fetch_prices: [OK] ユーロ円(EURJPY=X) = 175.336 [Yahoo直接API]
+2026-10-23 00:07:42 [INFO] fetch_prices: [OK] 米3ヶ月金利(^IRX) = 4.022 [Yahoo直接API]
+2026-10-23 00:07:43 [INFO] fetch_prices: [OK] 米2年金利(2YY=F) = 4.75 [Yahoo直接API]
+2026-10-23 00:07:43 [INFO] fetch_prices: [OK] 米5年金利(^FVX) = 4.768 [Yahoo直接API]
+2026-10-23 00:07:44 [INFO] fetch_prices: [OK] 米10年金利(^TNX) = 4.953 [Yahoo直接API]
+2026-10-23 00:07:44 [INFO] fetch_prices: [OK] 米30年金利(^TYX) = 5.287 [Yahoo直接API]
+2026-10-23 00:07:45 [INFO] fetch_prices: [OK] 金(GOLD)(GC=F) = 4037.3 [Yahoo直接API]
+2026-10-23 00:07:45 [INFO] fetch_prices: [OK] WTI原油(CL=F) = 99.3 [Yahoo直接API]
+2026-10-23 00:07:45 [INFO] fetch_prices: [OK] 銀(SILVER)(SI=F) = 54.61 [Yahoo直接API]
+2026-10-23 00:07:46 [INFO] fetch_prices: [OK] 銅(COPPER)(HG=F) = 6.404 [Yahoo直接API]
+2026-10-23 00:07:46 [INFO] fetch_prices: [OK] Bitcoin(BTC-USD) = 81215.2734 [Yahoo直接API]
+2026-10-23 00:07:47 [INFO] fetch_prices: [OK] NVIDIA(NVDA) = 221.97 [Yahoo直接API]
+2026-10-23 00:07:47 [INFO] fetch_prices: [OK] Apple(AAPL) = 343.99 [Yahoo直接API]
+2026-10-23 00:07:47 [INFO] fetch_prices: [OK] Tesla(TSLA) = 386.47 [Yahoo直接API]
+2026-10-23 00:07:48 [INFO] fetch_prices: [OK] Microsoft(MSFT) = 532.95 [Yahoo直接API]
+2026-10-23 00:07:48 [INFO] fetch_prices: [OK] Amazon(AMZN) = 262.37 [Yahoo直接API]
+2026-10-23 00:07:49 [INFO] fetch_prices: [OK] Meta(META) = 697.52 [Yahoo直接API]
+2026-10-23 00:07:49 [INFO] fetch_prices: [OK] Alphabet(GOOGL) = 334.76 [Yahoo直接API]
+2026-10-23 00:07:49 [INFO] fetch_prices: [OK] AMD(AMD) = 552.72 [Yahoo直接API]
+2026-10-23 00:07:50 [INFO] fetch_prices: [OK] Broadcom(AVGO) = 337.8 [Yahoo直接API]
+2026-10-23 00:07:50 [INFO] fetch_prices: [OK] Micron(メモリ)(MU) = 913.67 [Yahoo直接API]
+2026-10-23 00:07:50 [INFO] fetch_prices: [OK] Arm(ARM) = 226.59 [Yahoo直接API]
+2026-10-23 00:07:51 [INFO] fetch_prices: [OK] 米半導体ETF(SMH)(SMH) = 556.7 [Yahoo直接API]
+2026-10-23 00:07:51 [INFO] fetch_prices: [OK] 米テックETF(XLK)(XLK) = 188.54 [Yahoo直接API]
+2026-10-23 00:07:52 [INFO] fetch_prices: [OK] 米金融ETF(XLF)(XLF) = 56.04 [Yahoo直接API]
+2026-10-23 00:07:52 [INFO] fetch_prices: [OK] 米エネルギーETF(XLE)(XLE) = 68.16 [Yahoo直接API]
+2026-10-23 00:07:52 [INFO] fetch_prices: [OK] 米公益ETF(XLU)(XLU) = 42.0 [Yahoo直接API]
+2026-10-23 00:07:53 [INFO] fetch_prices: [OK] トヨタ(7203.T) = 3084.0 [Yahoo直接API]
+2026-10-23 00:07:53 [INFO] fetch_prices: [OK] ソフトバンクG(9984.T) = 4305.0 [Yahoo直接API]
+2026-10-23 00:07:55 [INFO] fetch_prices: [OK] ソニーG(6758.T) = 4081.0 [Yahoo直接API]
+2026-10-23 00:07:55 [INFO] fetch_prices: [OK] 三菱UFJ(8306.T) = 3373.0 [Yahoo直接API]
+2026-10-23 00:07:56 [INFO] fetch_prices: [OK] アドバンテスト(6857.T) = 32370.0 [Yahoo直接API]
+2026-10-23 00:07:56 [INFO] fetch_prices: [OK] 信越化学(4063.T) = 5804.0 [Yahoo直接API]
+2026-10-23 00:07:56 [INFO] fetch_prices: [OK] 東京エレクトロン(8035.T) = 9450.0 [Yahoo直接API]
+2026-10-23 00:07:57 [INFO] fetch_prices: [OK] レーザーテック(6920.T) = 37250.0 [Yahoo直接API]
+2026-10-23 00:07:57 [INFO] fetch_prices: [OK] ディスコ(6146.T) = 51230.0 [Yahoo直接API]
+2026-10-23 00:07:58 [INFO] fetch_prices: [OK] 日本郵船（BDI代替）(9101.T) = 7267.0 [Yahoo直接API]
+2026-10-23 00:07:58 [INFO] fetch_prices: [OK] 商船三井（BDI代替）(9104.T) = 7375.0 [Yahoo直接API]
+2026-10-23 00:07:58 [INFO] fetch_prices: [OK] 川崎汽船（BDI代替）(9107.T) = 3406.0 [Yahoo直接API]
+2026-10-23 00:07:59 [WARNING] fetch_prices: [--] NT倍率: 計算に必要なデータが不足
+2026-10-23 00:07:59 [INFO] fetch_prices: [OK] CNN Fear & Greed: 19.8 (極度の恐怖 😱)
+2026-10-23 00:07:59 [INFO] fetch_prices: 価格データ保存: /home/runner/work/market-ai-secretary/market-ai-secretary/data/raw/2026-10-23_prices.json
+2026-10-23 00:07:59 [INFO] fetch_prices: === 取得完了: 成功56件 / 失敗2件 ===
+2026-10-23 00:07:59 [INFO] data_audit:   主要価格: 4件中 異常0件
+2026-10-23 00:08:00 [INFO] data_audit:   窓開け: 6件中 異常0件
+2026-10-23 00:08:00 [INFO] data_audit: ✅ 検算した34件すべて一致
+2026-10-23 00:08:00 [INFO] cloud_run: --- Step NI: 日経寄与度 ---
+2026-10-23 00:08:00 [INFO] nikkei_impact: === 日経平均への寄与度 ===
+2026-10-23 00:08:01 [INFO] nikkei_impact: ✅ 30銘柄 / 押し上げ+118円 押し下げ-1939円 / 上位3銘柄の割合 62%
+2026-10-23 00:08:01 [INFO] cloud_run: ✅ 日経寄与度: 差し引き -1821.1円
+2026-10-23 00:08:01 [INFO] cloud_run: --- Step CS: チャートの形 ---
+2026-10-23 00:08:03 [INFO] candlestick: 形の重なり: 4件
+2026-10-23 00:08:03 [INFO] cloud_run: ✅ 形の重なり 4件
+2026-10-23 00:08:03 [INFO] cloud_run: --- Step RG: リスク計器盤 ---
+2026-10-23 00:08:03 [INFO] risk_gauges: === リスク計器盤 ===
+2026-10-23 00:08:08 [INFO] risk_gauges: ✅ 計器 25件 / 大きく動いた 10件
+2026-10-23 00:08:08 [INFO] cloud_run: ✅ 計器25件 / 大きく動いた10件
+2026-10-23 00:08:08 [INFO] cloud_run: --- Step RS: リスクオン/オフ判定 ---
+2026-10-23 00:08:08 [INFO] notify_ledger: 上位通知により話題を消化: ['us_stock', 'vix', 'usdjpy', 'rates']
+2026-10-23 00:08:08 [INFO] risk_sentiment: 🚨 極端なrisk_off: スコア4.5（5資産一致）
+2026-10-23 00:08:08 [INFO] cloud_run: 🚨 極端なrisk_off: スコア4.5
+2026-10-23 00:08:08 [INFO] cloud_run: --- Step SE: 市場心理の極値・反転 ---
+2026-10-23 00:08:08 [INFO] sentiment_extreme: ✅ 市場心理シグナル: 1件 (['fg_extreme'])
+2026-10-23 00:08:08 [INFO] cloud_run: 🎭 市場心理シグナル: 1件
+2026-10-23 00:08:08 [INFO] cloud_run: --- Step PW: 政策金利ウォッチ ---
+2026-10-23 00:08:08 [INFO] cloud_run: --- Step MD: 相場変動の要因分析 ---
+2026-10-23 00:08:08 [INFO] market_driver: ✅ 要因分析: 5指標が大きく変動
+2026-10-23 00:08:08 [INFO] cloud_run: ✅ 要因分析: 5指標が大きく変動
+2026-10-23 00:08:08 [INFO] cloud_run: --- Step MS: 市場内部シグナル ---
+2026-10-23 00:08:09 [INFO] notify_ledger: 重複のためスキップ（同じ話題を通知済み）: msig:vvix / topic=vix
+2026-10-23 00:08:09 [INFO] market_signals: ✅ 市場内部シグナル: 1件
+2026-10-23 00:08:09 [INFO] cloud_run: ✅ 市場内部シグナル: 1件
+2026-10-23 00:08:09 [INFO] cloud_run: --- Step KD: 株ドラゴン ランキング ---
+2026-10-23 00:08:21 [INFO] kabudragon: ✅ 株ドラゴン取得完了（4/4ランキング）
+2026-10-23 00:08:21 [INFO] cloud_run: ✅ 株ドラゴン: 4ランキング取得
+2026-10-23 00:08:21 [INFO] cloud_run: --- Step STW: 米国個人投資家の感情 ---
+2026-10-23 00:08:22 [INFO] stocktwits: ✅ Stocktwits: 7銘柄（基準強気率 72%）
+2026-10-23 00:08:22 [INFO] cloud_run: ✅ Stocktwits: 7銘柄
+2026-10-23 00:08:22 [INFO] cloud_run: --- Step HEAT: 個人投資家の過熱度 ---
+2026-10-23 00:08:22 [WARNING] nikkei_market_data: daily2year取得失敗: 404 Client Error: Not Found for url: https://nikkei225jp.com/_data/_nfsDATA/DAY/daily2year.json
+2026-10-23 00:08:22 [INFO] retail_heat: 過熱度: 内部データが無いためスキップ
+2026-10-23 00:08:22 [INFO] cloud_run: --- Step HOT: 話題株ウォッチ（数字×株クラ） ---
+2026-10-23 00:08:34 [INFO] kabudragon: ✅ 株ドラゴン取得完了（4/4ランキング）
+2026-10-23 00:08:41 [INFO] hot_stocks: ✅ 話題株ウォッチ: 3銘柄（Gemini不使用）
+2026-10-23 00:08:41 [INFO] cloud_run: ✅ 話題株ウォッチ: 3銘柄
+2026-10-23 00:08:41 [INFO] cloud_run: --- Step PTS: PTS夜間 急騰急落 ---
+2026-10-23 00:08:44 [WARNING] pts_data: PTS: データ取得できず → up: HTTP 405（2,541字） ／ down: HTTP 405（2,541字）
+2026-10-23 00:08:44 [INFO] cloud_run: --- Step MACRO: マクロレジーム判定 ---
+2026-10-23 00:08:44 [INFO] fundamental_signals: マクロシグナル: 該当なし（キャッシュも無し）
+2026-10-23 00:08:44 [INFO] cloud_run: --- Step CFD: CFD/24時間先物・SQ ---
+2026-10-23 00:08:46 [INFO] cfd_sq: ✅ CFD/SQ: 先物4本 商品7本 CMEギャップ=-3.75% SQまで21日
+2026-10-23 00:08:46 [INFO] cloud_run: ✅ CFD/SQ: CMEギャップ=-3.75% SQ=11/13(金)
+2026-10-23 00:08:46 [INFO] cloud_run: --- Step EV: 今後のイベント予定 ---
+2026-10-23 00:08:46 [INFO] upcoming_events: ✅ 今後のイベント: 2件（10日先まで）
+2026-10-23 00:08:46 [INFO] cloud_run: ✅ 今後のイベント: 2件
+2026-10-23 00:08:46 [INFO] cloud_run: --- Step PH: 1ヶ月の値動きヒストリー ---
+2026-10-23 00:08:46 [INFO] price_history: ✅ ヒストリー取得: 4系列 / 23日分
+2026-10-23 00:08:46 [INFO] cloud_run: ✅ ヒストリー: 4系列／23日分
+2026-10-23 00:08:46 [INFO] cloud_run: --- Step PA: 保有銘柄の含み損益 ---
+2026-10-23 00:08:46 [INFO] cloud_run: ✅ 保有銘柄: 2銘柄／評価損益 +27,450円／アラート1件
+2026-10-23 00:08:46 [INFO] cloud_run: --- Step DTS: 今日動きやすい銘柄 ---
+2026-10-23 00:08:46 [INFO] daytrade_screener: デイトレ候補 132銘柄を分析…
+2026-10-23 00:08:52 [INFO] daytrade_screener: ✅ デイトレ抽出: 132銘柄→上位6（首位 Taiyo Yuden 72.4点）
+2026-10-23 00:08:52 [INFO] cloud_run: ✅ デイトレ候補: 132銘柄→上位6（首位 Taiyo Yuden 72点）
+2026-10-23 00:08:52 [INFO] cloud_run: --- Step CHR: AIキャラクターコメント生成（詳細材料つき） ---
+2026-10-23 00:09:34 [INFO] cloud_run: ✅ ガネーシャ＆カワウソ コメント生成完了（詳細材料反映）
+2026-10-23 00:09:34 [INFO] cloud_run: --- Step 7: HTMLレポート生成 ---
+2026-10-23 00:09:34 [INFO] cloud_run: HTMLレポート保存: /home/runner/work/market-ai-secretary/market-ai-secretary/reports/2026-10-23_morning.html
+2026-10-23 00:09:34 [INFO] cloud_run: --- Step 7a2: デザインAIレポート（リッチ公開版） ---
+2026-10-23 00:09:34 [INFO] design_ai: ✅ デザインAIレポート生成: /home/runner/work/market-ai-secretary/market-ai-secretary/docs/daily_report.html（1,507,775バイト）
+2026-10-23 00:09:34 [INFO] cloud_run: ✅ 公開レポート更新済み（1,507,775バイト・本日の日付を確認）
+2026-10-23 00:09:34 [INFO] cloud_run: --- Step 7b: note記事生成 ---
+2026-10-23 00:09:34 [INFO] note_article: note記事: エグゼクティブサマリー生成中...
+2026-10-23 00:09:34 [INFO] gemini_budget: ⏭ note_article: 今日は順番待ち（土・日曜に実行）
+2026-10-23 00:09:34 [WARNING] note_article: Gemini サマリー生成失敗: Gemini予算のためスキップ（note_article）
+2026-10-23 00:09:34 [INFO] note_article: ✅ note記事生成完了: /home/runner/work/market-ai-secretary/market-ai-secretary/reports/2026-10-23_note_article.md
+2026-10-23 00:09:34 [INFO] cloud_run: ✅ note記事生成完了: /home/runner/work/market-ai-secretary/market-ai-secretary/reports/2026-10-23_note_article.md
+2026-10-23 00:09:34 [INFO] cloud_run: --- Step 7c: note カバー画像生成 ---
+2026-10-23 00:09:36 [INFO] note_cover: ✅ note カバー画像生成（HTML/cyan）: /home/runner/work/market-ai-secretary/market-ai-secretary/reports/2026-10-23_note_cover.png
+2026-10-23 00:09:36 [INFO] cloud_run: ✅ note カバー画像: /home/runner/work/market-ai-secretary/market-ai-secretary/reports/2026-10-23_note_cover.png
+2026-10-23 00:09:36 [INFO] cloud_run: --- Step 8: Telegram通知 ---
+2026-10-23 00:09:36 [INFO] cloud_run: --- Step VID: 要約ナレーション動画 ---
+2026-10-23 00:09:38 [INFO] summary_card: ✅ サマリーカード生成（HTML→PNG）: /home/runner/work/market-ai-secretary/market-ai-secretary/reports/charts/summary_card_2026-10-23.png
+2026-10-23 00:11:27 [INFO] cloud_run: ✅ 要約動画 準備完了
+2026-10-23 00:11:27 [INFO] notify_telegram: ✅ Telegramボット有効: @maket_ai_nakada_bot
+2026-10-23 00:11:27 [INFO] morning_brief: === 朝の3分ブリーフ ===
+2026-10-23 00:11:29 [INFO] us_movers: === 米国ザラ場ムーバー（市場は closed）===
+2026-10-23 00:11:30 [INFO] us_movers: ✅ 73銘柄 / 大きく動いた 20件 / セクター単位 7件
+2026-10-23 00:11:30 [INFO] economic_calendar: === 週次カレンダー生成開始 ===
+2026-10-23 00:11:30 [INFO] economic_calendar: 対象週: 2026-10-19 〜 2026-10-23
+2026-10-23 00:11:31 [INFO] gemini_budget: ⏭ economic_calendar: 今日は順番待ち（木曜に実行）
+2026-10-23 00:11:31 [ERROR] economic_calendar: Geminiカレンダー取得エラー: Gemini予算のためスキップ（economic_calendar）
+2026-10-23 00:11:31 [INFO] upcoming_events: ✅ 今後のイベント: 2件（10日先まで）
+2026-10-23 00:11:31 [INFO] economic_calendar: 確定日程イベント: 1件（FOMC・SQ・雇用統計など）
+2026-10-23 00:11:33 [INFO] economic_calendar: ウォッチリスト決算: 今週1件 / 今後24件
+2026-10-23 00:11:33 [INFO] economic_calendar: 天体イベント: 今週0件 / 水星逆行中=False
+2026-10-23 00:11:34 [INFO] economic_calendar: ✅ カレンダー画像生成: /home/runner/work/market-ai-secretary/market-ai-secretary/reports/charts/weekly_calendar_20261019.png
+2026-10-23 00:11:34 [INFO] economic_calendar: 週次カレンダーを永続化: weekly_calendar.json (4件)
+2026-10-23 00:11:34 [INFO] economic_calendar: カレンダー完了: 4件
+2026-10-23 00:11:34 [INFO] morning_brief: ✅ 寄り付きは約873円安く始まる見込み ／ リスク 警戒
+2026-10-23 00:11:36 [INFO] summary_card: ✅ サマリーカード生成（HTML→PNG）: /home/runner/work/market-ai-secretary/market-ai-secretary/reports/charts/summary_card_2026-10-23.png
+2026-10-23 00:11:39 [INFO] notify_telegram: Telegram 画像+ボタン送信 ✅: /home/runner/work/market-ai-secretary/market-ai-secretary/reports/charts/summary_card_2026-10-23.png
+2026-10-23 00:11:39 [INFO] notify_telegram: ✅ 朝レポート送信（1通）
+2026-10-23 00:11:39 [INFO] cloud_run: --- Step 8b: note記事生成 ---
+2026-10-23 00:11:39 [INFO] note_article_generator: ✅ note記事生成完了: data/note_article_2026-10-23.md
+2026-10-23 00:11:39 [INFO] cloud_run: ✅ note記事生成完了: data/note_article_2026-10-23.md
+2026-10-23 00:11:39 [INFO] cloud_run: --- Step 8d: X自動投稿 ---
+2026-10-23 00:11:39 [ERROR] notify_x: X投稿エラー
+2026-10-23 00:11:39 [WARNING] cloud_run: X投稿失敗（API設定確認）
+2026-10-23 00:11:39 [INFO] cloud_run: 📊 稼働: 14/19 機能
+2026-10-23 00:11:39 [WARNING] cloud_run: ⚠️ データ取得できず: 日経内部データ, PTS夜間, バリュエーション, マクロ・信用, 政策金利
+2026-10-23 00:11:39 [INFO] cloud_run: --- Step DIAG: システム自己診断 ---
+2026-10-23 00:11:39 [INFO] publish_check: === 公開物の実地点検 (https://youn24.github.io/market-ai-secretary) ===
+2026-10-23 00:11:39 [INFO] publish_check: ✅ 公開レポート: 2026-10-22 (1,476,423バイト) / 1日前の内容（休場日なら正常）
+2026-10-23 00:11:39 [INFO] self_diagnosis: 🩺 自己診断: 異常なし（100点）
+2026-10-23 00:11:39 [WARNING] run_recorder: 📝 実行記録: 5件の失敗を記録 → last_run_report.json
+2026-10-23 00:11:39 [INFO] cloud_run: ====== クラウド実行完了 ======
