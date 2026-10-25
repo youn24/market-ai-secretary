@@ -1,46 +1,176 @@
 {
- "saved_at": "2026-10-19",
+ "saved_at": "2026-10-26",
  "events": [
   {
-   "date": "2026-10-23",
+   "date": "2026-10-27",
    "time": "",
-   "event": "決算 ファナック（決算）",
+   "event": "決算 信越化学工業（決算）",
    "country": "",
    "importance": "high",
    "category": "指標"
   },
   {
-   "date": "2026-10-21",
+   "date": "2026-10-28",
+   "time": "",
+   "event": "FOMC結果発表（日本時間は翌朝未明）",
+   "country": "",
+   "importance": "high",
+   "category": "FRB"
+  },
+  {
+   "date": "2026-10-28",
+   "time": "",
+   "event": "決算 MSFT（早朝）",
+   "country": "",
+   "importance": "high",
+   "category": "指標"
+  },
+  {
+   "date": "2026-10-28",
+   "time": "",
+   "event": "決算 GOOGL（早朝）",
+   "country": "",
+   "importance": "high",
+   "category": "指標"
+  },
+  {
+   "date": "2026-10-28",
+   "time": "",
+   "event": "決算 日立製作所（決算）",
+   "country": "",
+   "importance": "high",
+   "category": "指標"
+  },
+  {
+   "date": "2026-10-28",
+   "time": "",
+   "event": "決算 アドバンテスト（決算）",
+   "country": "",
+   "importance": "high",
+   "category": "指標"
+  },
+  {
+   "date": "2026-10-29",
+   "time": "",
+   "event": "決算 AMZN（早朝）",
+   "country": "",
+   "importance": "high",
+   "category": "指標"
+  },
+  {
+   "date": "2026-10-29",
+   "time": "",
+   "event": "決算 ANAホールディングス（決算）",
+   "country": "",
+   "importance": "high",
+   "category": "指標"
+  },
+  {
+   "date": "2026-10-28",
    "time": "早朝",
    "country": "US",
    "category": "決算",
    "importance": "high",
-   "event": "決算 META"
+   "event": "決算 MSFT"
   },
   {
-   "date": "2026-10-21",
+   "date": "2026-10-28",
    "time": "早朝",
    "country": "US",
    "category": "決算",
    "importance": "high",
-   "event": "決算 TSLA"
+   "event": "決算 GOOGL"
   },
   {
-   "date": "2026-10-23",
+   "date": "2026-10-29",
+   "time": "早朝",
+   "country": "US",
+   "category": "決算",
+   "importance": "high",
+   "event": "決算 AMZN"
+  },
+  {
+   "date": "2026-10-30",
    "time": "決算",
    "country": "JP",
    "category": "決算",
    "importance": "high",
-   "event": "決算 ファナック"
+   "event": "決算 村田製作所"
+  },
+  {
+   "date": "2026-10-30",
+   "time": "決算",
+   "country": "JP",
+   "category": "決算",
+   "importance": "high",
+   "event": "決算 TDK"
+  },
+  {
+   "date": "2026-10-28",
+   "time": "決算",
+   "country": "JP",
+   "category": "決算",
+   "importance": "high",
+   "event": "決算 日立製作所"
+  },
+  {
+   "date": "2026-10-30",
+   "time": "決算",
+   "country": "JP",
+   "category": "決算",
+   "importance": "high",
+   "event": "決算 キオクシア"
+  },
+  {
+   "date": "2026-10-27",
+   "time": "決算",
+   "country": "JP",
+   "category": "決算",
+   "importance": "high",
+   "event": "決算 信越化学工業"
+  },
+  {
+   "date": "2026-10-30",
+   "time": "決算",
+   "country": "JP",
+   "category": "決算",
+   "importance": "high",
+   "event": "決算 東京エレクトロン"
+  },
+  {
+   "date": "2026-10-28",
+   "time": "決算",
+   "country": "JP",
+   "category": "決算",
+   "importance": "high",
+   "event": "決算 アドバンテスト"
+  },
+  {
+   "date": "2026-10-29",
+   "time": "決算",
+   "country": "JP",
+   "category": "決算",
+   "importance": "high",
+   "event": "決算 ANAホールディングス"
+  },
+  {
+   "date": "2026-10-29",
+   "time": "決算",
+   "country": "JP",
+   "category": "決算",
+   "importance": "high",
+   "event": "決算 オリエンタルランド"
+  },
+  {
+   "date": "2026-10-26",
+   "time": "12:36",
+   "country": "world",
+   "category": "天体",
+   "importance": "low",
+   "event": "🌕 満月（ハンターズムーン）"
   }
  ],
  "upcoming_earnings": [
-  {
-   "date": "2026-10-23",
-   "code": "6954",
-   "name": "ファナック",
-   "rev_avg": 239296949430
-  },
   {
    "date": "2026-10-27",
    "code": "4063",
@@ -57,7 +187,7 @@
    "date": "2026-10-28",
    "code": "6857",
    "name": "アドバンテスト",
-   "rev_avg": 431372514450
+   "rev_avg": 427049437530
   },
   {
    "date": "2026-10-29",
@@ -135,7 +265,7 @@
    "date": "2026-11-06",
    "code": "7011",
    "name": "三菱重工業",
-   "rev_avg": 1223310895250
+   "rev_avg": 1222029377790
   },
   {
    "date": "2026-11-09",
@@ -147,7 +277,7 @@
    "date": "2026-11-10",
    "code": "5803",
    "name": "フジクラ",
-   "rev_avg": 425123051670
+   "rev_avg": 426372400000
   },
   {
    "date": "2026-11-10",
@@ -165,7 +295,7 @@
    "date": "2026-11-11",
    "code": "3436",
    "name": "SUMCO",
-   "rev_avg": 120933000000
+   "rev_avg": 116985428570
   },
   {
    "date": "2026-11-11",

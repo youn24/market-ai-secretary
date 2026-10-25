@@ -1361,6 +1361,23 @@
       "verified": false,
       "correct": null,
       "actual_move": null
+    },
+    {
+      "date": "2026-10-26",
+      "direction": "bear",
+      "score": -2.11,
+      "adj_score": -5.11,
+      "conf_rank": "C",
+      "conf_win_rate": 54.1,
+      "fg": 21.0,
+      "nikkei": 62693.1602,
+      "sp500": 7623.6802,
+      "usdjpy": 156.982,
+      "vix": 19.45,
+      "confidence": null,
+      "verified": false,
+      "correct": null,
+      "actual_move": null
     }
   ],
   "accuracy": {}
