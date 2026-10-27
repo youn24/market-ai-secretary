@@ -1,8 +1,8 @@
 {
-  "in_alert": true,
-  "zone": "high",
-  "pctile": 92.1,
-  "nvi": 34.46,
-  "at": "2026-10-27T15:08:51.027468+09:00",
+  "in_alert": false,
+  "zone": "normal",
+  "pctile": 71.2,
+  "nvi": 27.66,
+  "at": "2026-10-27T21:36:47.323607+09:00",
   "jump_session": "2026-10-16"
 }
