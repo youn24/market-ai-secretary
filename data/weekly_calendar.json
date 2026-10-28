@@ -2,14 +2,6 @@
  "saved_at": "2026-10-26",
  "events": [
   {
-   "date": "2026-10-27",
-   "time": "",
-   "event": "決算 信越化学工業（決算）",
-   "country": "",
-   "importance": "high",
-   "category": "指標"
-  },
-  {
    "date": "2026-10-28",
    "time": "",
    "event": "FOMC結果発表（日本時間は翌朝未明）",
@@ -61,6 +53,14 @@
    "date": "2026-10-29",
    "time": "",
    "event": "決算 ANAホールディングス（決算）",
+   "country": "",
+   "importance": "high",
+   "category": "指標"
+  },
+  {
+   "date": "2026-10-29",
+   "time": "",
+   "event": "決算 オリエンタルランド（決算）",
    "country": "",
    "importance": "high",
    "category": "指標"
@@ -172,12 +172,6 @@
  ],
  "upcoming_earnings": [
   {
-   "date": "2026-10-27",
-   "code": "4063",
-   "name": "信越化学工業",
-   "rev_avg": 714821833330
-  },
-  {
    "date": "2026-10-28",
    "code": "6501",
    "name": "日立製作所",
@@ -217,7 +211,7 @@
    "date": "2026-10-30",
    "code": "285A",
    "name": "キオクシア",
-   "rev_avg": 2453932555560
+   "rev_avg": 2448642555560
   },
   {
    "date": "2026-10-30",
