@@ -2,46 +2,6 @@
  "saved_at": "2026-10-26",
  "events": [
   {
-   "date": "2026-10-28",
-   "time": "",
-   "event": "FOMC結果発表（日本時間は翌朝未明）",
-   "country": "",
-   "importance": "high",
-   "category": "FRB"
-  },
-  {
-   "date": "2026-10-28",
-   "time": "",
-   "event": "決算 MSFT（早朝）",
-   "country": "",
-   "importance": "high",
-   "category": "指標"
-  },
-  {
-   "date": "2026-10-28",
-   "time": "",
-   "event": "決算 GOOGL（早朝）",
-   "country": "",
-   "importance": "high",
-   "category": "指標"
-  },
-  {
-   "date": "2026-10-28",
-   "time": "",
-   "event": "決算 日立製作所（決算）",
-   "country": "",
-   "importance": "high",
-   "category": "指標"
-  },
-  {
-   "date": "2026-10-28",
-   "time": "",
-   "event": "決算 アドバンテスト（決算）",
-   "country": "",
-   "importance": "high",
-   "category": "指標"
-  },
-  {
    "date": "2026-10-29",
    "time": "",
    "event": "決算 AMZN（早朝）",
@@ -61,6 +21,38 @@
    "date": "2026-10-29",
    "time": "",
    "event": "決算 オリエンタルランド（決算）",
+   "country": "",
+   "importance": "high",
+   "category": "指標"
+  },
+  {
+   "date": "2026-10-30",
+   "time": "",
+   "event": "決算 村田製作所（決算）",
+   "country": "",
+   "importance": "high",
+   "category": "指標"
+  },
+  {
+   "date": "2026-10-30",
+   "time": "",
+   "event": "決算 TDK（決算）",
+   "country": "",
+   "importance": "high",
+   "category": "指標"
+  },
+  {
+   "date": "2026-10-30",
+   "time": "",
+   "event": "決算 キオクシア（決算）",
+   "country": "",
+   "importance": "high",
+   "category": "指標"
+  },
+  {
+   "date": "2026-10-30",
+   "time": "",
+   "event": "決算 東京エレクトロン（決算）",
    "country": "",
    "importance": "high",
    "category": "指標"
@@ -122,14 +114,6 @@
    "event": "決算 キオクシア"
   },
   {
-   "date": "2026-10-27",
-   "time": "決算",
-   "country": "JP",
-   "category": "決算",
-   "importance": "high",
-   "event": "決算 信越化学工業"
-  },
-  {
    "date": "2026-10-30",
    "time": "決算",
    "country": "JP",
@@ -172,18 +156,6 @@
  ],
  "upcoming_earnings": [
   {
-   "date": "2026-10-28",
-   "code": "6501",
-   "name": "日立製作所",
-   "rev_avg": 2924808344600
-  },
-  {
-   "date": "2026-10-28",
-   "code": "6857",
-   "name": "アドバンテスト",
-   "rev_avg": 427049437530
-  },
-  {
    "date": "2026-10-29",
    "code": "9202",
    "name": "ANAホールディングス",
@@ -199,13 +171,13 @@
    "date": "2026-10-30",
    "code": "6981",
    "name": "村田製作所",
-   "rev_avg": 560588030150
+   "rev_avg": 563930527270
   },
   {
    "date": "2026-10-30",
    "code": "6762",
    "name": "TDK",
-   "rev_avg": 772429276270
+   "rev_avg": 779120873210
   },
   {
    "date": "2026-10-30",
