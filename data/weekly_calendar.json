@@ -2,30 +2,6 @@
  "saved_at": "2026-10-26",
  "events": [
   {
-   "date": "2026-10-29",
-   "time": "",
-   "event": "決算 AMZN（早朝）",
-   "country": "",
-   "importance": "high",
-   "category": "指標"
-  },
-  {
-   "date": "2026-10-29",
-   "time": "",
-   "event": "決算 ANAホールディングス（決算）",
-   "country": "",
-   "importance": "high",
-   "category": "指標"
-  },
-  {
-   "date": "2026-10-29",
-   "time": "",
-   "event": "決算 オリエンタルランド（決算）",
-   "country": "",
-   "importance": "high",
-   "category": "指標"
-  },
-  {
    "date": "2026-10-30",
    "time": "",
    "event": "決算 村田製作所（決算）",
@@ -63,14 +39,6 @@
    "country": "US",
    "category": "決算",
    "importance": "high",
-   "event": "決算 MSFT"
-  },
-  {
-   "date": "2026-10-28",
-   "time": "早朝",
-   "country": "US",
-   "category": "決算",
-   "importance": "high",
    "event": "決算 GOOGL"
   },
   {
@@ -98,14 +66,6 @@
    "event": "決算 TDK"
   },
   {
-   "date": "2026-10-28",
-   "time": "決算",
-   "country": "JP",
-   "category": "決算",
-   "importance": "high",
-   "event": "決算 日立製作所"
-  },
-  {
    "date": "2026-10-30",
    "time": "決算",
    "country": "JP",
@@ -120,14 +80,6 @@
    "category": "決算",
    "importance": "high",
    "event": "決算 東京エレクトロン"
-  },
-  {
-   "date": "2026-10-28",
-   "time": "決算",
-   "country": "JP",
-   "category": "決算",
-   "importance": "high",
-   "event": "決算 アドバンテスト"
   },
   {
    "date": "2026-10-29",
@@ -155,18 +107,6 @@
   }
  ],
  "upcoming_earnings": [
-  {
-   "date": "2026-10-29",
-   "code": "9202",
-   "name": "ANAホールディングス",
-   "rev_avg": 709217750000
-  },
-  {
-   "date": "2026-10-29",
-   "code": "4661",
-   "name": "オリエンタルランド",
-   "rev_avg": 161954093160
-  },
   {
    "date": "2026-10-30",
    "code": "6981",
