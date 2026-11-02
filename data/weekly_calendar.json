@@ -1,136 +1,136 @@
 {
- "saved_at": "2026-10-26",
+ "saved_at": "2026-11-02",
  "events": [
   {
-   "date": "2026-10-30",
+   "date": "2026-11-02",
    "time": "",
-   "event": "決算 村田製作所（決算）",
+   "event": "決算 AAPL（早朝）",
    "country": "",
    "importance": "high",
    "category": "指標"
   },
   {
-   "date": "2026-10-30",
+   "date": "2026-11-04",
    "time": "",
-   "event": "決算 TDK（決算）",
+   "event": "決算 NTT（決算）",
    "country": "",
    "importance": "high",
    "category": "指標"
   },
   {
-   "date": "2026-10-30",
+   "date": "2026-11-04",
    "time": "",
-   "event": "決算 キオクシア（決算）",
+   "event": "決算 IHI（決算）",
    "country": "",
    "importance": "high",
    "category": "指標"
   },
   {
-   "date": "2026-10-30",
+   "date": "2026-11-04",
    "time": "",
-   "event": "決算 東京エレクトロン（決算）",
+   "event": "決算 三菱商事（決算）",
    "country": "",
    "importance": "high",
    "category": "指標"
   },
   {
-   "date": "2026-10-28",
+   "date": "2026-11-05",
+   "time": "",
+   "event": "決算 トヨタ自動車（決算）",
+   "country": "",
+   "importance": "high",
+   "category": "指標"
+  },
+  {
+   "date": "2026-11-05",
+   "time": "",
+   "event": "決算 ダイキン工業（決算）",
+   "country": "",
+   "importance": "high",
+   "category": "指標"
+  },
+  {
+   "date": "2026-11-06",
+   "time": "",
+   "event": "米雇用統計（夜・原則第1金曜）",
+   "country": "",
+   "importance": "high",
+   "category": "指標"
+  },
+  {
+   "date": "2026-11-06",
+   "time": "",
+   "event": "決算 KDDI（決算）",
+   "country": "",
+   "importance": "high",
+   "category": "指標"
+  },
+  {
+   "date": "2026-11-02",
    "time": "早朝",
    "country": "US",
    "category": "決算",
    "importance": "high",
-   "event": "決算 GOOGL"
+   "event": "決算 AAPL"
   },
   {
-   "date": "2026-10-29",
-   "time": "早朝",
-   "country": "US",
-   "category": "決算",
-   "importance": "high",
-   "event": "決算 AMZN"
-  },
-  {
-   "date": "2026-10-30",
+   "date": "2026-11-05",
    "time": "決算",
    "country": "JP",
    "category": "決算",
    "importance": "high",
-   "event": "決算 村田製作所"
+   "event": "決算 トヨタ自動車"
   },
   {
-   "date": "2026-10-30",
+   "date": "2026-11-04",
    "time": "決算",
    "country": "JP",
    "category": "決算",
    "importance": "high",
-   "event": "決算 TDK"
+   "event": "決算 NTT"
   },
   {
-   "date": "2026-10-30",
+   "date": "2026-11-06",
    "time": "決算",
    "country": "JP",
    "category": "決算",
    "importance": "high",
-   "event": "決算 キオクシア"
+   "event": "決算 KDDI"
   },
   {
-   "date": "2026-10-30",
+   "date": "2026-11-05",
    "time": "決算",
    "country": "JP",
    "category": "決算",
    "importance": "high",
-   "event": "決算 東京エレクトロン"
+   "event": "決算 ダイキン工業"
   },
   {
-   "date": "2026-10-29",
+   "date": "2026-11-06",
    "time": "決算",
    "country": "JP",
    "category": "決算",
    "importance": "high",
-   "event": "決算 ANAホールディングス"
+   "event": "決算 三菱重工業"
   },
   {
-   "date": "2026-10-29",
+   "date": "2026-11-04",
    "time": "決算",
    "country": "JP",
    "category": "決算",
    "importance": "high",
-   "event": "決算 オリエンタルランド"
+   "event": "決算 IHI"
   },
   {
-   "date": "2026-10-26",
-   "time": "12:36",
-   "country": "world",
-   "category": "天体",
-   "importance": "low",
-   "event": "🌕 満月（ハンターズムーン）"
+   "date": "2026-11-04",
+   "time": "決算",
+   "country": "JP",
+   "category": "決算",
+   "importance": "high",
+   "event": "決算 三菱商事"
   }
  ],
  "upcoming_earnings": [
-  {
-   "date": "2026-10-30",
-   "code": "6981",
-   "name": "村田製作所",
-   "rev_avg": 563930527270
-  },
-  {
-   "date": "2026-10-30",
-   "code": "6762",
-   "name": "TDK",
-   "rev_avg": 779120873210
-  },
-  {
-   "date": "2026-10-30",
-   "code": "285A",
-   "name": "キオクシア",
-   "rev_avg": 2448642555560
-  },
-  {
-   "date": "2026-10-30",
-   "code": "8035",
-   "name": "東京エレクトロン",
-   "rev_avg": 900597295030
-  },
   {
    "date": "2026-11-04",
    "code": "9432",
