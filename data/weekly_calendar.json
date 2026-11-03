@@ -2,14 +2,6 @@
  "saved_at": "2026-11-02",
  "events": [
   {
-   "date": "2026-11-02",
-   "time": "",
-   "event": "決算 AAPL（早朝）",
-   "country": "",
-   "importance": "high",
-   "category": "指標"
-  },
-  {
    "date": "2026-11-04",
    "time": "",
    "event": "決算 NTT（決算）",
@@ -61,6 +53,14 @@
    "date": "2026-11-06",
    "time": "",
    "event": "決算 KDDI（決算）",
+   "country": "",
+   "importance": "high",
+   "category": "指標"
+  },
+  {
+   "date": "2026-11-06",
+   "time": "",
+   "event": "決算 三菱重工業（決算）",
    "country": "",
    "importance": "high",
    "category": "指標"
