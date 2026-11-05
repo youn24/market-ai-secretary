@@ -2,30 +2,6 @@
  "saved_at": "2026-11-02",
  "events": [
   {
-   "date": "2026-11-04",
-   "time": "",
-   "event": "決算 NTT（決算）",
-   "country": "",
-   "importance": "high",
-   "category": "指標"
-  },
-  {
-   "date": "2026-11-04",
-   "time": "",
-   "event": "決算 IHI（決算）",
-   "country": "",
-   "importance": "high",
-   "category": "指標"
-  },
-  {
-   "date": "2026-11-04",
-   "time": "",
-   "event": "決算 三菱商事（決算）",
-   "country": "",
-   "importance": "high",
-   "category": "指標"
-  },
-  {
    "date": "2026-11-05",
    "time": "",
    "event": "決算 トヨタ自動車（決算）",
@@ -123,24 +99,6 @@
   }
  ],
  "upcoming_earnings": [
-  {
-   "date": "2026-11-04",
-   "code": "9432",
-   "name": "NTT",
-   "rev_avg": 3656213691000
-  },
-  {
-   "date": "2026-11-04",
-   "code": "7013",
-   "name": "IHI",
-   "rev_avg": 427544825880
-  },
-  {
-   "date": "2026-11-04",
-   "code": "8058",
-   "name": "三菱商事",
-   "rev_avg": null
-  },
   {
    "date": "2026-11-05",
    "code": "7203",
