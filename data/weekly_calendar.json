@@ -1,84 +1,136 @@
 {
- "saved_at": "2026-11-02",
+ "saved_at": "2026-11-09",
  "events": [
   {
-   "date": "2026-11-06",
+   "date": "2026-11-09",
    "time": "",
-   "event": "米雇用統計（夜・原則第1金曜）",
+   "event": "決算 商船三井（決算）",
    "country": "",
    "importance": "high",
    "category": "指標"
   },
   {
-   "date": "2026-11-06",
+   "date": "2026-11-10",
    "time": "",
-   "event": "決算 KDDI（決算）",
+   "event": "決算 フジクラ（決算）",
    "country": "",
    "importance": "high",
    "category": "指標"
   },
   {
-   "date": "2026-11-06",
+   "date": "2026-11-10",
    "time": "",
-   "event": "決算 三菱重工業（決算）",
+   "event": "決算 ソフトバンクグループ（決算）",
    "country": "",
    "importance": "high",
    "category": "指標"
   },
   {
-   "date": "2026-11-05",
-   "time": "決算",
-   "country": "JP",
-   "category": "決算",
+   "date": "2026-11-10",
+   "time": "",
+   "event": "決算 川崎重工業（決算）",
+   "country": "",
    "importance": "high",
-   "event": "決算 トヨタ自動車"
+   "category": "指標"
   },
   {
-   "date": "2026-11-06",
-   "time": "決算",
-   "country": "JP",
-   "category": "決算",
+   "date": "2026-11-11",
+   "time": "",
+   "event": "決算 SUMCO（決算）",
+   "country": "",
    "importance": "high",
-   "event": "決算 KDDI"
+   "category": "指標"
   },
   {
-   "date": "2026-11-05",
-   "time": "決算",
-   "country": "JP",
-   "category": "決算",
+   "date": "2026-11-11",
+   "time": "",
+   "event": "決算 レゾナック（決算）",
+   "country": "",
    "importance": "high",
-   "event": "決算 ダイキン工業"
+   "category": "指標"
   },
   {
-   "date": "2026-11-06",
-   "time": "決算",
-   "country": "JP",
-   "category": "決算",
+   "date": "2026-11-13",
+   "time": "",
+   "event": "決算 三菱UFJフィナンシャル（決算）",
+   "country": "",
    "importance": "high",
-   "event": "決算 三菱重工業"
+   "category": "指標"
   },
   {
-   "date": "2026-11-04",
+   "date": "2026-11-10",
    "time": "決算",
    "country": "JP",
    "category": "決算",
    "importance": "high",
-   "event": "決算 IHI"
+   "event": "決算 フジクラ"
+  },
+  {
+   "date": "2026-11-10",
+   "time": "決算",
+   "country": "JP",
+   "category": "決算",
+   "importance": "high",
+   "event": "決算 ソフトバンクグループ"
+  },
+  {
+   "date": "2026-11-10",
+   "time": "決算",
+   "country": "JP",
+   "category": "決算",
+   "importance": "high",
+   "event": "決算 川崎重工業"
+  },
+  {
+   "date": "2026-11-11",
+   "time": "決算",
+   "country": "JP",
+   "category": "決算",
+   "importance": "high",
+   "event": "決算 SUMCO"
+  },
+  {
+   "date": "2026-11-11",
+   "time": "決算",
+   "country": "JP",
+   "category": "決算",
+   "importance": "high",
+   "event": "決算 レゾナック"
+  },
+  {
+   "date": "2026-11-13",
+   "time": "決算",
+   "country": "JP",
+   "category": "決算",
+   "importance": "high",
+   "event": "決算 三菱UFJフィナンシャル"
+  },
+  {
+   "date": "2026-11-09",
+   "time": "決算",
+   "country": "JP",
+   "category": "決算",
+   "importance": "high",
+   "event": "決算 商船三井"
+  },
+  {
+   "date": "2026-11-10",
+   "time": "06:58",
+   "country": "world",
+   "category": "天体",
+   "importance": "low",
+   "event": "🌑 新月"
+  },
+  {
+   "date": "2026-11-13",
+   "time": "00:00",
+   "country": "world",
+   "category": "天体",
+   "importance": "low",
+   "event": "☿ 水星逆行明け（順行に戻る）"
   }
  ],
  "upcoming_earnings": [
-  {
-   "date": "2026-11-06",
-   "code": "9433",
-   "name": "KDDI",
-   "rev_avg": 1568847404440
-  },
-  {
-   "date": "2026-11-06",
-   "code": "7011",
-   "name": "三菱重工業",
-   "rev_avg": 1222029377790
-  },
   {
    "date": "2026-11-09",
    "code": "9104",
