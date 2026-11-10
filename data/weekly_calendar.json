@@ -2,14 +2,6 @@
  "saved_at": "2026-11-09",
  "events": [
   {
-   "date": "2026-11-09",
-   "time": "",
-   "event": "決算 商船三井（決算）",
-   "country": "",
-   "importance": "high",
-   "category": "指標"
-  },
-  {
    "date": "2026-11-10",
    "time": "",
    "event": "決算 フジクラ（決算）",
@@ -31,6 +23,14 @@
    "event": "決算 川崎重工業（決算）",
    "country": "",
    "importance": "high",
+   "category": "指標"
+  },
+  {
+   "date": "2026-11-10",
+   "time": "",
+   "event": "🌑 新月（06:58）",
+   "country": "",
+   "importance": "low",
    "category": "指標"
   },
   {
@@ -132,16 +132,10 @@
  ],
  "upcoming_earnings": [
   {
-   "date": "2026-11-09",
-   "code": "9104",
-   "name": "商船三井",
-   "rev_avg": 537241790999
-  },
-  {
    "date": "2026-11-10",
    "code": "5803",
    "name": "フジクラ",
-   "rev_avg": 426372400000
+   "rev_avg": 425123051670
   },
   {
    "date": "2026-11-10",
