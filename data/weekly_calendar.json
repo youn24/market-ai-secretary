@@ -2,22 +2,6 @@
  "saved_at": "2026-11-09",
  "events": [
   {
-   "date": "2026-11-11",
-   "time": "",
-   "event": "決算 SUMCO（決算）",
-   "country": "",
-   "importance": "high",
-   "category": "指標"
-  },
-  {
-   "date": "2026-11-11",
-   "time": "",
-   "event": "決算 レゾナック（決算）",
-   "country": "",
-   "importance": "high",
-   "category": "指標"
-  },
-  {
    "date": "2026-11-13",
    "time": "",
    "event": "決算 三菱UFJフィナンシャル（決算）",
@@ -40,30 +24,6 @@
    "country": "",
    "importance": "low",
    "category": "指標"
-  },
-  {
-   "date": "2026-11-10",
-   "time": "決算",
-   "country": "JP",
-   "category": "決算",
-   "importance": "high",
-   "event": "決算 フジクラ"
-  },
-  {
-   "date": "2026-11-10",
-   "time": "決算",
-   "country": "JP",
-   "category": "決算",
-   "importance": "high",
-   "event": "決算 ソフトバンクグループ"
-  },
-  {
-   "date": "2026-11-10",
-   "time": "決算",
-   "country": "JP",
-   "category": "決算",
-   "importance": "high",
-   "event": "決算 川崎重工業"
   },
   {
    "date": "2026-11-11",
@@ -107,18 +67,6 @@
   }
  ],
  "upcoming_earnings": [
-  {
-   "date": "2026-11-11",
-   "code": "3436",
-   "name": "SUMCO",
-   "rev_avg": 116985428570
-  },
-  {
-   "date": "2026-11-11",
-   "code": "4004",
-   "name": "レゾナック",
-   "rev_avg": 305266666670
-  },
   {
    "date": "2026-11-13",
    "code": "8306",
