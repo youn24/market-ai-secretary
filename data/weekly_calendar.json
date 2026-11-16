@@ -1,69 +1,22 @@
 {
- "saved_at": "2026-11-09",
+ "saved_at": "2026-11-16",
  "events": [
   {
-   "date": "2026-11-13",
+   "date": "2026-11-17",
    "time": "",
-   "event": "決算 三菱UFJフィナンシャル（決算）",
+   "event": "決算 NVDA（早朝）",
    "country": "",
    "importance": "high",
    "category": "指標"
   },
   {
-   "date": "2026-11-13",
-   "time": "",
-   "event": "オプションSQ",
-   "country": "",
-   "importance": "medium",
-   "category": "指標"
-  },
-  {
-   "date": "2026-11-13",
-   "time": "",
-   "event": "☿ 水星逆行明け（順行に戻る）（00:00）",
-   "country": "",
-   "importance": "low",
-   "category": "指標"
-  },
-  {
-   "date": "2026-11-11",
-   "time": "決算",
-   "country": "JP",
+   "date": "2026-11-17",
+   "time": "早朝",
+   "country": "US",
    "category": "決算",
    "importance": "high",
-   "event": "決算 レゾナック"
-  },
-  {
-   "date": "2026-11-13",
-   "time": "決算",
-   "country": "JP",
-   "category": "決算",
-   "importance": "high",
-   "event": "決算 三菱UFJフィナンシャル"
-  },
-  {
-   "date": "2026-11-10",
-   "time": "06:58",
-   "country": "world",
-   "category": "天体",
-   "importance": "low",
-   "event": "🌑 新月"
-  },
-  {
-   "date": "2026-11-13",
-   "time": "00:00",
-   "country": "world",
-   "category": "天体",
-   "importance": "low",
-   "event": "☿ 水星逆行明け（順行に戻る）"
+   "event": "決算 NVDA"
   }
  ],
- "upcoming_earnings": [
-  {
-   "date": "2026-11-13",
-   "code": "8306",
-   "name": "三菱UFJフィナンシャル",
-   "rev_avg": 1772561201250
-  }
- ]
+ "upcoming_earnings": []
 }
