@@ -58,6 +58,7 @@ jobs:
           # 為替シグナルはFX専用グループへ送る。未設定ならメイン側に落ちる
           TELEGRAM_FX_CHAT_ID: ${{ secrets.TELEGRAM_FX_CHAT_ID }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
         run: |
           python monitor_run.py
 

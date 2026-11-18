@@ -72,6 +72,7 @@ jobs:
           TELEGRAM_FX_CHAT_ID:   ${{ secrets.TELEGRAM_FX_CHAT_ID }}
           TELEGRAM_FX_BOT_TOKEN: ${{ secrets.TELEGRAM_FX_BOT_TOKEN }}
           GEMINI_API_KEY:        ${{ secrets.GEMINI_API_KEY }}
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
           GITHUB_PAGES_URL:      "https://youn24.github.io/market-ai-secretary"
           PYTHONIOENCODING:      "utf-8"
           PYTHONUTF8:            "1"

@@ -61,6 +61,18 @@ def _fetch_series(sid: str, tries: int = 2) -> pd.Series | None:
        （2026-09-09に4系列すべて ConnectionReset を実測）。
        1回で諦めると、その日のマクロ欄が丸ごと消える。少し待って試し直す。
     """
+    # 公式API（鍵つき）を第一手にする。CSV口は2026-09以降ブロックされている。
+    # 詳しい経緯は src/fred_data.py の _fetch_api を参照。
+    try:
+        from src.fred_data import _fetch_api
+        rows = _fetch_api(sid, 400)
+        if rows:
+            df = pd.DataFrame(rows, columns=["date", "value"])
+            return pd.Series(df["value"].astype(float).values,
+                             index=pd.to_datetime(df["date"]))
+    except Exception:
+        logger.debug(traceback.format_exc())
+
     # fred_data と遮断器を共有する。どちらかで全滅と分かったら、
     # もう一方も待たずにキャッシュへ回る（同じFREDなので当然同時に落ちている）。
     try:

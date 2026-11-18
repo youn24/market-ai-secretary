@@ -2,6 +2,7 @@
 L4c: FRB経済指標（FRED）取得モジュール
 APIキー不要でGDP・CPI・失業率・FF金利・イールドカーブを取得
 """
+import os
 import urllib.request
 import ssl
 import time
@@ -102,6 +103,46 @@ def mark_fred_down(reason: str = "") -> None:
     _FRED_DOWN = True
 
 
+def _fetch_api(series_id: str, limit: int) -> list:
+    """FRED公式API（api.stlouisfed.org）から取る。鍵が無ければ None。
+
+    ⚠️ 2026-11-19に判明: **CSV口（fredgraph.csv）だけがブロックされていた。**
+       09-10以降ずっとタイムアウトし、キャッシュも一度も作れないまま
+       2ヶ月間マクロ関連（マクロ環境・政策金利・マクロ信用・FRED指標）が
+       全滅していた。同時刻に公式APIを叩くと **HTTP 200・1.1秒** で返る。
+       鍵は .env / GitHub Secrets の FRED_API_KEY にある。
+
+       公式APIを第一手にし、鍵が無い環境でだけ従来のCSV口に落ちる。
+    """
+    key = (os.getenv("FRED_API_KEY") or "").strip()
+    if not key:
+        return None
+    url = ("https://api.stlouisfed.org/fred/series/observations"
+           f"?series_id={series_id}&api_key={key}&file_type=json"
+           f"&sort_order=desc&limit={max(limit, 60)}")
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+    try:
+        o = json.loads(urllib.request.urlopen(req, context=_ctx, timeout=20)
+                       .read().decode("utf-8"))
+    except Exception as e:
+        # ⚠️ 400 は「その系列が無い」という意味（WILL5000PRFC など廃止系列）。
+        #    FREDは生きているので、CSV口に落ちて27秒待ったうえに
+        #    遮断器を誤って倒し、**後続の系列まで全部キャッシュ送りになる**。
+        #    系列が無いだけなら、そこで打ち切る。
+        if "400" in str(e):
+            logger.info(f"FRED: 系列 {series_id} は取得できません（廃止または名称変更）")
+            return "no_such_series"
+        logger.warning(f"FRED公式API 失敗 {series_id}: {e}")
+        return None
+    rows = []
+    for ob in reversed(o.get("observations") or []):      # 古い順に戻す
+        v = ob.get("value")
+        if v in (".", "", None):
+            continue
+        rows.append([ob.get("date"), v])
+    return rows or None
+
+
 def _fetch_series(series_id: str, limit: int = 24, tries: int = 2) -> list:
     """FREDからCSVデータを取得（API不要）
 
@@ -111,6 +152,14 @@ def _fetch_series(series_id: str, limit: int = 24, tries: int = 2) -> list:
        「データなし」で落ちていた。少し待って試し直す。
        同じ対策を src/fundamental_signals.py にも入れてある。
     """
+    # 公式APIを第一手にする（CSV口はブロックされている）
+    _api = _fetch_api(series_id, limit)
+    if _api == "no_such_series":
+        return []                      # FREDは生きている。CSVを試す意味がない
+    if _api:
+        _cache_put(series_id, _api[-60:])
+        return _api[-limit:]
+
     # 既に全滅と分かっているなら待たない。キャッシュがあれば使う。
     if _FRED_DOWN:
         cached, age = _cache_get(series_id)

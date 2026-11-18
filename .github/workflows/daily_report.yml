@@ -153,6 +153,7 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
           GITHUB_PAGES_URL: "https://youn24.github.io/market-ai-secretary"
         run: |
           echo "🤖 完全自律AIチームシステムを起動..."
