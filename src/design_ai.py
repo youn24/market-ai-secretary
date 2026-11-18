@@ -2594,6 +2594,7 @@ def generate(
     retail_heat: dict = None,   # 個人投資家の過熱度
     macro_regime: dict = None,  # マクロ環境（実質金利など）
     bargain: dict = None,       # 割安株（グレアム基準・月曜のみ）
+    fear: dict = None,          # 恐怖指数の位置（フィードカードの重要度に使う）
     history: dict = None,       # 主要4指標の1ヶ月推移（自前SVGチャート）
     daytrade: dict = None,      # 今日動きやすい銘柄（寄り前スクリーニング）
     holdings: dict = None,      # 保有銘柄の含み損益
@@ -2653,6 +2654,19 @@ def generate(
     scr_html   = _screener_section(jquants)
     hist_html  = _history_section(history)
     bargain_html = _bargain_section(bargain)
+
+    # 📰 一番上に置く「結論カード」。レポートは区画が40以上あり、
+    #    いちばん知りたいことが下の方まで探さないと分からなかった。
+    try:
+        from src.feed_card import build as _build_feed
+        feed_html = _build_feed(
+            prices=prices, risk=risk, internals=nikkei_internals,
+            ai_summary=ai_summary, scenario=scenario,
+            market_driver=market_driver, news=news,
+            sector_ranking=sector_ranking, fear=fear, mode=mode)
+    except Exception:
+        logger.error("フィードカードを作れませんでした", exc_info=True)
+        feed_html = ""
     heat_html  = _retail_heat_section(retail_heat)
     hotstk_html = _hot_stocks_section(hot_stocks)
     stw_html   = _stocktwits_section(stocktwits)
@@ -2711,6 +2725,7 @@ def generate(
 <!-- ── メインコンテンツ ── -->
 <div class="wrap" style="padding:12px 13px 36px" id="main">
 
+  {feed_html}
   {hero_html}
   {brief_html}
   {q4_html}
@@ -2881,6 +2896,7 @@ def run(
     retail_heat: dict        = None,
     macro_regime: dict       = None,
     bargain: dict            = None,
+    fear: dict               = None,
     history: dict            = None,
     daytrade: dict           = None,
     holdings: dict           = None,
@@ -2912,7 +2928,7 @@ def run(
             history=history, daytrade=daytrade, holdings=holdings,
             hot_stocks=hot_stocks, stocktwits=stocktwits,
             retail_heat=retail_heat, macro_regime=macro_regime,
-            bargain=bargain,
+            bargain=bargain, fear=fear,
         )
         # 生成できたと言い切る前に、ファイルが実在し中身があるかを必ず確かめる。
         # ここを検証していなかったため、本番で生成に失敗していたことに

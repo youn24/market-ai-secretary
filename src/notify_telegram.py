@@ -635,7 +635,8 @@ def _build_unified_caption(risk, prices, fear_greed, ai_summary,
                            upcoming=None, shareholder=None,
                            sector_ranking=None, rating=None,
                            technical=None, holdings=None,
-                           daytrade=None) -> str:
+                           daytrade=None, fear=None,
+                           nikkei_internals=None) -> str:
     """
     朝レポートを1通に集約したときのキャプション（Telegram上限1024字）。
 
@@ -652,11 +653,44 @@ def _build_unified_caption(risk, prices, fear_greed, ai_summary,
     tl, mood = _mood(score)
     score_s  = f"+{score:.1f}" if score >= 0 else f"{score:.1f}"
 
+    # ⚠️ 2026-11-19 構成変更: いちばん大事な「結論」が真ん中あたりに
+    #    埋もれていた（⚖️ の行が blocks の後ろの方にあった）。
+    #    公開レポートの先頭に置いたフィードカードと同じ並びに揃える:
+    #        重要度 → 📌結論 → 数字 → 詳細 → レポートへ
+    #    結論は head に入れるので、字数が溢れても**絶対に落ちない**。
+
+    # 重要度はフィードカードと同じ計算を使う（同じ日に違う重要度を出さない）
+    _imp = None
+    try:
+        from src.feed_card import _importance as _calc_imp, _breadth as _calc_br
+        _nk_chg = ((prices or {}).get("^N225") or {}).get("change_pct")
+        _imp = _calc_imp(_nk_chg, score,
+                         (fear or {}).get("nvi_pctile"),
+                         _calc_br(nikkei_internals))
+    except Exception:
+        logger.debug("重要度を出せませんでした", exc_info=True)
+    _stars = ("★" * _imp + "☆" * (5 - _imp)) if _imp else ""
+
     head = [
-        f"🤖 *市場AI秘書* | {today}（{weekday}）",
+        f"🐘 *市場AI秘書* ｜ {today}（{weekday}）"
+        + (f"　{_stars}" if _stars else ""),
         "━━━━━━━━━━━━━━",
-        f"{tl} *{mood}*　スコア `{score_s}`",
     ]
+
+    # 📌 3秒で結論 — いちばん上。読むのをここで止めても損をしないように
+    _concl = ""
+    try:
+        for _c in ((ai_summary or {}).get("neutral_view"),
+                   (market_driver or {}).get("summary")):
+            if isinstance(_c, str) and _c.strip():
+                _concl = _c.strip()[:150]
+                break
+    except Exception:
+        pass
+    if _concl:
+        head += [f"📌 *3秒で結論*", _concl, ""]
+
+    head.append(f"{tl} *{mood}*　スコア `{score_s}`")
     _sc = _score_context(score)
     if _sc:
         head.append(f"　{_sc}")
@@ -672,6 +706,19 @@ def _build_unified_caption(risk, prices, fear_greed, ai_summary,
         if _o.get("available"):
             _ar = "🔺" if _o["diff_yen"] > 0 else "🔻"
             head.append(f"{_ar} 寄り付き目安 *{_o['diff_yen']:+,}円*（{_o['band']}）")
+            # ⚠️ スコア（地合い）と寄り付きの向きが逆を向く日がある。
+            #    「🟢 やや強気」の2行下に「🔻 -514円」が並ぶと、
+            #    読む人はどちらを信じればいいか分からない。
+            #    別々の材料から出た数字なので食い違うこと自体は普通だが、
+            #    **黙って並べず、食い違っていると書く**のが親切。
+            #    （スコア=米国株・VIX・金・為替の合成／寄り付き=日経先物と東京終値の差）
+            try:
+                _d = _o["diff_yen"]
+                if (score >= 1 and _d <= -150) or (score <= -1 and _d >= 150):
+                    head.append("　⚠️ 地合いと寄り付きの向きが食い違っています。"
+                                "どちらに転んでもいいよう、いつもより小さく構える場面です")
+            except Exception:
+                pass
         if _r.get("available"):
             _ic = {"警戒": "🔴", "やや警戒": "🟠",
                    "やや高い": "🟡", "普通": "⚪"}.get(_r["level"], "🟢")
@@ -872,8 +919,11 @@ def _build_unified_caption(risk, prices, fear_greed, ai_summary,
             mac.append(f"{s.get('emoji','')} {s.get('title','')}　{s.get('value','')}")
 
     # ── AIの一言 ──
+    # ⚠️ 結論は head の「📌 3秒で結論」へ移した。ここで同じ文をもう一度
+    #    出すと同じことを二度言うことになるので、**head に出せなかった日だけ**
+    #    予備として出す。
     ai_one = ""
-    if (ai_summary or {}).get("available"):
+    if not _concl and (ai_summary or {}).get("available"):
         ai_one = ((ai_summary.get("neutral_view") or "")[:110]).strip()
     ai_blk = [f"⚖️ {ai_one}"] if ai_one else []
 
@@ -1037,7 +1087,7 @@ def _build_unified_caption(risk, prices, fear_greed, ai_summary,
     except Exception:
         logger.error("デイトレ候補の行を作れませんでした", exc_info=True)
 
-    foot = ["👇 3シナリオ・チャート・全データはレポートへ"]
+    foot = ["👇 *続きはレポートで*　なぜ動いたかの連鎖・3シナリオ・チャート"]
 
     # 優先度の低い順に落として1024字に収める
     # 並びは src/priority.py の帯に合わせる。
@@ -1401,7 +1451,7 @@ def run(risk, analysis, report_paths, mode,
         macro_regime=None, policy=None, market_driver=None,
         sentiment=None, risk_sentiment=None,
         hot_stocks=None, stocktwits=None, retail_heat=None,
-        holdings=None, daytrade=None,
+        holdings=None, daytrade=None, fear=None,
         shareholder=None, sector_ranking=None,
         video_path=None,
         # ⚠️ **_extra を必ず残すこと。
@@ -1440,6 +1490,7 @@ def run(risk, analysis, report_paths, mode,
             risk_sentiment=risk_sentiment, hot_stocks=hot_stocks,
             stocktwits=stocktwits, retail_heat=retail_heat,
             holdings=holdings, daytrade=daytrade,
+            fear=fear, nikkei_internals=nikkei_internals,
             # 2026-08-26: この2つは引数で受け取るだけで一度も使っていなかった。
             # 決算PDFをGeminiで要約しては捨てていたことになる。
             earnings_brief=earnings_brief, earnings_preview=earnings_preview,

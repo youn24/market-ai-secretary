@@ -1104,6 +1104,18 @@ def run(mode: str):
     except Exception:
         logger.error("割安株スキャナーエラー", exc_info=True)
 
+    # Step FW: 恐怖指数の位置（レポート最上部のフィードカードの重要度に使う）
+    # 通知は monitor_run が担当。ここでは判定だけして渡す。
+    fear = {"available": False}
+    try:
+        from src.fear_watch import run as run_fw
+        fear = run_fw()
+        if fear.get("available"):
+            logger.info(f"✅ 恐怖指数: 日経VI {fear.get('nvi')}"
+                        f"（{(fear.get('zone') or {}).get('name')}）")
+    except Exception:
+        logger.error("恐怖指数の判定エラー", exc_info=True)
+
     # Step PH: 主要4指標の1ヶ月推移（レポートの自前SVGチャート用）
     # 既存のチャートはTradingViewの埋め込みで、全部「今日1日」の足。
     # 1ヶ月の比較が無かったので、ここで取る。外部が落ちても出るように自前で描く。
@@ -1269,7 +1281,7 @@ def run(mode: str):
             # スクリーニングも実行だけして表示していなかった（決算と同じ形）
             jquants=jquants,
             history=history, daytrade=daytrade, holdings=holdings,
-            bargain=bargain,
+            bargain=bargain, fear=fear,
             mode=mode,
         )
         # 公開ページが更新されたことを必ず確認する。
@@ -1390,7 +1402,7 @@ def run(mode: str):
                   earnings_preview=earnings_preview,
                   market_chain=market_chain,
                   jquants=jquants,
-                  holdings=holdings, daytrade=daytrade,
+                  holdings=holdings, daytrade=daytrade, fear=fear,
                   character_comments=character_comments,
                   macro=macro, tdnet=tdnet, earnings_brief=earnings_brief,
                   catalyst=catalyst,
