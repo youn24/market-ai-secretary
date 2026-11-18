@@ -30,7 +30,17 @@ from src.utils import setup_logger
 
 logger = setup_logger("nikkei_market_data")
 
-_URL = "https://nikkei225jp.com/_data/_nfsDATA/DAY/daily2year.json"
+# ⚠️ 2026-11-19: データ元が置き場所のフォルダ名を **DAY → data_DAY** に変えた
+#    （旧URLは404）。これに気づかず、日経内部データとバリュエーションが
+#    10月下旬から止まっていた。形式（var DAILY = [[...]]）も列の意味も変更なし。
+#    また同じことが起きるので、候補を順に試し、**どれも駄目なら理由をログに残す**。
+#    新しいURLは https://nikkei225jp.com/data/touraku.php の中を
+#    「_nfsDATA」で検索すると見つかる。
+_URLS = [
+    "https://nikkei225jp.com/_data/_nfsDATA/data_DAY/daily2year.json",   # 2026-11以降
+    "https://nikkei225jp.com/_data/_nfsDATA/DAY/daily2year.json",        # 旧（404）
+]
+_URL = _URLS[0]
 _HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
                   "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
@@ -78,9 +88,46 @@ def _f(v):
         return None
 
 
+def _discover_url() -> str | None:
+    """配布ページを読んで、今の daily2year.json の場所を見つける。
+
+    置き場所がまた変わっても、人が探しに行かなくて済むようにする。
+    """
+    try:
+        html = requests.get("https://nikkei225jp.com/data/touraku.php",
+                            headers=_HEADERS, timeout=15).text
+        m = re.search(r'[\w/._-]*_nfsDATA[\w/._-]*daily2year\.json', html)
+        if m:
+            path = m.group(0)
+            url = path if path.startswith("http") else \
+                "https://nikkei225jp.com" + ("" if path.startswith("/") else "/") + path
+            logger.info(f"日経データの新しい置き場所を見つけました: {url}")
+            return url
+    except Exception as e:
+        logger.debug(f"置き場所の探索に失敗: {e}")
+    return None
+
+
 def fetch_daily() -> list:
     """daily2year.json を取得してパース。新しい順ではなく古い→新しい順のまま返す"""
-    r = requests.get(_URL, headers=_HEADERS, timeout=15)
+    errs = []
+    r = None
+    for u in _URLS:
+        try:
+            rr = requests.get(u, headers=_HEADERS, timeout=15)
+            if rr.status_code == 200 and "DAILY" in rr.text[:200]:
+                r = rr
+                break
+            errs.append(f"{u.rsplit('/', 2)[-2]}: HTTP {rr.status_code}")
+        except Exception as e:
+            errs.append(f"{u.rsplit('/', 2)[-2]}: {type(e).__name__}")
+    if r is None:
+        # 既知のURLが全部駄目なら、配布ページから探しに行く
+        found = _discover_url()
+        if found:
+            r = requests.get(found, headers=_HEADERS, timeout=15)
+        else:
+            raise RuntimeError("日経データの取得先が見つかりません（" + " / ".join(errs) + "）")
     r.raise_for_status()
     rows = _sanitize_js_array(r.content.decode("utf-8", errors="replace"))
     # 日経終値が入っている有効行だけ残す（休場・データ無し行を除外）
