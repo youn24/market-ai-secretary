@@ -64,6 +64,17 @@ C_YIELD = 16             # 配当利回り(%)  ← 以前[14]と誤っていた�
 C_USDJPY, C_EURJPY = 17, 18
 C_SHORT_REG, C_SHORT_NOREG = 22, 24
 
+# 売買代金（百万円）。空売り比率の母数になっている3つの合計。
+#   [19] 実売買（空売りでない）／[21] 空売り(規制あり)／[23] 空売り(規制なし)
+# ⚠️ 2026-11-19 に**オーナー提供のみんかぶ画像と突き合わせて確定**した:
+#   2026-11-06 … こちらの合計 13.72兆円 ／ みんかぶ「東証プライム」12.48兆円
+#   比は91.0%で、プライムが東証全体に占める割合とちょうど一致する。
+#   同じ日の日経終値 57,434.77円・値下がり1,523銘柄も1円1銘柄まで一致した。
+#   → この合計は **東証全体（プライム＋スタンダード＋グロース）** の売買代金。
+#      「プライムの売買代金」として出すと約1割多い数字になるので、
+#      表示するときは必ず「東証全体」と書くこと。
+C_VAL_PLAIN, C_VAL_SREG, C_VAL_SNOREG = 19, 21, 23
+
 
 def _sanitize_js_array(text: str) -> list:
     """var DAILY = [...]; を Python リストへ。空フィールドの ,, を ,"" に補正してパース"""
@@ -310,6 +321,11 @@ def run(prices: dict = None, risk: dict = None, fear_greed: dict = None) -> dict
     bps = round(close / pbr, 0) if (close and pbr) else None        # 1株純資産
     spread = round(earnings_yield - jgb10, 2) if (earnings_yield is not None and jgb10 is not None) else None
 
+    # 売買代金（東証全体・百万円）。3つのうち1つでも欠けたら出さない
+    #   （一部だけ足した数字を「売買代金」と呼ぶと実際より小さく見える）
+    _v = [_f(last[i]) for i in (C_VAL_PLAIN, C_VAL_SREG, C_VAL_SNOREG)]
+    turnover_total = sum(_v) if all(isinstance(x, (int, float)) for x in _v) else None
+
     short_reg   = _f(last[C_SHORT_REG]) or 0
     short_noreg = _f(last[C_SHORT_NOREG]) or 0
     short_total = round(short_reg + short_noreg, 1) if (short_reg or short_noreg) else None
@@ -360,6 +376,7 @@ def run(prices: dict = None, risk: dict = None, fear_greed: dict = None) -> dict
         "trk6": trk6,
         "trk25_comment": _trk_comment(trk25),
         "short_ratio": short_total,
+        "turnover_total": turnover_total,   # 東証全体の売買代金（百万円）
         "short_reg": round(short_reg, 1) if short_reg else None,
         "short_noreg": round(short_noreg, 1) if short_noreg else None,
         "short_comment": _short_comment(short_total),

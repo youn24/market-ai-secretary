@@ -2663,7 +2663,7 @@ def generate(
             prices=prices, risk=risk, internals=nikkei_internals,
             ai_summary=ai_summary, scenario=scenario,
             market_driver=market_driver, news=news,
-            sector_ranking=sector_ranking, fear=fear, mode=mode)
+            sector_ranking=sector_ranking, fear=fear, policy=policy, mode=mode)
     except Exception:
         logger.error("フィードカードを作れませんでした", exc_info=True)
         feed_html = ""
