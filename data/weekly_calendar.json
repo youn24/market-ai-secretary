@@ -3,14 +3,6 @@
  "events": [
   {
    "date": "2026-11-17",
-   "time": "",
-   "event": "決算 NVDA（早朝）",
-   "country": "",
-   "importance": "high",
-   "category": "指標"
-  },
-  {
-   "date": "2026-11-17",
    "time": "早朝",
    "country": "US",
    "category": "決算",
