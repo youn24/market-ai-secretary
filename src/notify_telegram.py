@@ -1586,61 +1586,37 @@ def run(risk, analysis, report_paths, mode,
         # ボタン」の形で送っているので、**その画像を見本どおりにすれば**届く。
         # ⚠️ 作れなかった日に無音にしないこと。feed → 従来カード → チャート
         #    と順に落ちる受け皿を必ず残す（この案件で何度も痛い目に遭っている）。
-        card_path = None
+        # ── 朝の1通は「文字の記事」で送る ──
+        # ⚠️ **写真にしない。** 2026-11-19にオーナーから
+        #    「かなり見にくい」「アップするとぼやける」「クリックせずとも見たい」。
+        #    原因は画像という入れ物そのものだった:
+        #      ・Telegramは写真を圧縮して保存し直すので文字が滲む
+        #      ・チャット内では縮んで表示され、タップしないと読めない
+        #      ・画像の文字は選択もコピーも検索もできない
+        #    文字なら端末の字で描かれるので、**拡大しても絶対に滲まない**。
+        #    しかも本文の上限は写真のキャプション1024字に対し**4096字**で、
+        #    載せられる中身はむしろ増える。
+        text = ""
         try:
-            from src.feed_card import make_feed_image
-            # ⚠️ get_today_str は先頭で import 済み。ここで再importすると
-            #    run() の局所名になり、手前の参照が UnboundLocalError になる
-            #    （CLAUDE.md の既知の罠）。get_dirs だけを取る。
-            from src.utils import get_dirs
-            card_path = make_feed_image(
-                str(get_dirs()["charts"] / f"feed_{get_today_str()}.png"),
+            from src.feed_card import build_text
+            text = build_text(
                 prices=prices, risk=risk, internals=nikkei_internals,
                 ai_summary=ai_summary, market_driver=market_driver,
-                fear=fear, mode=mode,
-                # ⚠️ ここを渡し忘れると、その区画が**静かに消える**だけで
-                #    エラーにならない。画像が短い日は、まずここを疑うこと。
-                scenario=scenario, news=list(news), policy=policy,
-                sector_ranking=sector_ranking,
-            )
+                fear=fear, scenario=scenario, policy=policy, mode=mode)
         except Exception:
-            logger.error("フィード画像の生成エラー（従来カードへ）")
+            logger.error("記事テキストの生成エラー（従来のキャプションへ）")
             logger.debug(traceback.format_exc())
 
-        if not (card_path and os.path.exists(str(card_path))):
-            try:
-                from src.summary_card import make_summary_card
-                card_path = make_summary_card(
-                    prices=prices, fear_greed=fear_greed, risk=risk,
-                    ai_summary=ai_summary, news=list(news),
-                    character_comments=character_comments,
-                )
-            except Exception:
-                logger.error("サマリーカード生成エラー")
-                logger.debug(traceback.format_exc())
+        # 作れなかった日は従来のキャプションで必ず届ける（無音を回避）
+        body = text or caption
 
-        # 画像が作れなければ既存チャートで代替
-        if not (card_path and os.path.exists(str(card_path))):
-            for key in ("overview", "prices", "indices"):
-                p = chart_paths.get(key, "")
-                if p and os.path.exists(str(p)):
-                    card_path = str(p)
-                    break
-
-        sent = False
-        if card_path and os.path.exists(str(card_path)):
-            sent = send_photo_with_button(
-                str(card_path), caption=caption,
-                button_text="📊 フルレポートを開く →",
-                button_url=report_url,
-            )
+        sent = send_message_with_button(
+            text=body,
+            button_text="📖 グラフ・写真・動画つきの記事を開く →",
+            button_url=report_url,
+        )
         if not sent:
-            # 画像がまったく無い場合もテキスト1通で必ず届ける（無音を回避）
-            sent = send_message_with_button(
-                text=caption,
-                button_text="📊 フルレポートを開く →",
-                button_url=report_url,
-            )
+            sent = send_message(body)
 
         logger.info(f"{'✅' if sent else '❌'} 朝レポート送信（1通）")
         return True

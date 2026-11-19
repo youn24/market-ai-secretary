@@ -265,6 +265,28 @@ def _photo(key: str, w: int = 330) -> str:
         return ""
 
 
+def _scenarios(scenario):
+    """3シナリオを [(鍵, 名前, 確率, 本文)] の形に揃える。
+
+    ⚠️ `scenario.run()` が返すのは {"bull":…, "base":…, "bear":…} であって
+       `"scenarios"` という一覧ではない。以前そこを読んでいたため、
+       **レポートでも通知でも3シナリオが丸ごと空だった**
+       （例外にならず静かに消えるので、ログでは気づけない）。
+       取り違えを2か所で繰り返さないよう、ここに一本化する。
+    """
+    out = []
+    for key, nm in (("bull", "強気"), ("base", "中立"), ("bear", "弱気")):
+        e = (scenario or {}).get(key)
+        if not isinstance(e, dict):
+            continue
+        txt = str(e.get("text") or "").replace("\n", " ").strip()
+        if not txt:
+            continue
+        pr = e.get("prob")
+        out.append((key, nm, pr if isinstance(pr, (int, float)) else None, txt))
+    return out
+
+
 def _mo_tag(vals) -> str:
     """小チャートの下に「1ヶ月で何%」を書く。
 
@@ -710,14 +732,12 @@ def build(prices=None, risk=None, internals=None, ai_summary=None,
 
         # ── 🎯 3シナリオ ──
         sc_html = ""
-        scs = (scenario or {}).get("scenarios") or []
+        scs = _scenarios(scenario)
         if scs:
-            icon = {"楽観": ("🟢", _UP), "基本": ("🟡", _WARN), "悲観": ("🔴", _DOWN)}
+            icon = {"強気": ("🟢", _UP), "中立": ("🟡", _WARN), "弱気": ("🔴", _DOWN)}
             rows = ""
-            for s in scs[:3]:
-                nm = str(s.get("name", ""))[:6]
+            for _k, nm, pr, _txt in scs[:3]:
                 ic, cl = icon.get(nm, ("⚪", _DIM))
-                pr = s.get("probability")
                 bar = (f'<div style="height:4px;border-radius:3px;background:{cl};'
                        f'opacity:.75;width:{max(4, min(100, pr))}%;margin-top:3px"></div>'
                        if isinstance(pr, (int, float)) else "")
@@ -948,6 +968,172 @@ def build_compact(prices=None, risk=None, internals=None, ai_summary=None,
             f'text-align:center;line-height:1.85">'
             f'👇 目次をタップして飛べる記事・動画の再生は下のボタンから'
             f'</div></div>')
+
+
+def build_text(prices=None, risk=None, internals=None, ai_summary=None,
+               market_driver=None, fear=None, scenario=None, policy=None,
+               mode="morning", limit=3900) -> str:
+    """Telegramに**文字のまま**送る記事。画像にしない版。
+
+    ⚠️ **なぜ画像をやめたか（2026-11-19・オーナー指摘）**
+       「かなり見にくい」「アップするとぼやける」「クリックせずとも見たい」。
+       原因は画像という入れ物そのものにあった。
+
+       1. Telegramは写真を**圧縮して保存し直す**ので、文字が滲む。
+          縦に長い画像ほど縮小率が大きく、拡大すると崩れる。
+       2. チャットの中では縮めて表示されるので、**タップしないと読めない**。
+       3. 画像の文字は選択もコピーも検索もできない。
+
+       文字で送れば、どれも起きない。**端末の文字で描かれるので、
+       拡大しても絶対に滲まない**し、チャットを開いた時点で読める。
+
+    ⚠️ **字数の上限が写真とは違う。**
+       写真のキャプション = 1024字／**テキストの本文 = 4096字**。
+       画像をやめると、載せられる中身はむしろ4倍に増える。
+       それでも上限はあるので、入り切らない分は下から落とす
+       （大事なものを上に置いてあるので、落ちるのは参考情報から）。
+    """
+    prices, internals = prices or {}, internals or {}
+    nk = _q(prices, "^N225")
+    if not nk and not internals.get("available"):
+        return ""
+
+    now = get_jst_now()
+    score = (risk or {}).get("score")
+    nvi_pct = (fear or {}).get("nvi_pctile")
+    nvi = internals.get("nvi")
+    r = _breadth(internals)
+    imp = _importance(nk["c"] if nk else None, score, nvi_pct, r)
+    when = {"morning": "寄り付き前", "noon": "前場終了後",
+            "evening": "大引け後", "test": "検証"}.get(mode, "")
+
+    def _t(x):
+        """Telegramの書式を壊さないように整える。
+
+        ⚠️ `*` や `_` が奇数個あると Markdown の解析が失敗し、
+           send_message が書式なしで送り直す（＝太字が全部消える）。
+           **強調** はこちらの書き方なので *強調* に直し、
+           残った裸の記号は落とす。
+        """
+        x = str(x or "").replace("**", "\x00")
+        x = x.replace("*", "").replace("_", "").replace("`", "")
+        return x.replace("\x00", "*")
+
+    head = []
+    # 1行目＝見出し。iPhoneのロック画面にはここだけが出る
+    head.append(f"*{_t(_headline(nk, internals))}*")
+    head.append(f"🐘 市場AI秘書 ｜ {now.month}/{now.day}"
+                f"（{_WD[now.weekday()]}）"
+                f"{'　' + when if when else ''}　重要度 {imp}/5")
+    head.append("━━━━━━━━━━━━━━")
+
+    blocks = []
+
+    # 📌 3秒で結論
+    concl = ""
+    for cand in ((ai_summary or {}).get("neutral_view"),
+                 (market_driver or {}).get("summary")):
+        if isinstance(cand, str) and cand.strip():
+            concl = cand.strip()[:220]
+            break
+    if len(concl) < 24 and nk:
+        bits = [f"日経平均は{nk['c']:+.2f}%"]
+        if isinstance(r, (int, float)):
+            side = "下げ" if r >= .5 else "上げ"
+            bits.append(f"{(r if r >= .5 else 1 - r) * 100:.0f}%の銘柄が{side}ました")
+        concl = "。".join(bits) + "。"
+    if concl:
+        blocks.append(("concl", f"📌 *3秒で結論*\n{_t(concl)}"))
+
+    # 📊 本日の数字
+    lines = []
+    for sym, nm, unit in (("^N225", "日経平均", "円"), ("^TOPX", "TOPIX", ""),
+                          ("USDJPY=X", "ドル円", "円")):
+        d = _q(prices, sym)
+        if d:
+            mark = "📈" if d["c"] >= 0 else "📉"
+            lines.append(f"{mark} {nm} {_n(d['v'], 2)}{unit}（{d['c']:+.2f}%）")
+    adv, dec = internals.get("advancing"), internals.get("declining")
+    turn = internals.get("turnover_total")
+    if isinstance(turn, (int, float)):
+        lines.append(f"💰 東証の売買代金 {turn / 1e6:.2f}兆円")
+    if isinstance(adv, (int, float)) and isinstance(dec, (int, float)):
+        pct = dec / max(1, adv + dec) * 100
+        lines.append(f"🔻 値上がり {adv:,.0f} ／ 値下がり {dec:,.0f}"
+                     f"（{pct:.0f}%が下げ）")
+    if isinstance(nvi, (int, float)):
+        pos = (f"・上から{100 - nvi_pct:.0f}%"
+               if isinstance(nvi_pct, (int, float)) else "")
+        lines.append(f"😨 恐怖指数 日経VI {nvi:.1f}{pos}")
+    if lines:
+        blocks.append(("num", "📊 *本日の数字*\n" + "\n".join(lines)))
+
+    # 📋 なぜ動いたのか
+    try:
+        ch = _chain(prices, internals, None, {})
+        if ch:
+            rows = []
+            for c in ch[:3]:
+                rows.append(f"*{c['no']}. {_t(c['title'])}*\n"
+                            f"{_t(c['val'])}　{_t(c['note'])}")
+            blocks.append(("chain", "📋 *なぜ動いたのか*\n" + "\n\n".join(rows)))
+    except Exception:
+        logger.error("連鎖を作れませんでした", exc_info=True)
+
+    # 💱 為替・金利
+    fx = []
+    for sym, nm, unit in (("USDJPY=X", "ドル円", "円"), ("^TNX", "米10年金利", "%"),
+                          ("JP10Y", "日本10年国債", "%")):
+        d = _q(prices, sym)
+        if d:
+            fx.append(f"・{nm} {_n(d['v'], 2)}{unit}（{d['c']:+.2f}%）")
+    if fx:
+        blocks.append(("fx", "💱 *為替・金利*\n" + "\n".join(fx)))
+
+    # 🏦 日銀・政府・政策
+    pol = []
+    for key, icon, nm in (("fed", "🇺🇸", "FRB（米国）"), ("boj", "🇯🇵", "日銀（日本）")):
+        e = (policy or {}).get(key) or {}
+        if isinstance(e.get("rate"), (int, float)):
+            pol.append(f"{icon} {nm} {e['rate']:.2f}%")
+    if pol:
+        blocks.append(("pol", "🏦 *政策金利*\n" + "\n".join(pol)))
+
+    # 🎯 3シナリオ
+    try:
+        rows = []
+        for _k, nm, pr, txt in _scenarios(scenario):
+            ic = {"強気": "🟢", "中立": "🟡", "弱気": "🔴"}.get(nm, "⚪")
+            pr_s = f"（{pr}%）" if pr is not None else ""
+            rows.append(f"{ic} *{nm}*{pr_s} {_t(txt)[:110]}")
+        if rows:
+            blocks.append(("scn", "🎯 *3つの筋書き*\n" + "\n".join(rows)))
+        risk_txt = _t((scenario or {}).get("top_risk") or "")[:130]
+        if risk_txt:
+            blocks.append(("risk", f"⚠️ *いちばんの気がかり*\n{risk_txt}"))
+    except Exception:
+        logger.error("シナリオを作れませんでした", exc_info=True)
+
+    # 🐘 今日の構え
+    act = ("恐怖指数が高い日です。*同じ株数でも損得の振れ幅が大きくなります。*"
+           "株数を減らす・損切りを広めに置く・待つ、のどれかを選ぶ場面。"
+           if isinstance(nvi_pct, (int, float)) and nvi_pct >= 85 else
+           "大きく荒れてはいません。いつもどおりで構いませんが、"
+           "*決めた損切りの線は動かさない*ことだけ守ってください。")
+    blocks.append(("act", f"🐘 *今日の構え*\n{act}"))
+
+    tail = ("📚 出典: 日本経済新聞社・Yahoo Finance・nikkei225jp.com・株探\n"
+            "📖 グラフ・写真・動画つきの記事は下のボタンから")
+
+    # ⚠️ 上から詰めて上限に収める。途中で切らず**ブロックごと落とす**
+    #    （文の途中で切れると意味が変わる。priority.py と同じ考え方）。
+    out = "\n".join(head)
+    for _, b in blocks:
+        if len(out) + len(b) + len(tail) + 6 > limit:
+            logger.info(f"字数のため以降のブロックを省きました（{len(out)}字）")
+            break
+        out += "\n\n" + b
+    return out + "\n\n" + tail
 
 
 def render_png(html: str, out_path: str) -> bool:
