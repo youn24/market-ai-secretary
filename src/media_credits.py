@@ -59,18 +59,22 @@ _OK_LICENSE = ("cc0", "public domain", "cc by", "cc by-sa", "pd-")
 # ⚠️ 説明はこちらで書いた「何の写真か」。中身を見て書くこと。
 #    増やすときは必ず `python -m src.media_credits` で実物を確認してから。
 PHOTOS = {
+    # ⚠️ 説明は**実物を見てから**書くこと。この tse を最初「本館の入口」と
+    #    書いたが、実際には入口の**天井を見上げた写真**だった。
+    #    題名から説明を起こすと、嘘ではないが読み手の思い浮かべる絵と
+    #    食い違う。固定リストにする意味は、ここを人が見ることにある。
     "tse":   ("File:The Entrance of Tokyo Stock Exchange Main Building 20240329.jpg",
-              "東京証券取引所 本館の入口"),
+              "東京証券取引所 本館入口の天井"),
     "tse2":  ("File:Tokyo Stock Exchange Main Building (1988).jpg",
-              "東京証券取引所 本館"),
+              "東京証券取引所 本館（JPXの看板が見える外観）"),
     "boj":   ("File:Bank of Japan building (14490).jpg",
               "日本銀行 本店"),
     "mof":   ("File:Ministry of Finance Building (Japan).jpg",
               "財務省 庁舎"),
     "nyse":  ("File:Sign of the New York Stock Exchange, Broad Street.jpg",
-              "ニューヨーク証券取引所の看板（ブロード通り）"),
+              "ニューヨーク証券取引所の外壁（切り出した看板部分）"),
     "nyse2": ("File:NEW YORK STOCK EXCHANGE 20240521.jpg",
-              "ニューヨーク証券取引所"),
+              "ニューヨーク証券取引所の正面（星条旗の並ぶ列柱）"),
     "fed":   ("File:Eccles Building (26088200676).jpg",
               "米連邦準備制度理事会（FRB）エクルズ・ビル"),
 }
@@ -176,9 +180,14 @@ def photo(key: str) -> dict | None:
         return cache[ck]["v"]
 
     try:
+        # ⚠️ **原寸を読ませない。** この一覧の写真は 5184x3456 のような
+        #    数MBの原板で、172px の枠に出すために読ませるのは、
+        #    相手のサーバーにも利用者の通信量にも失礼。
+        #    `iiurlwidth` を付けると縮小版(thumburl)のURLが返るので必ず使う。
         u = ("https://commons.wikimedia.org/w/api.php?" + urllib.parse.urlencode(
             {"format": "json", "action": "query", "prop": "imageinfo",
-             "iiprop": "url|extmetadata|size", "titles": title}))
+             "iiprop": "url|extmetadata|size", "iiurlwidth": 800,
+             "titles": title}))
         d = json.loads(_get(u, timeout=25))
         pages = list((d.get("query") or {}).get("pages", {}).values())
         if not pages or "missing" in pages[0]:
@@ -193,11 +202,14 @@ def photo(key: str) -> dict | None:
         if not any(k in lic.lower() for k in _OK_LICENSE):
             logger.warning(f"ライセンスが条件外なので使いません: {title} / {lic}")
             return None
-        if not ii.get("url"):
+        # 縮小版があればそれを使う。無い形式のときだけ原板に落ちる。
+        src_url = ii.get("thumburl") or ii.get("url")
+        if not src_url:
             return None
 
         v = {
-            "url": ii["url"],
+            "url": src_url,
+            "full": ii.get("url") or "",
             "page": ii.get("descriptionurl") or "",
             "license": lic,
             "author": _text((em.get("Artist") or {}).get("value"))[:60],

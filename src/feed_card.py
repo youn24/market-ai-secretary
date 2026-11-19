@@ -39,6 +39,7 @@ from src import feed_visuals as V
 logger = setup_logger("feed_card")
 
 _CARD = "rgba(255,255,255,0.045)"
+_BG2 = "#0a0d13"      # 記事の紙面。カードより少しだけ暗く、枠は外側だけ
 _LINE = "rgba(255,255,255,0.10)"
 _TEXT, _DIM = "#eaf0fa", "#8a99ae"
 _UP, _DOWN = "#2fd98a", "#ff4d63"
@@ -117,20 +118,71 @@ def _tone(imp, nk_chg):
     return {"size": sz, "weight": wt, "col": c, "glow": g, "label": lb, "badge": bd}
 
 
+def _pill(text: str) -> str:
+    """文末に付ける小さな出典バッジ。見本の「みんかぶ +1」の形。
+
+    ⚠️ 出典を段落の下に別行で置くと読み飛ばされる。見本どおり
+       **文の終わりに続けて**置くと、どの記述の出どころかが一目で分かる。
+    """
+    if not text:
+        return ""
+    return (f'<span style="display:inline-block;vertical-align:middle;'
+            f'font-size:9px;color:{_DIM};background:rgba(255,255,255,.07);'
+            f'border:1px solid {_LINE};border-radius:20px;'
+            f'padding:1.5px 7px;margin-left:5px;white-space:nowrap">{text}</span>')
+
+
 def _sec(title, body, note="", src="") -> str:
-    """見出し＋中身＋（注記）＋（出典）の1区画。"""
-    t = (f'<div style="font-size:13px;font-weight:800;color:{_TEXT};'
-         f'margin-bottom:8px">{title}</div>') if title else ""
-    n = (f'<div style="font-size:10px;color:{_DIM};margin-top:6px;line-height:1.75">'
-         f'{_b(note)}</div>') if note else ""
-    sc = (f'<div style="font-size:9px;color:{_DIM};opacity:.75;margin-top:4px">'
-          f'出典: {src}</div>') if src else ""
-    return f'<div style="margin:18px 0 0">{t}{body}{n}{sc}</div>'
+    """見出し＋中身＋（注記）＋（出典）の1区画。
+
+    ⚠️ **カードで囲まない。** 見本は雑誌記事の体裁で、区画ごとに枠を付けると
+       画面が升目に割れて「ダッシュボード」になってしまう（一度そうして
+       「理想とかけ離れている」と指摘を受けた）。区切りは余白と細い線で作る。
+    """
+    t = (f'<div style="font-size:15px;font-weight:800;color:{_TEXT};'
+         f'margin:0 0 10px;letter-spacing:.01em">{title}</div>') if title else ""
+    n = (f'<div style="font-size:11px;color:{_DIM};margin-top:7px;'
+         f'line-height:1.85">{_b(note)}</div>') if note else ""
+    sc = (f'<div style="margin-top:5px">{_pill(src)}</div>') if src else ""
+    return (f'<section style="margin:24px 0 0;padding-top:20px;'
+            f'border-top:1px solid {_LINE}">{t}{body}{n}{sc}</section>')
 
 
-def _box(inner, pad="10px 14px") -> str:
+def _p(text: str, size=12.5) -> str:
+    """記事の本文1段落。読み物として読める行間にする。"""
+    return (f'<p style="font-size:{size}px;line-height:1.95;color:{_TEXT};'
+            f'margin:0 0 10px">{_b(text)}</p>')
+
+
+def _box(inner, pad="12px 14px") -> str:
+    """数値をまとめる枠。見本でもここだけは枠で囲っている。"""
     return (f'<div style="background:{_CARD};border:1px solid {_LINE};'
             f'border-radius:12px;padding:{pad}">{inner}</div>')
+
+
+def _chain(num: int, title: str, body: str, src="", photo_key="") -> str:
+    """「なぜ動いたのか」の1項目。左に小さな写真、右に小見出しと本文。
+
+    見本の ①②③ の形。写真が取れない日は**文字だけで詰めて出す**
+    （枠だけ残して空けると、読む側には欠落にしか見えない）。
+    """
+    th = ""
+    if photo_key:
+        try:
+            from src.media_credits import photo
+            pm = photo(photo_key)
+            if pm:
+                th = (f'<img src="{pm["url"]}" alt="" loading="lazy" '
+                      f'style="width:104px;height:72px;object-fit:cover;'
+                      f'border-radius:8px;flex:0 0 auto;border:1px solid {_LINE}">')
+        except Exception:
+            logger.debug("連鎖の写真を出せませんでした")
+    return (f'<div style="display:flex;gap:11px;margin:0 0 16px;align-items:flex-start">'
+            f'{th}<div style="flex:1;min-width:0">'
+            f'<div style="font-size:12.5px;font-weight:800;color:{_TEXT};'
+            f'margin-bottom:4px">{num}. {_b(title)}</div>'
+            f'<div style="font-size:11.5px;line-height:1.85;color:{_DIM}">'
+            f'{_b(body)}{_pill(src)}</div></div></div>')
 
 
 def _row(label, value, col=None, sub="") -> str:
@@ -322,24 +374,61 @@ def build(prices=None, risk=None, internals=None, ai_summary=None,
         if not hist.get("^TOPX"):
             hist["^TOPX"] = V.history("1306.T")      # TOPIX連動ETFで代替
 
-        # ── ヘッダー ──
-        stars = "★" * imp + "☆" * (5 - imp)
+        # ── ヘッダー（見本の体裁: ブランド名＋重要度バッジ）──
+        # ⚠️ 重要度は★の並びではなく **「5/5」の数字**にする。
+        #    見本がそうなっているのに加え、★5個は小さい画面で潰れて
+        #    何個あるか数えられない。数字なら一瞬で分かる。
         head = (
-            f'<div style="display:flex;align-items:center;gap:8px;'
-            f'border-bottom:1px solid {_LINE};padding-bottom:10px">'
-            f'<span style="font-size:16px">🐘</span>'
-            f'<span style="font-size:12.5px;font-weight:900;letter-spacing:.07em;'
-            f'color:{_TEXT}">MARKET FEED</span>'
+            f'<div style="display:flex;align-items:center;gap:9px">'
+            f'<span style="font-size:19px">🐘</span>'
+            f'<span style="font-size:14px;font-weight:900;letter-spacing:.06em;'
+            f'color:{_TEXT}">GANESHA MARKET FEED</span>'
             f'<span style="margin-left:auto;font-size:10px;font-weight:800;'
-            f'color:{tone["badge"]};border:1px solid {tone["badge"]};'
-            f'border-radius:20px;padding:2px 9px">{stars}</span></div>'
-            f'<div style="font-size:10px;color:{_DIM};margin-top:7px">'
-            f'{now.year}年{now.month}月{now.day}日（{_WD[now.weekday()]}）'
-            f'{"　" + when if when else ""} ｜ 日本株・米国株'
-            f'<span style="color:{tone["badge"]}">　{tone["label"]}</span></div>'
-            f'<div style="font-size:{tone["size"]}px;font-weight:{tone["weight"]};'
-            f'color:{tone["col"]};line-height:1.45;margin-top:9px;'
-            f'letter-spacing:-.01em">{_b(_headline(nk, internals))}</div>')
+            f'color:{tone["badge"]};background:{tone["badge"]}1f;'
+            f'border-radius:6px;padding:3px 8px;white-space:nowrap">'
+            f'重要度 {imp}/5</span></div>'
+            f'<div style="font-size:10.5px;color:{_DIM};margin-top:10px">'
+            f'{now.month}月{now.day}日（{_WD[now.weekday()]}）'
+            f'{"　" + when if when else ""} ｜ 日本株・米国株</div>'
+            f'<h1 style="font-size:{tone["size"] + 2}px;font-weight:{tone["weight"]};'
+            f'color:{_TEXT};line-height:1.5;margin:11px 0 0;'
+            f'letter-spacing:-.01em">{_b(_headline(nk, internals))}</h1>')
+
+        # 1本の記事の中で**同じ写真を二度出さない**（オーナーの明示指示）。
+        # 気をつけて書くだけでは、欄が増えたときに必ず重複する。
+        # 使った鍵をここで覚えて、以降は自動で避ける。
+        used_photos = set()
+
+        def _pick(*keys):
+            """まだ使っていない写真の鍵を1つ返す。無ければ None。"""
+            for k in keys:
+                if k not in used_photos:
+                    used_photos.add(k)
+                    return k
+            return None
+
+        # ── 記事の顔になる写真（見本の大きな報道写真の位置）──
+        # ⚠️ 見本は当日の報道写真だが、こちらは用意できない。
+        #    代わりに取引所の写真を**「いつ撮られた何か」を明記して**置く。
+        #    その日の光景のように見せないことが条件。
+        lead_photo = ""
+        try:
+            from src.media_credits import photo, photo_credit
+            # ⚠️ 外観(tse2)を先に。tse は入口の**天井**の写真で、
+            #    記事の顔には「ここは取引所だ」と分かる絵が要る。
+            _pm = photo(_pick("tse2", "tse") or "tse2")
+            if _pm:
+                lead_photo = (
+                    f'<figure style="margin:14px 0 0">'
+                    f'<img src="{_pm["url"]}" alt="{_pm["caption"]}" loading="lazy" '
+                    f'style="width:100%;height:172px;object-fit:cover;'
+                    f'border-radius:12px;display:block;border:1px solid {_LINE}">'
+                    f'<figcaption style="font-size:9px;color:{_DIM};margin-top:5px;'
+                    f'line-height:1.6">{photo_credit(_pm)}'
+                    f'　※当日の写真ではありません</figcaption></figure>')
+        except Exception:
+            logger.error("見出し写真を出せませんでした", exc_info=True)
+        head += lead_photo
 
         # ── 大きなチャート（ローソク足）──
         # 折れ線は終値しか見せない。ローソクなら「その日どこまで行って
@@ -430,33 +519,43 @@ def build(prices=None, risk=None, internals=None, ai_summary=None,
                             "売買代金が大きい日は、それだけ多くのお金が動いたということです。",
                        src="nikkei225jp.com（東証の公表値をまとめたもの）")
 
-        # ── 📋 なぜ動いたのか ──
+        # ── 📋 なぜ動いたのか（見本の①②③ の形）──
+        # 左に小さな図、右に小見出し＋本文＋出典。枠で囲わず記事として流す。
         chain_html = ""
         ch = _chain(prices, internals, sector_ranking, hist)
         if ch:
+            # 連鎖ごとに違う写真を当てる。
+            # ⚠️ **同じ写真を2枚出さない**（オーナーの明示指示）。
+            #    使える写真が足りない日は、足りない分は写真なしで出す。
+            pkeys = [_pick("nyse2", "nyse"), _pick("boj", "mof"),
+                     _pick("fed", "mof"), _pick("tse", "mof")]
             rows = ""
-            for c in ch:
+            for i, c in enumerate(ch):
                 vis = (f'<div style="flex:0 0 104px">{c["vis"]}</div>'
                        ) if c.get("vis") else ""
+                thumb = vis
+                if not thumb and i < len(pkeys) and pkeys[i]:
+                    try:
+                        from src.media_credits import photo as _ph
+                        _p2 = _ph(pkeys[i])
+                        if _p2:
+                            thumb = (f'<img src="{_p2["url"]}" alt="" loading="lazy" '
+                                     f'style="width:104px;height:72px;object-fit:cover;'
+                                     f'border-radius:8px;flex:0 0 auto;'
+                                     f'border:1px solid {_LINE}">')
+                    except Exception:
+                        logger.debug("連鎖の写真を出せませんでした")
                 rows += (
-                    f'<div style="display:flex;gap:11px;align-items:flex-start;'
-                    f'padding:11px 0;border-bottom:1px solid {_LINE}">{vis}'
+                    f'<div style="display:flex;gap:12px;align-items:flex-start;'
+                    f'margin:0 0 17px">{thumb}'
                     f'<div style="flex:1;min-width:0">'
-                    f'<div style="display:flex;align-items:center;gap:6px">'
-                    f'<span style="width:17px;height:17px;border-radius:6px;'
-                    f'background:{_ACC};color:#06121f;font-size:10px;font-weight:900;'
-                    f'display:inline-flex;align-items:center;justify-content:center">'
-                    f'{c["no"]}</span>'
-                    f'<span style="font-size:11.5px;font-weight:800;color:{_TEXT}">'
-                    f'{c["title"]}</span></div>'
-                    f'<div class="num" style="font-size:10.5px;color:{_ACC};'
-                    f'margin-top:3px">{c["val"]}</div>'
-                    f'<div style="font-size:10.5px;color:{_DIM};margin-top:3px;'
-                    f'line-height:1.8">{_b(c["note"])}</div>'
-                    f'<div style="font-size:9px;color:{_DIM};opacity:.7;margin-top:2px">'
-                    f'出典: {c["src"]}</div></div></div>')
-            chain_html = _sec(f"📋 なぜ動いたのか — {len(ch)}つの連鎖",
-                              _box(rows, "4px 14px 8px"),
+                    f'<div style="font-size:12.5px;font-weight:800;color:{_TEXT};'
+                    f'margin-bottom:4px">{c["no"]}. {c["title"]}</div>'
+                    f'<div style="font-size:11.5px;line-height:1.9;color:{_DIM}">'
+                    f'<span class="num" style="color:{_ACC};font-weight:700">'
+                    f'{c["val"]}</span>　{_b(c["note"])}{_pill(c["src"])}'
+                    f'</div></div></div>')
+            chain_html = _sec(f"📋 なぜ動いたのか？ {len(ch)}つの連鎖", rows,
                               note="ここに並ぶのは**その日に実際に起きた値動き**だけです。"
                                    "解釈は下の「違う角度から」に分けてあります。")
 
@@ -516,7 +615,9 @@ def build(prices=None, risk=None, internals=None, ai_summary=None,
         if pol_news:
             pol_rows += f'<div style="margin-top:6px">{_links(pol_news, "🏦")}</div>'
         if pol_rows:
-            pol_rows += _photo("boj")
+            _pk = _pick("boj", "mof", "fed")
+            if _pk:
+                pol_rows += _photo(_pk)
         pol_html = _sec("🏦 日銀・政府・政策", _box(pol_rows),
                         note="金利を決めるのは日銀とFRBで、**株より先に為替が反応**します。"
                              "利上げは企業の借入コストを上げるので、株には逆風に"
@@ -681,13 +782,16 @@ def build(prices=None, risk=None, internals=None, ai_summary=None,
               '<br>数字は自動取得したもので、取引所の一次データとの'
               '全項目照合はしていません。</div>')
 
+        # ⚠️ 外枠は**記事の紙面**であって、カードを並べる台ではない。
+        #    以前は枠＋角丸＋薄い発光を付けていたが、中の区画にも枠があるため
+        #    画面が升目に割れて「ダッシュボード」に見えていた。
+        #    枠は外側の1本だけにして、中は余白と区切り線で読ませる。
         return (
-            f'<div style="margin-bottom:18px;background:linear-gradient(180deg,'
-            f'rgba(106,169,255,{tone["glow"]}),rgba(106,169,255,0) 170px);'
-            f'border:1px solid {_LINE};border-radius:16px;padding:16px 16px 20px">'
+            f'<article style="margin-bottom:18px;background:{_BG2};'
+            f'border:1px solid {_LINE};border-radius:16px;padding:20px 18px 22px">'
             f'{head}{hero}{concl_html}{idx_html}{mkt}{chain_html}'
             f'{fx_html}{pol_html}{alt_html}{sc_html}{recap_html}{vid_html}{src_html}{verify}'
-            f'</div>')
+            f'</article>')
     except Exception:
         logger.error("フィードカードを作れませんでした", exc_info=True)
         return ""
