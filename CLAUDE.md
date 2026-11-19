@@ -2192,3 +2192,41 @@ gauge / sector_bars / donut）。画像ファイルを作らずHTMLに直接埋�
    「緑のグラフの上に赤い-0.19%」が起きた。→ 1ヶ月の変化率を必ず添える
 5. 1区画のデータが壊れるとカード全体が消えた（policy が文字列のとき）。
    → 区画ごとに形を確認し、**壊れた区画だけ出さない**
+
+### 2026-11-19 Telegramの朝の1通を MARKET FEED の画像に（src/feed_card.build_compact）
+
+オーナー「テレグラムの通知にmarketfeed見本のようにしてもらいたい」。
+
+**Telegram は HTML も SVG も表示できない。** だが朝の通知は元から
+「画像＋キャプション＋ボタン」の1通で送っている。つまり**その画像を
+見本の見た目にすれば**、通知そのものが MARKET FEED になる。
+HTML→PNG は note のカバー画像で既に使っている Playwright で行う
+（`daily_report.yml` に `playwright install --with-deps chromium` 済み）。
+
+| | |
+|---|---|
+| 旧 | `summary_card.make_summary_card` |
+| 新 | `feed_card.make_feed_image`（失敗したら旧カード→既存チャートへ落ちる） |
+
+**⚠️ レポート版をそのまま画像にしない。** Telegram は縦長の画像を
+チャット幅（実質400px程度）に縮めるので、**縦に長いほど文字が潰れて読めない**。
+`build_compact()` はレポート版とは別に、載せる物を絞ってある:
+ヘッダー＋★ → 見出し → 指標3つ（小チャート付き） → 市場全体＋値上がり値下がりの帯
+→ 📌3秒で結論 → 🐘今日の構え。残り（なぜ動いたか・3シナリオ・為替金利・政策）は
+ボタンの先のレポートへ送る。実測 1520×1840px・縦横比 1:1.21（1:1.9以内なら読める）。
+
+- 幅は `TG_W = 760`、`device_scale_factor=2` で実寸1520px（iPhoneで拡大しても粗くならない）
+- `render_png` の待ちは `wait_until="load"`。**`networkidle` にしない** —
+  このカードは外部URLを1つも読まないので、通信が止まるのを待ち続けることがある
+- 重要度★・`_tone()`・`_importance()` はレポート版と共有。同じ日に違う★を出さないため
+
+**実装で踏んだ罠**
+1. 受け皿を `try/except Exception` の中で `raise StopIteration` して飛ばそうとした。
+   StopIteration は Exception の子なので**自分の except に捕まり、
+   成功した日に「生成エラー」と嘘のログを出す**形になっていた。素直に if で分けた。
+2. 関数内で `from src.utils import get_today_str` と書いた。先頭で import 済みの名前を
+   関数内で再importすると**その関数の局所名になり、手前の参照が UnboundLocalError**。
+   CLAUDE.md のルール3（`get_jst_now`）とまったく同じ罠。`get_dirs` だけに絞った。
+
+検証: 送信だけ横取りして `notify_telegram.run()` を実行し、
+**sendPhoto が1回だけ・本物は1通も送っていない**ことを確認済み。

@@ -1509,17 +1509,39 @@ def run(risk, analysis, report_paths, mode,
                      or "https://youn24.github.io/market-ai-secretary").rstrip("/")
             report_url = _base + "/daily_report.html"
 
+        # ── 朝の1枚は MARKET FEED の見た目にする ──
+        # Telegram は HTML も SVG も表示できないが、元から「画像＋キャプション＋
+        # ボタン」の形で送っているので、**その画像を見本どおりにすれば**届く。
+        # ⚠️ 作れなかった日に無音にしないこと。feed → 従来カード → チャート
+        #    と順に落ちる受け皿を必ず残す（この案件で何度も痛い目に遭っている）。
         card_path = None
         try:
-            from src.summary_card import make_summary_card
-            card_path = make_summary_card(
-                prices=prices, fear_greed=fear_greed, risk=risk,
-                ai_summary=ai_summary, news=list(news),
-                character_comments=character_comments,
+            from src.feed_card import make_feed_image
+            # ⚠️ get_today_str は先頭で import 済み。ここで再importすると
+            #    run() の局所名になり、手前の参照が UnboundLocalError になる
+            #    （CLAUDE.md の既知の罠）。get_dirs だけを取る。
+            from src.utils import get_dirs
+            card_path = make_feed_image(
+                str(get_dirs()["charts"] / f"feed_{get_today_str()}.png"),
+                prices=prices, risk=risk, internals=nikkei_internals,
+                ai_summary=ai_summary, market_driver=market_driver,
+                fear=fear, mode=mode,
             )
         except Exception:
-            logger.error("サマリーカード生成エラー")
+            logger.error("フィード画像の生成エラー（従来カードへ）")
             logger.debug(traceback.format_exc())
+
+        if not (card_path and os.path.exists(str(card_path))):
+            try:
+                from src.summary_card import make_summary_card
+                card_path = make_summary_card(
+                    prices=prices, fear_greed=fear_greed, risk=risk,
+                    ai_summary=ai_summary, news=list(news),
+                    character_comments=character_comments,
+                )
+            except Exception:
+                logger.error("サマリーカード生成エラー")
+                logger.debug(traceback.format_exc())
 
         # 画像が作れなければ既存チャートで代替
         if not (card_path and os.path.exists(str(card_path))):
