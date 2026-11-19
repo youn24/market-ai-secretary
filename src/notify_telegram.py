@@ -1598,6 +1598,10 @@ def run(risk, analysis, report_paths, mode,
                 prices=prices, risk=risk, internals=nikkei_internals,
                 ai_summary=ai_summary, market_driver=market_driver,
                 fear=fear, mode=mode,
+                # ⚠️ ここを渡し忘れると、その区画が**静かに消える**だけで
+                #    エラーにならない。画像が短い日は、まずここを疑うこと。
+                scenario=scenario, news=list(news), policy=policy,
+                sector_ranking=sector_ranking,
             )
         except Exception:
             logger.error("フィード画像の生成エラー（従来カードへ）")

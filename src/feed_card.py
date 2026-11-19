@@ -135,6 +135,10 @@ def _pill(text: str) -> str:
 _TOC = []          # 目次の材料。build() の最初で空にする
 
 
+class _SkipVideoEmbed(Exception):
+    """画像版で動画をサムネイルにしたあと、埋め込み用の処理を飛ばすための合図。"""
+
+
 def _slug(title: str) -> str:
     """見出しから飛び先のidを作る。絵文字や記号は落とす。"""
     import hashlib
@@ -369,7 +373,8 @@ def _chain(prices, internals, sector_ranking, hist):
 # ── 本体 ────────────────────────────────────────────────
 def build(prices=None, risk=None, internals=None, ai_summary=None,
           scenario=None, market_driver=None, news=None,
-          sector_ranking=None, fear=None, policy=None, mode="morning") -> str:
+          sector_ranking=None, fear=None, policy=None, mode="morning",
+          for_image=False) -> str:
     # ⚠️ 目次の台帳は実行ごとに空にする。モジュールの変数なので、
     #    空にし忘れると2回目の実行で前回の項目が二重に並ぶ。
     _TOC.clear()
@@ -547,8 +552,24 @@ def build(prices=None, risk=None, internals=None, ai_summary=None,
             # 連鎖ごとに違う写真を当てる。
             # ⚠️ **同じ写真を2枚出さない**（オーナーの明示指示）。
             #    使える写真が足りない日は、足りない分は写真なしで出す。
-            pkeys = [_pick("nyse2", "nyse"), _pick("boj", "mof"),
-                     _pick("fed", "mof"), _pick("tse", "mof")]
+            # ⚠️ 写真は**中身に合うものだけ**を付ける。順番で機械的に割ると、
+            #    「売り買いの広がり」の横に日銀の写真、のような
+            #    意味のない組み合わせになる（オーナー指示は
+            #    「できるだけ意味のある内容の画像」）。
+            #    合う写真が無い項目は、写真なしで文字だけ出す。
+            def _match(title: str):
+                t = str(title or "")
+                if any(k in t for k in ("米国", "NY", "ナスダック", "S&P")):
+                    return _pick("nyse2", "nyse")
+                if any(k in t for k in ("日銀", "金利", "政策")):
+                    return _pick("boj",)
+                if any(k in t for k in ("為替", "ドル円", "円安", "円高")):
+                    return _pick("mof",)
+                if any(k in t for k in ("FRB", "FOMC", "米金融")):
+                    return _pick("fed",)
+                return None
+
+            pkeys = [_match(c.get("title")) for c in ch]
             rows = ""
             for i, c in enumerate(ch):
                 vis = (f'<div style="flex:0 0 104px">{c["vis"]}</div>'
@@ -750,6 +771,29 @@ def build(prices=None, risk=None, internals=None, ai_summary=None,
             from src.media_credits import videos
             vids = videos(limit=3, max_age_days=2)
             if vids:
+                # ⚠️ 画像(PNG)にするときは iframe が意味を持たないので
+                #    サムネイルに落とす。ページでは再生できる形のまま。
+                if for_image:
+                    cells = "".join(
+                        f'<div style="display:flex;gap:10px;margin:0 0 12px;'
+                        f'align-items:flex-start">'
+                        f'<img src="{v["thumb"]}" alt="" '
+                        f'style="width:124px;height:70px;object-fit:cover;'
+                        f'border-radius:8px;flex:0 0 auto;border:1px solid {_LINE}">'
+                        f'<div style="flex:1;min-width:0">'
+                        f'<div style="font-size:12px;color:{_TEXT};line-height:1.6">'
+                        f'{v["title"]}</div>'
+                        f'<div style="font-size:10.5px;color:{_DIM};margin-top:3px">'
+                        f'{v["channel"]}　{v["published"][:10]}</div></div></div>'
+                        for v in vids)
+                    vid_html = _sec(
+                        "📺 公式チャンネルの最新動画",
+                        f'<div>{cells}</div>',
+                        note="題名とチャンネル名は**YouTubeが返したそのまま**です。"
+                             "再生は記事ページから。",
+                        src="YouTube 公式チャンネルのRSS")
+                    raise _SkipVideoEmbed
+
                 # ⚠️ 画像ではなく**その場で再生できる形**にする。
                 #    `youtube-nocookie.com` を使うのは、再生するまで
                 #    閲覧履歴を残さないため（prefer privacy）。
@@ -774,6 +818,8 @@ def build(prices=None, risk=None, internals=None, ai_summary=None,
                     note="題名とチャンネル名は**YouTubeが返したそのまま**です。"
                          "中身は見ていないので要約は付けていません。",
                     src="YouTube 公式チャンネルのRSS")
+        except _SkipVideoEmbed:
+            pass                      # サムネイル版を作り終えただけ。異常ではない
         except Exception:
             logger.error("動画の欄を作れませんでした", exc_info=True)
 
@@ -866,186 +912,50 @@ _FONT = ("-apple-system,'Hiragino Kaku Gothic ProN','Noto Sans CJK JP',"
 
 
 def build_compact(prices=None, risk=None, internals=None, ai_summary=None,
-                  market_driver=None, fear=None, mode="morning") -> str:
-    """Telegramに画像で送る**記事**。レポートと同じ体裁で、分量だけ絞る。
+                  market_driver=None, fear=None, mode="morning",
+                  scenario=None, news=None, sector_ranking=None,
+                  policy=None) -> str:
+    """Telegramに画像で送る記事。**公開ページと同じ中身をまるごと**入れる。
 
-    ⚠️ **幅の設計がこの関数の肝。**
-       Telegram は画像をチャット幅（実機で390pt前後）に縮めて表示する。
-       つまり「画像のCSS幅」が「実機での文字の大きさ」をそのまま決める。
+    ⚠️ **縦に長くしても、実機での文字は小さくならない。**
+       効くのは幅だけ。Telegramは画像をチャット幅（実機390pt前後）に
+       縮めるので、文字の大きさを決めるのは「CSS幅 ÷ 390」であって、
+       縦の長さは一切関係しない。
 
-         CSS幅 760 → 390/760 = 0.51倍 → 13pxの字が 6.6pt（読めない）
-         CSS幅 420 → 390/420 = 0.93倍 → 13pxの字が 12.1pt（読める）
+         CSS幅 760 → 0.51倍 → 13pxが6.6pt（読めない）
+         CSS幅 420 → 0.93倍 → 13pxが12.1pt（読める）
 
-       なので**スマホと同じ420px幅で組む**。横に広げるほど字は小さくなる。
+       一度ここを取り違えて「長いと字が小さくなる」と考え、中身を削って
+       表紙だけにしたが、**それは間違い**で、ただ内容が減っただけだった。
+       幅さえ420に保てば、いくら長くしても字の大きさは変わらない。
 
-    ⚠️ **縦の長さにも上限がある。** sendPhoto は「幅＋高さ ≤ 10000px」を
-       超えると受け取らない。実寸(×2)で 840 + 2×高さ ≤ 10000、
-       つまり **CSS高さ 4580px まで**。加えて長すぎる画像はチャット内で
-       切り詰められるので 1300px前後に収め、残りはボタンの先のレポートへ送る。
+    ⚠️ **縦の上限は Telegram の仕様から来る。**
+       sendPhoto は「幅＋高さ > 10000px」の写真を受け取らない。
+       実寸(×2)で 840 + 2×高さ ≤ 10000 → **CSS高さ 4580pxまで**。
+       `make_feed_image` が出来た画像を測って、超えたら従来カードへ落とす。
     """
-    prices, internals = prices or {}, internals or {}
-    nk = _q(prices, "^N225")
-    if not nk and not internals.get("available"):
+    body = build(prices=prices, risk=risk, internals=internals,
+                 ai_summary=ai_summary, scenario=scenario,
+                 market_driver=market_driver, news=news,
+                 sector_ranking=sector_ranking, fear=fear, policy=policy,
+                 mode=mode, for_image=True)
+    if not body:
         return ""
-
-    score = (risk or {}).get("score")
-    nvi_pct = (fear or {}).get("nvi_pctile")
-    nvi = internals.get("nvi")
-    r = _breadth(internals)
-    imp = _importance(nk["c"] if nk else None, score, nvi_pct, r)
-    tone = _tone(imp, nk["c"] if nk else 0)
-    now = get_jst_now()
-    when = {"morning": "寄り付き前", "noon": "前場終了後",
-            "evening": "大引け後", "test": "検証"}.get(mode, "")
-
-    # 同じ写真を二度出さない（レポート側と同じ決まり）
-    used = set()
-
-    def _pick(*keys):
-        for k in keys:
-            if k not in used:
-                used.add(k)
-                return k
-        return None
-
-    inner = TG_W - 32          # 左右の余白を引いた、図を描ける幅
-
-    # ── 記事の顔になる写真 ──
-    lead = ""
-    try:
-        from src.media_credits import photo, photo_credit
-        pm = photo(_pick("tse2", "tse") or "tse2")
-        if pm:
-            lead = (f'<figure style="margin:13px 0 0">'
-                    f'<img src="{pm["url"]}" alt="" '
-                    f'style="width:100%;height:150px;object-fit:cover;'
-                    f'border-radius:11px;display:block;border:1px solid {_LINE}">'
-                    f'<figcaption style="font-size:9px;color:{_DIM};margin-top:4px;'
-                    f'line-height:1.6">{photo_credit(pm)}'
-                    f'　※当日の写真ではありません</figcaption></figure>')
-    except Exception:
-        logger.error("見出し写真を出せませんでした", exc_info=True)
-
-    # ── 📌 3秒で結論 ──
-    concl = ""
-    for cand in ((ai_summary or {}).get("neutral_view"),
-                 (market_driver or {}).get("summary")):
-        if isinstance(cand, str) and cand.strip():
-            concl = cand.strip()[:150]
-            break
-    if len(concl) < 24 and nk:
-        bits = [f"日経平均は{nk['c']:+.2f}%"]
-        if isinstance(r, (int, float)):
-            side = "下げ" if r >= .5 else "上げ"
-            bits.append(f"{(r if r >= .5 else 1 - r) * 100:.0f}%の銘柄が{side}ました")
-        concl = "。".join(bits) + "。"
-    concl_html = _sec("📌 3秒で結論", _p(concl, 13)) if concl else ""
-
-    # ── 📊 本日の数字（見本の数値ボックス）──
-    rows = ""
-    for sym, nm, unit in (("^N225", "日経平均", "円"), ("^TOPX", "TOPIX", ""),
-                          ("USDJPY=X", "ドル円", "円")):
-        d = _q(prices, sym)
-        if not d:
-            continue
-        col = _UP if d["c"] >= 0 else _DOWN
-        rows += (f'<div style="display:flex;align-items:baseline;'
-                 f'padding:7px 0;border-bottom:1px solid {_LINE}">'
-                 f'<span style="font-size:14px;font-weight:700;color:{_TEXT};flex:1">'
-                 f'{nm}</span>'
-                 f'<span class="num" style="font-size:15px;font-weight:800;'
-                 f'color:{_TEXT}">{_n(d["v"], 2) or "—"}'
-                 f'<span style="font-size:11px">{unit}</span></span>'
-                 f'<span class="num" style="font-size:13px;font-weight:800;'
-                 f'color:{col};margin-left:9px;min-width:68px;text-align:right">'
-                 f'{d["c"]:+.2f}%</span></div>')
-    adv, dec = internals.get("advancing"), internals.get("declining")
-    turn = internals.get("turnover_total")
-    sub = []
-    if isinstance(turn, (int, float)):
-        sub.append(f'東証の売買代金 <b style="color:{_ACC}">{turn / 1e6:.2f}兆円</b>')
-    if isinstance(adv, (int, float)) and isinstance(dec, (int, float)):
-        sub.append(f'値上がり <b style="color:{_UP}">{adv:,.0f}</b>'
-                   f' ／ 値下がり <b style="color:{_DOWN}">{dec:,.0f}</b>')
-    if isinstance(nvi, (int, float)):
-        pos = (f"・上から{100 - nvi_pct:.0f}%"
-               if isinstance(nvi_pct, (int, float)) else "")
-        sub.append(f'恐怖指数 日経VI <b style="color:{_WARN}">{nvi:.1f}</b>{pos}')
-    subhtml = ""
-    if sub:
-        subhtml = (f'<div style="font-size:13px;color:{_DIM};line-height:2;'
-                   f'margin-top:9px">' + "<br>".join(sub) + "</div>")
-    bar = ""
-    if isinstance(adv, (int, float)) and isinstance(dec, (int, float)):
-        bar = (f'<div style="margin-top:8px">'
-               f'{V.breadth_bar(adv, dec, w=inner - 28, h=26)}</div>')
-    num_html = _sec(f"📊 本日の数字（{now.month}月{now.day}日）",
-                    _box(rows + subhtml + bar),
-                    src="Yahoo Finance・nikkei225jp.com") if rows else ""
-
-    # ── 🕯 ローソク足 ──
-    candle_html = ""
-    try:
-        svg = V.candles(V.ohlc("^N225", "6mo"), w=inner - 16, h=168,
-                        label="日経平均", days=30)
-        if svg:
-            candle_html = _sec(
-                "🕯 日経平均の日足", _box(svg, "10px 8px 4px"),
-                note="緑はその日上げた日、赤は下げた日。上下の細い線は"
-                     "**その日の高値と安値**です。",
-                src="Yahoo Finance の4本値から自前で作図")
-    except Exception:
-        logger.error("ローソク足を描けませんでした", exc_info=True)
-
-    # ⚠️ 連鎖・3シナリオ・為替金利はここに載せない。
-    #    通知の画像は**表紙**で、本文は公開ページ（目次つき・動画つき）で読む。
-    #    画像に詰めるほど縦に伸び、実機での文字が小さくなる。
-    chain_html = ""
-
-    # ── 🐘 今日の構え ──
-    act = ("恐怖指数が高い日です。**同じ株数でも損得の振れ幅が大きくなります。**"
-           "株数を減らす・損切りを広めに置く・待つ、のどれかを選ぶ場面。"
-           if isinstance(nvi_pct, (int, float)) and nvi_pct >= 85 else
-           "大きく荒れてはいません。いつもどおりで構いませんが、"
-           "**決めた損切りの線は動かさない**ことだけ守ってください。")
-    act_html = (
-        f'<section style="margin:22px 0 0;border:1px solid {_WARN}55;'
-        f'background:{_WARN}12;border-radius:12px;padding:12px 14px">'
-        f'<div style="font-size:15px;font-weight:800;color:{_WARN};'
-        f'margin-bottom:6px">🐘 今日の構え</div>'
-        f'<div style="font-size:13.5px;line-height:1.95;color:{_TEXT}">{_b(act)}</div>'
-        f'</section>')
-
-    return (
-        f'<div id="feed" style="width:{TG_W}px;background:{_BG2};color:{_TEXT};'
-        f'font-family:{_FONT};padding:18px 16px 20px;box-sizing:border-box">'
-        f'<div style="display:flex;align-items:center;gap:8px">'
-        f'<span style="font-size:18px">🐘</span>'
-        f'<span style="font-size:13px;font-weight:900;letter-spacing:.05em">'
-        f'GANESHA MARKET FEED</span>'
-        f'<span style="margin-left:auto;font-size:10px;font-weight:800;'
-        f'color:{tone["badge"]};background:{tone["badge"]}1f;border-radius:6px;'
-        f'padding:3px 8px;white-space:nowrap">重要度 {imp}/5</span></div>'
-        f'<div style="font-size:10.5px;color:{_DIM};margin-top:9px">'
-        f'{now.month}月{now.day}日（{_WD[now.weekday()]}）'
-        f'{"　" + when if when else ""} ｜ 日本株・米国株</div>'
-        f'<h1 style="font-size:{tone["size"] + 1}px;font-weight:{tone["weight"]};'
-        f'color:{_TEXT};line-height:1.5;margin:10px 0 0">'
-        f'{_b(_headline(nk, internals))}</h1>'
-        f'{lead}{concl_html}{num_html}{candle_html}{chain_html}{act_html}'
-        f'<div style="font-size:12px;color:{_DIM};margin-top:18px;'
-        f'text-align:center;line-height:1.85">'
-        f'👇 目次つきの記事・動画・3シナリオは下のボタンから'
-        f'<br><span style="opacity:.75">グラフは自前作図／'
-        f'数値: Yahoo Finance・nikkei225jp.com・株探</span></div>'
-        f'</div>')
+    return (f'<div id="feed" style="width:{TG_W}px;background:{_BG2};'
+            f'color:{_TEXT};font-family:{_FONT};padding:16px 14px 18px;'
+            f'box-sizing:border-box">{body}'
+            f'<div style="font-size:12px;color:{_DIM};margin-top:18px;'
+            f'text-align:center;line-height:1.85">'
+            f'👇 目次をタップして飛べる記事・動画の再生は下のボタンから'
+            f'</div></div>')
 
 
 def render_png(html: str, out_path: str) -> bool:
     """HTMLを1枚のPNGにする。Playwrightが無ければ False（呼び出し側で代替へ）。
 
-    ⚠️ `wait_until="networkidle"` は外部を読み込まないページでは待ち続けることがある。
-       この図は外部URLを1つも使わないので `load` で十分。
+    ⚠️ `wait_until="networkidle"` にしない。写真や動画のサムネイルを
+       外から読むようになったので、1枚でも遅い画像があると待ち続ける。
+       `load` で待ち、そのあと少しだけ時間を置いて画像の到着を待つ。
     """
     try:
         from playwright.sync_api import sync_playwright
@@ -1055,9 +965,40 @@ def render_png(html: str, out_path: str) -> bool:
     try:
         with sync_playwright() as pw:
             br = pw.chromium.launch(args=["--no-sandbox"])
+
+            # ⚠️ **中身を削って縮めない。** Telegram の「幅＋高さ ≤ 10000」は
+            #    実寸の話なので、倍率(device_scale_factor)を下げれば収まる。
+            #    倍率は**粗さ**だけを変え、実機での文字の大きさは変えない
+            #    （文字の大きさを決めるのは CSS幅 ÷ チャット幅 だけ）。
+            #    なので「長い記事＝字が小さい」ではない。削るのは最後の手段。
+            probe = br.new_page(viewport={"width": TG_W, "height": 1000},
+                                device_scale_factor=1)
+            probe.set_content(html, wait_until="load")
+            try:
+                probe.wait_for_load_state("networkidle", timeout=12000)
+            except Exception:
+                pass
+            probe.wait_for_timeout(800)
+            h_css = probe.evaluate(
+                "() => Math.ceil(document.querySelector('#feed')"
+                ".getBoundingClientRect().height)") or 1200
+            probe.close()
+
+            dsf = min(2.0, (TG_MAX_SUM - 200) / max(1, TG_W + h_css))
+            dsf = max(1.0, round(dsf, 2))
+            logger.info(f"記事の高さ {h_css}px → 倍率 {dsf}（実寸 "
+                        f"{int(TG_W * dsf)}x{int(h_css * dsf)}）")
+
             page = br.new_page(viewport={"width": TG_W, "height": 1200},
-                               device_scale_factor=2)
+                               device_scale_factor=dsf)
             page.set_content(html, wait_until="load")
+            # 外から読む写真が入るので、少し待ってから撮る。
+            # 待たないと**写真の枠だけが空で写る**（実際に一度やった）。
+            try:
+                page.wait_for_load_state("networkidle", timeout=12000)
+            except Exception:
+                logger.debug("画像の読み込み待ちが時間切れ。そのまま撮ります")
+            page.wait_for_timeout(1200)
             page.locator("#feed").screenshot(path=out_path)
             br.close()
         return True
