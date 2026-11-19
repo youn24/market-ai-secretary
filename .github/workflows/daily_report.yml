@@ -183,6 +183,21 @@ jobs:
           X_ACCESS_TOKEN_SECRET: ${{ secrets.X_ACCESS_TOKEN_SECRET }}
           CF_PROXY_URL: ${{ secrets.CF_PROXY_URL }}
           VOICEVOX_URL: "http://127.0.0.1:50021"
+          # ⚠️ 2026-11-20 発覚: これらは上の
+          #    「完全自律AIチーム」ステップ（if: false で停止中）にだけ書いてあり、
+          #    実際に朝のレポートを作るこのステップには渡っていなかった。
+          #    そのため FRED の公式APIもHTMLメールも**本番では一度も動いていない**。
+          #    無設定なら各モジュールが何もせずに返るので、登録するまでは従来どおり。
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          MAIL_TO: ${{ secrets.MAIL_TO }}
+          MAIL_FROM: ${{ secrets.MAIL_FROM }}
+          # LINE公式アカウント（Messaging API）。LINE Notify は 2025-03-31 に終了済み。
+          LINE_CHANNEL_TOKEN: ${{ secrets.LINE_CHANNEL_TOKEN }}
+          LINE_TO: ${{ secrets.LINE_TO }}
         run: |
           echo "📋 従来型レポート生成中..."
           # cloud_run.py の失敗は隠さない（|| true を付けない）。

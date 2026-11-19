@@ -287,6 +287,23 @@ def _scenarios(scenario):
     return out
 
 
+def _breadth_phrase(r) -> str:
+    """売り買いの広がりを「3秒で結論」向けに一言で。
+
+    ⚠️ 判定の帯は「売り買いの広がり」の説明文と必ず揃える。
+       以前は r>=.5 で機械的に側を選んでいたため、60%の日に
+       結論は「60%の銘柄が下げました」、広がりの欄は「拮抗」と
+       **同じ通知の中で正反対のことを言っていた**。
+       同じ判定を2か所に書くと必ず片方だけずれるので、ここに一本化する。
+    """
+    if not isinstance(r, (int, float)):
+        return ""
+    if 0.35 < r < 0.65:
+        return "値上がりと値下がりはほぼ拮抗しました"
+    side = "下げ" if r >= .5 else "上げ"
+    return f"{(r if r >= .5 else 1 - r) * 100:.0f}%の銘柄が{side}ました"
+
+
 def _mo_tag(vals) -> str:
     """小チャートの下に「1ヶ月で何%」を書く。
 
@@ -507,9 +524,8 @@ def build(prices=None, risk=None, internals=None, ai_summary=None,
         ai_made = bool(concl)
         if len(concl) < 24 and nk:
             bits = [f"日経平均は{nk['c']:+.2f}%"]
-            if isinstance(r, (int, float)):
-                side = "下げ" if r >= .5 else "上げ"
-                bits.append(f"{(r if r >= .5 else 1 - r)*100:.0f}%の銘柄が{side}ました")
+            if _breadth_phrase(r):
+                bits.append(_breadth_phrase(r))
             if isinstance(nvi, (int, float)) and isinstance(nvi_pct, (int, float)):
                 if nvi_pct >= 90:
                     bits.append(f"恐怖指数は{nvi:.1f}と高く、値動きが荒くなりやすい状態です")
@@ -1038,9 +1054,8 @@ def build_text(prices=None, risk=None, internals=None, ai_summary=None,
             break
     if len(concl) < 24 and nk:
         bits = [f"日経平均は{nk['c']:+.2f}%"]
-        if isinstance(r, (int, float)):
-            side = "下げ" if r >= .5 else "上げ"
-            bits.append(f"{(r if r >= .5 else 1 - r) * 100:.0f}%の銘柄が{side}ました")
+        if _breadth_phrase(r):
+            bits.append(_breadth_phrase(r))
         concl = "。".join(bits) + "。"
     if concl:
         blocks.append(("concl", f"📌 *3秒で結論*\n{_t(concl)}"))

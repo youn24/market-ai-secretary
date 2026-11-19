@@ -86,6 +86,12 @@ FILES = ("cloud_run.py", "monitor_run.py", "weekly_run.py",
 
 
 def main() -> int:
+    # ⚠️ Windowsの既定(cp932)では ✅ が印字できず、**合格の行だけで落ちる**。
+    #    検査自体は終わっているのに失敗に見えるので、出口を utf-8 に揃える。
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
     paths = [p for d in DIRS for p in (ROOT / d).glob("*.py")]
     paths += [ROOT / f for f in FILES if (ROOT / f).exists()]
 

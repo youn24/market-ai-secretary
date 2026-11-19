@@ -58,6 +58,11 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          # ⚠️ FRED は「配信先」ではなくデータ源なのでここでも渡す。
+          #    無いとマクロ環境・政策金利が空のまま通知される。
+          #    X/note の Secret を渡さないのは「公開投稿をさせない」ためで、
+          #    データを欠けさせるためではない。
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
           GITHUB_PAGES_URL: "https://youn24.github.io/market-ai-secretary"
           CF_PROXY_URL: ${{ secrets.CF_PROXY_URL }}
           VOICEVOX_URL: "http://127.0.0.1:50021"

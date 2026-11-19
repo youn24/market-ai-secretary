@@ -660,19 +660,10 @@ def run(mode: str):
     # チャート画像の解釈。効果を検証しておらず、消費だけが確実だった。
     multimodal = {"available": False}
 
-    # Step L5i: LINE通知（Telegramと並行送信）
-    try:
-        logger.info("--- Step L5i: LINE通知 ---")
-        from src.notify_line import run as run_line
-        run_line(
-            risk, fear_greed, prices, report_paths,
-            ai_summary=ai_summary,
-            chart_paths=chart_paths,
-            multi_consensus=multi_consensus,
-            autonomous_plan=autonomous_plan,
-        )
-    except Exception:
-        logger.error("LINE通知エラー"); logger.debug(traceback.format_exc())
+    # Step L5i: LINE通知 → 2026-11-20 Step 8 の直後へ移動した。
+    # ここでは internals / scenario / policy がまだ作られておらず、
+    # Telegramと同じ記事を組み立てられなかったため（別々に書くと、
+    # 同じ日に違うことを言う通知が2つできる）。
 
     # ══════════ 追加分析モジュール群（再統合） ══════════
     _wd = get_jst_now().weekday()          # 0=月曜
@@ -1452,6 +1443,22 @@ def run(mode: str):
             _rec4("Step 8 Telegram通知", ok=False, detail=traceback.format_exc().strip().splitlines()[-1][:200])
         except Exception:
             pass
+
+    # Step L5i: LINE通知（Telegramと同じ記事を1通だけ）
+    # ⚠️ 旧実装は LINE Notify を叩いていたが、**2025-03-31 に終了済み**。
+    #    LINE公式アカウント（Messaging API）に作り直してある。
+    #    LINE_CHANNEL_TOKEN と LINE_TO の両方が設定された日から届きはじめ、
+    #    未設定の間は何もせず False を返す（＝今までどおり何も起きない）。
+    try:
+        logger.info("--- Step L5i: LINE通知 ---")
+        from src.notify_line import run as run_line
+        if run_line(risk=risk, fear_greed=fear_greed, prices=prices,
+                    report_paths=report_paths, ai_summary=ai_summary,
+                    internals=nikkei_internals, market_driver=market_driver,
+                    fear=fear, scenario=scenario, policy=policy, mode=mode):
+            logger.info("✅ LINE通知送信")
+    except Exception:
+        logger.error("LINE通知エラー"); logger.error(traceback.format_exc())
 
     # Step 8b: note記事テキスト自動生成
     note_article = {"available": False}
