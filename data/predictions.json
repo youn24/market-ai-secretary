@@ -1,20 +1,6 @@
 {
   "predictions": [
     {
-      "date": "2026-06-18",
-      "direction": "bear",
-      "score": -8.31,
-      "fg": 32.7,
-      "nikkei": 69404.5,
-      "sp500": 7420.1001,
-      "usdjpy": 160.61,
-      "vix": 18.44,
-      "verified": true,
-      "correct": false,
-      "actual_move": 0.72,
-      "actual_dir": "bull"
-    },
-    {
       "date": "2026-06-19",
       "direction": "bull",
       "score": 10.49,
@@ -1575,6 +1561,24 @@
       "sp500": 7340.5298,
       "usdjpy": 159.374,
       "vix": 25.46,
+      "confidence": null,
+      "verified": true,
+      "correct": false,
+      "actual_move": 0.78,
+      "actual_dir": "bull"
+    },
+    {
+      "date": "2026-11-19",
+      "direction": "neutral",
+      "score": 3.44,
+      "adj_score": 0.44,
+      "conf_rank": null,
+      "conf_win_rate": null,
+      "fg": 24.6,
+      "nikkei": 59156.8008,
+      "sp500": 7323.6299,
+      "usdjpy": 159.407,
+      "vix": 24.56,
       "confidence": null,
       "verified": false,
       "correct": null,
