@@ -809,14 +809,31 @@ def build(prices=None, risk=None, internals=None, ai_summary=None,
 # ⚠️ 全部を1枚に詰めない。Telegram は縦長の画像をチャット幅（実質400px程度）に
 #    縮めて表示するため、縦に長いほど**文字が潰れて読めなくなる**。
 #    横760・縦1400くらいに収まる分量だけ載せ、残りはレポートへ送る。
-TG_W = 760                 # CSSの幅。device_scale_factor=2 で実寸1520px
+# ⚠️ ここを広げると実機での文字が小さくなる（build_compact の説明を参照）。
+#    スマホのチャット幅に合わせた 420 が、読める上限いっぱいの幅。
+TG_W = 420                 # CSSの幅。device_scale_factor=2 で実寸840px
 _FONT = ("-apple-system,'Hiragino Kaku Gothic ProN','Noto Sans CJK JP',"
          "'Noto Sans JP','Yu Gothic UI',Meiryo,sans-serif")
 
 
 def build_compact(prices=None, risk=None, internals=None, ai_summary=None,
                   market_driver=None, fear=None, mode="morning") -> str:
-    """Telegram画像用の短い版。読めることを最優先にする。"""
+    """Telegramに画像で送る**記事**。レポートと同じ体裁で、分量だけ絞る。
+
+    ⚠️ **幅の設計がこの関数の肝。**
+       Telegram は画像をチャット幅（実機で390pt前後）に縮めて表示する。
+       つまり「画像のCSS幅」が「実機での文字の大きさ」をそのまま決める。
+
+         CSS幅 760 → 390/760 = 0.51倍 → 13pxの字が 6.6pt（読めない）
+         CSS幅 420 → 390/420 = 0.93倍 → 13pxの字が 12.1pt（読める）
+
+       なので**スマホと同じ420px幅で組む**。横に広げるほど字は小さくなる。
+
+    ⚠️ **縦の長さにも上限がある。** sendPhoto は「幅＋高さ ≤ 10000px」を
+       超えると受け取らない。実寸(×2)で 840 + 2×高さ ≤ 10000、
+       つまり **CSS高さ 4580px まで**。加えて長すぎる画像はチャット内で
+       切り詰められるので 1300px前後に収め、残りはボタンの先のレポートへ送る。
+    """
     prices, internals = prices or {}, internals or {}
     nk = _q(prices, "^N225")
     if not nk and not internals.get("available"):
@@ -831,149 +848,175 @@ def build_compact(prices=None, risk=None, internals=None, ai_summary=None,
     now = get_jst_now()
     when = {"morning": "寄り付き前", "noon": "前場終了後",
             "evening": "大引け後", "test": "検証"}.get(mode, "")
-    stars = "★" * imp + "☆" * (5 - imp)
 
-    hist = {s: V.history(s) for s in ("^N225", "^TOPX", "USDJPY=X")}
-    if not hist.get("^TOPX"):
-        hist["^TOPX"] = V.history("1306.T")
+    # 同じ写真を二度出さない（レポート側と同じ決まり）
+    used = set()
 
-    # 指標3つ
-    cards = ""
-    for sym, nm, dp, unit in (("^N225", "日経平均", 2, "円"),
-                              ("^TOPX", "TOPIX", 2, ""),
-                              ("USDJPY=X", "ドル円", 2, "円")):
-        d = _q(prices, sym)
-        if not d:
-            continue
-        col = _UP if d["c"] >= 0 else _DOWN
-        cards += (
-            f'<div style="flex:1;min-width:0;background:{_CARD};border:1px solid {_LINE};'
-            f'border-radius:14px;padding:13px 14px">'
-            f'<div style="font-size:15px;color:{_DIM}">{nm}</div>'
-            f'<div class="num" style="font-size:25px;font-weight:900;color:{_TEXT};'
-            f'margin-top:2px;letter-spacing:-.01em">{_n(d["v"], dp) or "—"}'
-            f'<span style="font-size:15px">{unit}</span></div>'
-            f'<div class="num" style="font-size:18px;font-weight:800;color:{col}">'
-            f'{d["c"]:+.2f}%</div>'
-            f'<div style="margin-top:7px">{V.sparkline(hist.get(sym) or [], w=150, h=46)}'
-            # ⚠️ 小チャートは1ヶ月の形、上の%は当日の前日比。期間が違うので
-            #    「緑の数字の下に赤いグラフ」が普通に起きる（実際に起きた）。
-            #    レポート版では直してあったが、こちらに入れ忘れていた。
-            f'</div>{_mo_tag(hist.get(sym))}</div>')
+    def _pick(*keys):
+        for k in keys:
+            if k not in used:
+                used.add(k)
+                return k
+        return None
 
-    # ── ローソク足（日経平均） ──
-    # 折れ線は終値しか見せない。ローソクなら「その日どこまで行って戻されたか」
-    # まで分かる。上ヒゲが長い日は高いところで売られたということで、
-    # 終値だけ見ていると気づけない情報。
-    candle_html = ""
+    inner = TG_W - 32          # 左右の余白を引いた、図を描ける幅
+
+    # ── 記事の顔になる写真 ──
+    lead = ""
     try:
-        rows = V.ohlc("^N225")
-        svg = V.candles(rows, w=700, h=196, label="日経平均", days=30)
-        if svg:
-            candle_html = (
-                f'<div style="background:{_CARD};border:1px solid {_LINE};'
-                f'border-radius:14px;padding:10px 12px 8px;margin-top:12px">'
-                f'{svg}'
-                f'<div style="font-size:11px;color:{_DIM};margin-top:2px">'
-                f'緑＝その日上げた　赤＝下げた　／　細い線はその日の高値と安値'
-                f'<span style="float:right">数値: Yahoo Finance ／ 作図: 市場AI秘書</span>'
-                f'</div></div>')
+        from src.media_credits import photo, photo_credit
+        pm = photo(_pick("tse2", "tse") or "tse2")
+        if pm:
+            lead = (f'<figure style="margin:13px 0 0">'
+                    f'<img src="{pm["url"]}" alt="" '
+                    f'style="width:100%;height:150px;object-fit:cover;'
+                    f'border-radius:11px;display:block;border:1px solid {_LINE}">'
+                    f'<figcaption style="font-size:9px;color:{_DIM};margin-top:4px;'
+                    f'line-height:1.6">{photo_credit(pm)}'
+                    f'　※当日の写真ではありません</figcaption></figure>')
     except Exception:
-        logger.error("ローソク足を描けませんでした", exc_info=True)
+        logger.error("見出し写真を出せませんでした", exc_info=True)
 
-    # 市場全体
-    mkt = ""
-    adv, dec = internals.get("advancing"), internals.get("declining")
-    turn = internals.get("turnover_total")
-    chips = []
-    if isinstance(turn, (int, float)):
-        chips.append(("東証の売買代金", f"{turn / 1e6:.2f}兆円", _ACC))
-    if isinstance(adv, (int, float)):
-        chips.append(("値上がり", f"{adv:,.0f}銘柄", _UP))
-    if isinstance(dec, (int, float)):
-        chips.append(("値下がり", f"{dec:,.0f}銘柄", _DOWN))
-    if isinstance(nvi, (int, float)):
-        pos = (f"上から{100 - nvi_pct:.0f}%"
-               if isinstance(nvi_pct, (int, float)) else "")
-        chips.append(("恐怖指数 日経VI", f"{nvi:.1f}" + (f"（{pos}）" if pos else ""), _WARN))
-    if chips:
-        inner = "".join(
-            f'<div style="min-width:46%;flex:1;padding:7px 0">'
-            f'<div style="font-size:14px;color:{_DIM}">{a}</div>'
-            f'<div class="num" style="font-size:20px;font-weight:800;color:{c}">{b}</div>'
-            f'</div>' for a, b, c in chips)
-        bar = (f'<div style="margin-top:6px">{V.breadth_bar(adv, dec, w=700, h=34)}</div>'
-               if isinstance(adv, (int, float)) and isinstance(dec, (int, float)) else "")
-        mkt = (f'<div style="background:{_CARD};border:1px solid {_LINE};'
-               f'border-radius:14px;padding:10px 16px 14px;margin-top:12px">'
-               f'<div style="display:flex;flex-wrap:wrap;gap:0 20px">{inner}</div>'
-               f'{bar}</div>')
-
-    # 結論
+    # ── 📌 3秒で結論 ──
     concl = ""
     for cand in ((ai_summary or {}).get("neutral_view"),
                  (market_driver or {}).get("summary")):
         if isinstance(cand, str) and cand.strip():
-            concl = cand.strip()[:170]
+            concl = cand.strip()[:150]
             break
     if len(concl) < 24 and nk:
         bits = [f"日経平均は{nk['c']:+.2f}%"]
         if isinstance(r, (int, float)):
             side = "下げ" if r >= .5 else "上げ"
-            bits.append(f"{(r if r >= .5 else 1 - r)*100:.0f}%の銘柄が{side}ました")
+            bits.append(f"{(r if r >= .5 else 1 - r) * 100:.0f}%の銘柄が{side}ました")
         concl = "。".join(bits) + "。"
-    concl_html = (
-        f'<div style="background:{_CARD};border:1px solid {_LINE};border-radius:14px;'
-        f'padding:14px 16px;margin-top:12px">'
-        f'<div style="font-size:15px;font-weight:800;color:{_TEXT};margin-bottom:6px">'
-        f'📌 3秒で結論</div>'
-        f'<div style="font-size:18px;line-height:1.8;color:{_TEXT}">{_b(concl)}</div>'
-        f'</div>') if concl else ""
+    concl_html = _sec("📌 3秒で結論", _p(concl, 13)) if concl else ""
 
-    # 今日の構え
+    # ── 📊 本日の数字（見本の数値ボックス）──
+    rows = ""
+    for sym, nm, unit in (("^N225", "日経平均", "円"), ("^TOPX", "TOPIX", ""),
+                          ("USDJPY=X", "ドル円", "円")):
+        d = _q(prices, sym)
+        if not d:
+            continue
+        col = _UP if d["c"] >= 0 else _DOWN
+        rows += (f'<div style="display:flex;align-items:baseline;'
+                 f'padding:7px 0;border-bottom:1px solid {_LINE}">'
+                 f'<span style="font-size:12px;font-weight:700;color:{_TEXT};flex:1">'
+                 f'{nm}</span>'
+                 f'<span class="num" style="font-size:15px;font-weight:800;'
+                 f'color:{_TEXT}">{_n(d["v"], 2) or "—"}'
+                 f'<span style="font-size:10px">{unit}</span></span>'
+                 f'<span class="num" style="font-size:13px;font-weight:800;'
+                 f'color:{col};margin-left:9px;min-width:62px;text-align:right">'
+                 f'{d["c"]:+.2f}%</span></div>')
+    adv, dec = internals.get("advancing"), internals.get("declining")
+    turn = internals.get("turnover_total")
+    sub = []
+    if isinstance(turn, (int, float)):
+        sub.append(f'東証の売買代金 <b style="color:{_ACC}">{turn / 1e6:.2f}兆円</b>')
+    if isinstance(adv, (int, float)) and isinstance(dec, (int, float)):
+        sub.append(f'値上がり <b style="color:{_UP}">{adv:,.0f}</b>'
+                   f' ／ 値下がり <b style="color:{_DOWN}">{dec:,.0f}</b>')
+    if isinstance(nvi, (int, float)):
+        pos = (f"・上から{100 - nvi_pct:.0f}%"
+               if isinstance(nvi_pct, (int, float)) else "")
+        sub.append(f'恐怖指数 日経VI <b style="color:{_WARN}">{nvi:.1f}</b>{pos}')
+    subhtml = ""
+    if sub:
+        subhtml = (f'<div style="font-size:11px;color:{_DIM};line-height:1.95;'
+                   f'margin-top:8px">' + "<br>".join(sub) + "</div>")
+    bar = ""
+    if isinstance(adv, (int, float)) and isinstance(dec, (int, float)):
+        bar = (f'<div style="margin-top:8px">'
+               f'{V.breadth_bar(adv, dec, w=inner - 28, h=26)}</div>')
+    num_html = _sec(f"📊 本日の数字（{now.month}月{now.day}日）",
+                    _box(rows + subhtml + bar),
+                    src="Yahoo Finance・nikkei225jp.com") if rows else ""
+
+    # ── 🕯 ローソク足 ──
+    candle_html = ""
+    try:
+        svg = V.candles(V.ohlc("^N225"), w=inner - 16, h=168,
+                        label="日経平均", days=30)
+        if svg:
+            candle_html = _sec(
+                "🕯 日経平均の日足", _box(svg, "10px 8px 4px"),
+                note="緑はその日上げた日、赤は下げた日。上下の細い線は"
+                     "**その日の高値と安値**です。",
+                src="Yahoo Finance の4本値から自前で作図")
+    except Exception:
+        logger.error("ローソク足を描けませんでした", exc_info=True)
+
+    # ── 📋 なぜ動いたのか（上位2つだけ。残りはレポートへ）──
+    chain_html = ""
+    try:
+        ch = _chain(prices, internals, None, {})[:2]
+        if ch:
+            pk = [_pick("nyse2", "nyse"), _pick("boj", "fed")]
+            body = ""
+            for i, c in enumerate(ch):
+                th = ""
+                if i < len(pk) and pk[i]:
+                    try:
+                        from src.media_credits import photo as _ph
+                        _p2 = _ph(pk[i])
+                        if _p2:
+                            th = (f'<img src="{_p2["url"]}" alt="" '
+                                  f'style="width:92px;height:64px;object-fit:cover;'
+                                  f'border-radius:8px;flex:0 0 auto;'
+                                  f'border:1px solid {_LINE}">')
+                    except Exception:
+                        logger.debug("連鎖の写真を出せませんでした")
+                body += (f'<div style="display:flex;gap:10px;align-items:flex-start;'
+                         f'margin:0 0 13px">{th}<div style="flex:1;min-width:0">'
+                         f'<div style="font-size:12px;font-weight:800;color:{_TEXT};'
+                         f'margin-bottom:3px">{c["no"]}. {c["title"]}</div>'
+                         f'<div style="font-size:11px;line-height:1.8;color:{_DIM}">'
+                         f'<span class="num" style="color:{_ACC};font-weight:700">'
+                         f'{c["val"]}</span>　{_b(c["note"])}{_pill(c["src"])}'
+                         f'</div></div></div>')
+            chain_html = _sec("📋 なぜ動いたのか？", body)
+    except Exception:
+        logger.error("連鎖を作れませんでした", exc_info=True)
+
+    # ── 🐘 今日の構え ──
     act = ("恐怖指数が高い日です。**同じ株数でも損得の振れ幅が大きくなります。**"
            "株数を減らす・損切りを広めに置く・待つ、のどれかを選ぶ場面。"
            if isinstance(nvi_pct, (int, float)) and nvi_pct >= 85 else
            "大きく荒れてはいません。いつもどおりで構いませんが、"
            "**決めた損切りの線は動かさない**ことだけ守ってください。")
     act_html = (
-        f'<div style="border:1px solid {_WARN}55;background:{_WARN}12;border-radius:14px;'
-        f'padding:13px 16px;margin-top:12px">'
-        f'<div style="font-size:15px;font-weight:800;color:{_WARN};margin-bottom:5px">'
-        f'🐘 今日の構え</div>'
-        f'<div style="font-size:16px;line-height:1.8;color:{_TEXT}">{_b(act)}</div></div>')
+        f'<section style="margin:22px 0 0;border:1px solid {_WARN}55;'
+        f'background:{_WARN}12;border-radius:12px;padding:12px 14px">'
+        f'<div style="font-size:13px;font-weight:800;color:{_WARN};'
+        f'margin-bottom:5px">🐘 今日の構え</div>'
+        f'<div style="font-size:12px;line-height:1.9;color:{_TEXT}">{_b(act)}</div>'
+        f'</section>')
 
     return (
-        f'<div id="feed" style="width:{TG_W}px;background:#0b0e14;color:{_TEXT};'
-        f'font-family:{_FONT};padding:22px 22px 20px;box-sizing:border-box">'
-        f'<div style="background:linear-gradient(180deg,rgba(106,169,255,'
-        f'{tone["glow"] + 0.05}),rgba(106,169,255,0) 200px);'
-        f'border:1px solid {_LINE};border-radius:20px;padding:20px 20px 22px">'
-        # ヘッダー
-        f'<div style="display:flex;align-items:center;gap:10px;'
-        f'border-bottom:1px solid {_LINE};padding-bottom:13px">'
-        f'<span style="font-size:24px">🐘</span>'
-        f'<span style="font-size:19px;font-weight:900;letter-spacing:.08em">MARKET FEED</span>'
-        f'<span style="margin-left:auto;font-size:15px;font-weight:800;'
-        f'color:{tone["badge"]};border:1.5px solid {tone["badge"]};border-radius:30px;'
-        f'padding:3px 14px">{stars}</span></div>'
-        f'<div style="font-size:14.5px;color:{_DIM};margin-top:11px">'
-        f'{now.year}年{now.month}月{now.day}日（{_WD[now.weekday()]}）'
-        f'{"　" + when if when else ""} ｜ 日本株・米国株'
-        f'<span style="color:{tone["badge"]}">　{tone["label"]}</span></div>'
-        # 見出し
-        f'<div style="font-size:{tone["size"] + 10}px;font-weight:{tone["weight"]};'
-        f'color:{tone["col"]};line-height:1.4;margin-top:11px;letter-spacing:-.015em">'
-        f'{_b(_headline(nk, internals))}</div>'
-        # 指標
-        f'<div style="display:flex;gap:11px;margin-top:15px">{cards}</div>'
-        f'{candle_html}'
-        f'{mkt}{concl_html}{act_html}'
-        f'<div style="font-size:13.5px;color:{_DIM};margin-top:14px;text-align:center">'
-        f'👇 なぜ動いたかの連鎖・3シナリオ・チャートは下のボタンから'
-        f'<br><span style="opacity:.7">グラフは自前作図／数値: Yahoo Finance・'
-        f'nikkei225jp.com・株探</span></div>'
-        f'</div></div>')
+        f'<div id="feed" style="width:{TG_W}px;background:{_BG2};color:{_TEXT};'
+        f'font-family:{_FONT};padding:18px 16px 20px;box-sizing:border-box">'
+        f'<div style="display:flex;align-items:center;gap:8px">'
+        f'<span style="font-size:18px">🐘</span>'
+        f'<span style="font-size:13px;font-weight:900;letter-spacing:.05em">'
+        f'GANESHA MARKET FEED</span>'
+        f'<span style="margin-left:auto;font-size:10px;font-weight:800;'
+        f'color:{tone["badge"]};background:{tone["badge"]}1f;border-radius:6px;'
+        f'padding:3px 8px;white-space:nowrap">重要度 {imp}/5</span></div>'
+        f'<div style="font-size:10.5px;color:{_DIM};margin-top:9px">'
+        f'{now.month}月{now.day}日（{_WD[now.weekday()]}）'
+        f'{"　" + when if when else ""} ｜ 日本株・米国株</div>'
+        f'<h1 style="font-size:{tone["size"] + 1}px;font-weight:{tone["weight"]};'
+        f'color:{_TEXT};line-height:1.5;margin:10px 0 0">'
+        f'{_b(_headline(nk, internals))}</h1>'
+        f'{lead}{concl_html}{num_html}{candle_html}{chain_html}{act_html}'
+        f'<div style="font-size:10.5px;color:{_DIM};margin-top:16px;'
+        f'text-align:center;line-height:1.8">'
+        f'👇 3シナリオ・為替金利・日銀政策・公式動画は下のボタンから'
+        f'<br><span style="opacity:.75">グラフは自前作図／'
+        f'数値: Yahoo Finance・nikkei225jp.com・株探</span></div>'
+        f'</div>')
 
 
 def render_png(html: str, out_path: str) -> bool:
@@ -1001,13 +1044,36 @@ def render_png(html: str, out_path: str) -> bool:
         return False
 
 
+TG_MAX_SUM = 10000      # Telegram の sendPhoto は 幅+高さ がこれを超えると拒否する
+
+
 def make_feed_image(out_path: str, **kw) -> str | None:
     """Telegram用のフィード画像を作ってパスを返す。作れなければ None。"""
     try:
         html = build_compact(**kw)
         if not html:
             return None
-        return out_path if render_png(html, out_path) else None
+        if not render_png(html, out_path):
+            return None
+
+        # ⚠️ 出来た画像の寸法を**必ず確かめる。**
+        #    Telegram は 幅+高さ > 10000 の写真を受け取らない。
+        #    文章が長い日に静かに超えて、その朝だけ通知が画像なしになる
+        #    （しかもログには出ない）のがいちばん困る。ここで気づく。
+        try:
+            from PIL import Image
+            with Image.open(out_path) as im:
+                w, h = im.size
+            if w + h > TG_MAX_SUM:
+                logger.error(
+                    f"フィード画像が大きすぎます {w}x{h}（幅+高さ={w + h} > "
+                    f"{TG_MAX_SUM}）。Telegramが拒否するため従来のカードに落とします。"
+                    f"載せる項目を減らすか build_compact の分量を見直してください")
+                return None
+            logger.info(f"フィード画像 {w}x{h}px（幅+高さ={w + h}／上限{TG_MAX_SUM}）")
+        except ImportError:
+            logger.debug("Pillow が無いため画像の寸法確認は省略します")
+        return out_path
     except Exception:
         logger.error("フィード画像を作れませんでした", exc_info=True)
         return None
