@@ -670,7 +670,30 @@ def build_compact(prices=None, risk=None, internals=None, ai_summary=None,
             f'<div class="num" style="font-size:18px;font-weight:800;color:{col}">'
             f'{d["c"]:+.2f}%</div>'
             f'<div style="margin-top:7px">{V.sparkline(hist.get(sym) or [], w=150, h=46)}'
-            f'</div></div>')
+            # ⚠️ 小チャートは1ヶ月の形、上の%は当日の前日比。期間が違うので
+            #    「緑の数字の下に赤いグラフ」が普通に起きる（実際に起きた）。
+            #    レポート版では直してあったが、こちらに入れ忘れていた。
+            f'</div>{_mo_tag(hist.get(sym))}</div>')
+
+    # ── ローソク足（日経平均） ──
+    # 折れ線は終値しか見せない。ローソクなら「その日どこまで行って戻されたか」
+    # まで分かる。上ヒゲが長い日は高いところで売られたということで、
+    # 終値だけ見ていると気づけない情報。
+    candle_html = ""
+    try:
+        rows = V.ohlc("^N225")
+        svg = V.candles(rows, w=700, h=196, label="日経平均", days=30)
+        if svg:
+            candle_html = (
+                f'<div style="background:{_CARD};border:1px solid {_LINE};'
+                f'border-radius:14px;padding:10px 12px 8px;margin-top:12px">'
+                f'{svg}'
+                f'<div style="font-size:11px;color:{_DIM};margin-top:2px">'
+                f'緑＝その日上げた　赤＝下げた　／　細い線はその日の高値と安値'
+                f'<span style="float:right">数値: Yahoo Finance ／ 作図: 市場AI秘書</span>'
+                f'</div></div>')
+    except Exception:
+        logger.error("ローソク足を描けませんでした", exc_info=True)
 
     # 市場全体
     mkt = ""
@@ -758,6 +781,7 @@ def build_compact(prices=None, risk=None, internals=None, ai_summary=None,
         f'{_b(_headline(nk, internals))}</div>'
         # 指標
         f'<div style="display:flex;gap:11px;margin-top:15px">{cards}</div>'
+        f'{candle_html}'
         f'{mkt}{concl_html}{act_html}'
         f'<div style="font-size:13.5px;color:{_DIM};margin-top:14px;text-align:center">'
         f'👇 なぜ動いたかの連鎖・3シナリオ・チャートは下のボタンから'

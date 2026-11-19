@@ -49,6 +49,82 @@ def history(symbol: str, rng: str = "1mo") -> list:
         return []
 
 
+def ohlc(symbol: str, rng: str = "2mo") -> list:
+    """日足の [始値, 高値, 安値, 終値] の並びを返す。取れなければ空。
+
+    ⚠️ 4本値のどれかが欠けている日は**その日ごと捨てる**。
+       片方だけ埋めるとローソクの形が変わり、無い動きを描くことになる。
+    """
+    url = (f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}"
+           f"?interval=1d&range={rng}")
+    try:
+        req = urllib.request.Request(url, headers=_HEAD)
+        res = json.load(urllib.request.urlopen(req, timeout=15))
+        q = res["chart"]["result"][0]["indicators"]["quote"][0]
+        out = []
+        for o, h, l, c in zip(q["open"], q["high"], q["low"], q["close"]):
+            if all(isinstance(x, (int, float)) for x in (o, h, l, c)):
+                out.append([float(o), float(h), float(l), float(c)])
+        return out
+    except Exception as e:
+        logger.debug(f"4本値を取れませんでした [{symbol}]: {e}")
+        return []
+
+
+def candles(rows, w=700, h=200, label="", days=30) -> str:
+    """ローソク足。実体＋ヒゲを描く。
+
+    ローソク足は折れ線より情報が多い。折れ線は終値しか見せないが、
+    ローソクは**その日のうちにどこまで行って戻されたか**まで見える。
+    「上ヒゲが長い」＝高いところで売られた、という形は終値だけでは分からない。
+
+    色は日本式（陽線＝赤、陰線＝青）ではなく、**このレポート全体の約束**に
+    合わせて上げ＝緑・下げ＝赤にしてある。同じ画面の中で赤の意味が
+    場所によって逆になるのが、いちばん読み違えのもとになるため。
+    """
+    rows = [r for r in (rows or []) if r and len(r) == 4][-days:]
+    if len(rows) < 5:
+        return ""
+    pad_l, pad_r, pad_t, pad_b = 6, 52, 16, 16
+    iw, ih = w - pad_l - pad_r, h - pad_t - pad_b
+    lo = min(r[2] for r in rows)
+    hi = max(r[1] for r in rows)
+    if hi == lo:
+        hi = lo + 1
+
+    def y(v):
+        return pad_t + (hi - v) / (hi - lo) * ih
+
+    step = iw / len(rows)
+    bw = max(2.0, min(11.0, step * 0.62))     # 実体の幅
+    parts = []
+    for i, (o, hh, ll, c) in enumerate(rows):
+        cx = pad_l + step * (i + 0.5)
+        col = UP if c >= o else DOWN
+        # ヒゲ
+        parts.append(f'<line x1="{cx:.1f}" y1="{y(hh):.1f}" x2="{cx:.1f}" '
+                     f'y2="{y(ll):.1f}" stroke="{col}" stroke-width="1.1"/>')
+        # 実体。始値と終値が同じ日は線になるので最低1pxの高さを与える
+        top, bot = y(max(o, c)), y(min(o, c))
+        parts.append(f'<rect x="{cx - bw / 2:.1f}" y="{top:.1f}" width="{bw:.1f}" '
+                     f'height="{max(1.0, bot - top):.1f}" fill="{col}" rx="1"/>')
+
+    # 右端に高値・安値・直近の値
+    last = rows[-1][3]
+    for v, txt, cl in ((hi, f"{hi:,.0f}", DIM), (lo, f"{lo:,.0f}", DIM),
+                       (last, f"{last:,.0f}", TEXT)):
+        parts.append(f'<text x="{w - pad_r + 6}" y="{y(v) + 4:.1f}" font-size="11" '
+                     f'fill="{cl}" font-weight="{700 if cl == TEXT else 400}">{txt}</text>')
+    parts.append(f'<line x1="{pad_l}" y1="{y(last):.1f}" x2="{w - pad_r}" '
+                 f'y2="{y(last):.1f}" stroke="{TEXT}" stroke-width="0.7" '
+                 f'stroke-dasharray="3 3" opacity="0.45"/>')
+
+    head = (f'<text x="{pad_l}" y="11" font-size="11" fill="{DIM}">'
+            f'{label}　直近{len(rows)}営業日の日足</text>') if label else ""
+    return (f'<svg width="{w}" height="{h}" viewBox="0 0 {w} {h}" '
+            f'xmlns="http://www.w3.org/2000/svg">{head}{"".join(parts)}</svg>')
+
+
 def sparkline(vals, w=108, h=34, strong=False) -> str:
     """小さな折れ線。上げ下げで色が変わる。"""
     vals = [v for v in (vals or []) if isinstance(v, (int, float))]
