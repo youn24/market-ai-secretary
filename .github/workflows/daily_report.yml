@@ -154,6 +154,15 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+          # HTMLメール（文章の間に画像を挟んだ記事）。
+          # 未設定なら notify_email が何もせずに返るので、
+          # 入れていない間はTelegramだけが届く。
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          MAIL_TO: ${{ secrets.MAIL_TO }}
+          MAIL_FROM: ${{ secrets.MAIL_FROM }}
           GITHUB_PAGES_URL: "https://youn24.github.io/market-ai-secretary"
         run: |
           echo "🤖 完全自律AIチームシステムを起動..."

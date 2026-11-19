@@ -1341,6 +1341,21 @@ def run(mode: str):
     except Exception:
         logger.error("note カバー画像エラー"); logger.debug(traceback.format_exc())
 
+    # Step MAIL: HTMLメール（文章の間に画像を挟んだ記事）
+    # ⚠️ Telegramの1通では文章と画像を交互に置けない（仕様）。
+    #    メールならできるので、読み物としてはこちらが本命。
+    #    SMTPの設定が無い環境では何もせず False を返すだけなので、
+    #    設定していない間は従来どおりTelegramだけが届く。
+    try:
+        logger.info("--- Step MAIL: HTMLメール ---")
+        from src.notify_email import run as notify_mail
+        if notify_mail(prices=prices, risk=risk, internals=nikkei_internals,
+                       ai_summary=ai_summary, market_driver=market_driver,
+                       fear=fear, scenario=scenario, policy=policy, mode=mode):
+            logger.info("✅ HTMLメール送信")
+    except Exception:
+        logger.error("HTMLメールエラー"); logger.debug(traceback.format_exc())
+
     # Step 8: Telegram通知
     try:
         logger.info("--- Step 8: Telegram通知 ---")
