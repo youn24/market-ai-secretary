@@ -683,11 +683,13 @@ def run_gauge_alert() -> bool:
         if not big:
             return False
 
-        from src.notify_telegram import send_message
+        from src.notify_telegram import send_alert
         # 恐怖指数・金利・為替はマクロの話なのでFXグループへ。
         # 未設定ならメイン側に落として通知消失を防ぐ。
         chat_id = os.getenv("TELEGRAM_FX_CHAT_ID", "").strip() or None
-        ok = send_message(build_message(big, r.get("gauges")), chat_id=chat_id)
+        ok = send_alert(build_message(big, r.get("gauges")),
+                          sources=("yahoo", "nikkei_vi", "mof", "alternative_me"),
+                          chat_id=chat_id)
         if ok:
             logger.info("✅ 大きく動いた指標を通知: "
                         + " / ".join(g["name"] for g in big))

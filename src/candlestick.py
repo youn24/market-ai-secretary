@@ -492,8 +492,8 @@ def run_pattern_alert() -> bool:
         except Exception:
             logger.error("状態の保存に失敗しました", exc_info=True)
 
-        from src.notify_telegram import send_message
-        ok = send_message(build_message(kept))
+        from src.notify_telegram import send_alert
+        ok = send_alert(build_message(kept), sources=("yahoo",))
         if ok:
             logger.info(f"✅ チャートの形を通知（{len(kept)}件）")
         return bool(ok)

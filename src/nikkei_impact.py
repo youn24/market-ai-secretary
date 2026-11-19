@@ -302,8 +302,8 @@ def run_emergency_alert() -> bool:
             logger.info("緊急アラートは通知済みのためスキップ")
             return False
 
-        from src.notify_telegram import send_message
-        ok = send_message(build_emergency_message(r))
+        from src.notify_telegram import send_alert
+        ok = send_alert(build_emergency_message(r), sources=("yahoo", "nikkei_index"))
         if ok:
             st["emergency_session"] = skey
             st["emergency_ts"] = datetime.now().isoformat()
@@ -369,8 +369,8 @@ def run_impact_alert() -> bool:
             logger.info("本日は通知済みのためスキップ")
             return False
 
-        from src.notify_telegram import send_message
-        ok = send_message(build_block(r))
+        from src.notify_telegram import send_alert
+        ok = send_alert(build_block(r), sources=("yahoo", "nikkei_index"))
         if ok:
             try:
                 _STATE_FILE.parent.mkdir(parents=True, exist_ok=True)

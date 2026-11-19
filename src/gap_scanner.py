@@ -245,8 +245,8 @@ def run_gap_alert() -> bool:
             logger.info("本日は通知済みのためスキップ")
             return False
 
-        from src.notify_telegram import send_message
-        ok = send_message(build_block(r))
+        from src.notify_telegram import send_alert
+        ok = send_alert(build_block(r), sources=("yahoo",))
         if ok:
             st = {"session": skey, "ts": datetime.now().isoformat(),
                   "count": len(gaps)}

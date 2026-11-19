@@ -343,8 +343,9 @@ def run_usdjpy_emergency() -> bool:
         except Exception:
             pass
 
-        from src.notify_telegram import send_message
-        ok = send_message(build_message(hits, sc, price))
+        from src.notify_telegram import send_alert
+        ok = send_alert(build_message(hits, sc, price),
+                        sources=("yahoo", "mof", "cftc"))
         if ok:
             _save_state(sc)
             logger.info(f"🚨 ドル円 緊急アラート送信: {sc['rank']} "

@@ -215,9 +215,24 @@ def _fetch_nikkei_official_csv(csv_name: str) -> dict | None:
             below = sum(1 for v in vals if v < latest)
             pct = round(below / len(vals) * 100, 1)
 
+        # 「上位5%／25%は実際にいくつか」も一緒に出す。
+        # ⚠️ **ここで出すことに意味がある。** 呼び出し側が手元の短い並びから
+        #    計算し直すと、判定に使った分布（全履歴）と図に引く線（直近だけ）が
+        #    食い違う。アラート本文と図が違うことを言う形になり、
+        #    この案件で最も避けたい失敗そのものになる。
+        def _at(p):
+            if len(vals) < 60:
+                return None
+            i = min(len(vals) - 1, max(0, int(round(p / 100 * (len(vals) - 1)))))
+            return round(vals[i], 2)
+        bands = {"p95": _at(95), "p75": _at(75), "p50": _at(50)}
+
         return {"latest": round(latest, 2), "prev_close": round(prev, 2) if prev else None,
                 "change_pct": change, "source": "日経公式CSV",
-                "pctile": pct, "history_days": len(rows)}
+                "pctile": pct, "history_days": len(rows), "bands": bands,
+                # 直近の並びも渡す。アラートに「今どのあたりか」の図を
+                # 添えるのに使う（ここで渡さないと同じCSVをもう一度取りに行く）。
+                "series": [round(v, 2) for _, v in rows[-180:]]}
     except Exception as e:
         logger.warning(f"日経公式CSV 失敗 [{csv_name}]: {e}")
     return None

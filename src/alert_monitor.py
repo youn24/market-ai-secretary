@@ -317,8 +317,9 @@ def run_cfd_alert() -> bool:
             "📱 市場AI秘書",
         ]
 
-        from src.notify_telegram import send_message
-        send_message("\n".join(lines))
+        from src.notify_telegram import send_alert
+        send_alert("\n".join(lines), alerts=alerts,
+                   chart_title="24時間マーケットで動いた銘柄")
         logger.info(f"🚨 CFD/24時間アラート送信: {len(alerts)}銘柄")
         return True
     except Exception:
@@ -382,8 +383,9 @@ def run_afterhours_alert() -> bool:
             "📱 市場AI秘書",
         ]
 
-        from src.notify_telegram import send_message
-        send_message("\n".join(lines))
+        from src.notify_telegram import send_alert
+        send_alert("\n".join(lines), alerts=alerts,
+                   chart_title="時間外で動いた銘柄")
         logger.info(f"🚨 時間外ムーバーアラート送信: {len(alerts)}銘柄")
         return True
     except Exception:
@@ -444,8 +446,9 @@ def run_alert_check(prices: dict, fear_greed: dict, risk: dict) -> bool:
         except Exception as e:
             logger.error(f"Gemini急変分析エラー: {e}")
 
-        from src.notify_telegram import send_message
-        send_message(msg)
+        # 図と出典は send_alert が付ける（全アラート共通の出口）
+        from src.notify_telegram import send_alert
+        send_alert(msg, alerts=alerts, chart_title="急変した銘柄の今日の動き")
         return True
 
     except Exception as e:

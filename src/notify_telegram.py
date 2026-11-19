@@ -461,6 +461,63 @@ def send_photo_with_button(image_path: str, caption: str,
     return False
 
 
+def send_alert(text: str, alerts: list = None, sources=(),
+               chart_title: str = "急変した銘柄の今日の動き",
+               image: str = None, chat_id: str = None) -> bool:
+    """緊急アラートを「図＋出典つきで1通」送る。
+
+    オーナー指示（2026-11-19）「どの緊急アラートでも出典引用して」に対応。
+    **全アラートはこの関数を通す。** 各所で個別に出典を足して回ると、
+    必ず付け忘れが出る（この案件で何度も繰り返している形）。
+
+    順番が大事:
+      ① 本文に 📚出典 を足す（これは何があっても付く）
+      ② 図を描く（失敗しても None が返るだけ）
+      ③ 本文が1024字に収まり図もあれば → 写真＋キャプションで1通
+         収まらない／図が無ければ      → テキストで1通
+
+    ⚠️ **本文を切り詰めてまで図を付けない。** Telegramのキャプションは
+       1024字で、超えた分は黙って消える。緊急の知らせで中身が欠けるのは、
+       図が無いことよりはるかに悪い。長い日はテキストを優先する。
+    """
+    body = (text or "").rstrip()
+    try:
+        from src.sources import cite, source_for_symbol
+        keys = list(sources) or [source_for_symbol(a.get("symbol"))
+                                 for a in (alerts or [])]
+        line = cite(*keys) if keys else ""
+        if line:
+            body += "\n\n" + line
+    except Exception:
+        logger.error("出典行を作れませんでした", exc_info=True)
+
+    # 呼び出し側がその通知にふさわしい図を既に作っていれば、それを使う
+    # （恐怖指数なら水準の推移、急変なら銘柄の値動き、と図の形が違うため）。
+    img = image if (image and os.path.exists(str(image))) else None
+    if not img and alerts:
+        try:
+            from src.alert_chart import make as _make_chart
+            img = _make_chart(alerts, title=chart_title)
+        except Exception:
+            logger.error("アラート図の呼び出しに失敗", exc_info=True)
+
+    if img and len(body) <= 1024:
+        try:
+            from src.notify_meter import allow as _allow, record as _rec
+        except Exception:
+            _allow, _rec = (lambda *a, **k: True), (lambda *a, **k: None)
+        if not _allow("alert_photo"):
+            return False
+        if send_photo(img, caption=body, chat_id=chat_id):
+            _rec("alert_photo", True)
+            return True
+        logger.warning("図つき送信に失敗 → テキストで送り直します")
+
+    if img:
+        logger.info(f"本文が{len(body)}字で枠(1024)を超えるため、図は付けずテキストで送ります")
+    return send_message(body, chat_id=chat_id)
+
+
 def send_document(file_path: str, caption: str = "") -> bool:
     if not _is_configured():
         return False

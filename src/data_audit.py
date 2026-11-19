@@ -268,8 +268,8 @@ def run_audit_alert() -> bool:
             logger.info("本日は通知済みのためスキップ")
             return False
 
-        from src.notify_telegram import send_message
-        ok = send_message(build_message(r))
+        from src.notify_telegram import send_alert
+        ok = send_alert(build_message(r), sources=("yahoo", "nikkei225jp"))
         if ok:
             try:
                 _STATE_FILE.parent.mkdir(parents=True, exist_ok=True)

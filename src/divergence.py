@@ -274,8 +274,8 @@ def run_divergence_alert() -> bool:
         if not hits:
             return False
 
-        from src.notify_telegram import send_message
-        ok = send_message(build_message(hits))
+        from src.notify_telegram import send_alert
+        ok = send_alert(build_message(hits), sources=("yahoo",))
         if ok:
             names = " / ".join(f"{h['name']}{h['label']}" for h in hits)
             logger.info(f"✅ ヒドゥンダイバージェンス通知: {names}")

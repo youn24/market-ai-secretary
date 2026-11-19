@@ -240,11 +240,11 @@ def run_fx_alert() -> bool:
         if not groups:
             return False
 
-        from src.notify_telegram import send_message
+        from src.notify_telegram import send_alert
         # 為替・マクロは専用グループへ送る。未設定ならメイン側に落とす
         # （設定漏れで通知そのものが消えるのを防ぐ）。
         chat_id = os.getenv("TELEGRAM_FX_CHAT_ID", "").strip() or None
-        ok = send_message(build_message(groups), chat_id=chat_id)
+        ok = send_alert(build_message(groups), sources=("yahoo",), chat_id=chat_id)
         if ok:
             logger.info(f"✅ 為替シグナル通知（{len(groups)}ペア）: "
                         + " / ".join(g["name"] for g in groups))

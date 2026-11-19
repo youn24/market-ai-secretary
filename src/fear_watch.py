@@ -158,6 +158,12 @@ def run() -> dict:
 
         return {"available": True, "nvi": nvi, "nvi_chg": nvi_chg,
                 "nvi_pctile": pct, "zone": z, "history_days": d.get("history_days"),
+                # アラートに「今どのあたりか」の図を添えるための並び。
+                # CSVは既に読み終えているので通信は増えない。
+                "series": d.get("series") or [],
+                # 上位5%/25%が実際にいくつか。判定に使った分布（全履歴）で
+                # 計算された値なので、図に引く線が本文と必ず一致する。
+                "bands": d.get("bands") or {},
                 "vix": vix, "vix_chg": vix_chg,
                 "jump": jump, "world": world}
     except Exception:
@@ -311,11 +317,29 @@ def run_fear_alert() -> bool:
         if kind == "jump":
             new_st["jump_session"] = sess
 
-        from src.notify_telegram import send_message
+        from src.notify_telegram import send_alert
         # ⚠️ FXグループではなくメインへ送る。日経VIは**日本株**の恐怖指数で、
         #    株を持ち続けるか・株数を減らすかという判断に直接効く。
         #    為替・マクロをFXグループに分けている方針とは別の話。
-        ok = send_message(build_message(r, kind))
+        #
+        # 図は「今の水準が過去のどこか」を見せる。数字だけでは高いか低いか
+        # 分からないのが恐怖指数なので、入る線・出る線も一緒に引く。
+        img = None
+        try:
+            from src.alert_chart import level_chart
+            ser = r.get("series") or []
+            bd = r.get("bands") or {}
+            img = level_chart(
+                ser, "恐怖指数 日経VI",
+                sources=("nikkei_vi",),
+                bands=[(bd.get("p95"), "#ff4d63", "ここから上は異常（上位5%）"),
+                       (bd.get("p75"), "#2fd98a", "ここまでなら落ち着き（上位25%）")],
+                band_note=(f"点線は過去{r.get('history_days')}営業日の分布から"
+                           if r.get("history_days") else ""))
+        except Exception:
+            logger.error("恐怖指数の図を作れませんでした", exc_info=True)
+        ok = send_alert(build_message(r, kind), sources=("nikkei_vi", "yahoo"),
+                        image=img)
         if ok:
             logger.info(f"✅ 恐怖指数アラート送信（{kind}・"
                         f"日経VI {r['nvi']:.1f}／{z.get('name')}）")

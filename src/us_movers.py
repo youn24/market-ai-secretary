@@ -517,8 +517,13 @@ def run_emergency_alert() -> bool:
             logger.info("緊急アラートは通知済みのためスキップ")
             return False
 
-        from src.notify_telegram import send_message
-        ok = send_message(build_emergency_message(r))
+        from src.notify_telegram import send_alert
+        # 緊急なので「どの銘柄がどう動いたか」の図を添える（出典は図にも焼く）
+        ok = send_alert(build_emergency_message(r), sources=("yahoo",),
+                        alerts=[{"symbol": m.get("symbol"), "name": m.get("name"),
+                                 "change": m.get("chg_pct")}
+                                for m in (r.get("movers") or [])[:4]],
+                        chart_title="米国市場で大きく動いた銘柄")
         if ok:
             st[key] = {"session": skey, "ts": datetime.now().isoformat(),
                        "avg": em["avg"]}
@@ -588,8 +593,8 @@ def run_movers_alert() -> bool:
                    "sectors": new_secs or sectors}
         payload["jp_impact"] = _jp_impact(payload["movers"], payload["sectors"])
 
-        from src.notify_telegram import send_message
-        ok = send_message(build_message(payload))
+        from src.notify_telegram import send_alert
+        ok = send_alert(build_message(payload), sources=("yahoo",))
         if ok:
             logger.info(f"✅ 米国ザラ場ムーバーを通知"
                         f"（銘柄{len(new_syms)}・業界{len(new_secs)}）")

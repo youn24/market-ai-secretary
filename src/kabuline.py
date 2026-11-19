@@ -205,8 +205,8 @@ def run_report(codes: list | None = None) -> bool:
         if not res.get("available"):
             logger.info("株クラの声: 送信スキップ")
             return False
-        from src.notify_telegram import send_message
-        ok = send_message(res["telegram_message"])
+        from src.notify_telegram import send_alert
+        ok = send_alert(res["telegram_message"], sources=("kabuline",))
         if ok:
             logger.info("✅ 株クラの声を送信")
         return bool(ok)

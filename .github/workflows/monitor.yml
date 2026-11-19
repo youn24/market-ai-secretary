@@ -65,9 +65,14 @@ jobs:
 
       - name: ライブラリインストール
         run: |
+          # matplotlib は緊急アラートに添える図（src/alert_chart.py）に要る。
+          # ここから外すと図だけが黙って消える（アラート本体は届く作り）。
+          # フォントは apt ではなく pip の japanize-matplotlib で入れる —
+          # 2026-09-02/03 に apt-get の404で処理ごと落ちた事故があるため。
           pip install --upgrade pip
           pip install pandas numpy requests python-dotenv \
-                      PyYAML yfinance feedparser google-generativeai
+                      PyYAML yfinance feedparser google-generativeai \
+                      matplotlib japanize-matplotlib
 
       - name: 市場監視・急変アラート
         env:
