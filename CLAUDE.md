@@ -2298,3 +2298,44 @@ fx_signals ／ tech_signals ／ candlestick ／ kabuline。
 
 検証: 送信を横取りして3経路を実行し、**急変=写真＋出典／恐怖指数=写真＋出典／
 1233字の長文=テキストで全文＋出典**を確認（本物の通知は1通も送っていない）。
+
+### 2026-11-19 出典のURLを外から点検したら、2件が404だった（scripts/check_sources.py）
+
+出典の台帳を作ったその日に、**存在しないページを出典として配信していた**。
+
+| 鍵 | 書いていたURL | 正しいURL |
+|---|---|---|
+| `mof` | `.../reference/**feign**/index.htm` | `.../reference/**feio**/`（Foreign Exchange Intervention Operations） |
+| `nikkei225jp` | `nikkei225jp.com/**nkd**/touraku.php` | `nikkei225jp.com/**data**/touraku.php` |
+
+どちらも見た目では気づけず、**誰かがタップするまで誰も気づけない**形。
+出典は「正しそうに見える」だけでは無意味で、むしろ有害（数字が合っていても信用を崩す）。
+→ `scripts/check_sources.py` で**実際にHTTPで取りに行って**確かめる。404/410 は異常で exit 1。
+403やタイムアウトは「こちらの回線から確認できないだけ」なので注意止まりにする。
+
+    python -m scripts.check_sources
+
+**⚠️ 新しい出典を台帳に足したら、必ずこれを通すこと。**
+「生成できた」と「利用者に届いた」は別物（publish_check.py の教訓）と同じ形が出典にもある。
+
+### 2026-11-19 FREDのチャート画像は使えない（公式の埋め込み画像を調べた結果）
+
+「公式サイトの画像を出典つきで引用する」案の中で、唯一きれいに成立するはずだったのが
+FREDの公式チャート画像（`fred.stlouisfed.org/graph/fredgraph.png?id=...`）だった。
+埋め込み用に公開されており、日経225・S&P500・VIX・ドル円・10年債まで揃っている。
+
+**実測の結果、使えない。**
+
+| 試した先 | 結果 |
+|---|---|
+| `fred.stlouisfed.org/graph/fredgraph.png`（画像） | 45秒でタイムアウト |
+| `fred.stlouisfed.org/graph/fredgraph.csv`（CSV） | 45秒でタイムアウト |
+| `fred.stlouisfed.org/`（トップページ） | 45秒でタイムアウト |
+| `api.stlouisfed.org`（公式API） | 即応答 |
+
+11-19 に直した「CSV口だけが塞がれている」という見立ては**不正確だった**。
+塞がれているのは `fred.stlouisfed.org` という**ホストごと**で、CSVも画像もトップページも
+届かない。生きているのは `api.stlouisfed.org` だけ。
+（データ取得は既に公式APIへ移してあるので実害はない。画像の道が無いことが分かっただけ。）
+
+→ **マクロ系の図も自前で描く。** 外部の公式画像に頼る道は、少なくともFREDには無い。

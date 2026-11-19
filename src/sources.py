@@ -54,7 +54,9 @@ SOURCES = {
     ),
     "nikkei225jp": (
         "nikkei225jp.com",
-        "https://nikkei225jp.com/nkd/touraku.php",
+        # ⚠️ "/nkd/" は404。実際にコードが読んでいるのは "/data/"
+        #    （nikkei_market_data._discover_url も同じページを見る）
+        "https://nikkei225jp.com/data/touraku.php",
         "騰落レシオ・空売り比率・PER・東証の売買代金",
     ),
     "kabutan": (
@@ -72,10 +74,18 @@ SOURCES = {
         "https://fred.stlouisfed.org/",
         "米国の経済統計（政策金利・CPI・失業率・国債利回り）",
     ),
+    # ⚠️ ここは一度 "feign" と書いて**404のURLを出典として配信していた**。
+    #    正しくは feio（Foreign Exchange Intervention Operations）。
+    #    `scripts/check_sources.py` を足したのはこの事故のため。
     "mof": (
-        "財務省",
-        "https://www.mof.go.jp/policy/international_policy/reference/feign/index.htm",
-        "外国為替平衡操作（為替介入）の実施状況・国債金利情報",
+        "財務省 外国為替平衡操作の実施状況",
+        "https://www.mof.go.jp/policy/international_policy/reference/feio/",
+        "為替介入の実績（intervention_stats が読むCSVの出どころ）",
+    ),
+    "mof_jgb": (
+        "財務省 国債金利情報",
+        "https://www.mof.go.jp/jgbs/reference/interest_rate/",
+        "日本国債の利回り（risk_gauges が読むCSVの出どころ）",
     ),
     "boj": (
         "日本銀行",
