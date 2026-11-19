@@ -132,24 +132,41 @@ def _pill(text: str) -> str:
             f'padding:1.5px 7px;margin-left:5px;white-space:nowrap">{text}</span>')
 
 
-def _sec(title, body, note="", src="") -> str:
+_TOC = []          # 目次の材料。build() の最初で空にする
+
+
+def _slug(title: str) -> str:
+    """見出しから飛び先のidを作る。絵文字や記号は落とす。"""
+    import hashlib
+    return "s" + hashlib.md5(str(title).encode("utf-8")).hexdigest()[:8]
+
+
+def _sec(title, body, note="", src="", toc=True) -> str:
     """見出し＋中身＋（注記）＋（出典）の1区画。
 
     ⚠️ **カードで囲まない。** 見本は雑誌記事の体裁で、区画ごとに枠を付けると
        画面が升目に割れて「ダッシュボード」になってしまう（一度そうして
        「理想とかけ離れている」と指摘を受けた）。区切りは余白と細い線で作る。
     """
-    t = (f'<div style="font-size:15px;font-weight:800;color:{_TEXT};'
-         f'margin:0 0 10px;letter-spacing:.01em">{title}</div>') if title else ""
-    n = (f'<div style="font-size:11px;color:{_DIM};margin-top:7px;'
-         f'line-height:1.85">{_b(note)}</div>') if note else ""
+    sid = _slug(title) if title else ""
+    if title and toc:
+        _TOC.append((sid, title))
+    t = (f'<h2 id="{sid}" style="font-size:17px;font-weight:800;color:{_TEXT};'
+         f'margin:0 0 10px;letter-spacing:.01em;scroll-margin-top:12px">'
+         f'{title}</h2>') if title else ""
+    n = (f'<div style="font-size:12.5px;color:{_DIM};margin-top:8px;'
+         f'line-height:1.9">{_b(note)}</div>') if note else ""
     sc = (f'<div style="margin-top:5px">{_pill(src)}</div>') if src else ""
     return (f'<section style="margin:24px 0 0;padding-top:20px;'
             f'border-top:1px solid {_LINE}">{t}{body}{n}{sc}</section>')
 
 
-def _p(text: str, size=12.5) -> str:
-    """記事の本文1段落。読み物として読める行間にする。"""
+def _p(text: str, size=14) -> str:
+    """記事の本文1段落。読み物として読める大きさと行間にする。
+
+    ⚠️ 既定を 12.5px から 14px に上げた。Telegramの画像でも公開ページでも
+       「小さすぎる」と指摘を受けたため。迷ったら大きいほうに倒す。
+    """
     return (f'<p style="font-size:{size}px;line-height:1.95;color:{_TEXT};'
             f'margin:0 0 10px">{_b(text)}</p>')
 
@@ -353,6 +370,9 @@ def _chain(prices, internals, sector_ranking, hist):
 def build(prices=None, risk=None, internals=None, ai_summary=None,
           scenario=None, market_driver=None, news=None,
           sector_ranking=None, fear=None, policy=None, mode="morning") -> str:
+    # ⚠️ 目次の台帳は実行ごとに空にする。モジュールの変数なので、
+    #    空にし忘れると2回目の実行で前回の項目が二重に並ぶ。
+    _TOC.clear()
     try:
         prices, internals = prices or {}, internals or {}
         nk = _q(prices, "^N225")
@@ -436,7 +456,7 @@ def build(prices=None, risk=None, internals=None, ai_summary=None,
         # という形は終値だけ追っていると気づけない。
         hero = ""
         try:
-            _rows = V.ohlc("^N225")
+            _rows = V.ohlc("^N225", "6mo")
             _svg = V.candles(_rows, w=330, h=176, label="日経平均", days=30)
             if _svg:
                 hero = _sec("", _box(_svg, pad="10px 10px 4px"),
@@ -730,19 +750,27 @@ def build(prices=None, risk=None, internals=None, ai_summary=None,
             from src.media_credits import videos
             vids = videos(limit=3, max_age_days=2)
             if vids:
+                # ⚠️ 画像ではなく**その場で再生できる形**にする。
+                #    `youtube-nocookie.com` を使うのは、再生するまで
+                #    閲覧履歴を残さないため（prefer privacy）。
+                #    `loading="lazy"` で、下まで来るまで読み込まない。
                 cells = "".join(
-                    f'<a href="{v["url"]}" target="_blank" rel="noopener noreferrer" '
-                    f'style="flex:1;min-width:0;text-decoration:none;display:block">'
-                    f'<img src="{v["thumb"]}" alt="" loading="lazy" '
-                    f'style="width:100%;height:84px;object-fit:cover;border-radius:8px;'
-                    f'border:1px solid {_LINE};display:block">'
-                    f'<div style="font-size:10.5px;color:{_TEXT};line-height:1.5;'
-                    f'margin-top:4px;max-height:48px;overflow:hidden">{v["title"]}</div>'
-                    f'<div style="font-size:9px;color:{_DIM};margin-top:2px">'
-                    f'{v["channel"]}　{v["published"][:10]}</div></a>' for v in vids)
+                    f'<div style="margin:0 0 14px">'
+                    f'<div style="position:relative;width:100%;padding-top:56.25%;'
+                    f'border-radius:10px;overflow:hidden;border:1px solid {_LINE}">'
+                    f'<iframe src="https://www.youtube-nocookie.com/embed/{v["id"]}" '
+                    f'title="{v["title"]}" loading="lazy" allowfullscreen '
+                    f'referrerpolicy="no-referrer" frameborder="0" '
+                    f'style="position:absolute;inset:0;width:100%;height:100%">'
+                    f'</iframe></div>'
+                    f'<div style="font-size:12px;color:{_TEXT};line-height:1.6;'
+                    f'margin-top:6px">{v["title"]}</div>'
+                    f'<div style="font-size:10.5px;color:{_DIM};margin-top:3px">'
+                    f'{v["channel"]}　{v["published"][:10]}</div></div>'
+                    for v in vids)
                 vid_html = _sec(
                     "📺 公式チャンネルの最新動画",
-                    f'<div style="display:flex;gap:9px">{cells}</div>',
+                    f'<div>{cells}</div>',
                     note="題名とチャンネル名は**YouTubeが返したそのまま**です。"
                          "中身は見ていないので要約は付けていません。",
                     src="YouTube 公式チャンネルのRSS")
@@ -782,6 +810,27 @@ def build(prices=None, risk=None, internals=None, ai_summary=None,
               '<br>数字は自動取得したもので、取引所の一次データとの'
               '全項目照合はしていません。</div>')
 
+        # ── 🧭 今日の目次（タップでその項目へ飛ぶ）──
+        # ⚠️ **ここは全セクションを作り終えた後でないと作れない。**
+        #    _TOC は _sec() が呼ばれるたびに積まれるので、
+        #    上で作っておくと空の目次になる。
+        toc_html = ""
+        if len(_TOC) >= 3:
+            items = "".join(
+                f'<a href="#{sid}" style="display:block;text-decoration:none;'
+                f'color:{_TEXT};font-size:13.5px;line-height:1.5;'
+                f'padding:9px 10px;border-radius:9px;background:{_CARD};'
+                f'border:1px solid {_LINE}">{t}'
+                f'<span style="float:right;color:{_DIM}">›</span></a>'
+                for sid, t in _TOC)
+            toc_html = (
+                f'<nav style="margin:18px 0 0">'
+                f'<div style="font-size:15px;font-weight:800;color:{_TEXT};'
+                f'margin-bottom:9px">🧭 今日の目次</div>'
+                f'<div style="display:grid;gap:7px">{items}</div>'
+                f'<div style="font-size:11.5px;color:{_DIM};margin-top:8px">'
+                f'項目をタップすると、その場所へ飛びます。</div></nav>')
+
         # ⚠️ 外枠は**記事の紙面**であって、カードを並べる台ではない。
         #    以前は枠＋角丸＋薄い発光を付けていたが、中の区画にも枠があるため
         #    画面が升目に割れて「ダッシュボード」に見えていた。
@@ -789,7 +838,7 @@ def build(prices=None, risk=None, internals=None, ai_summary=None,
         return (
             f'<article style="margin-bottom:18px;background:{_BG2};'
             f'border:1px solid {_LINE};border-radius:16px;padding:20px 18px 22px">'
-            f'{head}{hero}{concl_html}{idx_html}{mkt}{chain_html}'
+            f'{head}{toc_html}{hero}{concl_html}{idx_html}{mkt}{chain_html}'
             f'{fx_html}{pol_html}{alt_html}{sc_html}{recap_html}{vid_html}{src_html}{verify}'
             f'</article>')
     except Exception:
@@ -902,13 +951,13 @@ def build_compact(prices=None, risk=None, internals=None, ai_summary=None,
         col = _UP if d["c"] >= 0 else _DOWN
         rows += (f'<div style="display:flex;align-items:baseline;'
                  f'padding:7px 0;border-bottom:1px solid {_LINE}">'
-                 f'<span style="font-size:12px;font-weight:700;color:{_TEXT};flex:1">'
+                 f'<span style="font-size:14px;font-weight:700;color:{_TEXT};flex:1">'
                  f'{nm}</span>'
                  f'<span class="num" style="font-size:15px;font-weight:800;'
                  f'color:{_TEXT}">{_n(d["v"], 2) or "—"}'
-                 f'<span style="font-size:10px">{unit}</span></span>'
+                 f'<span style="font-size:11px">{unit}</span></span>'
                  f'<span class="num" style="font-size:13px;font-weight:800;'
-                 f'color:{col};margin-left:9px;min-width:62px;text-align:right">'
+                 f'color:{col};margin-left:9px;min-width:68px;text-align:right">'
                  f'{d["c"]:+.2f}%</span></div>')
     adv, dec = internals.get("advancing"), internals.get("declining")
     turn = internals.get("turnover_total")
@@ -924,8 +973,8 @@ def build_compact(prices=None, risk=None, internals=None, ai_summary=None,
         sub.append(f'恐怖指数 日経VI <b style="color:{_WARN}">{nvi:.1f}</b>{pos}')
     subhtml = ""
     if sub:
-        subhtml = (f'<div style="font-size:11px;color:{_DIM};line-height:1.95;'
-                   f'margin-top:8px">' + "<br>".join(sub) + "</div>")
+        subhtml = (f'<div style="font-size:13px;color:{_DIM};line-height:2;'
+                   f'margin-top:9px">' + "<br>".join(sub) + "</div>")
     bar = ""
     if isinstance(adv, (int, float)) and isinstance(dec, (int, float)):
         bar = (f'<div style="margin-top:8px">'
@@ -937,7 +986,7 @@ def build_compact(prices=None, risk=None, internals=None, ai_summary=None,
     # ── 🕯 ローソク足 ──
     candle_html = ""
     try:
-        svg = V.candles(V.ohlc("^N225"), w=inner - 16, h=168,
+        svg = V.candles(V.ohlc("^N225", "6mo"), w=inner - 16, h=168,
                         label="日経平均", days=30)
         if svg:
             candle_html = _sec(
@@ -948,37 +997,10 @@ def build_compact(prices=None, risk=None, internals=None, ai_summary=None,
     except Exception:
         logger.error("ローソク足を描けませんでした", exc_info=True)
 
-    # ── 📋 なぜ動いたのか（上位2つだけ。残りはレポートへ）──
+    # ⚠️ 連鎖・3シナリオ・為替金利はここに載せない。
+    #    通知の画像は**表紙**で、本文は公開ページ（目次つき・動画つき）で読む。
+    #    画像に詰めるほど縦に伸び、実機での文字が小さくなる。
     chain_html = ""
-    try:
-        ch = _chain(prices, internals, None, {})[:2]
-        if ch:
-            pk = [_pick("nyse2", "nyse"), _pick("boj", "fed")]
-            body = ""
-            for i, c in enumerate(ch):
-                th = ""
-                if i < len(pk) and pk[i]:
-                    try:
-                        from src.media_credits import photo as _ph
-                        _p2 = _ph(pk[i])
-                        if _p2:
-                            th = (f'<img src="{_p2["url"]}" alt="" '
-                                  f'style="width:92px;height:64px;object-fit:cover;'
-                                  f'border-radius:8px;flex:0 0 auto;'
-                                  f'border:1px solid {_LINE}">')
-                    except Exception:
-                        logger.debug("連鎖の写真を出せませんでした")
-                body += (f'<div style="display:flex;gap:10px;align-items:flex-start;'
-                         f'margin:0 0 13px">{th}<div style="flex:1;min-width:0">'
-                         f'<div style="font-size:12px;font-weight:800;color:{_TEXT};'
-                         f'margin-bottom:3px">{c["no"]}. {c["title"]}</div>'
-                         f'<div style="font-size:11px;line-height:1.8;color:{_DIM}">'
-                         f'<span class="num" style="color:{_ACC};font-weight:700">'
-                         f'{c["val"]}</span>　{_b(c["note"])}{_pill(c["src"])}'
-                         f'</div></div></div>')
-            chain_html = _sec("📋 なぜ動いたのか？", body)
-    except Exception:
-        logger.error("連鎖を作れませんでした", exc_info=True)
 
     # ── 🐘 今日の構え ──
     act = ("恐怖指数が高い日です。**同じ株数でも損得の振れ幅が大きくなります。**"
@@ -989,9 +1011,9 @@ def build_compact(prices=None, risk=None, internals=None, ai_summary=None,
     act_html = (
         f'<section style="margin:22px 0 0;border:1px solid {_WARN}55;'
         f'background:{_WARN}12;border-radius:12px;padding:12px 14px">'
-        f'<div style="font-size:13px;font-weight:800;color:{_WARN};'
-        f'margin-bottom:5px">🐘 今日の構え</div>'
-        f'<div style="font-size:12px;line-height:1.9;color:{_TEXT}">{_b(act)}</div>'
+        f'<div style="font-size:15px;font-weight:800;color:{_WARN};'
+        f'margin-bottom:6px">🐘 今日の構え</div>'
+        f'<div style="font-size:13.5px;line-height:1.95;color:{_TEXT}">{_b(act)}</div>'
         f'</section>')
 
     return (
@@ -1011,9 +1033,9 @@ def build_compact(prices=None, risk=None, internals=None, ai_summary=None,
         f'color:{_TEXT};line-height:1.5;margin:10px 0 0">'
         f'{_b(_headline(nk, internals))}</h1>'
         f'{lead}{concl_html}{num_html}{candle_html}{chain_html}{act_html}'
-        f'<div style="font-size:10.5px;color:{_DIM};margin-top:16px;'
-        f'text-align:center;line-height:1.8">'
-        f'👇 3シナリオ・為替金利・日銀政策・公式動画は下のボタンから'
+        f'<div style="font-size:12px;color:{_DIM};margin-top:18px;'
+        f'text-align:center;line-height:1.85">'
+        f'👇 目次つきの記事・動画・3シナリオは下のボタンから'
         f'<br><span style="opacity:.75">グラフは自前作図／'
         f'数値: Yahoo Finance・nikkei225jp.com・株探</span></div>'
         f'</div>')

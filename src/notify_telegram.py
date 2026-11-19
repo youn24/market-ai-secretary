@@ -728,8 +728,23 @@ def _build_unified_caption(risk, prices, fear_greed, ai_summary,
         logger.debug("重要度を出せませんでした", exc_info=True)
     _stars = ("★" * _imp + "☆" * (5 - _imp)) if _imp else ""
 
-    head = [
-        f"🐘 *市場AI秘書* ｜ {today}（{weekday}）"
+    # ⚠️ **1行目はその日の見出しにする。**
+    #    iPhoneのロック画面やバナーに出るのは本文の冒頭だけなので、
+    #    1行目が「市場AI秘書｜11/19」だと、開くまで何があった日か分からない。
+    #    見出しを先頭に置けば、通知を見ただけで今日の中身が伝わる。
+    _title = ""
+    try:
+        from src.feed_card import _headline as _hl, _q as _fq
+        _title = _hl(_fq(prices or {}, "^N225"), nikkei_internals or {})
+        _title = str(_title or "").replace("**", "").strip()
+    except Exception:
+        logger.debug("見出しを作れませんでした", exc_info=True)
+
+    head = []
+    if _title:
+        head.append(f"*{_title}*")
+    head += [
+        f"🐘 市場AI秘書 ｜ {today}（{weekday}）"
         + (f"　{_stars}" if _stars else ""),
         "━━━━━━━━━━━━━━",
     ]

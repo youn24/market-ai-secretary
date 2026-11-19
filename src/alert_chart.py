@@ -173,7 +173,9 @@ def candle_chart(symbol: str, label: str = "", days: int = 30,
 
     try:
         from src.feed_visuals import ohlc
-        rows = (ohlc(str(symbol).replace("CFD:", "")) or [])[-days:]
+        # 25日平均を引くには表示本数より長い履歴が要る
+        allrows = ohlc(str(symbol).replace("CFD:", ""), "6mo") or []
+        rows = allrows[-days:]
         if len(rows) < 5:
             logger.info(f"4本値が足りないため図は添えません [{symbol}]")
             return None
@@ -191,6 +193,22 @@ def candle_chart(symbol: str, label: str = "", days: int = 30,
             ax.add_patch(plt.Rectangle(
                 (i - 0.32, min(o, c)), 0.64, max(abs(c - o), (h - l) * 0.004),
                 facecolor=col, edgecolor=col, zorder=4))
+
+        # 移動平均線（5日＝ここ1週間、25日＝ここ1ヶ月の平均）
+        cl = [r[3] for r in allrows]
+        for n, col in ((5, "#ffc24d"), (25, "#6aa9ff")):
+            ma = [None if i + 1 < n else sum(cl[i + 1 - n:i + 1]) / n
+                  for i in range(len(cl))][len(allrows) - len(rows):]
+            xs = [i for i, v in enumerate(ma) if v is not None]
+            ys = [ma[i] for i in xs]
+            if len(xs) >= 2:
+                ax.plot(xs, ys, color=col, linewidth=1.4,
+                        label=f"{n}日平均", zorder=5)
+        if any(True for _ in (5, 25)):
+            lg = ax.legend(loc="upper right", fontsize=8, frameon=False,
+                           labelcolor=_DIM)
+            if lg:
+                lg.get_frame().set_alpha(0)
 
         last = rows[-1][3]
         ax.axhline(last, color=_FG, linewidth=0.7, linestyle="--",

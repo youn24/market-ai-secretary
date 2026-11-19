@@ -82,13 +82,34 @@ def candles(rows, w=700, h=200, label="", days=30) -> str:
     合わせて上げ＝緑・下げ＝赤にしてある。同じ画面の中で赤の意味が
     場所によって逆になるのが、いちばん読み違えのもとになるため。
     """
-    rows = [r for r in (rows or []) if r and len(r) == 4][-days:]
+    allrows = [r for r in (rows or []) if r and len(r) == 4]
+    # ⚠️ 移動平均は**表示する30本だけで計算しない。**
+    #    25日線は過去25日分の終値が要る。表示分だけで計算すると
+    #    最初の24本が描けず、線が途中から生えているように見える。
+    #    もらった全履歴で計算してから、表示する分だけ切り出す。
+    closes = [r[3] for r in allrows]
+
+    def _ma(n):
+        out = []
+        for i in range(len(closes)):
+            if i + 1 < n:
+                out.append(None)
+            else:
+                out.append(sum(closes[i + 1 - n:i + 1]) / n)
+        return out
+
+    ma_all = {n: _ma(n) for n in (5, 25)}
+    rows = allrows[-days:]
+    off = len(allrows) - len(rows)
+    mas = {n: v[off:] for n, v in ma_all.items()}
     if len(rows) < 5:
         return ""
-    pad_l, pad_r, pad_t, pad_b = 6, 52, 16, 16
+    pad_l, pad_r, pad_t, pad_b = 6, 52, 16, 26   # 下は移動平均の凡例のぶん広く
     iw, ih = w - pad_l - pad_r, h - pad_t - pad_b
-    lo = min(r[2] for r in rows)
-    hi = max(r[1] for r in rows)
+    # 移動平均が枠の外へ出ないよう、縦の範囲に含めて決める
+    mvals = [v for n in mas for v in mas[n] if isinstance(v, (int, float))]
+    lo = min([r[2] for r in rows] + mvals)
+    hi = max([r[1] for r in rows] + mvals)
     if hi == lo:
         hi = lo + 1
 
@@ -109,6 +130,29 @@ def candles(rows, w=700, h=200, label="", days=30) -> str:
         parts.append(f'<rect x="{cx - bw / 2:.1f}" y="{top:.1f}" width="{bw:.1f}" '
                      f'height="{max(1.0, bot - top):.1f}" fill="{col}" rx="1"/>')
 
+    # ── 移動平均線 ──
+    # 5日線＝ここ1週間の平均、25日線＝ここ1ヶ月の平均。
+    # ローソクが25日線の上にあるか下にあるかで「流れに乗っているか」が分かる。
+    _MA_COL = {5: "#ffc24d", 25: "#6aa9ff"}
+    for n, vals in mas.items():
+        pts = [f"{pad_l + step * (i + 0.5):.1f},{y(v):.1f}"
+               for i, v in enumerate(vals) if isinstance(v, (int, float))]
+        if len(pts) < 2:
+            continue
+        parts.append(f'<polyline points="{" ".join(pts)}" fill="none" '
+                     f'stroke="{_MA_COL[n]}" stroke-width="1.4" '
+                     f'stroke-linejoin="round" opacity="0.95"/>')
+    # 凡例。線を引いたら必ず何の線か書く（色だけでは伝わらない）
+    lg = ""
+    for i, n in enumerate(sorted(mas)):
+        if not any(isinstance(v, (int, float)) for v in mas[n]):
+            continue
+        lg += (f'<line x1="{pad_l + i * 86}" y1="{h - 4}" '
+               f'x2="{pad_l + 14 + i * 86}" y2="{h - 4}" '
+               f'stroke="{_MA_COL[n]}" stroke-width="1.6"/>'
+               f'<text x="{pad_l + 18 + i * 86}" y="{h - 1}" font-size="9.5" '
+               f'fill="{DIM}">{n}日平均</text>')
+
     # 右端に高値・安値・直近の値
     last = rows[-1][3]
     for v, txt, cl in ((hi, f"{hi:,.0f}", DIM), (lo, f"{lo:,.0f}", DIM),
@@ -122,7 +166,7 @@ def candles(rows, w=700, h=200, label="", days=30) -> str:
     head = (f'<text x="{pad_l}" y="11" font-size="11" fill="{DIM}">'
             f'{label}　直近{len(rows)}営業日の日足</text>') if label else ""
     return (f'<svg width="{w}" height="{h}" viewBox="0 0 {w} {h}" '
-            f'xmlns="http://www.w3.org/2000/svg">{head}{"".join(parts)}</svg>')
+            f'xmlns="http://www.w3.org/2000/svg">{head}{"".join(parts)}{lg}</svg>')
 
 
 def sparkline(vals, w=108, h=34, strong=False) -> str:
