@@ -148,6 +148,81 @@ def make(alerts: list, out_path: str = None, title: str = "急変した銘柄の
         return None
 
 
+def candle_chart(symbol: str, label: str = "", days: int = 30,
+                 sources=("yahoo",), out_path: str = None):
+    """急変した銘柄のローソク足。描けなければ None。
+
+    値動きの折れ線（`make`）は「今日どう動いたか」、こちらは
+    「**ここ1ヶ月の中で今日がどういう日か**」を見せる。
+    急落の日に、それが下げ続きの延長なのか、上げていた所からの急反転なのかで
+    意味がまったく違うので、アラートにはこちらが効く場面がある。
+    """
+    try:
+        import matplotlib
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
+        try:
+            import japanize_matplotlib  # noqa: F401
+        except ImportError:
+            matplotlib.rcParams["font.family"] = [
+                "Noto Sans CJK JP", "Noto Sans JP", "IPAexGothic",
+                "Yu Gothic", "Meiryo", "DejaVu Sans"]
+    except Exception as e:
+        logger.info(f"matplotlib が無いため図は添えません: {e}")
+        return None
+
+    try:
+        from src.feed_visuals import ohlc
+        rows = (ohlc(str(symbol).replace("CFD:", "")) or [])[-days:]
+        if len(rows) < 5:
+            logger.info(f"4本値が足りないため図は添えません [{symbol}]")
+            return None
+
+        out = out_path or str(
+            get_dirs()["charts"] /
+            f"candle_{get_jst_now().strftime('%Y%m%d_%H%M%S')}.png")
+        fig, ax = plt.subplots(figsize=(8.2, 4.4), dpi=150)
+        fig.patch.set_facecolor(_BG)
+        ax.set_facecolor(_BG)
+
+        for i, (o, h, l, c) in enumerate(rows):
+            col = _UP if c >= o else _DOWN
+            ax.plot([i, i], [l, h], color=col, linewidth=1.1, zorder=3)
+            ax.add_patch(plt.Rectangle(
+                (i - 0.32, min(o, c)), 0.64, max(abs(c - o), (h - l) * 0.004),
+                facecolor=col, edgecolor=col, zorder=4))
+
+        last = rows[-1][3]
+        ax.axhline(last, color=_FG, linewidth=0.7, linestyle="--",
+                   alpha=0.45, zorder=1)
+        ax.annotate(f"{last:,.0f}", (len(rows) - 1, last), xytext=(8, 0),
+                    textcoords="offset points", va="center",
+                    color=_FG, fontsize=11, fontweight="bold", zorder=6)
+        ax.set_title(f"{label or symbol}　直近{len(rows)}営業日の日足",
+                     color=_FG, fontsize=13, fontweight="bold", pad=12)
+        ax.set_xlabel("緑＝その日上げた　赤＝下げた　／　細い線はその日の高値と安値",
+                      color=_DIM, fontsize=9)
+        ax.tick_params(colors=_DIM, labelsize=9)
+        ax.set_xticks([])
+        ax.grid(True, axis="y", color=_GRID, linewidth=0.8, zorder=0)
+        for sp in ax.spines.values():
+            sp.set_color(_GRID)
+
+        fig.text(0.012, 0.015, cite_image(*sources), color=_DIM, fontsize=7.5)
+        fig.text(0.988, 0.015,
+                 get_jst_now().strftime("%Y-%m-%d %H:%M JST 時点"),
+                 color=_DIM, fontsize=7.5, ha="right")
+        fig.tight_layout(rect=(0, 0.035, 1, 1))
+        fig.savefig(out, facecolor=_BG)
+        plt.close(fig)
+        logger.info(f"ローソク足の図を作成: {out}（{len(rows)}本）")
+        return out
+    except Exception:
+        logger.error("ローソク足の図の作成に失敗（テキストのみで送ります）",
+                     exc_info=True)
+        return None
+
+
 def level_chart(values, label: str, sources=("nikkei_vi",),
                 bands=(), band_note: str = "", out_path: str = None, note: str = ""):
     """水準そのものの推移を描く（恐怖指数など）。描けなければ None。

@@ -155,6 +155,43 @@ def _links(items, icon="📰", n=3) -> str:
 
 
 # ── 見出し ──────────────────────────────────────────────
+def _photo(key: str, w: int = 330) -> str:
+    """固定リストの写真を、作者・ライセンス・撮影時期つきで1枚出す。
+
+    ⚠️ **説明を必ず付ける。** Commonsにあるのは建物の一般写真であって
+       その日の相場の写真ではない。今日の数字の隣に裸で置くと
+       今日の光景と誤読される。何の写真でいつ撮られたかまで書く。
+    ⚠️ 取れなければ**何も出さない**。代わりの写真を探しに行かない
+       （探すと全文検索に戻り、無関係な画像を載せる事故になる）。
+    """
+    try:
+        from src.media_credits import photo, photo_credit
+        pm = photo(key)
+        if not pm:
+            return ""
+        # ⚠️ f文字列の中に f文字列を入れ子にしない。同じ引用符を内側で使うと
+        #    **Python 3.11 では SyntaxError**（緩和されたのは3.12から）。
+        #    手元は3.14で通るのに CI(3.11) だけ落ち、しかもモジュールごと
+        #    import できなくなるので朝のレポートが丸ごと消える。
+        page = pm.get("page") or ""
+        link = ""
+        if page:
+            link = ('　・<a href="' + page + '" target="_blank" '
+                    'rel="noopener noreferrer" style="color:' + _DIM + '">'
+                    '出典ページ</a>')
+        return (
+            f'<figure style="margin:8px 0 0">'
+            f'<img src="{pm["url"]}" alt="{pm["caption"]}" loading="lazy" '
+            f'style="width:100%;max-width:{w}px;height:132px;object-fit:cover;'
+            f'border-radius:10px;display:block;border:1px solid {_LINE}">'
+            f'<figcaption style="font-size:9px;color:{_DIM};margin-top:3px;'
+            f'line-height:1.6">{photo_credit(pm)}{link}'
+            f'</figcaption></figure>')
+    except Exception:
+        logger.error(f"写真を出せませんでした [{key}]", exc_info=True)
+        return ""
+
+
 def _mo_tag(vals) -> str:
     """小チャートの下に「1ヶ月で何%」を書く。
 
@@ -304,9 +341,22 @@ def build(prices=None, risk=None, internals=None, ai_summary=None,
             f'color:{tone["col"]};line-height:1.45;margin-top:9px;'
             f'letter-spacing:-.01em">{_b(_headline(nk, internals))}</div>')
 
-        # ── 大きなチャート ──
+        # ── 大きなチャート（ローソク足）──
+        # 折れ線は終値しか見せない。ローソクなら「その日どこまで行って
+        # 戻されたか」まで見える。上ヒゲが長い日＝高いところで売られた、
+        # という形は終値だけ追っていると気づけない。
         hero = ""
-        if hist.get("^N225"):
+        try:
+            _rows = V.ohlc("^N225")
+            _svg = V.candles(_rows, w=330, h=176, label="日経平均", days=30)
+            if _svg:
+                hero = _sec("", _box(_svg, pad="10px 10px 4px"),
+                            note="緑はその日上げた日、赤は下げた日。"
+                                 "上下に伸びる細い線は**その日の高値と安値**です。",
+                            src="Yahoo Finance の4本値から自前で作図")
+        except Exception:
+            logger.error("ローソク足を描けませんでした", exc_info=True)
+        if not hero and hist.get("^N225"):
             hero = _sec("", _box(V.big_chart(hist["^N225"], "日経平均 この1ヶ月", "1ヶ月"),
                                  pad="10px 10px 4px"),
                         src="Yahoo Finance（終値から自前で作図）")
@@ -465,6 +515,8 @@ def build(prices=None, risk=None, internals=None, ai_summary=None,
                                       "利下げ", "FRB", "FOMC"))]
         if pol_news:
             pol_rows += f'<div style="margin-top:6px">{_links(pol_news, "🏦")}</div>'
+        if pol_rows:
+            pol_rows += _photo("boj")
         pol_html = _sec("🏦 日銀・政府・政策", _box(pol_rows),
                         note="金利を決めるのは日銀とFRBで、**株より先に為替が反応**します。"
                              "利上げは企業の借入コストを上げるので、株には逆風に"
@@ -569,6 +621,33 @@ def build(prices=None, risk=None, internals=None, ai_summary=None,
                    f'margin-top:9px;padding-top:9px;border-top:1px solid {_LINE}">'
                    f'{_b(act)}</div>')) if recap else ""
 
+        # ── 📺 公式チャンネルの最新動画 ──
+        # ⚠️ **要約しない。** 動画を見ていないのに中身を書くのがハルシネーション。
+        #    出すのは YouTube が返した題名・チャンネル名・公開日だけ。
+        vid_html = ""
+        try:
+            from src.media_credits import videos
+            vids = videos(limit=3, max_age_days=2)
+            if vids:
+                cells = "".join(
+                    f'<a href="{v["url"]}" target="_blank" rel="noopener noreferrer" '
+                    f'style="flex:1;min-width:0;text-decoration:none;display:block">'
+                    f'<img src="{v["thumb"]}" alt="" loading="lazy" '
+                    f'style="width:100%;height:84px;object-fit:cover;border-radius:8px;'
+                    f'border:1px solid {_LINE};display:block">'
+                    f'<div style="font-size:10.5px;color:{_TEXT};line-height:1.5;'
+                    f'margin-top:4px;max-height:48px;overflow:hidden">{v["title"]}</div>'
+                    f'<div style="font-size:9px;color:{_DIM};margin-top:2px">'
+                    f'{v["channel"]}　{v["published"][:10]}</div></a>' for v in vids)
+                vid_html = _sec(
+                    "📺 公式チャンネルの最新動画",
+                    f'<div style="display:flex;gap:9px">{cells}</div>',
+                    note="題名とチャンネル名は**YouTubeが返したそのまま**です。"
+                         "中身は見ていないので要約は付けていません。",
+                    src="YouTube 公式チャンネルのRSS")
+        except Exception:
+            logger.error("動画の欄を作れませんでした", exc_info=True)
+
         # ── 📚 出典 ──
         picked = [n for n in (news or [])
                   if isinstance(n, dict) and n.get("url") and n.get("title")]
@@ -593,9 +672,12 @@ def build(prices=None, risk=None, internals=None, ai_summary=None,
             + f'<br><b style="color:{_WARN}">グラフはすべて自前で描いています。</b>'
               'よそのチャート画像を借りると、相手のサーバーに負担をかけるうえ、'
               '先方のURLが変わった日に壊れ、本文の数字と食い違っても気づけません。'
-              f'<br><b style="color:{_WARN}">写真は使っていません。</b>'
-              '当日の現場写真を用意できないため、関係のない写真を'
-              'その日の写真のように見せない方針です。'
+              f'<br><b style="color:{_WARN}">写真はWikimedia Commonsから引用しています。</b>'
+              '作者とライセンスを写真ごとに明記しています。ただし'
+              '<b>その日の相場の写真ではありません</b>（建物などの一般写真です）。'
+              'いつ撮られた何の写真かを必ず添えているのはそのためです。'
+              f'<br><b style="color:{_WARN}">動画は題名をそのまま載せています。</b>'
+              '中身は見ていないので要約は付けません。'
               '<br>数字は自動取得したもので、取引所の一次データとの'
               '全項目照合はしていません。</div>')
 
@@ -604,7 +686,7 @@ def build(prices=None, risk=None, internals=None, ai_summary=None,
             f'rgba(106,169,255,{tone["glow"]}),rgba(106,169,255,0) 170px);'
             f'border:1px solid {_LINE};border-radius:16px;padding:16px 16px 20px">'
             f'{head}{hero}{concl_html}{idx_html}{mkt}{chain_html}'
-            f'{fx_html}{pol_html}{alt_html}{sc_html}{recap_html}{src_html}{verify}'
+            f'{fx_html}{pol_html}{alt_html}{sc_html}{recap_html}{vid_html}{src_html}{verify}'
             f'</div>')
     except Exception:
         logger.error("フィードカードを作れませんでした", exc_info=True)
