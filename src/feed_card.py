@@ -132,7 +132,7 @@ def _pill(text: str) -> str:
             f'padding:1.5px 7px;margin-left:5px;white-space:nowrap">{text}</span>')
 
 
-_TOC = []          # 目次の材料。build() の最初で空にする
+_TOC = []          # 目次の材料 (id, 見出し, [見出し下の一言]) 。build() の最初で空にする
 
 
 class _SkipVideoEmbed(Exception):
@@ -145,7 +145,20 @@ def _slug(title: str) -> str:
     return "s" + hashlib.md5(str(title).encode("utf-8")).hexdigest()[:8]
 
 
-def _sec(title, body, note="", src="", toc=True) -> str:
+def _toc_lines(items, limit=40) -> list:
+    """ニュースの見出しを目次の一言に整える（見出しはAPIの返り値のまま）。"""
+    out = []
+    for x in items or []:
+        if isinstance(x, dict):
+            t = _news_title(x, limit)
+        else:
+            t = str(x or "").strip()
+        if t:
+            out.append(t)
+    return out
+
+
+def _sec(title, body, note="", src="", toc=True, toc_sub=None) -> str:
     """見出し＋中身＋（注記）＋（出典）の1区画。
 
     ⚠️ **カードで囲まない。** 見本は雑誌記事の体裁で、区画ごとに枠を付けると
@@ -154,7 +167,7 @@ def _sec(title, body, note="", src="", toc=True) -> str:
     """
     sid = _slug(title) if title else ""
     if title and toc:
-        _TOC.append((sid, title))
+        _TOC.append((sid, title, list(toc_sub or [])[:3]))
     t = (f'<h2 id="{sid}" style="font-size:17px;font-weight:800;color:{_TEXT};'
          f'margin:0 0 10px;letter-spacing:.01em;scroll-margin-top:12px">'
          f'{title}</h2>') if title else ""
@@ -319,6 +332,7 @@ def _groups_section(news, groups, title, note, used, per=2, cap=4) -> str:
        区別できなくなる。
     """
     blocks = []
+    subs = []
     for _k, label, labels, hint in groups:
         got = _news_by_label(news, labels, used)[:per]
         if not got:
@@ -326,12 +340,17 @@ def _groups_section(news, groups, title, note, used, per=2, cap=4) -> str:
         for g in got:
             used.add(g.get("url"))
         blocks.append(_topic_block(label, _links(got, "📰", per), hint))
+        # 目次には束ごとに先頭の1本を「束の名前：題名」で載せる
+        head = _toc_lines(got[:1], 30)
+        if head:
+            subs.append(f"{label.split(' ', 1)[-1]}：{head[0]}")
         if len(blocks) >= cap:
             break
     if not blocks:
         return ""
     return _sec(title, _box("".join(blocks), "4px 14px 6px"),
-                note=note, src="Google News RSS（見出しと配信元はそのまま）")
+                note=note, src="Google News RSS（見出しと配信元はそのまま）",
+                toc_sub=subs)
 
 
 # ── 見出し ──────────────────────────────────────────────
@@ -808,7 +827,8 @@ def build(prices=None, risk=None, internals=None, ai_summary=None,
                         note="金利を決めるのは日銀とFRBで、**株より先に為替が反応**します。"
                              "利上げは企業の借入コストを上げるので、株には逆風に"
                              "なりやすい話です。",
-                        src="FRED（政策金利）／ Google News RSS") if pol_rows else ""
+                        src="FRED（政策金利）／ Google News RSS",
+                        toc_sub=_toc_lines(pol_news, 36)) if pol_rows else ""
 
         # ── 🐊 違う角度から分析すると？ ──
         alt = []
@@ -996,7 +1016,8 @@ def build(prices=None, risk=None, internals=None, ai_summary=None,
                     note="**見出しはそのまま載せています。**こちらで要約も解釈も"
                          "していません。報道が挙げている理由であって、"
                          "相場が動いた原因を断定するものではありません。",
-                    src="Google News RSS")
+                    src="Google News RSS",
+                    toc_sub=_toc_lines(why, 36))
         except Exception:
             logger.error("報道の欄を作れませんでした", exc_info=True)
 
@@ -1035,8 +1056,8 @@ def build(prices=None, risk=None, internals=None, ai_summary=None,
         if pol_news:
             shown |= {n.get("url") for n in pol_news[:3]}
         rest = [n for n in picked if n.get("url") not in shown]
-        src_html = _sec("📚 参考にしたニュース", _box(_links(rest, "📰", 5), "4px 14px 8px")
-                        ) if rest else ""
+        src_html = _sec("📚 参考にしたニュース", _box(_links(rest, "📰", 5), "4px 14px 8px"),
+                        toc_sub=_toc_lines(rest, 36)) if rest else ""
 
         used = ["株価・為替: Yahoo Finance", "TOPIX: 株探"]
         if internals.get("available"):
@@ -1067,13 +1088,22 @@ def build(prices=None, risk=None, internals=None, ai_summary=None,
         #    上で作っておくと空の目次になる。
         toc_html = ""
         if len(_TOC) >= 3:
+            # ⚠️ 見出しの下に、その区画のニュースの題名を1〜3本そのまま出す。
+            #    題名だけの目次だと「どんな話が載っているか」が開くまで分からない。
+            #    こちらで要約しない（要約すると推測が混ざる）。
+            import html as _h
             items = "".join(
                 f'<a href="#{sid}" style="display:block;text-decoration:none;'
                 f'color:{_TEXT};font-size:13.5px;line-height:1.5;'
                 f'padding:9px 10px;border-radius:9px;background:{_CARD};'
                 f'border:1px solid {_LINE}">{t}'
-                f'<span style="float:right;color:{_DIM}">›</span></a>'
-                for sid, t in _TOC)
+                f'<span style="float:right;color:{_DIM}">›</span>'
+                + "".join(
+                    f'<div style="font-size:11.5px;line-height:1.55;color:{_DIM};'
+                    f'font-weight:400;margin-top:3px;padding-left:2px">'
+                    f'・{_h.escape(ln)}</div>' for ln in subs)
+                + '</a>'
+                for sid, t, subs in _TOC)
             toc_html = (
                 f'<nav style="margin:18px 0 0">'
                 f'<div style="font-size:15px;font-weight:800;color:{_TEXT};'
