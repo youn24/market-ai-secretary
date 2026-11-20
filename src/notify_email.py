@@ -328,7 +328,9 @@ def build_html(prices=None, risk=None, internals=None, ai_summary=None,
         from src.feed_card import _scenarios
         rows = _scenarios(scenario)
         if rows:
-            body.append(_h2("🎯 3つの筋書き"))
+            body.append(_h2("🎯 3つの筋書き" + (
+                "（計算で作成）"
+                if str((scenario or {}).get("source") or "") == "rule" else "")))
             for _k, nm, pr, txt in rows:
                 col = {"強気": _UP, "中立": _WARN, "弱気": _DOWN}.get(nm, _DIM)
                 pr_s = f"（{pr}%）" if pr is not None else ""

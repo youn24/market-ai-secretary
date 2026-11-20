@@ -872,12 +872,22 @@ def build(prices=None, risk=None, internals=None, ai_summary=None,
                     f'<div class="num" style="font-size:10px;color:{_DIM}">'
                     f'{f"{pr}%" if isinstance(pr, (int, float)) else ""}</div>{bar}</div>'
                     f'<div style="flex:1;font-size:11px;color:{_TEXT};line-height:1.8">'
-                    f'{str(s.get("detail", ""))[:150]}</div></div>')
+                    f'{str(_txt)[:150]}</div></div>')
+            # ⚠️ Geminiが使えない日は計算で出している（scenario._rule_based）。
+            #    出典と断り書きを**必ず切り替える**。計算値を「AIの見立て」と
+            #    名乗らせたら、読み手は無い判断を信じることになる。
+            _rule = str((scenario or {}).get("source") or "") == "rule"
             sc_html = _sec("🎯 これからの3つの筋書き", _box(rows, "4px 14px 8px"),
-                           note="確率はAIの見立てで、当たることが保証された数字では"
-                                "ありません。「どれか1つが来る」ではなく"
-                                "「この幅の中で動きやすい」と読んでください。",
-                           src="AIの見立て（Gemini）")
+                           note=("**この幅と確率は、AIの見立てではなく計算です。**"
+                                 "恐怖指数（日経VI）が示す1ヶ月の振れ幅と、その日の"
+                                 "リスクスコアの向きだけで機械的に出しています。"
+                                 "当たることが保証された数字ではありません。"
+                                 if _rule else
+                                 "確率はAIの見立てで、当たることが保証された数字では"
+                                 "ありません。「どれか1つが来る」ではなく"
+                                 "「この幅の中で動きやすい」と読んでください。"),
+                           src=("計算（日経VI＋リスクスコア）" if _rule
+                                else "AIの見立て（Gemini）"))
 
         # ── 🐘 最後のおさらい ──
         recap = []
@@ -1282,7 +1292,9 @@ def build_text(prices=None, risk=None, internals=None, ai_summary=None,
             pr_s = f"（{pr}%）" if pr is not None else ""
             rows.append(f"{ic} *{nm}*{pr_s} {_t(txt)[:110]}")
         if rows:
-            blocks.append(("scn", "🎯 *3つの筋書き*\n" + "\n".join(rows)))
+            _tag = ("（計算で作成）"
+                    if str((scenario or {}).get("source") or "") == "rule" else "")
+            blocks.append(("scn", f"🎯 *3つの筋書き*{_tag}\n" + "\n".join(rows)))
         risk_txt = _t((scenario or {}).get("top_risk") or "")[:130]
         if risk_txt:
             blocks.append(("risk", f"⚠️ *いちばんの気がかり*\n{risk_txt}"))

@@ -86,12 +86,19 @@ def _undefined_reads(module_path: str, func_name: str) -> list:
         if isinstance(n, (ast.Import, ast.ImportFrom)):
             for x in n.names:
                 known.add((x.asname or x.name).split(".")[0])
-        elif isinstance(n, ast.FunctionDef):
+        elif isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
             known.add(n.name)
         elif isinstance(n, ast.Assign) and getattr(n, "col_offset", 1) == 0:
+            # ⚠️ `_UP, _DOWN, _WARN = ...` のような一行まとめ代入は
+            #    targets が Tuple なので、Name だけ見ていると**定数を見落とす**。
+            #    見落とすと本物の不具合が38件の誤検知に埋まって誰も読まなくなる。
             for t in n.targets:
-                if isinstance(t, ast.Name):
-                    known.add(t.id)
+                for sub in ast.walk(t):
+                    if isinstance(sub, ast.Name):
+                        known.add(sub.id)
+        elif isinstance(n, ast.AnnAssign) and getattr(n, "col_offset", 1) == 0:
+            if isinstance(n.target, ast.Name):
+                known.add(n.target.id)
     a = target.args
     known |= {x.arg for x in a.args} | {x.arg for x in a.kwonlyargs}
     if a.vararg:
@@ -177,8 +184,15 @@ def main() -> int:
             print(f"✅ {caller} → {mod}:{mfunc}()  "
                   f"{len(passed)}個すべて受けられる{note}")
 
+    # ⚠️ 記事を組み立てる長い関数は、必ずここに足す。
+    #    2026-11-20: feed_card.build() の3シナリオの行に、存在しない変数 `s` を
+    #    書いていた。鍵が無くてその枝を通らなかったため半日気づけず、
+    #    Geminiが動いた日に**その区画より下の本文がまるごと落ちる**ところだった。
     for mod, fn in (("src/notify_telegram.py", "_build_unified_caption"),
-                    ("src/design_ai.py", "generate")):
+                    ("src/design_ai.py", "generate"),
+                    ("src/feed_card.py", "build"),
+                    ("src/feed_card.py", "build_text"),
+                    ("src/notify_email.py", "build_html")):
         u = _undefined_reads(mod, fn)
         if u:
             print(f"❌ {mod}:{fn}() 定義されていない名前 {len(u)}件")
