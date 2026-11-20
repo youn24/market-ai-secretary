@@ -12,11 +12,11 @@
  "dividend_yield": {
   "zone": 3,
   "name": "高利回り",
-  "value": 2.87
+  "value": 2.82
  },
  "spread": {
   "zone": 2,
   "name": "株が割安",
-  "value": 4.78
+  "value": 4.72
  }
 }
