@@ -776,9 +776,12 @@ def build(prices=None, risk=None, internals=None, ai_summary=None,
         recap = []
         if nk:
             recap.append(f"日経平均は **{_n(nk['v'], 2)}円（{nk['c']:+.2f}%）**")
-        if isinstance(r, (int, float)):
-            side = "下げ" if r >= .5 else "上げ"
-            recap.append(f"{(r if r >= .5 else 1 - r)*100:.0f}%の銘柄が{side}た")
+        if _breadth_phrase(r):
+            # ⚠️ ここも _breadth_phrase に揃える。以前は広がりの欄が「拮抗」と
+            #    書いている日に、おさらいだけ「60%の銘柄が下げた」と言っていた。
+            recap.append(_breadth_phrase(r)
+                         .replace("拮抗しました", "拮抗")
+                         .replace("ました", ""))
         if isinstance(turn, (int, float)):
             recap.append(f"東証の売買代金は **{turn / 1e6:.2f}兆円**")
         if isinstance(nvi, (int, float)):
