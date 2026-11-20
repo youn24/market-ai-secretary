@@ -21,7 +21,8 @@ def load_news_config() -> dict:
         return yaml.safe_load(f)
 
 
-def _parse_entry(entry: dict, keyword: str, label: str, importance: str) -> dict:
+def _parse_entry(entry: dict, keyword: str, label: str, importance: str,
+                 category: str = "") -> dict:
     """feedparser のエントリを統一フォーマットに変換する。"""
     title = entry.get("title", "タイトル不明")
     link = entry.get("link", "")
@@ -43,6 +44,9 @@ def _parse_entry(entry: dict, keyword: str, label: str, importance: str) -> dict
         "keyword": keyword,
         "label": label,
         "importance": importance,
+        # ⚠️ yaml に書いてあるのに今まで捨てていた（保存データは全件 None）。
+        #    話題ごとに束ねるのに使える情報なので受け渡す。
+        "category": category,
         "title": title,
         "url": link,
         "source": source,
@@ -52,6 +56,7 @@ def _parse_entry(entry: dict, keyword: str, label: str, importance: str) -> dict
 
 
 def fetch_google_news(keyword: str, label: str, importance: str,
+                      category: str = "",
                       max_items: int = 5) -> list[dict]:
     """Google News RSS から指定キーワードのニュースを取得する。"""
     encoded = quote(keyword)
@@ -63,7 +68,7 @@ def fetch_google_news(keyword: str, label: str, importance: str,
             return []
         items = []
         for entry in feed.entries[:max_items]:
-            items.append(_parse_entry(entry, keyword, label, importance))
+            items.append(_parse_entry(entry, keyword, label, importance, category))
         logger.info(f"[OK] ニュース取得 [{keyword}]: {len(items)}件")
         return items
     except Exception as e:
@@ -82,6 +87,7 @@ def fetch_all_news() -> list[dict]:
             keyword=kw_cfg["keyword"],
             label=kw_cfg["label"],
             importance=kw_cfg["importance"],
+            category=kw_cfg.get("category", ""),
             max_items=max_items,
         )
         all_news.extend(items)

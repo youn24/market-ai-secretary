@@ -181,31 +181,6 @@ def _box(inner, pad="12px 14px") -> str:
             f'border-radius:12px;padding:{pad}">{inner}</div>')
 
 
-def _chain(num: int, title: str, body: str, src="", photo_key="") -> str:
-    """「なぜ動いたのか」の1項目。左に小さな写真、右に小見出しと本文。
-
-    見本の ①②③ の形。写真が取れない日は**文字だけで詰めて出す**
-    （枠だけ残して空けると、読む側には欠落にしか見えない）。
-    """
-    th = ""
-    if photo_key:
-        try:
-            from src.media_credits import photo
-            pm = photo(photo_key)
-            if pm:
-                th = (f'<img src="{pm["url"]}" alt="" loading="lazy" '
-                      f'style="width:104px;height:72px;object-fit:cover;'
-                      f'border-radius:8px;flex:0 0 auto;border:1px solid {_LINE}">')
-        except Exception:
-            logger.debug("連鎖の写真を出せませんでした")
-    return (f'<div style="display:flex;gap:11px;margin:0 0 16px;align-items:flex-start">'
-            f'{th}<div style="flex:1;min-width:0">'
-            f'<div style="font-size:12.5px;font-weight:800;color:{_TEXT};'
-            f'margin-bottom:4px">{num}. {_b(title)}</div>'
-            f'<div style="font-size:11.5px;line-height:1.85;color:{_DIM}">'
-            f'{_b(body)}{_pill(src)}</div></div></div>')
-
-
 def _row(label, value, col=None, sub="") -> str:
     col = col or _TEXT
     s = (f'<div style="font-size:9.5px;color:{_DIM};padding:0 0 3px">{sub}</div>'
@@ -217,14 +192,146 @@ def _row(label, value, col=None, sub="") -> str:
             f'</div>{s}</div>')
 
 
+def _news_title(x, limit=52) -> str:
+    """ニュースの見出しを表示用に整える。
+
+    ⚠️ 以前は `split(" - ")[0]` で切っていたため、題名の途中に " - " がある
+       記事（Reutersの「Breakingviews - コラム：…」など）が
+       **先頭の1語だけ**になっていた。見出しが消えるので何の話か分からない。
+       Google News RSS が付けるのは**末尾の " - 配信元"** だけなので、
+       後ろから1回だけ切り、配信元と一致したときに限って落とす。
+    """
+    t = str(x.get("title") or "").strip()
+    src = str(x.get("source") or "").strip()
+    if src and " - " in t:
+        head, tail = t.rsplit(" - ", 1)
+        if tail.strip() == src and len(head) >= 8:
+            t = head.strip()
+    return t[:limit] + ("…" if len(t) > limit else "")
+
+
 def _links(items, icon="📰", n=3) -> str:
     return "".join(
         f'<div style="padding:5px 0;border-bottom:1px solid {_LINE}">'
         f'<a href="{x["url"]}" target="_blank" rel="noopener" '
         f'style="font-size:10.5px;color:{_ACC};text-decoration:none">'
-        f'{x.get("label", icon)} {str(x.get("title", "")).split(" - ")[0][:52]}</a>'
+        f'{x.get("label", icon)} {_news_title(x)}</a>'
         f'<span style="font-size:9px;color:{_DIM}"> ／ {x.get("source", "")}</span>'
         f'</div>' for x in items[:n])
+
+
+# ── ニュースの束ね方 ────────────────────────────────────
+# ⚠️ 見出しから「なぜ動いたか」を**こちらで推測して書かない**。
+#    見出しはそのまま載せ、出どころを添える。相場の原因を断定するのは
+#    誤情報のいちばん出やすい形で、しかも外から検証できない。
+#    「どこに効くか」の説明は、見出しごとではなく**話題ごとの固定文**に
+#    してある（下の表）。固定文なら人が確認でき、日によってぶれない。
+#
+# 束ね方は `label`（config/news_sources.yaml の表示名）で引く。
+# 見出しの文字で引くと、同じ語を含む無関係な記事を拾う。
+
+#   束の名前 → (まとめ見出し, [label...], どこに効くかの固定文)
+_THEME_GROUPS = (
+    ("ai", "💻 AI・半導体", ["💻 AI・半導体", "📈 テック株"],
+     "日経平均は今、半導体関連の比重が大きいので、"
+     "**この話題が指数をいちばん大きく動かします。**"
+     "米国のテック株が動いた翌朝は、東京の半導体株がほぼ同じ方向に動きます。"),
+    ("gafa", "🏢 米巨大テックの決算", ["🏢 GAFA決算"],
+     "決算はその会社の成績表です。見るところは売上より"
+     "**AI向けの設備投資をいくらに増やしたか**で、"
+     "そこが日本の半導体製造装置メーカーへの注文につながります。"),
+    ("jp", "🇯🇵 日本の大企業", ["🏢 日本大企業", "🏢 企業決算"],
+     "日経平均は**株価の平均**なので、株価の高い銘柄"
+     "（ソフトバンクG・ファストリなど）の値動きが指数を強く動かします。"
+     "同じ1%でも指数への効き方が違います。"),
+)
+
+_GEO_GROUPS = (
+    ("macro", "📊 物価・雇用・景気（経済指標）",
+     ["📊 米CPI", "📊 雇用統計", "📊 GDP", "📊 PMI"],
+     "ここが**金利を決めます**。物価が高いと利上げ、雇用が弱いと利下げ。"
+     "利上げなら株に逆風、利下げなら追い風という順で回ってきます。"),
+    ("uscn", "🇺🇸🇨🇳 米中と台湾", ["⚠️ 米中・台湾"],
+     "米中が対立すると、半導体の輸出制限や関税が増えます。"
+     "日本は半導体の製造装置を中国に売っているので、"
+     "**東京エレクトロン・アドバンテストなどに直接ひびきます。**"),
+    ("tariff", "🧾 関税・通商政策", ["🇺🇸 米経済政策"],
+     "関税は輸入品に上乗せされる税です。米国に車を売るトヨタなどの"
+     "利益を削り、同時に**米国の物価を押し上げて利上げの理由になります。**"),
+    ("fiscal", "💸 米国の財政と国債", ["🇺🇸 米財政"],
+     "国の借金が増えると、国債を買ってもらうために利回り（金利）を"
+     "上げる必要が出ます。**金利が上がると株は割高に見えて売られやすい**"
+     "ので、ここは株価に回ってきます。"),
+    ("me", "🛢 中東情勢", ["⚠️ 中東情勢"],
+     "原油の産地と輸送路です。紛争が広がると原油が上がり、"
+     "日本は輸入に頼っているので**物価と企業のコストが上がります。**"),
+    ("ru", "🌍 ロシア・ウクライナ", ["⚠️ ロシア・ウクライナ"],
+     "エネルギーと穀物の供給に影響します。"
+     "欧州の景気と資源価格を通して、日本株にも回ってきます。"),
+    ("cn", "🇨🇳 中国の景気", ["🇨🇳 中国経済", "🇪🇺 欧州経済"],
+     "中国は日本の最大の輸出先です。中国の景気が悪いと"
+     "**機械・化学・自動車の注文が減ります。**"),
+    ("jppol", "🇯🇵 日本の政策", ["🇯🇵 日本経済"],
+     "補正予算や減税は、**どの業種にお金が流れるか**を変えます。"),
+)
+
+# 「報道が挙げている理由」に載せる話題。相場を動かした話に絞る
+_WHY_LABELS = ["📈 米国株", "📈 テック株", "📈 日本株", "💻 AI・半導体",
+               "📊 米金利", "💱 為替", "🥇 金", "🛢 原油"]
+
+
+def _news_by_label(news, labels, used=None) -> list:
+    """label が一致するニュースを、重要度の高い順に拾う。
+
+    ⚠️ 同じ記事を2か所に出さないため `used`（出したURLの集合）を見る。
+       欄が増えるほど重複は必ず起きるので、気をつけて書くのではなく
+       機械的に避ける（写真の `used_photos` と同じ考え）。
+    """
+    used = used if used is not None else set()
+    out = []
+    for n in (news or []):
+        if not isinstance(n, dict):
+            continue
+        u, t = n.get("url"), str(n.get("title") or "").strip()
+        if not u or not t or u in used:
+            continue
+        if str(n.get("label") or "") in labels:
+            out.append(n)
+    out.sort(key=lambda x: {"S": 0, "A": 1, "B": 2}.get(x.get("importance"), 3))
+    return out
+
+
+def _topic_block(title, body_html, hint="") -> str:
+    """話題ひとかたまり。小見出し＋見出し一覧＋効くところ。"""
+    h = (f'<div style="font-size:12.5px;font-weight:800;color:{_TEXT};'
+         f'margin:0 0 5px">{title}</div>')
+    k = (f'<div style="font-size:11px;color:{_DIM};line-height:1.85;'
+         f'margin-top:6px">{_b(hint)}</div>') if hint else ""
+    return (f'<div style="padding:11px 0;border-bottom:1px solid {_LINE}">'
+            f'{h}{body_html}{k}</div>')
+
+
+def _groups_section(news, groups, title, note, used, per=2, cap=4) -> str:
+    """束ごとに「小見出し＋見出し＋効くところ」を並べた区画を作る。
+
+    ⚠️ 取れなかった束は**その束ごと出さない**。空の小見出しが並ぶと
+       読む気が失せるし、何も起きていないのか取れなかったのか
+       区別できなくなる。
+    """
+    blocks = []
+    for _k, label, labels, hint in groups:
+        got = _news_by_label(news, labels, used)[:per]
+        if not got:
+            continue
+        for g in got:
+            used.add(g.get("url"))
+        blocks.append(_topic_block(label, _links(got, "📰", per), hint))
+        if len(blocks) >= cap:
+            break
+    if not blocks:
+        return ""
+    return _sec(title, _box("".join(blocks), "4px 14px 6px"),
+                note=note, src="Google News RSS（見出しと配信元はそのまま）")
 
 
 # ── 見出し ──────────────────────────────────────────────
@@ -862,12 +969,61 @@ def build(prices=None, risk=None, internals=None, ai_summary=None,
         except Exception:
             logger.error("動画の欄を作れませんでした", exc_info=True)
 
+        # ── 📰 報道が挙げている理由 ──
+        # ⚠️ 上の「なぜ動いたのか」は**値動きから出した事実**で、ここは
+        #    **報道がそう言っている**という別の種類の情報。混ぜると
+        #    「相場が動いた原因はこれだ」と断定したことになる。分けて置く。
+        why_used = set()
+        why_html = ""
+        try:
+            why = _news_by_label(news, _WHY_LABELS, why_used)[:4]
+            if why:
+                for w in why:
+                    why_used.add(w.get("url"))
+                why_html = _sec(
+                    "📰 報道が挙げている理由",
+                    _box(_links(why, "📰", 4), "4px 14px 8px"),
+                    note="**見出しはそのまま載せています。**こちらで要約も解釈も"
+                         "していません。報道が挙げている理由であって、"
+                         "相場が動いた原因を断定するものではありません。",
+                    src="Google News RSS")
+        except Exception:
+            logger.error("報道の欄を作れませんでした", exc_info=True)
+
+        # ── 💻 注目の企業とテーマ ──
+        theme_html = ""
+        try:
+            theme_html = _groups_section(
+                news, _THEME_GROUPS, "💻 注目の企業とテーマ",
+                "**どの会社の話が日経平均に効くか**は、株価の高さと"
+                "業種の比重で決まります。話題ごとに、どこに効くのかを添えました。",
+                why_used, per=2, cap=3)
+        except Exception:
+            logger.error("テーマの欄を作れませんでした", exc_info=True)
+
+        # ── 🏛 世界の政治とお金 ──
+        # オーナー要望「政治はどうなのか？」。地政学と通商・財政は
+        # 毎朝取っていたのに、レポートにも通知にも一度も出していなかった。
+        geo_html = ""
+        try:
+            geo_html = _groups_section(
+                news, _GEO_GROUPS, "🏛 世界の政治とお金",
+                "政治の話が株価に届くまでには**必ず途中の道筋があります**"
+                "（関税→企業の利益、財政→金利、紛争→原油）。"
+                "その道筋を話題ごとに書いてあります。",
+                why_used, per=2, cap=5)
+        except Exception:
+            logger.error("政治の欄を作れませんでした", exc_info=True)
+
         # ── 📚 出典 ──
         picked = [n for n in (news or [])
                   if isinstance(n, dict) and n.get("url") and n.get("title")]
         picked.sort(key=lambda x: {"S": 0, "A": 1, "B": 2}.get(x.get("importance"), 3))
-        # 政策の欄で既に出したものは繰り返さない
-        shown = {n.get("url") for n in pol_news[:3]} if pol_news else set()
+        # 政策・報道・テーマ・政治の欄で既に出したものは繰り返さない
+        # ⚠️ 欄が増えたので、ここを足し忘れると同じ記事が二度並ぶ。
+        shown = set(why_used)
+        if pol_news:
+            shown |= {n.get("url") for n in pol_news[:3]}
         rest = [n for n in picked if n.get("url") not in shown]
         src_html = _sec("📚 参考にしたニュース", _box(_links(rest, "📰", 5), "4px 14px 8px")
                         ) if rest else ""
@@ -924,7 +1080,8 @@ def build(prices=None, risk=None, internals=None, ai_summary=None,
             f'<article style="margin-bottom:18px;background:{_BG2};'
             f'border:1px solid {_LINE};border-radius:16px;padding:20px 18px 22px">'
             f'{head}{toc_html}{hero}{concl_html}{idx_html}{mkt}{chain_html}'
-            f'{fx_html}{pol_html}{alt_html}{sc_html}{recap_html}{vid_html}{src_html}{verify}'
+            f'{why_html}{theme_html}{fx_html}{pol_html}{geo_html}'
+            f'{alt_html}{sc_html}{recap_html}{vid_html}{src_html}{verify}'
             f'</article>')
     except Exception:
         logger.error("フィードカードを作れませんでした", exc_info=True)
