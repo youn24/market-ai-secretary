@@ -1,0 +1,9 @@
+*.xcodeproj
+xcuserdata/
+DerivedData/
+.DS_Store
+# XcodeGenが生成する（project.ymlが正）
+App/Info.plist
+App/*.entitlements
+Widget/Info.plist
+Widget/*.entitlements

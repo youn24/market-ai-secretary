@@ -1,0 +1,28 @@
+name: iOS Widget Build Check
+
+# iOSアプリのコンパイル確認専用。定期実行はしない（通知・Gemini枠・予約実行の混雑に影響させない）。
+# 開発環境(Linux)にはSwiftが無いので、ここが唯一のビルド検証になる。
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "ios/**"
+      - ".github/workflows/ios_build.yml"
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate Xcode project
+        working-directory: ios/MarketWidget
+        run: xcodegen generate
+      - name: Build (simulator, no signing)
+        working-directory: ios/MarketWidget
+        run: |
+          xcodebuild -project MarketWidget.xcodeproj -scheme MarketWidget \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO build
