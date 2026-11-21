@@ -79,7 +79,29 @@ enum MarketService {
             .prefix(limit).map { $0 }
     }
 
-    // MARK: まとめ取得
+    // MARK: 配信ファイル（ウィジェット用）
+
+    /// Actionsが数時間ごとに作る静的JSON。端末はこれを読むだけ（Yahooを直接叩かない）
+    static let feedURL = URL(string: "https://youn24.github.io/market-ai-secretary/widget_feed.json")!
+    /// 3時間更新＋予約実行の遅れを見込んだ上限。これを超えたら「古い」と明示する
+    static let feedMaxAge: TimeInterval = 8 * 3600
+
+    static func loadFeed() async -> (snapshot: Snapshot?, stale: Bool) {
+        var req = URLRequest(url: feedURL)
+        req.cachePolicy = .reloadIgnoringLocalCacheData
+        if let (data, resp) = try? await session.data(for: req),
+           (resp as? HTTPURLResponse)?.statusCode == 200 {
+            let d = JSONDecoder(); d.dateDecodingStrategy = .iso8601
+            if let snap = try? d.decode(Snapshot.self, from: data), !snap.quotes.isEmpty {
+                Shared.saveCache(snap)
+                return (snap, Date().timeIntervalSince(snap.fetched) > feedMaxAge)
+            }
+        }
+        return (Shared.loadCache(), true)   // 取れない日は前回分を「古い」と明示して返す
+    }
+
+    // MARK: まとめ取得（アプリ用・ライブ）
+
 
     /// 取得に失敗した部分は直前のキャッシュで補い、古いデータなら stale=true を返す。
     /// 「取れなかったのに新しいように見せる」ことはしない。

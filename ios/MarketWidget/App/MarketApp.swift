@@ -215,7 +215,7 @@ struct SettingsTab: View {
                     if let message { Text(message).font(.footnote).foregroundStyle(.orange) }
                 }
                 Section("ウィジェットについて") {
-                    Text("ウィジェットの更新間隔はiOSが決めます。約15分ごとを要求しますが、省電力や更新回数の予算により遅れることがあります。ウィジェット下部の時刻が取得時点です。")
+                    Text("ウィジェットのデータはGitHub Actionsが約3時間ごとに作る配信ファイルです（銘柄は日経・ドル円・S&P500・ナスダック・VIX固定）。ウィジェット下部の日時がデータの作成時点で、8時間以上古いと「古いデータ」と表示します。アプリ本体の一覧はこの端末から直接取得するのでウォッチリスト編集が効きます。")
                         .font(.footnote).foregroundStyle(.secondary)
                     Text("価格はYahoo Financeの非公式APIから取得するため、無料枠の遅延（最大15〜20分）や取得制限が起こりえます。")
                         .font(.footnote).foregroundStyle(.secondary)

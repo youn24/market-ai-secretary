@@ -22,14 +22,14 @@ struct MarketProvider: TimelineProvider {
     func getTimeline(in context: Context, completion: @escaping (Timeline<MarketEntry>) -> Void) {
         Task {
             let entry = await load()
-            // iOSは更新回数に予算を持つ（目安: 1日40〜70回）。15分は「要求」であって保証ではない
-            let next = Date().addingTimeInterval(15 * 60)
+            // データ自体が3時間ごとなので、読みに行くのは1時間ごとで十分（静的ファイルなので負荷もない）
+            let next = Date().addingTimeInterval(60 * 60)
             completion(Timeline(entries: [entry], policy: .after(next)))
         }
     }
 
     private func load() async -> MarketEntry {
-        let (snap, stale) = await MarketService.loadSnapshot()
+        let (snap, stale) = await MarketService.loadFeed()
         return MarketEntry(date: Date(), snapshot: snap, stale: stale)
     }
 }
@@ -71,7 +71,7 @@ private struct Footer: View {
             if entry.stale { Text("⚠︎ 古いデータ").foregroundStyle(.orange) }
             Spacer(minLength: 0)
             // 取得時刻を必ず出す。「リアルタイム」ではなく「いつ時点か」を示す
-            Text(entry.snapshot?.fetched ?? entry.date, style: .time)
+            Text(entry.snapshot?.fetched ?? entry.date, format: .dateTime.month().day().hour().minute())
         }
         .font(.system(size: 9)).foregroundStyle(.secondary)
     }

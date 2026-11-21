@@ -1,0 +1,41 @@
+name: Widget Feed
+
+# iPhoneウィジェット用の docs/widget_feed.json を3時間ごとに更新する。
+# 通知・Geminiは使わない。公開リポジトリならActions/Pagesとも無料。
+# ⚠️ 予約実行は遅れることがある（朝のレポートで実測済み）。数時間ごとの用途なので許容。
+on:
+  schedule:
+    - cron: "17 */3 * * *"   # 毎時0分は混むのでずらす
+  workflow_dispatch:
+
+# 朝のレポート等の git push と同時に走ってもぶつからないよう順番待ちにする
+concurrency:
+  group: widget-feed
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  feed:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Build feed
+        run: python -m scripts.build_widget_feed   # 1銘柄も取れなければ exit 1（古いものを新しく見せない）
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          [ -f docs/widget_feed.json ] && git add docs/widget_feed.json
+          if git diff --staged --quiet; then echo "変更なし"; exit 0; fi
+          git commit -m "chore: ウィジェット用データ更新 [skip ci]"
+          for i in 1 2 3; do
+            git pull --rebase origin main && git push && exit 0
+            sleep $((i * 5))
+          done
+          echo "::error::widget_feed.json のpushに失敗しました"; exit 1
