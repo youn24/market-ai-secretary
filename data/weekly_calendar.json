@@ -1,13 +1,21 @@
 {
- "saved_at": "2026-11-16",
+ "saved_at": "2026-11-23",
  "events": [
   {
-   "date": "2026-11-17",
-   "time": "早朝",
-   "country": "US",
-   "category": "決算",
-   "importance": "high",
-   "event": "決算 NVDA"
+   "date": "2026-11-25",
+   "time": "",
+   "event": "🌕 満月（ビーバームーン）（01:20）",
+   "country": "",
+   "importance": "low",
+   "category": "指標"
+  },
+  {
+   "date": "2026-11-25",
+   "time": "01:20",
+   "country": "world",
+   "category": "天体",
+   "importance": "low",
+   "event": "🌕 満月（ビーバームーン）"
   }
  ],
  "upcoming_earnings": []
