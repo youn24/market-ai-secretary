@@ -123,11 +123,15 @@ def run() -> dict:
             f_boj = ex.submit(_analyze, _BOJ_SERIES, "日銀（日本）", 120)
             fed = f_fed.result(timeout=40)
             boj = f_boj.result(timeout=40)
-    except Exception:
+    except Exception as e:
+        # ⚠️ 以前は logger.debug で握りつぶしていたため、FRBも日銀も取得できなかった日に
+        # 本番ログに何の手がかりも残らなかった（2026-11-23に無言の失敗として発覚）。
+        logger.error(f"政策金利ウォッチエラー: {type(e).__name__}: {e}")
         logger.debug(traceback.format_exc())
         fed = boj = None
 
     if not fed and not boj:
+        logger.error("政策金利: FRB・日銀とも取得できませんでした（FRED接続不可の可能性）")
         return {"available": False, "events": []}
 
     st = _load_state()
