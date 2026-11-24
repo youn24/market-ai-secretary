@@ -1360,23 +1360,16 @@ def run(mode: str):
         if sector_chart_path:
             chart_paths["sector"] = sector_chart_path
 
-        # Step VID: 要約ナレーション動画（通知③・失敗しても通知①②は継続）
-        video_path = None
-        try:
-            logger.info("--- Step VID: 要約ナレーション動画 ---")
-            from src.video_summary import run as run_video
-            _vid = run_video(prices=prices, fear_greed=fear_greed, risk=risk,
-                             ai_summary=ai_summary, news=news,
-                             character_comments=character_comments,
-                             chart_paths=chart_paths, mode=mode)
-            if _vid.get("available"):
-                video_path = _vid.get("path")
-                logger.info("✅ 要約動画 準備完了")
-        except Exception:
-            logger.debug(traceback.format_exc())
-
+        # 2026-11-24: 要約動画生成（Step VID）はここでは呼ばない。
+        # video_summary.py は「生成のみ・送信しない」運用（notify_telegram.run()の
+        # video_path は定義されているが本文で一度も参照されず、常に不使用）。
+        # それにもかかわらず notify_tg() の手前に置かれていたため、VOICEVOX/ffmpegが
+        # 遅い日に本物のTelegram通知そのものが時間切れで止まっていた
+        # （2026-11-24 実測: ジョブタイムアウトでpython/ffmpegがorphan終了し、
+        #  notify_tg()未到達→last_run_report.jsonも更新されず発覚）。
+        # 使われない動画より本体の通知を先に送る。動画は通知の後ろへ移動した。
         notify_tg(risk, analysis, report_paths, mode,
-                  video_path=video_path,
+                  video_path=None,
                   # TOB対象・上場廃止・減配だけが通知に出る（残りはレポートへ）
                   shareholder=shareholder,
                   # 業種別は上位3・下位3だけ（オーナー指示）
@@ -1492,6 +1485,25 @@ def run(mode: str):
             logger.info("X API未設定のためスキップ")
     except Exception:
         logger.error("X投稿エラー"); logger.debug(traceback.format_exc())
+
+    # Step VID: 要約ナレーション動画（生成のみ・送信しない運用。失敗しても他に影響なし）
+    # 2026-11-24: 以前は notify_tg() の手前（Step 8の中）にあり、VOICEVOX/ffmpegが
+    # 遅い日に本物のTelegram通知そのものが時間切れで止まっていた
+    # （notify_telegram.run() の video_path 引数は本文で一度も参照されず常に不使用。
+    #  実測: ジョブタイムアウトでpython/ffmpegがorphan終了→Step8未到達→
+    #  last_run_report.jsonも更新されず発覚）。
+    # Telegram・LINE・X の本物の通知をすべて先に送り終えてから、最後に動画生成だけ試す。
+    try:
+        logger.info("--- Step VID: 要約ナレーション動画 ---")
+        from src.video_summary import run as run_video
+        _vid = run_video(prices=prices, fear_greed=fear_greed, risk=risk,
+                         ai_summary=ai_summary, news=news,
+                         character_comments=character_comments,
+                         chart_paths=chart_paths, mode=mode)
+        if _vid.get("available"):
+            logger.info(f"✅ 要約動画 準備完了: {_vid.get('path')}")
+    except Exception:
+        logger.debug(traceback.format_exc())
 
     # ── 稼働状況の一覧（どの機能が動き、どれが取得できなかったかを毎回残す）──
     # 個々のStepは try/except で継続するため、失敗しても実行は最後まで進む。
