@@ -3,14 +3,6 @@
  "events": [
   {
    "date": "2026-11-25",
-   "time": "",
-   "event": "🌕 満月（ビーバームーン）（01:20）",
-   "country": "",
-   "importance": "low",
-   "category": "指標"
-  },
-  {
-   "date": "2026-11-25",
    "time": "01:20",
    "country": "world",
    "category": "天体",
