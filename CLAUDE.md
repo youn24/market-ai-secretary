@@ -165,6 +165,7 @@ cloud_run.py（メインスクリプト）
 | `src/portfolio_alert.py` | 保有銘柄の含み損益。しきい値は `data/portfolio.json` の `alerts` |
 | `src/daytrade_screener.py` | 今日動きやすい銘柄（寄り前・朝のみ）。売買代金が常識外なら「?」 |
 | `src/bargain_scanner.py` | 割安株（グレアム基準 PER×PBR≦22.5・月曜のみ） |
+| `src/drawdown_screener.py` | 下落×割安（日米約95銘柄・毎日 Step DD）。6カ月-15%以下 or 高値比-30%以下を、予想PERと「来期減益か」で①割安候補 ②要注意 ③割高のまま に仕分け。検証: `python -m tests.test_drawdown_screener` |
 | `src/evening_summary.py` | 夜23:00の振り返り本文。Gemini失敗時の代替文は**日経を先に見る** |
 
 ### 設定・データ

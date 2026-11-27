@@ -2536,6 +2536,65 @@ def _bargain_section(bargain):
 </div>"""
 
 
+def _drawdown_section(drawdown):
+    """下落×割安（日米）。直近6カ月で下げた銘柄を「割安候補／要注意」に分ける。
+
+    ⚠️ 要注意を必ず並べて見せる。指標が安くても、来期の利益が減る予想なら
+       「利益のピークで安く見えているだけ」の可能性がある（バリュートラップ）。
+    """
+    dd = drawdown or {}
+    if not dd.get("available"):
+        return ""
+    cands = [x for x in (dd.get("candidates") or []) if isinstance(x, dict)]
+    caution = [x for x in (dd.get("caution") or []) if isinstance(x, dict)]
+    if not cands and not caution:
+        return ""
+    pct = lambda v: f"{v * 100:+.0f}%" if isinstance(v, (int, float)) else "—"
+    num = lambda v, d=1: f"{v:.{d}f}" if isinstance(v, (int, float)) else "—"
+
+    def _rows(items, warn):
+        out = []
+        for x in items[:6]:
+            flag = (f'<div style="font-size:9.5px;color:{YELLOW};margin-top:2px;padding-left:24px">'
+                    f'⚠ {" / ".join(x.get("flags") or [])}</div>') if warn and x.get("flags") else ""
+            out.append(f"""<div style="padding:7px 0;border-bottom:1px solid {BORDER}">
+  <div style="display:flex;align-items:center;gap:7px">
+    <span style="font-size:9px;font-weight:900;color:{MUTED};min-width:17px">{x.get('market', '')}</span>
+    <span style="font-size:11.5px;font-weight:800;color:{TEXT};flex:1;min-width:0">{x.get('name', '')}</span>
+    <span class="num" style="font-size:10.5px;font-weight:800;color:{RED}">6カ月 {pct(x.get('ret_6m'))}</span>
+  </div>
+  <div style="display:flex;gap:12px;font-size:10px;color:{MUTED};margin-top:3px;padding-left:24px;flex-wrap:wrap">
+    <span>高値比 <b style="color:{TEXT}">{pct(x.get('from_high'))}</b></span>
+    <span>PER <b style="color:{TEXT}">{num(x.get('per_used'))}</b></span>
+    <span>PBR <b style="color:{TEXT}">{num(x.get('pbr'), 2)}</b></span>
+    <span>RSI <b style="color:{TEXT}">{num(x.get('rsi14'), 0)}</b></span>
+  </div>{flag}
+</div>""")
+        return "".join(out)
+
+    blocks = ""
+    if cands:
+        blocks += (f'<div style="font-size:10.5px;font-weight:800;color:{GREEN};margin:6px 0 2px">'
+                   f'① 割安候補（{len(cands)}）</div>' + _rows(cands, False))
+    if caution:
+        blocks += (f'<div style="font-size:10.5px;font-weight:800;color:{YELLOW};margin:10px 0 2px">'
+                   f'② 要注意（{len(caution)}）減益予想・売上減・赤字のどれかあり</div>'
+                   + _rows(caution, True))
+    pricey_n = len(dd.get("pricey") or [])
+    return f"""
+<div style="margin-bottom:12px">
+  <div class="label" style="padding:0 2px;margin-bottom:6px">📉 下落×割安（日米・{dd.get('as_of') or ''}時点）</div>
+  <div class="glass-sm fade" style="padding:4px 12px 8px">{blocks}</div>
+  <div style="font-size:9px;color:{MUTED};margin-top:5px;padding:0 2px">
+    {dd.get('priced', 0)}銘柄のうち、6カ月で15%以上 または 1年の高値から30%以上下げた
+    {dd.get('dropped_count', 0)}銘柄を、予想PER（米18倍・日14倍以下を安い側）とPBRで仕分けています。
+    下げてもまだ指標が高い銘柄が他に{pricey_n}あります。<br>
+    <b style="color:{YELLOW}">「要注意」は、来期の利益が減る予想・売上減・赤字のどれかがある銘柄です。</b>
+    利益が落ちる会社は指標のうえで必ず安く見えます。「割安候補」も、下げた理由を確かめてから判断してください。
+  </div>
+</div>"""
+
+
 def generate(
     mode: str = "morning",
     prices: dict = None,
@@ -2594,6 +2653,7 @@ def generate(
     retail_heat: dict = None,   # 個人投資家の過熱度
     macro_regime: dict = None,  # マクロ環境（実質金利など）
     bargain: dict = None,       # 割安株（グレアム基準・月曜のみ）
+    drawdown: dict = None,      # 下落×割安（日米・毎日）
     fear: dict = None,          # 恐怖指数の位置（フィードカードの重要度に使う）
     history: dict = None,       # 主要4指標の1ヶ月推移（自前SVGチャート）
     daytrade: dict = None,      # 今日動きやすい銘柄（寄り前スクリーニング）
@@ -2654,6 +2714,7 @@ def generate(
     scr_html   = _screener_section(jquants)
     hist_html  = _history_section(history)
     bargain_html = _bargain_section(bargain)
+    drawdown_html = _drawdown_section(drawdown)
 
     # 📰 一番上に置く「結論カード」。レポートは区画が40以上あり、
     #    いちばん知りたいことが下の方まで探さないと分からなかった。
@@ -2762,6 +2823,7 @@ def generate(
   {shr_html}
   {scr_html}
   {bargain_html}
+  {drawdown_html}
   {earn_html}
   {anom_html}
   {internals_html}
@@ -2896,6 +2958,7 @@ def run(
     retail_heat: dict        = None,
     macro_regime: dict       = None,
     bargain: dict            = None,
+    drawdown: dict           = None,
     fear: dict               = None,
     history: dict            = None,
     daytrade: dict           = None,
@@ -2928,7 +2991,7 @@ def run(
             history=history, daytrade=daytrade, holdings=holdings,
             hot_stocks=hot_stocks, stocktwits=stocktwits,
             retail_heat=retail_heat, macro_regime=macro_regime,
-            bargain=bargain, fear=fear,
+            bargain=bargain, fear=fear, drawdown=drawdown,
         )
         # 生成できたと言い切る前に、ファイルが実在し中身があるかを必ず確かめる。
         # ここを検証していなかったため、本番で生成に失敗していたことに

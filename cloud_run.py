@@ -1095,6 +1095,22 @@ def run(mode: str):
     except Exception:
         logger.error("割安株スキャナーエラー", exc_info=True)
 
+    # Step DD: 下落×割安スクリーナー（日米・Gemini不使用・毎日）
+    # 価格は一括取得、PER等の .info は「6カ月で下げた銘柄」だけに叩くので軽い。
+    # 割安株(Step BG)と違い、急落局面では日々入れ替わるため毎日回す。
+    drawdown = {"available": False}
+    try:
+        logger.info("--- Step DD: 下落×割安スクリーナー ---")
+        from src.drawdown_screener import run as run_drawdown
+        drawdown = run_drawdown()
+        if drawdown.get("available"):
+            logger.info(f"✅ 下落×割安: 割安候補 {len(drawdown.get('candidates') or [])}・"
+                        f"要注意 {len(drawdown.get('caution') or [])}")
+        else:
+            logger.error(f"❌ 下落×割安: 結果なし（{drawdown.get('error', '原因不明')}）")
+    except Exception:
+        logger.error("下落×割安スクリーナーエラー", exc_info=True)
+
     # Step FW: 恐怖指数の位置（レポート最上部のフィードカードの重要度に使う）
     # 通知は monitor_run が担当。ここでは判定だけして渡す。
     fear = {"available": False}
@@ -1272,7 +1288,7 @@ def run(mode: str):
             # スクリーニングも実行だけして表示していなかった（決算と同じ形）
             jquants=jquants,
             history=history, daytrade=daytrade, holdings=holdings,
-            bargain=bargain, fear=fear,
+            bargain=bargain, fear=fear, drawdown=drawdown,
             mode=mode,
         )
         # 公開ページが更新されたことを必ず確認する。
