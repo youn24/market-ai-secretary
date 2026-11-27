@@ -2,7 +2,7 @@
  "per": {
   "zone": 2,
   "name": "標準",
-  "value": 14.74
+  "value": 14.77
  },
  "pbr": {
   "zone": 3,
@@ -12,7 +12,7 @@
  "dividend_yield": {
   "zone": 2,
   "name": "妙味あり",
-  "value": 2.62
+  "value": 2.63
  },
  "spread": {
   "zone": 2,
