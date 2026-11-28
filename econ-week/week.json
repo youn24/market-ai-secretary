@@ -1,6 +1,6 @@
 {
-  "checkedAt": "2026-11-28 06:17",
-  "checked_at": "2026-11-28 06:17",
+  "checkedAt": "2026-11-28 17:21 JST",
+  "checked_at": "2026-11-28 17:21 JST",
   "events": [
     {
       "badge": null,
@@ -993,6 +993,21 @@
       "title": "国民投票 第22案（非核家園政策の廃止）"
     },
     {
+      "badge": null,
+      "category": "centralbank",
+      "country": "米国",
+      "date": "2026-11-28",
+      "detail": "FOMC（12月8–9日）を前に、FRB高官が金融政策・経済見通しについて公の発言を控える「ブラックアウト期間」が開始（11月28日〜12月10日、米東部時間基準）。この間はFRB発言という材料が途絶え、思惑だけで相場が動きやすい。12月会合は経済見通し（SEP・ドットプロット）の公表を伴う。出典：シカゴ連銀「FOMC Blackout Periods」公式カレンダー（2026-11-28確認）",
+      "flag": "🇺🇸",
+      "forecast": null,
+      "id": 1304,
+      "importance": 2,
+      "previous": null,
+      "shortTitle": "ブラックアウト",
+      "time": "終日",
+      "title": "FRBブラックアウト開始"
+    },
+    {
       "badge": "選挙",
       "category": "politics",
       "country": "スペイン",
@@ -1039,7 +1054,7 @@
     }
   ],
   "notes_commentary": "来週の山場は水曜22:30の米PCE価格指数（コア前年比+3.2%予想、9月の+3.1%から加速）と金曜08:30の東京都区部CPI。12月FOMC前の最後の大きな物価データになる。日米とも休場・短縮取引が多く薄商いで、少ない注文で値が飛びやすい週。月曜は東証休場のため、週明けの反応は火曜に集まりやすい。",
-  "sourceLabel": "みんかぶ（株探）・みんかぶFX、ロイター、共同通信、日本経済新聞、東京新聞、読売新聞、Al Jazeera、swissinfo、RTI・TVBS、IPOScoop・TipRanks（IPOチェック）",
+  "sourceLabel": "みんかぶ（株探）・みんかぶFX、ロイター、共同通信、日本経済新聞、東京新聞、読売新聞、Al Jazeera、swissinfo、RTI・TVBS、IPOScoop・TipRanks（IPOチェック） ＋ FRBブラックアウト期間（シカゴ連銀公式カレンダー）",
   "weekLabel": "11月23日(月) 〜 11月29日(日)",
   "weekStart": "2026-11-23",
   "week_label": "11月23日(月) 〜 11月29日(日)",
