@@ -87,6 +87,18 @@ DROP_FROM_HIGH = -0.30  # または52週高値からの下落率がこれ以下
 # 日本: プライム市場平均の予想PERが15倍前後（2026-11 株探の特集で14.6〜15.1倍）。
 CHEAP_PER = {"US": 18.0, "JP": 14.0}
 JP_PBR_CHEAP = 1.0      # 日本はPBR1倍割れも安い側に数える（ただしPER20倍以下に限る）
+
+# ── 金利で基準を動かす（2026-11-29 追加）─────────────────────────
+# PER の逆数＝益回り（利益÷株価）は、国債の利回りと比べられる。
+# 国債で利息が多く取れるほど、株に求める益回りも上がる＝許されるPERが下がる。
+# 上の CHEAP_PER は「金利が過去1年の平均くらいのとき」の基準とみなし、
+# 今の10年金利が1年平均からずれた分だけ、求める益回りを同じだけ動かす。
+#   例: 米国 基準18倍＝益回り5.56%。金利が平均より+0.5%高い → 6.06% → 16.5倍
+# 絶対水準ではなく「1年平均からのずれ」を見るのは、日米で金利の水準が
+# まったく違い、固定の数字を決めると片方が必ず歪むため。
+RATE_SENSITIVITY = 1.0     # 金利の差を、求める益回りに何倍で効かせるか
+PER_BOUNDS = (10.0, 25.0)  # 動かしすぎ防止（金利が急変した日の異常値対策）
+RATE_SERIES = {"US": "米国10年国債", "JP": "日本10年国債"}
 EPS_DROP_RATIO = 0.90   # 来期EPS が今期の90%未満なら「減益予想」
 MAX_INFO_CALLS = 40     # .info を叩く上限（時間と制限対策）
 MIN_HISTORY_ROWS = 120  # 6カ月比較に必要な最低本数
@@ -174,7 +186,29 @@ def _fundamentals(info: dict) -> dict:
     }
 
 
-def _classify(market: str, f: dict) -> dict:
+def _rate_adjusted_per(base_per: float, now, avg) -> float:
+    """金利が1年平均からずれた分だけ、割安とみなすPERの上限を動かす。
+
+    金利が取れない日は基準を動かさない（＝従来どおり）。
+    """
+    if not isinstance(now, (int, float)) or not isinstance(avg, (int, float)):
+        return base_per
+    ey = 1 / base_per + (now - avg) / 100 * RATE_SENSITIVITY
+    if ey <= 0:
+        return PER_BOUNDS[1]
+    return round(min(max(1 / ey, PER_BOUNDS[0]), PER_BOUNDS[1]), 1)
+
+
+def _thresholds(rates: dict) -> dict:
+    """市場ごとの今日の基準PER。rates = {"US": {"now":..,"avg":..}, ...}"""
+    out = {}
+    for mkt, base in CHEAP_PER.items():
+        r = (rates or {}).get(mkt) or {}
+        out[mkt] = _rate_adjusted_per(base, r.get("now"), r.get("avg"))
+    return out
+
+
+def _classify(market: str, f: dict, cheap_per: float = None) -> dict:
     """指標から ①割安候補 ②要注意 ③割高のまま ④判定不可 を決める。
 
     ⚠️ 順序に意味がある。先に「罠の兆候」を集めてから安さを見る。
@@ -183,22 +217,24 @@ def _classify(market: str, f: dict) -> dict:
     flags = []
     ttm_eps, fwd_eps = f.get("ttm_eps"), f.get("fwd_eps")
     if ttm_eps is not None and ttm_eps <= 0:
-        flags.append("直近赤字")
+        flags.append("いまは赤字")
     if (ttm_eps and fwd_eps and ttm_eps > 0 and fwd_eps > 0
             and fwd_eps < ttm_eps * EPS_DROP_RATIO):
-        flags.append(f"来期減益予想({(fwd_eps / ttm_eps - 1) * 100:+.0f}%)")
+        flags.append(f"来年の利益が今より{(1 - fwd_eps / ttm_eps) * 100:.0f}%減る予想")
     if fwd_eps is not None and fwd_eps <= 0:
-        flags.append("来期も赤字予想")
+        flags.append("来年も赤字の予想")
     rg = f.get("rev_growth")
     if rg is not None and rg < 0:
-        flags.append(f"売上減({rg * 100:+.0f}%)")
+        flags.append(f"売上が前の年より{-rg * 100:.0f}%減")
 
     per = f.get("fwd_per") or f.get("ttm_per")
     pbr = f.get("pbr")
+    limit = cheap_per if cheap_per else CHEAP_PER[market]
     if per is None and pbr is None:
-        return {"bucket": "判定不可", "per_used": None, "flags": flags or ["指標なし"]}
+        return {"bucket": "判定不可", "per_used": None, "flags": flags or ["指標なし"],
+                "cheap_per": limit}
 
-    cheap = per is not None and per <= CHEAP_PER[market]
+    cheap = per is not None and per <= limit
     if (market == "JP" and pbr is not None and pbr < JP_PBR_CHEAP
             and (per is None or per <= 20)):
         cheap = True
@@ -207,13 +243,13 @@ def _classify(market: str, f: dict) -> dict:
         bucket = "要注意" if flags else "割安候補"
     else:
         bucket = "要注意" if any("赤字" in x for x in flags) else "割高のまま"
-    return {"bucket": bucket, "per_used": per, "flags": flags}
+    return {"bucket": bucket, "per_used": per, "flags": flags, "cheap_per": limit}
 
 
 def _rank_key(r: dict):
     """割安候補の並び順: PERが基準に対して安いほど、深く下げているほど上。"""
     per = r.get("per_used")
-    base = CHEAP_PER[r["market"]]
+    base = r.get("cheap_per") or CHEAP_PER[r["market"]]
     per_score = (per / base) if per else 1.0
     return per_score + r["ret_6m"]  # ret_6m は負なので、深い下げほど小さくなる
 
@@ -239,13 +275,43 @@ def _download_closes(symbols: list):
     return out
 
 
+def _fetch_rates() -> dict:
+    """日米10年金利の「今」と「過去1年の平均」。取れなかった市場は入れない。"""
+    out = {}
+    try:
+        import warnings
+        warnings.filterwarnings("ignore")
+        import yfinance as yf
+        c = yf.download("^TNX", period="1y", interval="1d", progress=False,
+                        auto_adjust=False)["Close"]
+        c = c.squeeze().dropna() if hasattr(c, "squeeze") else c.dropna()
+        if len(c) >= 100:
+            out["US"] = {"now": round(float(c.iloc[-1]), 3), "avg": round(float(c.mean()), 3)}
+        else:
+            logger.warning(f"米10年金利の履歴が短い（{len(c)}本）。米国の基準は固定のまま")
+    except Exception as e:
+        logger.error(f"米10年金利の取得に失敗（米国の基準は固定のまま）: {type(e).__name__}: {e}")
+    try:
+        from src.risk_gauges import _fetch_jgb
+        j = _fetch_jgb()
+        g = next((x for x in (j.get("gauges") or []) if x.get("symbol") == "JGB10年"), None)
+        if g and isinstance(g.get("value"), (int, float)) and isinstance(g.get("avg_1y"), (int, float)):
+            out["JP"] = {"now": g["value"], "avg": g["avg_1y"]}
+        else:
+            logger.warning("日本10年国債の値が取れず、日本の基準は固定のまま")
+    except Exception as e:
+        logger.error(f"日本10年国債の取得に失敗（日本の基準は固定のまま）: {type(e).__name__}: {e}")
+    return out
+
+
 def _fetch_info(symbol: str) -> dict:
     import yfinance as yf
     return yf.Ticker(symbol).info or {}
 
 
 # ── 本体 ────────────────────────────────────────────────────────
-def scan(us: dict = None, jp: dict = None, downloader=None, info_fetcher=None) -> dict:
+def scan(us: dict = None, jp: dict = None, downloader=None, info_fetcher=None,
+         rates_fetcher=None) -> dict:
     """スクリーニングを実行する。
 
     downloader / info_fetcher を差し替えればネット無しで検証できる。
@@ -254,6 +320,7 @@ def scan(us: dict = None, jp: dict = None, downloader=None, info_fetcher=None) -
     jp = JP_STOCKS if jp is None else jp
     downloader = downloader or _download_closes
     info_fetcher = info_fetcher or _fetch_info
+    rates_fetcher = rates_fetcher or _fetch_rates
 
     universe = {s: ("US", n) for s, n in us.items()}
     universe.update({s: ("JP", n) for s, n in jp.items()})
@@ -279,6 +346,14 @@ def scan(us: dict = None, jp: dict = None, downloader=None, info_fetcher=None) -
         if _is_dropped(m):
             dropped.append({"symbol": sym, "name": name, "market": mkt, **m})
 
+    # 金利で今日の基準PERを決める（取れなければ固定値のまま）
+    try:
+        rates = rates_fetcher() or {}
+    except Exception as e:
+        logger.error(f"金利の取得に失敗（基準は固定のまま）: {type(e).__name__}: {e}")
+        rates = {}
+    per_limit = _thresholds(rates)
+
     # 深く下げた順に .info を叩く（上限あり）
     dropped.sort(key=lambda r: r["ret_6m"])
     rows, info_failed = [], []
@@ -289,7 +364,7 @@ def scan(us: dict = None, jp: dict = None, downloader=None, info_fetcher=None) -
             logger.warning(f"  {r['symbol']} の指標取得失敗: {type(e).__name__}: {e}")
             info_failed.append(r["symbol"])
             f = _fundamentals({})
-        rows.append({**r, **f, **_classify(r["market"], f)})
+        rows.append({**r, **f, **_classify(r["market"], f, per_limit[r["market"]])})
 
     buckets = {k: [x for x in rows if x["bucket"] == k]
                for k in ("割安候補", "要注意", "割高のまま", "判定不可")}
@@ -312,7 +387,13 @@ def scan(us: dict = None, jp: dict = None, downloader=None, info_fetcher=None) -
         "info_failed": info_failed,
         "truncated": max(0, len(dropped) - MAX_INFO_CALLS),
         "thresholds": {"drop_6m": DROP_6M, "drop_from_high": DROP_FROM_HIGH,
-                       "cheap_per": CHEAP_PER, "jp_pbr": JP_PBR_CHEAP},
+                       "cheap_per_base": CHEAP_PER, "cheap_per": per_limit,
+                       "jp_pbr": JP_PBR_CHEAP},
+        # 市場ごと: 今の10年金利・1年平均・今日の基準PER（金利が取れない市場は adjusted=False）
+        "rates": {m: {**(rates.get(m) or {}), "name": RATE_SERIES[m],
+                      "base_per": CHEAP_PER[m], "per": per_limit[m],
+                      "adjusted": m in rates}
+                  for m in CHEAP_PER},
     }
     return res
 
@@ -347,7 +428,13 @@ def format_text(res: dict) -> str:
     if not res.get("available"):
         return f"取得できませんでした: {res.get('error')}"
     lines = [f"下落×割安スクリーナー（{res['as_of']}時点・{res['priced']}/{res['universe']}銘柄）",
-             f"6カ月{DROP_6M * 100:.0f}%以下 または 高値から{DROP_FROM_HIGH * 100:.0f}%以下 → {res['dropped_count']}銘柄", ""]
+             f"6カ月{DROP_6M * 100:.0f}%以下 または 高値から{DROP_FROM_HIGH * 100:.0f}%以下 → {res['dropped_count']}銘柄"]
+    for m, r in (res.get("rates") or {}).items():
+        if r.get("adjusted"):
+            lines.append(f"  {m} 基準PER {r['per']}倍（{r['name']} {r['now']:.2f}% ／ 1年平均 {r['avg']:.2f}%）")
+        else:
+            lines.append(f"  {m} 基準PER {r['per']}倍（金利が取れず固定）")
+    lines.append("")
     for title, key in (("① 割安候補", "candidates"), ("② 要注意", "caution"),
                        ("③ 割高のまま", "pricey"), ("④ 判定不可", "unknown")):
         lines.append(f"{title}（{len(res[key])}）")

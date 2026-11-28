@@ -2537,10 +2537,12 @@ def _bargain_section(bargain):
 
 
 def _drawdown_section(drawdown):
-    """下落×割安（日米）。直近6カ月で下げた銘柄を「割安候補／要注意」に分ける。
+    """下落×割安（日米）。半年で大きく下げた銘柄を、中学生でも読める言葉で2つに分ける。
 
-    ⚠️ 要注意を必ず並べて見せる。指標が安くても、来期の利益が減る予想なら
-       「利益のピークで安く見えているだけ」の可能性がある（バリュートラップ）。
+    ⚠️ 「利益が減りそう」の組を必ず並べて見せる。利益が落ちる会社は
+       PERのうえで必ず安く見える（利益のピークで一番安く見える＝バリュートラップ）。
+    ⚠️ 専門用語は行の中に出さず、下の「読み方」で一度だけ説明する。
+       各行に PER/PBR/RSI を並べると、初心者には記号の羅列にしか見えない。
     """
     dd = drawdown or {}
     if not dd.get("available"):
@@ -2549,51 +2551,92 @@ def _drawdown_section(drawdown):
     caution = [x for x in (dd.get("caution") or []) if isinstance(x, dict)]
     if not cands and not caution:
         return ""
-    pct = lambda v: f"{v * 100:+.0f}%" if isinstance(v, (int, float)) else "—"
-    num = lambda v, d=1: f"{v:.{d}f}" if isinstance(v, (int, float)) else "—"
+
+    def _pct(v):
+        return f"{v * 100:+.0f}%" if isinstance(v, (int, float)) else "—"
+
+    def _tags(x):
+        """数字の意味を言葉で添える。当てはまるときだけ出す。"""
+        t = []
+        rsi = x.get("rsi14")
+        if isinstance(rsi, (int, float)) and rsi <= 30:
+            t.append("売られすぎ")
+        pbr = x.get("pbr")
+        if isinstance(pbr, (int, float)) and pbr < 1.0:
+            t.append("PBR1倍割れ")
+        return t
 
     def _rows(items, warn):
         out = []
         for x in items[:6]:
-            flag = (f'<div style="font-size:9.5px;color:{YELLOW};margin-top:2px;padding-left:24px">'
-                    f'⚠ {" / ".join(x.get("flags") or [])}</div>') if warn and x.get("flags") else ""
-            out.append(f"""<div style="padding:7px 0;border-bottom:1px solid {BORDER}">
-  <div style="display:flex;align-items:center;gap:7px">
-    <span style="font-size:9px;font-weight:900;color:{MUTED};min-width:17px">{x.get('market', '')}</span>
-    <span style="font-size:11.5px;font-weight:800;color:{TEXT};flex:1;min-width:0">{x.get('name', '')}</span>
-    <span class="num" style="font-size:10.5px;font-weight:800;color:{RED}">6カ月 {pct(x.get('ret_6m'))}</span>
+            per = x.get("per_used")
+            per_s = f"利益の{per:.0f}年分" if isinstance(per, (int, float)) else "—"
+            tags = "".join(
+                f'<span style="font-size:9.5px;font-weight:800;color:{BLUE};'
+                f'border:1px solid {BORDER};border-radius:8px;padding:0 6px;margin-left:5px">{t}</span>'
+                for t in _tags(x))
+            flag = (f'<div style="font-size:10.5px;color:{YELLOW};margin-top:3px;padding-left:24px">'
+                    f'⚠ {" ／ ".join(x.get("flags") or [])}</div>') if warn and x.get("flags") else ""
+            out.append(f"""<div style="padding:8px 0;border-bottom:1px solid {BORDER}">
+  <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
+    <span style="font-size:9px;font-weight:900;color:{MUTED};min-width:17px">{'米' if x.get('market') == 'US' else '日'}</span>
+    <span style="font-size:12px;font-weight:800;color:{TEXT}">{x.get('name', '')}</span>{tags}
   </div>
-  <div style="display:flex;gap:12px;font-size:10px;color:{MUTED};margin-top:3px;padding-left:24px;flex-wrap:wrap">
-    <span>高値比 <b style="color:{TEXT}">{pct(x.get('from_high'))}</b></span>
-    <span>PER <b style="color:{TEXT}">{num(x.get('per_used'))}</b></span>
-    <span>PBR <b style="color:{TEXT}">{num(x.get('pbr'), 2)}</b></span>
-    <span>RSI <b style="color:{TEXT}">{num(x.get('rsi14'), 0)}</b></span>
+  <div style="display:flex;gap:12px;font-size:10.5px;color:{MUTED};margin-top:3px;padding-left:24px;flex-wrap:wrap">
+    <span>半年で <b style="color:{RED}">{_pct(x.get('ret_6m'))}</b></span>
+    <span>一番高い時から <b style="color:{TEXT}">{_pct(x.get('from_high'))}</b></span>
+    <span>株価は <b style="color:{TEXT}">{per_s}</b></span>
   </div>{flag}
 </div>""")
         return "".join(out)
 
     blocks = ""
     if cands:
-        blocks += (f'<div style="font-size:10.5px;font-weight:800;color:{GREEN};margin:6px 0 2px">'
-                   f'① 割安候補（{len(cands)}）</div>' + _rows(cands, False))
+        blocks += (f'<div style="font-size:11px;font-weight:800;color:{GREEN};margin:6px 0 2px">'
+                   f'① 下がったけど、利益は減らない予想（{len(cands)}）</div>' + _rows(cands, False))
     if caution:
-        blocks += (f'<div style="font-size:10.5px;font-weight:800;color:{YELLOW};margin:10px 0 2px">'
-                   f'② 要注意（{len(caution)}）減益予想・売上減・赤字のどれかあり</div>'
+        blocks += (f'<div style="font-size:11px;font-weight:800;color:{YELLOW};margin:10px 0 2px">'
+                   f'② 安く見えるけど、利益が減りそう・赤字（{len(caution)}）</div>'
                    + _rows(caution, True))
+
+    # 金利で基準を動かした説明（取れた市場だけ）
+    rate_lines = []
+    for mkt, label in (("US", "米国"), ("JP", "日本")):
+        r = (dd.get("rates") or {}).get(mkt) or {}
+        per = r.get("per")
+        if not isinstance(per, (int, float)):
+            continue
+        if r.get("adjusted") and isinstance(r.get("now"), (int, float)) and isinstance(r.get("avg"), (int, float)):
+            diff = r["now"] - r["avg"]
+            how = ("いつもより高いので、基準を少し厳しく" if diff > 0.05 else
+                   "いつもより低いので、基準を少しゆるく" if diff < -0.05 else "いつもどおり")
+            rate_lines.append(f"{label}: 10年金利 {r['now']:.2f}%（1年平均 {r['avg']:.2f}%）→ {how}。"
+                              f"今日は<b style=\"color:{TEXT}\">利益の{per:g}年分以下</b>を「安い」とします")
+        else:
+            rate_lines.append(f"{label}: 金利が取れなかったため、いつもの基準（利益の{per:g}年分以下）")
+    rate_html = "<br>".join(rate_lines)
     pricey_n = len(dd.get("pricey") or [])
+
     return f"""
 <div style="margin-bottom:12px">
-  <div class="label" style="padding:0 2px;margin-bottom:6px">📉 下落×割安（日米・{dd.get('as_of') or ''}時点）</div>
+  <div class="label" style="padding:0 2px;margin-bottom:6px">📉 大きく下がった株（日米・{dd.get('as_of') or ''}時点）</div>
   <div class="glass-sm fade" style="padding:4px 12px 8px">{blocks}</div>
-  <div style="font-size:9px;color:{MUTED};margin-top:5px;padding:0 2px">
-    {dd.get('priced', 0)}銘柄のうち、6カ月で15%以上 または 1年の高値から30%以上下げた
-    {dd.get('dropped_count', 0)}銘柄を、予想PER（米18倍・日14倍以下を安い側）とPBRで仕分けています。
-    下げてもまだ指標が高い銘柄が他に{pricey_n}あります。<br>
-    <b style="color:{YELLOW}">「要注意」は、来期の利益が減る予想・売上減・赤字のどれかがある銘柄です。</b>
-    利益が落ちる会社は指標のうえで必ず安く見えます。「割安候補」も、下げた理由を確かめてから判断してください。
+  <div style="font-size:10px;color:{MUTED};margin-top:6px;padding:0 2px;line-height:1.7">
+    <b style="color:{TEXT}">どう選んだ？</b>
+    {dd.get('priced', 0)}銘柄のうち、半年で15%以上、または1年で一番高い時から30%以上下がった
+    {dd.get('dropped_count', 0)}銘柄を、2つに分けました。下がっても、まだ株価が高めの銘柄が他に{pricey_n}銘柄あります。<br>
+    <b style="color:{TEXT}">「利益の◯年分」とは？</b>
+    PER（株価収益率）のことです。株価が、会社の1年分の利益の何年分にあたるか。小さいほど安い目安です。<br>
+    <b style="color:{TEXT}">金利で基準が変わる</b>
+    金利が上がると、銀行や国債でもお金が増えるので、株は高い値段では買われにくくなります。
+    そこで基準を金利に合わせて動かしています。<br>{rate_html}<br>
+    <b style="color:{YELLOW}">②に注意</b>
+    利益が減る会社は、数字のうえでは必ず安く見えます。安いのは「これから稼げなくなる」と思われているからかもしれません。
+    ①も、なぜ下がったのかを確かめてから考えてください。<br>
+    <b style="color:{TEXT}">売られすぎ</b>＝最近の下げ方がとても急（RSIが30以下）。
+    <b style="color:{TEXT}">PBR1倍割れ</b>＝株価が、会社を解散したときに残る財産より安い。
   </div>
 </div>"""
-
 
 def generate(
     mode: str = "morning",

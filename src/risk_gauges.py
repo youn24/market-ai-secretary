@@ -251,6 +251,10 @@ def _fetch_jgb() -> dict:
             "threshold": st["threshold"], "typical": st["typical"],
             "big": bool(st["threshold"] and pct is not None
                         and abs(pct) >= st["threshold"]),
+            # 過去1年（約260営業日）の平均。drawdown_screener が
+            # 「金利が普段より高いか」を見て割安の基準を動かすのに使う
+            "avg_1y": (round(statistics.mean(series[k]), 3)
+                       if len(series.get(k) or []) >= 100 else None),
         })
     return {"available": True, "date": date_str, "gauges": gauges}
 
